@@ -46,14 +46,14 @@ def test_post_clasico_sin_horas(cliente_usuario: TestClient) -> None:
 
 
 def test_post_clasico_con_horas_extras(cliente_usuario: TestClient) -> None:
-    """10 horas nocturnas: recargo 250.000 y saldo 3.210.000."""
+    """10 horas nocturnas: recargo 250.000; salud y pensión sobre 3.250.000 (SRS v1.4)."""
     respuesta = cliente_usuario.post(
         RUTA,
         data={"sueldo_basico": "3000000", "horas_EXTRA_NOCTURNA": "10"},
     )
 
     assert respuesta.status_code == 200
-    assert "3.210.000" in respuesta.text
+    assert "3.190.000" in respuesta.text
     assert "Hora extra nocturna" in respuesta.text
     assert "250.000" in respuesta.text
 

@@ -56,7 +56,7 @@ Plataforma web/móvil híbrida (PWA) con backend y frontend **100% Python**, arq
     ├── requirements-dev.txt            # pytest + httpx (solo desarrollo)
     ├── datos/finanzas.db               # Base SQLite local (no versionar)
     ├── scripts/respaldo.py             # Respaldo consistente y rotación
-    ├── tests/                          # Suite completa (228 pruebas)
+    ├── tests/                          # Suite completa (244 pruebas)
     └── app/
         ├── main.py                     # Punto de entrada FastAPI (fábrica de app)
         ├── dependencias.py             # Sesión, `SesionRequerida` y RBAC por rol
@@ -143,7 +143,7 @@ Plataforma web/móvil híbrida (PWA) con backend y frontend **100% Python**, arq
 ## 6. Reglas del Motor Financiero (Colombia)
 
 - **Base mensual legal:** 210 horas laborales (jornada de 42h semanales).
-- **Deducciones fijas (sólo lectura):** 4% Salud + 4% Pensión sobre el Sueldo Básico.
+- **Deducciones de ley (sólo lectura):** 4% Salud + 4% Pensión sobre el **salario devengado** del periodo: sueldo básico + horas extras y recargos − descuento por incapacidad (SRS v1.4, ADR-19). Esta regla reemplaza la anterior, que usaba solo el sueldo básico.
 - **Factores de recargos:**
   - Extra Diurna Normal: `1.25`
   - Extra Nocturna: `1.75`
@@ -187,7 +187,7 @@ python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 
 ```bash
 cd backend
-.\.venv\Scripts\python -m pytest -q          # suite completa (228 pruebas)
+.\.venv\Scripts\python -m pytest -q          # suite completa (238 pruebas)
 .\.venv\Scripts\python scripts\respaldo.py   # copia consistente en backend/respaldos
 ```
 
@@ -262,4 +262,9 @@ La configuración vive en `.vscode/launch.json`. También existe **Pruebas (pyte
 - [x] Verificación bloque 4: **227 pruebas** con `pytest` en verde (224 + 3 netas).
 - [x] **SRS v1.3 — Bloque 5 (Historial de Registros):** `_filas_historial` expone `fecha_guardado` y `total_extras`; tabla cronológica con fecha de guardado, periodo, sueldo base, total extras, total deducciones, gastos quincenales, saldo neto final (con variación frente al anterior) y acciones. 1 prueba nueva.
 - [x] Verificación bloque 5 y cierre SRS v1.3: `python -m compileall` OK y **228 pruebas** con `pytest` en verde (227 + 1 neta).
+- [x] **SRS v1.4 — Layout, navegación y deducciones fijas:** submenú en botones con scroll móvil (REQ-03), columnas alineadas y liquidación primero en móvil (REQ-01, REQ-02), desglose bajo la liquidación (REQ-06), atajos solo en consulta (REQ-07), filas de gastos compactas (REQ-09), tabla `deducciones_fijas` y gestión en «Gastos y Presupuesto» (REQ-08), y recálculo en vivo de quincenas con recargos e incapacidad (REQ-04, REQ-05). Registrado en `MEMORY.md` (bitácora + ADR-18). Verificado: **238 pruebas** en verde.
+- [x] **Cálculo en vivo de incapacidades y sueldo proyectado:** el descuento sale del motor legal (días 1–2 al 100 %; desde el día 3, 33,33 %), el sueldo proyectado suma horas extras y resta la incapacidad, y las quincenas se recalculan al instante. Verificado: **244 pruebas** en verde (`MEMORY.md`, bitácora).
+- [x] **SRS v1.4 — Salud y pensión sobre el devengado (ADR-19):** la base es sueldo + extras − incapacidad, en el motor de nómina y en el panel de quincenas. Horas extras e incapacidad se ven en vivo en el sueldo proyectado, en salud/pensión y en las quincenas.
+- [ ] **SRS v1.4 — Revisión visual pendiente:** alineación de columnas y móvil; el usuario reportó desalineación de cuadros de horas corregida por CSS, verificar en navegador.
+- [ ] **Facturación PDF OLB_BYTE:** pendiente. Requiere elegir motor PDF (no hay ninguno instalado) y justificarlo en ADR.
 - [ ] **Fase 3 (opcional)** — Migración a PostgreSQL con Alembic y despliegue multi-instancia (ver `DESPLIEGUE.md` §11).

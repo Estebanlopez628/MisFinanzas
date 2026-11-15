@@ -60,6 +60,12 @@
     for (var i = 0; i < campos.length; i += 1) {
       datos[campos[i].name] = campos[i].value;
     }
+    // Las fechas de incapacidad se envían siempre (aunque vayan vacías) para que
+    // el servidor sepa que el descuento se calcula desde ellas.
+    var inicio = document.querySelector("[data-incapacidad-inicio]");
+    var fin = document.querySelector("[data-incapacidad-fin]");
+    datos.incapacidad_inicio = inicio ? inicio.value : "";
+    datos.incapacidad_fin = fin ? fin.value : "";
     return datos;
   }
 
@@ -143,7 +149,9 @@
   /**
    * Reconstruye la tabla de recargos con el desglose devuelto.
    *
-   * @param {Array<{etiqueta: string, factor: string, horas: string, valor: string}>} filas
+   * Solo muestra concepto, horas y valor: el factor no aporta al lector.
+   *
+   * @param {Array<{etiqueta: string, horas: string, valor: string}>} filas
    */
   function pintarDetalle(filas) {
     if (!cuerpoDetalle) {
@@ -155,7 +163,7 @@
     if (!filas || filas.length === 0) {
       var vacia = document.createElement("tr");
       var celda = document.createElement("td");
-      celda.colSpan = 4;
+      celda.colSpan = 3;
       celda.className = "tabla__vacia";
       celda.textContent = "Sin horas extras ni recargos registrados.";
       vacia.appendChild(celda);
@@ -169,9 +177,6 @@
       var concepto = document.createElement("td");
       concepto.textContent = fila.etiqueta;
 
-      var factor = document.createElement("td");
-      factor.textContent = "× " + fila.factor;
-
       var horas = document.createElement("td");
       horas.className = "tabla__numero";
       horas.textContent = fila.horas;
@@ -181,7 +186,6 @@
       valor.textContent = fila.valor;
 
       tr.appendChild(concepto);
-      tr.appendChild(factor);
       tr.appendChild(horas);
       tr.appendChild(valor);
       cuerpoDetalle.appendChild(tr);
@@ -227,7 +231,73 @@
 
     pintarDetalle(respuesta.detalle);
     pintarAuxilio(respuesta.mensaje_auxilio, respuesta.aplica_auxilio);
+    pintarQuincenas(respuesta.quincenas || []);
+    pintarIncapacidad(respuesta.incapacidad, respuesta.rollover);
     pintarErrores([]);
+  }
+
+  /**
+   * Muestra el resumen de la incapacidad y guarda el descuento calculado en el
+   * campo oculto que usa «Guardar periodo» (SRS v1.4, REQ-05).
+   *
+   * @param {{dias_al_100: number, dias_al_66: number, descuento: string}|null} detalle
+   * @param {string} descuentoTotal Descuento del periodo incluido el saldo arrastrado.
+   */
+  function pintarIncapacidad(detalle, descuentoTotal) {
+    var oculto = formulario.querySelector('input[name="deduccion_incapacidad"]');
+    if (oculto && descuentoTotal !== undefined) {
+      oculto.value = descuentoTotal;
+    }
+
+    var resumen = document.querySelector("[data-incapacidad-resumen]");
+    if (!resumen) {
+      return;
+    }
+    if (!detalle) {
+      resumen.hidden = true;
+      resumen.textContent = "";
+      return;
+    }
+    resumen.hidden = false;
+    resumen.textContent =
+      detalle.dias_al_100 + " día(s) sin descuento (empleador) y " +
+      detalle.dias_al_66 + " día(s) con descuento del 33,33 % (EPS). Descuento del mes: " +
+      detalle.descuento + ".";
+  }
+
+  /**
+   * Actualiza las tarjetas de Quincena 1 y 2 (SRS v1.4, REQ-04 y REQ-05).
+   *
+   * Cada tarjeta se identifica por el número de pago que devuelve el servidor.
+   * El saldo libre cambia de color cuando queda negativo.
+   *
+   * @param {Array<{numero: number, ingreso: string, deducciones: string,
+   *   deducciones_fijas: string, saldo_libre: string, negativo: boolean}>} filas
+   */
+  function pintarQuincenas(filas) {
+    filas.forEach(function (fila) {
+      var saldo = document.querySelector('[data-saldo-quincena="' + fila.numero + '"]');
+      if (saldo) {
+        saldo.textContent = fila.saldo_libre;
+        saldo.classList.toggle("valor-negativo", Boolean(fila.negativo));
+      }
+      pintarTexto('[data-ingreso-quincena="' + fila.numero + '"]', fila.ingreso);
+      pintarTexto('[data-deducciones-quincena="' + fila.numero + '"]', "− " + fila.deducciones);
+      pintarTexto('[data-fijas-quincena="' + fila.numero + '"]', "− " + fila.deducciones_fijas);
+    });
+  }
+
+  /**
+   * Escribe un texto en el primer elemento que coincida con el selector.
+   *
+   * @param {string} selector Selector CSS del destino.
+   * @param {string} texto Texto ya formateado.
+   */
+  function pintarTexto(selector, texto) {
+    var destino = document.querySelector(selector);
+    if (destino) {
+      destino.textContent = texto;
+    }
   }
 
   /**
@@ -362,6 +432,13 @@
   formulario.addEventListener("input", function () {
     marcarCambios();
     programarCalculo();
+  });
+
+  // SRS v1.4, REQ-05: las fechas de la incapacidad viven fuera del formulario de
+  // liquidación; cualquier cambio en ellas recalcula el sueldo y las quincenas.
+  document.querySelectorAll("[data-incapacidad-inicio], [data-incapacidad-fin]").forEach(function (campo) {
+    campo.addEventListener("input", programarCalculo);
+    campo.addEventListener("change", programarCalculo);
   });
 
   formulario.addEventListener("submit", function (evento) {

@@ -110,10 +110,91 @@
       </p>
 
       <button class="boton boton--primario" type="submit">Crear meta</button>
-      <a class="boton boton--secundario" href="{{ url_for('ver_gastos') }}">
-        Registrar gastos fijos
-      </a>
     </form>
+  </section>
+
+  {# ---------------- Deducciones fijas del salario (SRS v1.4) ----------------- #}
+  <section class="panel" aria-labelledby="titulo-deducciones">
+    <h2 id="titulo-deducciones" class="panel__titulo">Deducciones fijas del salario</h2>
+    <p class="panel__descripcion">
+      Descuentos que la empresa aplica por nómina antes del pago (libranzas,
+      fondos, seguros empresariales). Se restan de la quincena elegida antes de
+      calcular tu saldo libre.
+    </p>
+
+    <form class="formulario formulario--compacto" method="post"
+          action="{{ url_for('crear_deduccion_fija') }}" data-proteccion>
+      <div class="fila-campos">
+        <label class="campo">
+          <span class="campo__etiqueta">Concepto</span>
+          <input class="campo__control" type="text" name="descripcion"
+                 placeholder="Libranza banco X, fondo…" required />
+        </label>
+        <label class="campo">
+          <span class="campo__etiqueta">Valor por pago (COP)</span>
+          <input class="campo__control" type="text" name="valor"
+                 inputmode="decimal" placeholder="120.000" required />
+        </label>
+        <label class="campo">
+          <span class="campo__etiqueta">Quincena de descuento</span>
+          <select class="campo__control" name="quincena">
+            <option value="1">Quincena 1 · día 15</option>
+            <option value="2">Quincena 2 · día 30</option>
+          </select>
+        </label>
+      </div>
+      <button class="boton boton--secundario boton--pequeno" type="submit">
+        + Agregar deducción fija
+      </button>
+    </form>
+
+    {% if deducciones %}
+      <ul class="lista-gastos">
+        {% for deduccion in deducciones %}
+          <li class="lista-gastos__item">
+            <span class="lista-gastos__nombre">
+              {{ deduccion.descripcion }} - Quincena {{ deduccion.quincena }}
+            </span>
+            <span class="lista-gastos__valor">Valor: {{ deduccion.valor | cop }}</span>
+            <div class="lista-gastos__acciones">
+              <details class="edicion-gasto">
+                <summary class="boton boton--secundario lista-gastos__boton">Editar</summary>
+                <form class="formulario formulario--compacto edicion-gasto__formulario" method="post"
+                      action="{{ url_for('editar_deduccion_fija', id_deduccion=deduccion.id_deduccion) }}"
+                      data-proteccion>
+                  <label class="campo">
+                    <span class="campo__etiqueta">Concepto</span>
+                    <input class="campo__control" type="text" name="descripcion"
+                           value="{{ deduccion.descripcion }}" required />
+                  </label>
+                  <label class="campo">
+                    <span class="campo__etiqueta">Valor (COP)</span>
+                    <input class="campo__control" type="text" name="valor"
+                           inputmode="decimal" value="{{ deduccion.valor | cop(false) }}" required />
+                  </label>
+                  <label class="campo">
+                    <span class="campo__etiqueta">Quincena</span>
+                    <select class="campo__control" name="quincena">
+                      <option value="1" {% if deduccion.quincena == 1 %}selected{% endif %}>Quincena 1</option>
+                      <option value="2" {% if deduccion.quincena == 2 %}selected{% endif %}>Quincena 2</option>
+                    </select>
+                  </label>
+                  <button class="boton boton--primario boton--pequeno" type="submit">Actualizar</button>
+                </form>
+              </details>
+              <form method="post"
+                    action="{{ url_for('eliminar_deduccion_fija', id_deduccion=deduccion.id_deduccion) }}"
+                    onsubmit="return confirm('¿Eliminar esta deducción fija?');">
+                <button class="boton boton--peligro lista-gastos__boton" type="submit"
+                        aria-label="Eliminar {{ deduccion.descripcion }}">×</button>
+              </form>
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="tabla__vacia">Aún no tienes deducciones fijas registradas.</p>
+    {% endif %}
   </section>
 
   {# ------------------------ Seguimiento de metas ------------------------- #}

@@ -222,11 +222,12 @@ def calcular_deducciones_ley(
 ) -> DeduccionesLey:
     """Calcula las deducciones obligatorias de salud y pensión.
 
-    Ambas se aplican sobre el **sueldo básico** (no sobre los recargos) y son de
-    sólo lectura en la interfaz, según la normativa colombiana vigente.
+    Ambas se aplican sobre la base que se pasa como argumento. En la liquidación
+    de Mis Finanzas esa base es el salario devengado (sueldo + horas extras y
+    recargos − incapacidad), según SRS v1.4.
 
     Args:
-        sueldo_basico: Sueldo básico mensual del periodo.
+        sueldo_basico: Base de cotización del periodo (salario devengado).
         parametros: Parámetros de nómina; si es `None` se usan los vigentes.
 
     Returns:
@@ -407,9 +408,12 @@ def liquidar_periodo(
 
     valor_hora = calcular_valor_hora_ordinaria(sueldo, parametros_efectivos)
     recargos = calcular_recargos(horas_por_tipo, valor_hora)
-    deducciones = calcular_deducciones_ley(sueldo, parametros_efectivos)
-
     total_devengado = calcular_total_devengado(sueldo, recargos.total_valor)
+
+    # SRS v1.4: salud y pensión se calculan sobre el salario que realmente se
+    # devenga: sueldo + horas extras y recargos − descuento por incapacidad.
+    base_cotizacion = redondear_dinero(max(total_devengado - incapacidad, CERO))
+    deducciones = calcular_deducciones_ley(base_cotizacion, parametros_efectivos)
 
     # Evaluación automática del auxilio (Tarea 3). Se hace después de conocer los
     # recargos porque el SRS compara "sueldo + recargos" contra los 2 SMMLV.

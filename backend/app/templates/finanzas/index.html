@@ -32,16 +32,8 @@ contenido %}
   <section
     class="columna-finanzas columna-finanzas--quincenas"
     id="quincenas"
-    aria-labelledby="titulo-quincenas"
+    aria-label="Quincenas, gastos fijos y atajos de pago"
   >
-    <h2 id="titulo-quincenas" class="seccion__titulo">
-      Tus quincenas y gastos fijos
-    </h2>
-    <p class="ayuda">
-      Cada gasto fijo se resta del ingreso proyectado de su quincena. Las
-      deducciones de ley (salud y pensión) se imputan a la quincena que elegiste
-      en tu perfil.
-    </p>
 
     {% for quincena in resumen_quincenas %} {# Sub-contenedor 1 y 2: resumen de
     la quincena y sus gastos fijos. #}
@@ -71,7 +63,7 @@ contenido %}
       <ul class="lista-parametros lista-parametros--compacta">
         <li>
           <span>Ingreso proyectado</span>
-          <strong>{{ quincena.ingreso | cop }}</strong>
+          <strong data-ingreso-quincena="{{ quincena.numero }}">{{ quincena.ingreso | cop }}</strong>
         </li>
         <li>
           <span>Gastos fijos</span>
@@ -79,8 +71,14 @@ contenido %}
         </li>
         <li>
           <span>Deducciones de ley</span>
-          <strong class="valor-negativo"
+          <strong class="valor-negativo" data-deducciones-quincena="{{ quincena.numero }}"
             >− {{ quincena.deducciones | cop }}</strong
+          >
+        </li>
+        <li>
+          <span>Deducciones fijas del salario</span>
+          <strong class="valor-negativo" data-fijas-quincena="{{ quincena.numero }}"
+            >− {{ quincena.deducciones_fijas | cop }}</strong
           >
         </li>
       </ul>
@@ -98,91 +96,40 @@ contenido %}
         <ul class="lista-gastos">
           {% for gasto in quincena.gastos_detalle %} {# MODIFICACIÓN: Cambiamos
           a un contenedor flexible en fila única #}
-          <li
-            class="lista-gastos__item flex items-center justify-between py-2 border-b border-slate-700/40"
-          >
-            {# Descripción a la izquierda #}
-            <span class="lista-gastos__descripcion">
-              {{ gasto.descripcion }}
-              <small
-                class="lista-gastos__categoria block text-xs text-slate-400"
-              >
-                {{ gasto.categoria }}{% if gasto.quincena is none %} · todo el
-                mes{% endif %}
-              </small>
+          <li class="lista-gastos__item">
+            <span class="lista-gastos__nombre">
+              {{ gasto.descripcion }} - {{ gasto.categoria }}{% if gasto.quincena is none %} · todo el mes{% endif %}
             </span>
-
-            {# Lado derecho: Valor + Botones de acciones en línea horizontal #}
-            <div class="flex items-center gap-3">
-              <span class="lista-gastos__valor font-semibold text-white"
-                >{{ gasto.valor | cop }}</span
-              >
-
-              <div class="lista-gastos__acciones flex items-center gap-1.5">
-                <details class="edicion-gasto relative">
-                  <summary
-                    class="boton boton--secundario boton--pequeno cursor-pointer"
-                  >
-                    Editar
-                  </summary>
-                  <form
-                    class="formulario formulario--compacto absolute right-0 mt-2 z-10 bg-slate-900 p-4 border border-slate-700 rounded-lg shadow-xl"
-                    method="post"
-                    action="/gastos/{{ gasto.id_gasto }}/editar"
-                    data-proteccion
-                  >
-                    <input type="hidden" name="origen" value="finanzas" />
-                    <input
-                      type="hidden"
-                      name="quincena"
-                      value="{{ gasto.quincena or '' }}"
-                    />
-                    <label class="campo">
-                      <span class="campo__etiqueta">Descripción</span>
-                      <input
-                        class="campo__control"
-                        type="text"
-                        name="descripcion"
-                        value="{{ gasto.descripcion }}"
-                        required
-                      />
-                    </label>
-                    <label class="campo">
-                      <span class="campo__etiqueta">Valor (COP)</span>
-                      <input
-                        class="campo__control"
-                        type="text"
-                        name="valor"
-                        inputmode="decimal"
-                        value="{{ gasto.valor }}"
-                        required
-                      />
-                    </label>
-                    <button
-                      class="boton boton--primario boton--pequeno mt-2"
-                      type="submit"
-                    >
-                      Actualizar
-                    </button>
-                  </form>
-                </details>
-
-                <form
-                  method="post"
-                  action="{{ url_for('eliminar_gasto', id_gasto=gasto.id_gasto) }}"
-                  data-proteccion
-                  class="inline"
-                >
+            <span class="lista-gastos__valor">Valor: {{ gasto.valor | cop }}</span>
+            <div class="lista-gastos__acciones">
+              <details class="edicion-gasto">
+                <summary class="boton boton--secundario lista-gastos__boton">Editar</summary>
+                <form class="formulario formulario--compacto edicion-gasto__formulario"
+                      method="post"
+                      action="{{ url_for('editar_gasto', id_gasto=gasto.id_gasto) }}"
+                      data-proteccion>
                   <input type="hidden" name="origen" value="finanzas" />
-                  <button
-                    class="boton boton--peligro boton--pequeno px-2"
-                    type="submit"
-                    aria-label="Eliminar {{ gasto.descripcion }}"
-                  >
-                    ×
-                  </button>
+                  <input type="hidden" name="quincena" value="{{ gasto.quincena or '' }}" />
+                  <label class="campo">
+                    <span class="campo__etiqueta">Descripción</span>
+                    <input class="campo__control" type="text" name="descripcion"
+                           value="{{ gasto.descripcion }}" required />
+                  </label>
+                  <label class="campo">
+                    <span class="campo__etiqueta">Valor (COP)</span>
+                    <input class="campo__control" type="text" name="valor"
+                           inputmode="decimal" value="{{ gasto.valor }}" required />
+                  </label>
+                  <button class="boton boton--primario boton--pequeno" type="submit">Actualizar</button>
                 </form>
-              </div>
+              </details>
+              <form method="post"
+                    action="{{ url_for('eliminar_gasto', id_gasto=gasto.id_gasto) }}"
+                    data-proteccion>
+                <input type="hidden" name="origen" value="finanzas" />
+                <button class="boton boton--peligro lista-gastos__boton" type="submit"
+                        aria-label="Eliminar {{ gasto.descripcion }}">×</button>
+              </form>
             </div>
           </li>
           {% endfor %}
@@ -336,6 +283,8 @@ contenido %}
         data-proteccion
         novalidate
       >
+        {# Botón por defecto para Enter: recalcula en vivo y nunca guarda. #}
+        <button type="submit" hidden tabindex="-1" aria-hidden="true"></button>
         {# SRS v1.3: año, mes y quincena dejan de mostrarse en la cabecera, pero
         siguen viajando en el POST para no perder el periodo que se está
         liquidando. #}
@@ -384,6 +333,16 @@ contenido %}
               perfil si lo dejas vacío.{% endif %}
             </span>
           </label>
+          <p class="sueldo-proyectado">
+            Sueldo proyectado del periodo:
+            <strong data-campo="sueldo_proyectado"
+              >{%- if resultado %}{{ (resultado.total_devengado -
+              resultado.deduccion_incapacidad) | cop }}{% else %}—{% endif -%}</strong
+            >
+            <span class="ayuda"
+              >Se recalcula con horas extras e incapacidades y alimenta las quincenas.</span
+            >
+          </p>
         </div>
 
         {# ------------- Deducciones de ley con valor en pesos ----------- #}
@@ -410,10 +369,16 @@ contenido %}
                 }}{% else %}—{% endif -%}
               </strong>
             </li>
+            <li>
+              <span>Deducciones fijas del salario</span>
+              <strong class="valor-negativo" data-deducciones-fijas>
+                − {{ deducciones_fijas_periodo | cop }}
+              </strong>
+            </li>
           </ul>
           <p class="ayuda">
-            Se calculan sobre el ingreso base de cotización: sueldo básico más
-            horas extras y recargos del periodo.
+            Salud y pensión se calculan sobre el sueldo básico del periodo. Las
+            deducciones fijas se administran en Gastos y Presupuesto.
           </p>
         </div>
 
@@ -458,9 +423,6 @@ contenido %}
         </fieldset>
 
         <div class="acciones-formulario acciones-formulario--liquidacion">
-          <button class="boton boton--primario" type="submit">
-            Calcular liquidación
-          </button>
           <button
             class="boton boton--secundario"
             type="button"
@@ -480,6 +442,50 @@ contenido %}
       </form>
     </section>
 
+    {# ------------------------ Desglose de recargos -------------------- #}
+    <section class="panel panel--tabla" aria-labelledby="titulo-detalle">
+      <h2 id="titulo-detalle" class="panel__titulo">
+        Desglose de horas extras y recargos
+      </h2>
+      <div class="tabla-contenedor">
+        <table class="tabla">
+          <thead>
+            <tr>
+              <th scope="col">Concepto</th>
+              <th scope="col">Horas</th>
+              <th scope="col">Valor</th>
+            </tr>
+          </thead>
+          <tbody data-detalle>
+            {% if resultado and resultado.detalle_recargos %} {% for item in
+            resultado.detalle_recargos %}
+            <tr>
+              <td>{{ item.etiqueta }}</td>
+              <td class="tabla__numero">
+                {{ '%.2f' | format(item.cantidad_horas) | replace('.', ',') }}
+              </td>
+              <td class="tabla__numero">{{ item.valor_total | cop }}</td>
+            </tr>
+            {% endfor %} {% else %}
+            <tr>
+              <td colspan="3" class="tabla__vacia">
+                Sin horas extras ni recargos registrados.
+              </td>
+            </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+      <p class="ayuda">
+        <a class="enlace" href="{{ url_for('ver_historial') }}"
+          >Historial y comparación</a
+        >
+        ·
+        <a class="enlace" href="{{ url_for('exportar_historial_csv') }}"
+          >Exportar CSV</a
+        >
+      </p>
+    </section>
     {# ------------------ Auxilio de transporte (2 SMMLV) --------------- #}
     <section class="panel panel--auxilio" aria-live="polite">
       <h2 class="panel__titulo">Auxilio de transporte</h2>
@@ -516,6 +522,7 @@ contenido %}
       <p class="panel__descripcion">
         Días 1 y 2 al 100 % (empleador); desde el día 3, al 66,67 %.
       </p>
+      <p class="aviso aviso--incapacidad" data-incapacidad-resumen hidden></p>
       <form
         class="formulario formulario--compacto"
         method="post"
@@ -530,6 +537,7 @@ contenido %}
               type="date"
               name="fecha_inicio"
               required
+              data-incapacidad-inicio
             />
           </label>
           <label class="campo">
@@ -539,6 +547,7 @@ contenido %}
               type="date"
               name="fecha_fin"
               required
+              data-incapacidad-fin
             />
           </label>
           <label class="campo">
@@ -682,189 +691,11 @@ contenido %}
         >.
       </p>
       {% endif %}
+  </div>
     </section>
 
-    {# ------------------------ Desglose de recargos -------------------- #}
-    <section class="panel panel--tabla" aria-labelledby="titulo-detalle">
-      <h2 id="titulo-detalle" class="panel__titulo">
-        Desglose de horas extras y recargos
-      </h2>
-      <div class="tabla-contenedor">
-        <table class="tabla">
-          <thead>
-            <tr>
-              <th scope="col">Concepto</th>
-              <th scope="col">Factor</th>
-              <th scope="col">Horas</th>
-              <th scope="col">Valor</th>
-            </tr>
-          </thead>
-          <tbody data-detalle>
-            {% if resultado and resultado.detalle_recargos %} {% for item in
-            resultado.detalle_recargos %}
-            <tr>
-              <td>{{ item.etiqueta }}</td>
-              <td>× {{ item.factor }}</td>
-              <td class="tabla__numero">
-                {{ '%.2f' | format(item.cantidad_horas) | replace('.', ',') }}
-              </td>
-              <td class="tabla__numero">{{ item.valor_total | cop }}</td>
-            </tr>
-            {% endfor %} {% else %}
-            <tr>
-              <td colspan="4" class="tabla__vacia">
-                Sin horas extras ni recargos registrados.
-              </td>
-            </tr>
-            {% endif %}
-          </tbody>
-        </table>
-      </div>
-      <p class="ayuda">
-        <a class="enlace" href="{{ url_for('ver_historial') }}"
-          >Historial y comparación</a
-        >
-        ·
-        <a class="enlace" href="{{ url_for('exportar_historial_csv') }}"
-          >Exportar CSV</a
-        >
-      </p>
-    </section>
-  </div>
 </div>
 
-{# ------------------------------------------------------------------ #} {#
-Gestión de atajos de pago (solo ADMIN_OLB). #} {#
------------------------------------------------------------------- #} {% if
-usuario.es_administrador %}
-<section
-  class="panel panel--chancucos"
-  id="chancucos"
-  aria-labelledby="titulo-chancucos"
->
-  <h2 id="titulo-chancucos" class="panel__titulo">
-    🔗 Configurar atajos de pago
-  </h2>
-  <p class="panel__descripcion">
-    Tres datos por atajo: descripción, número de referencia y link de pago.
-  </p>
-
-  <form
-    class="formulario formulario--compacto"
-    method="post"
-    action="{{ url_for('crear_chancuco') }}"
-    data-proteccion
-  >
-    <input type="hidden" name="origen" value="finanzas" />
-    <div class="fila-campos">
-      <label class="campo">
-        <span class="campo__etiqueta">Descripción</span>
-        <input
-          class="campo__control"
-          type="text"
-          name="descripcion"
-          placeholder="EPM energía, Claro internet…"
-          required
-        />
-      </label>
-      <label class="campo">
-        <span class="campo__etiqueta">Número de referencia</span>
-        <input
-          class="campo__control"
-          type="text"
-          name="numero_referencia"
-          required
-        />
-      </label>
-      <label class="campo">
-        <span class="campo__etiqueta">Link de pago (opcional)</span>
-        <input
-          class="campo__control"
-          type="url"
-          name="url_pago"
-          placeholder="https://pagos.entidad.com"
-        />
-      </label>
-    </div>
-    <label class="campo campo--casilla">
-      <input type="checkbox" name="favorito" value="1" />
-      <span>Marcar como favorito</span>
-    </label>
-    <button class="boton boton--secundario boton--pequeno" type="submit">
-      Guardar atajo de pago
-    </button>
-  </form>
-
-  {% if chancucos %}
-  <div class="tabla-contenedor">
-    <table class="tabla">
-      <thead>
-        <tr>
-          <th scope="col">Favorito</th>
-          <th scope="col">Descripción</th>
-          <th scope="col">Referencia</th>
-          <th scope="col">Acciones</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for item in chancucos %}
-        <tr>
-          <td>
-            <form
-              method="post"
-              action="{{ url_for('alternar_favorito_chancuco', id_chancuco=item.id_chancuco) }}"
-            >
-              <input type="hidden" name="origen" value="finanzas" />
-              <button
-                class="boton boton--secundario boton--pequeno"
-                type="submit"
-                aria-label="{{ 'Quitar de favoritos' if item.favorito else 'Marcar como favorito' }}"
-              >
-                {{ '★' if item.favorito else '☆' }}
-              </button>
-            </form>
-          </td>
-          <td>{{ item.descripcion }}</td>
-          <td class="tabla__numero">
-            <code>{{ item.numero_referencia }}</code>
-            <button
-              class="boton boton--secundario boton--pequeno"
-              type="button"
-              data-copiar="{{ item.numero_referencia }}"
-            >
-              Copiar
-            </button>
-          </td>
-          <td class="tabla__acciones">
-            {% if item.url_pago %}
-            <a
-              class="boton boton--primario boton--pequeno"
-              href="{{ item.url_pago }}"
-              target="_blank"
-              rel="noopener"
-              >Pagar</a
-            >
-            {% endif %}
-            <form
-              method="post"
-              action="{{ url_for('eliminar_chancuco', id_chancuco=item.id_chancuco) }}"
-              onsubmit="return confirm('¿Eliminar esta referencia?');"
-            >
-              <input type="hidden" name="origen" value="finanzas" />
-              <button class="boton boton--peligro boton--pequeno" type="submit">
-                Eliminar
-              </button>
-            </form>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-  {% else %}
-  <p class="tabla__vacia">Aún no hay referencias guardadas.</p>
-  {% endif %}
-</section>
-{% endif %} {% endblock %} {% block scripts %}
+{% endblock %} {% block scripts %}
 <script src="{{ url_for('estaticos', path='js/finanzas.js') }}" defer></script>
 {% endblock %}

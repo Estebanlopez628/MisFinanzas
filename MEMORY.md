@@ -159,6 +159,32 @@ Recálculo en tiempo real (<100 ms) sin recargar página. Se implementa con func
 
 ---
 
+### ADR-18 — Deducciones fijas del salario y recálculo por quincena (SRS v1.4)
+- **Contexto:** la liquidación no reflejaba descuentos recurrentes de nómina (libranzas, fondos), ni el efecto de horas extras e incapacidades sobre cada quincena. Además, el formulario de gastos fijos estaba duplicado entre pestañas.
+- **Decisión:**
+  - Nueva tabla `deducciones_fijas` (§9.3 del diccionario) con servicio `servicios/deducciones_fijas.py`. Se gestiona en «Gastos y Presupuesto» y se lista en la liquidación con la misma jerarquía que las deducciones de ley.
+  - El saldo libre de cada quincena resta solo las deducciones de su propia quincena (`quincenas.resumen_quincenas`).
+  - REQ-05: el descuento por incapacidad se resta del sueldo base antes de repartirlo por porcentaje.
+  - REQ-04: los recargos se suman al ingreso de la quincena indicada en `perfil.quincena_deducciones`.
+  - El endpoint `POST /finanzas/calcular` devuelve `quincenas` y el JavaScript repinta saldo, ingreso y deducciones sin recargar.
+  - El formulario de gastos fijos de «Gastos y Presupuesto» se retira; el alta vive en cada tarjeta de quincena.
+  - La administración de atajos sale de la vista de liquidación (REQ-07); queda en la pestaña «Configurar Atajos de Pago».
+- **Decisión pendiente de validación:** REQ-04 pide recalcular salud y pensión sobre «sueldo + horas extras». El AGENTS.md (regla innegociable) dice **sueldo básico**. Se mantiene la regla vigente del AGENTS.md y el texto de ayuda se corrigió para reflejarla. Cambiar la base legal requiere aprobación explícita.
+- **Consecuencia:** el saldo de cada quincena ya responde a horas extras, incapacidades y descuentos fijos. El resultado total del periodo sigue calculándose en `nomina.py` sin cambios.
+
+---
+
+### ADR-19 — Salud y pensión sobre el salario devengado (SRS v1.4)
+- **Contexto:** la regla del AGENTS.md §6 calculaba el 4 % + 4 % sobre el sueldo básico fijo. Con horas extras o incapacidad, el salario que realmente se devenga cambia y el descuento no reflejaba ese cambio.
+- **Decisión (aprobada por el usuario):** la base de cotización es el salario devengado del periodo: `sueldo básico + horas extras y recargos − descuento por incapacidad` (tope inferior en cero).
+  - `servicios/nomina.py` — `liquidar_periodo` calcula el total devengado antes y aplica la base nueva.
+  - `routers/finanzas.py` — `_deducciones_segun_quincena` usa la misma base mensual.
+  - `servicios/quincenas.py` — el panel de quincenas usa la misma base.
+- **Consecuencia:** al escribir horas extras o fechas de incapacidad, salud y pensión se actualizan en vivo junto con el sueldo proyectado y las quincenas. Una incapacidad que deja la base en cero elimina salud y pensión de ese periodo.
+- **Supersede:** la regla «sobre el sueldo básico» de AGENTS.md §6.
+
+---
+
 ## Parámetros de Dominio Salarial (Colombia)
 
 | Parámetro | Valor parametrizado | Regla |
@@ -193,6 +219,49 @@ Recálculo en tiempo real (<100 ms) sin recargar página. Se implementa con func
 ---
 
 ## Bitácora de Cambios
+
+### 2026-11-16 — SRS v1.4: layout, navegación y deducciones fijas
+
+**Cambios realizados**
+1. `templates/finanzas/_subnav.html` y `estilos.css` — el submenú pasa a botones independientes con hover y estado activo; en móvil hace scroll horizontal (REQ-03).
+2. `templates/finanzas/index.html` — se elimina el encabezado intermedio de la columna izquierda para que ambas columnas empiecen a la misma altura (REQ-01); «Desglose de horas extras» pasa justo debajo de la liquidación (REQ-06); se quita el panel de administración de atajos (REQ-07).
+3. `estilos.css` — `.columna-finanzas--liquidacion { order: -1 }` en móvil (REQ-02); filas de gastos compactas con botones «Editar» y «×» del mismo alto y ancho (REQ-09).
+4. `diccionario_datos.md` §9.3 y `modelos.py` — tabla `deducciones_fijas` (REQ-08).
+5. `servicios/deducciones_fijas.py` (nuevo) — alta, edición, eliminación y totales por quincena.
+6. `servicios/quincenas.py` — resta deducciones fijas; aplica incapacidad al sueldo base (REQ-05) y recargos a la quincena de deducciones (REQ-04).
+7. `routers/finanzas.py` — contexto con deducciones fijas; `POST /finanzas/calcular` devuelve `quincenas`.
+8. `routers/presupuesto.py` y `templates/presupuesto/index.html` — gestión de deducciones fijas; se retira «Registrar gastos fijos».
+9. `static/js/finanzas.js` — `pintarQuincenas()` actualiza saldo, ingreso y deducciones en vivo.
+10. `static/js/sw.js` — caché `olb-finanzas-v3`.
+11. Pruebas: `tests/test_deducciones_fijas.py` (12 pruebas nuevas); `test_quincenas.py` actualizado a REQ-01 y REQ-07; `conftest.py` limpia `deducciones_fijas`.
+
+**Verificación**
+- `python -m compileall` sin errores.
+- `pytest -q` → **238 pruebas en verde**.
+
+**Pendiente**
+- Validar la base legal de salud y pensión (ver ADR-18).
+- Revisión visual en navegador de REQ-01 y REQ-02.
+
+### 2026-11-16 — Cálculo en vivo de incapacidades y sueldo proyectado
+
+**Objetivo:** que las horas extras y la incapacidad muevan el sueldo del periodo en el mismo instante, y de ahí las quincenas, para cuadrar gastos con el salario real.
+
+**Cambios realizados**
+1. `routers/finanzas.py` — `_descuento_por_fechas()` calcula el descuento del mes con `liquidar_mes_incapacidad` (días 1–2 al 100 %; desde el día 3, 33,33 % de descuento). Si el formulario envía `incapacidad_inicio`/`incapacidad_fin`, ese valor reemplaza el oculto y se suma el saldo arrastrado del mes.
+2. `routers/finanzas.py` — `sueldo_proyectado` (sueldo + horas extras − incapacidad) se devuelve en el JSON como `datos.sueldo_proyectado`. `incapacidad` resume días sin y con descuento.
+3. `static/js/finanzas.js` — envía siempre las fechas, repinta el sueldo proyectado y el resumen de incapacidad, y actualiza el campo oculto para que «Guardar periodo» guarde el mismo descuento.
+4. `templates/finanzas/index.html` — «Sueldo proyectado del periodo» bajo el sueldo básico; fechas de incapacidad marcadas para el cálculo en vivo; resumen de días bajo el título.
+5. Pruebas: `tests/test_incapacidad_en_vivo.py` (6 pruebas: días 1–2 sin descuento, tercer día en adelante con norma, sueldo y quincenas que bajan, horas extras que suben el sueldo, rango inválido, valor listo para guardar).
+
+**Decisión**
+- La incapacidad se liquida sobre el sueldo mensual del perfil, no sobre el número escrito en el formulario, para que cada quincena use la misma base.
+
+**Verificación**
+- `pytest -q` → **244 pruebas en verde**; `node --check` del JavaScript sin errores.
+- Caché del service worker: `olb-finanzas-v4`.
+
+---
 
 ### 2026-11-13 — Cierre de la orden SRS v1.2
 

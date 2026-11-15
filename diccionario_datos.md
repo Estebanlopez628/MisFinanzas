@@ -260,6 +260,21 @@ Registro de cada cuota efectivamente abonada a una meta.
 segundo registro sobre el mismo mes **actualiza** el monto en lugar de duplicar
 la fila.
 
+## 9.3 `deducciones_fijas` — *Descuentos fijos del salario* (SRS v1.4, REQ-08)
+
+Descuentos que la empresa aplica por nómina antes del pago (por ejemplo, cuotas
+de libranza, fondos o seguros empresariales). Se restan de la quincena indicada
+antes de calcular el saldo libre.
+
+| Campo | Tipo | Nulo | Obligatorio | Descripción / Regla |
+| --- | --- | --- | --- | --- |
+| `id_deduccion` | `UUID` (PK) | No | Sí | Identificador. |
+| `id_usuario` | `UUID` (FK → `usuarios`) | No | Sí | Propietario; `ON DELETE CASCADE`. |
+| `descripcion` | `VARCHAR(150)` | No | Sí | Concepto, por ejemplo «Libranza banco X». |
+| `valor` | `NUMERIC(14,2)` | No | Sí | Monto por pago; `>= 0`. |
+| `quincena` | `SMALLINT` | No | Sí | `1` o `2`: pago del que se descuenta. |
+| `fecha_creacion` | `TIMESTAMPTZ` | No | Sí | `now()`. |
+
 ---
 
 ### 10.1 `clientes`

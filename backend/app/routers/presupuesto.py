@@ -22,7 +22,7 @@ from sqlalchemy.orm import Session
 from app.core.base_datos import obtener_bd
 from app.dependencias import UsuarioSesion, obtener_usuario_actual
 from app.routers.vistas import contexto_base, plantillas
-from app.servicios import ahorro, auditoria, perfiles
+from app.servicios import ahorro, auditoria, deducciones_fijas, perfiles
 
 router = APIRouter(tags=["Presupuesto"])
 
@@ -73,6 +73,7 @@ def _contexto(
                 bd, usuario.id_usuario, perfil, hoy.year, hoy.month
             ),
             "metas": ahorro.resumen_metas(bd, usuario.id_usuario),
+            "deducciones": deducciones_fijas.listar_deducciones(bd, usuario.id_usuario),
             "categorias": ahorro.CATEGORIAS_SUGERIDAS,
             "fecha_hoy": hoy.isoformat(),
             "guardado": guardado,
@@ -247,5 +248,130 @@ def eliminar_proyeccion(
     if ahorro.eliminar_proyeccion(bd, usuario.id_usuario, id_proyeccion):
         auditoria.registrar(
             bd, usuario.id_usuario, "META_ELIMINADA", "proyecciones_ahorro", id_proyeccion
+        )
+    return RedirectResponse(url="/presupuesto", status_code=status.HTTP_303_SEE_OTHER)
+
+# ---------------------------------------------------------------------------
+# Deducciones fijas del salario (SRS v1.4, REQ-08)
+# ---------------------------------------------------------------------------
+
+
+@router.post("/presupuesto/deducciones", name="crear_deduccion_fija", response_model=None)
+def crear_deduccion_fija(
+    request: Request,
+    usuario: UsuarioSesion = Depends(obtener_usuario_actual),
+    bd: Session = Depends(obtener_bd),
+    descripcion: Annotated[str, Form()] = "",
+    valor: Annotated[str, Form()] = "",
+    quincena: Annotated[str, Form()] = "1",
+) -> HTMLResponse | RedirectResponse:
+    """Registra una deducción fija del salario (libranza, fondo, seguro).
+
+    Args:
+        request: Petición HTTP.
+        usuario: Usuario autenticado.
+        bd: Sesión de base de datos.
+        descripcion: Concepto del descuento.
+        valor: Monto por pago en pesos.
+        quincena: `1` o `2`, pago del que se descuenta.
+
+    Returns:
+        Redirección al planificador o la vista con el error (400).
+    """
+    try:
+        deduccion = deducciones_fijas.crear_deduccion(
+            bd, usuario.id_usuario, descripcion, valor, quincena
+        )
+    except (ValueError, ArithmeticError) as error:
+        contexto = _contexto(usuario, bd, error=str(error))
+        return plantillas.TemplateResponse(
+            request,
+            "presupuesto/index.html",
+            contexto,
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+    auditoria.registrar(
+        bd, usuario.id_usuario, "DEDUCCION_FIJA_CREADA", "deducciones_fijas", deduccion.descripcion
+    )
+    return RedirectResponse(
+        url="/presupuesto?guardado=1", status_code=status.HTTP_303_SEE_OTHER
+    )
+
+
+@router.post(
+    "/presupuesto/deducciones/{id_deduccion}/editar",
+    name="editar_deduccion_fija",
+    response_model=None,
+)
+def editar_deduccion_fija(
+    request: Request,
+    id_deduccion: str,
+    usuario: UsuarioSesion = Depends(obtener_usuario_actual),
+    bd: Session = Depends(obtener_bd),
+    descripcion: Annotated[str, Form()] = "",
+    valor: Annotated[str, Form()] = "",
+    quincena: Annotated[str, Form()] = "1",
+) -> HTMLResponse | RedirectResponse:
+    """Modifica una deducción fija existente del usuario.
+
+    Args:
+        request: Petición HTTP.
+        id_deduccion: Deducción a modificar.
+        usuario: Usuario autenticado.
+        bd: Sesión de base de datos.
+        descripcion: Nuevo concepto.
+        valor: Nuevo monto por pago.
+        quincena: Nueva quincena de descuento.
+
+    Returns:
+        Redirección al planificador o la vista con el error.
+    """
+    try:
+        actualizada = deducciones_fijas.actualizar_deduccion(
+            bd, usuario.id_usuario, id_deduccion, descripcion, valor, quincena
+        )
+    except (ValueError, ArithmeticError) as error:
+        contexto = _contexto(usuario, bd, error=str(error))
+        return plantillas.TemplateResponse(
+            request,
+            "presupuesto/index.html",
+            contexto,
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+    if actualizada is None:
+        return RedirectResponse(
+            url=f"/presupuesto?error={quote('La deducción no existe.')}",
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
+    auditoria.registrar(
+        bd, usuario.id_usuario, "DEDUCCION_FIJA_ACTUALIZADA", "deducciones_fijas", id_deduccion
+    )
+    return RedirectResponse(
+        url="/presupuesto?guardado=1", status_code=status.HTTP_303_SEE_OTHER
+    )
+
+
+@router.post(
+    "/presupuesto/deducciones/{id_deduccion}/eliminar",
+    name="eliminar_deduccion_fija",
+)
+def eliminar_deduccion_fija(
+    id_deduccion: str,
+    usuario: UsuarioSesion = Depends(obtener_usuario_actual),
+    bd: Session = Depends(obtener_bd),
+) -> RedirectResponse:
+    """Elimina una deducción fija del usuario.
+
+    Args:
+        id_deduccion: Deducción a eliminar.
+        usuario: Usuario autenticado.
+        bd: Sesión de base de datos.
+
+    Returns:
+        Redirección al planificador.
+    """
+    if deducciones_fijas.eliminar_deduccion(bd, usuario.id_usuario, id_deduccion):
+        auditoria.registrar(
+            bd, usuario.id_usuario, "DEDUCCION_FIJA_ELIMINADA", "deducciones_fijas", id_deduccion
         )
     return RedirectResponse(url="/presupuesto", status_code=status.HTTP_303_SEE_OTHER)

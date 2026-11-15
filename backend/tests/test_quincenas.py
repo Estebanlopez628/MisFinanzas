@@ -126,7 +126,8 @@ def test_vista_finanzas_muestra_dos_quincenas(cliente_admin: TestClient) -> None
     respuesta = cliente_admin.get("/finanzas")
 
     assert respuesta.status_code == 200
-    assert "Tus quincenas" in respuesta.text
+    # SRS v1.4, REQ-01: sin encabezado intermedio, la columna empieza en la tarjeta.
+    assert 'aria-label="Quincenas, gastos fijos y atajos de pago"' in respuesta.text
     assert 'data-quincena="1"' in respuesta.text
     assert 'data-quincena="2"' in respuesta.text
     assert "Saldo libre restante" in respuesta.text
@@ -177,17 +178,20 @@ def test_chancucos_embebidos_solo_para_administrador(
     assert respuesta.status_code == 303
     assert respuesta.headers["location"] == "/finanzas?guardado_chancuco=1#chancucos"
 
+    # SRS v1.4, REQ-07: la vista de liquidación solo consulta los atajos; la
+    # administración vive en la pestaña "Configurar Atajos de Pago".
     html_admin = cliente_admin.get("/finanzas").text
-    # SRS v1.3: la sección de gestión se llama "Configurar atajos de pago" y el
-    # acceso rápido de la columna izquierda, "Atajos de pago".
-    assert "🔗 Configurar atajos de pago" in html_admin
     assert "🔗 Atajos de pago" in html_admin
     assert "123456" in html_admin
     assert 'data-copiar="123456"' in html_admin
     assert "https://epm.com.co/pagos" in html_admin
+    assert "🔗 Configurar atajos de pago" not in html_admin
+    assert "Guardar atajo de pago" not in html_admin
+
+    html_gestion = cliente_admin.get("/chancucos").text
+    assert "123456" in html_gestion
 
     html_usuario = cliente_usuario.get("/finanzas").text
-    assert "🔗 Configurar atajos de pago" not in html_usuario
     assert "123456" not in html_usuario
 
 
@@ -231,8 +235,13 @@ def test_gastos_del_periodo_separan_las_quincenas(
         quincena=2,
     )
 
-    html_quincena_2 = cliente_admin.get("/finanzas?anio=2026&mes=11&quincena=2").text
+    # El texto del HTML puede partirse en varias líneas; se normalizan los espacios.
+    html_quincena_2 = " ".join(
+        cliente_admin.get("/finanzas?anio=2026&mes=11&quincena=2").text.split()
+    )
     assert "Gastos del periodo: $120.000" in html_quincena_2
 
-    html_quincena_1 = cliente_admin.get("/finanzas?anio=2026&mes=11&quincena=1").text
+    html_quincena_1 = " ".join(
+        cliente_admin.get("/finanzas?anio=2026&mes=11&quincena=1").text.split()
+    )
     assert "Gastos del periodo: $0" in html_quincena_1

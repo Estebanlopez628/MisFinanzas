@@ -181,9 +181,10 @@ def test_liquidacion_completa_con_auxilio_e_incapacidad() -> None:
     assert liquidacion.total_recargos == Decimal("125000.00")
     assert liquidacion.total_devengado == Decimal("2225000.00")
     assert liquidacion.total_ingresos == Decimal("2425000.00")
-    assert liquidacion.deducciones_ley.total == Decimal("168000.00")
-    assert liquidacion.total_deducciones == Decimal("218000.00")
-    assert liquidacion.saldo_bolsillo == Decimal("2207000.00")
+    # Base de cotización (SRS v1.4): 2.225.000 devengado − 50.000 incapacidad = 2.175.000.
+    assert liquidacion.deducciones_ley.total == Decimal("174000.00")
+    assert liquidacion.total_deducciones == Decimal("224000.00")
+    assert liquidacion.saldo_bolsillo == Decimal("2201000.00")
 
 
 def test_liquidacion_cumple_la_invariante_contable() -> None:
@@ -210,8 +211,11 @@ def test_liquidacion_permite_saldo_negativo() -> None:
         deduccion_incapacidad=Decimal("1200000"),
     )
 
+    # SRS v1.4: la incapacidad deja la base de cotización en cero, así que no hay
+    # salud ni pensión; el saldo queda solo con el descuento por incapacidad.
     assert liquidacion.saldo_bolsillo < 0
-    assert liquidacion.saldo_bolsillo == Decimal("-280000.00")
+    assert liquidacion.deducciones_ley.total == Decimal("0.00")
+    assert liquidacion.saldo_bolsillo == Decimal("-200000.00")
 
 
 def test_liquidacion_rechaza_incapacidad_negativa() -> None:

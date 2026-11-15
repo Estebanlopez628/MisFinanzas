@@ -49,6 +49,7 @@ from app.modelos import (
     Auditoria,
     Chancuco,
     Cliente,
+    DeduccionFija,
     Deuda,
     Gasto,
     Incapacidad,
@@ -77,6 +78,7 @@ inicializar_base_datos()
 MODELOS_TRANSACCIONALES = (
     AbonoProyeccion,
     ProyeccionAhorro,
+    DeduccionFija,
     RegistroHorasExtra,
     SaldoIncapacidad,
     Gasto,

@@ -41,6 +41,8 @@ from app.dependencias import UsuarioSesion, obtener_usuario_actual
 from app.modelos import PerfilFinanciero, PeriodoNomina
 from app.routers.vistas import contexto_base, plantillas
 from app.servicios import auditoria, gastos, perfiles, periodos
+from app.servicios import deducciones_fijas
+from app.servicios.incapacidad import ResultadoMesIncapacidad, liquidar_mes_incapacidad
 from app.servicios import chancucos as servicio_chancucos
 from app.servicios import quincenas
 from app.servicios.nomina import (
@@ -82,6 +84,7 @@ class EntradaFinanzas:
     quincena: int = 0
     aplicar_rollover: bool = False
     perfil: PerfilFinanciero | None = None
+    detalle_incapacidad: ResultadoMesIncapacidad | None = None
     errores: list[str] = field(default_factory=list)
 
     @property
@@ -131,6 +134,51 @@ def _entero(texto: str, defecto: int, etiqueta: str, errores: list[str]) -> int:
     except ValueError:
         errores.append(f"El campo '{etiqueta}' debe ser un número entero.")
         return defecto
+
+
+def _descuento_por_fechas(datos: Mapping[str, Any], entrada: EntradaFinanzas) -> Decimal:
+    """Calcula el descuento del mes por incapacidad a partir de sus fechas.
+
+    Usa el sueldo mensual del perfil (o el del formulario si no hay perfil) porque
+    la incapacidad se liquida sobre el salario mensual; el resultado reduce luego
+    el sueldo proyectado de la quincena.
+
+    Args:
+        datos: Campos enviados con `incapacidad_inicio` e `incapacidad_fin`.
+        entrada: Entrada en construcción; se guarda el detalle para la vista.
+
+    Returns:
+        Descuento del mes en pesos; cero si las fechas están incompletas o no hay
+        sueldo. Un rango inválido se registra como error de validación.
+    """
+    texto_inicio = _texto(datos, "incapacidad_inicio")
+    texto_fin = _texto(datos, "incapacidad_fin")
+    if not texto_inicio or not texto_fin:
+        # Mientras el usuario escribe, un rango incompleto no es un error.
+        return CERO
+    try:
+        inicio = date.fromisoformat(texto_inicio)
+        fin = date.fromisoformat(texto_fin)
+    except ValueError:
+        entrada.errores.append("Las fechas de la incapacidad no son válidas.")
+        return CERO
+
+    if entrada.perfil is not None:
+        base = entrada.perfil.sueldo_basico
+    elif entrada.sueldo is not None:
+        base = entrada.sueldo
+    else:
+        return CERO
+
+    try:
+        detalle = liquidar_mes_incapacidad(
+            inicio, fin, base, anio=entrada.anio, mes=entrada.mes
+        )
+    except ValueError as error:
+        entrada.errores.append(str(error))
+        return CERO
+    entrada.detalle_incapacidad = detalle
+    return detalle.valor_descontado
 
 
 def _leer_entradas(
@@ -202,15 +250,25 @@ def _leer_entradas(
         elif cantidad > CERO:
             entrada.horas[tipo] = cantidad
 
-    # Rollover: se usa cuando el formulario no trae un descuento explícito o
-    # cuando el valor enviado coincide con el saldo pendiente del mes.
+    # Rollover: saldo de incapacidades arrastrado desde meses anteriores.
     rollover = periodos.resumen_rollover(
         bd, id_usuario, entrada.anio, entrada.mes
     )
-    envio_explicito = "deduccion_incapacidad" in datos
-    texto_deduccion = _texto(datos, "deduccion_incapacidad")
-    if not envio_explicito and rollover.hay_saldo:
-        texto_deduccion = f"{rollover.valor:.2f}"
+    # SRS v1.4 (REQ-05): cuando el formulario envía las fechas de incapacidad, el
+    # descuento del mes sale del motor legal (días 1–2 al 100 %; desde el día 3,
+    # descuento del 33,33 %) y se suma al saldo arrastrado. El cliente siempre
+    # envía esas claves, así que el valor oculto ya no decide el resultado.
+    fechas_enviadas = "incapacidad_inicio" in datos or "incapacidad_fin" in datos
+    if fechas_enviadas:
+        descuento_fechas = _descuento_por_fechas(datos, entrada)
+        arrastre = rollover.valor if rollover.hay_saldo else CERO
+        texto_deduccion = f"{descuento_fechas + arrastre:.2f}"
+        envio_explicito = False
+    else:
+        envio_explicito = "deduccion_incapacidad" in datos
+        texto_deduccion = _texto(datos, "deduccion_incapacidad")
+        if not envio_explicito and rollover.hay_saldo:
+            texto_deduccion = f"{rollover.valor:.2f}"
 
     try:
         deduccion = parsear_monto(texto_deduccion or "0")
@@ -280,7 +338,13 @@ def _deducciones_segun_quincena(
         return liquidacion
 
     if perfil.quincena_deducciones == entrada.quincena:
-        deducciones = calcular_deducciones_ley(perfil.sueldo_basico)
+        # SRS v1.4: la base es el salario mensual devengado, igual que en el panel
+        # de quincenas: sueldo + horas extras y recargos − incapacidad.
+        base_mensual = max(
+            perfil.sueldo_basico + liquidacion.total_recargos - liquidacion.deduccion_incapacidad,
+            CERO,
+        )
+        deducciones = calcular_deducciones_ley(redondear_dinero(base_mensual))
     else:
         deducciones = DeduccionesLey(salud=CERO, pension=CERO, total=CERO)
 
@@ -307,6 +371,11 @@ def _datos_formateados(liquidacion: LiquidacionNomina) -> dict[str, str]:
         Diccionario ``campo → texto formateado``.
     """
     return {
+        # SRS v1.4: el sueldo que llega a las quincenas ya incluye extras y el
+        # descuento por incapacidad.
+        "sueldo_proyectado": formatear_cop(
+            redondear_dinero(liquidacion.total_devengado - liquidacion.deduccion_incapacidad)
+        ),
         "valor_hora": formatear_cop(liquidacion.valor_hora_ordinaria),
         "total_horas_extra": f"{liquidacion.total_horas_extra:.2f}".replace(".", ","),
         "total_recargos": formatear_cop(liquidacion.total_recargos),
@@ -338,6 +407,69 @@ def _detalle_formateado(liquidacion: LiquidacionNomina) -> list[dict[str, str]]:
             "valor": formatear_cop(item.valor_total),
         }
         for item in liquidacion.detalle_recargos
+    ]
+
+
+def _detalle_incapacidad_json(entrada: EntradaFinanzas) -> dict[str, object] | None:
+    """Resume el cálculo de incapacidad para mostrarlo junto al formulario.
+
+    Args:
+        entrada: Entrada normalizada; `detalle_incapacidad` se llena al calcular.
+
+    Returns:
+        Días sin descuento, días con descuento y descuento del mes; `None` si no
+        se enviaron fechas de incapacidad.
+    """
+    detalle = entrada.detalle_incapacidad
+    if detalle is None:
+        return None
+    return {
+        "dias_al_100": detalle.dias_al_100,
+        "dias_al_66": detalle.dias_al_66,
+        "descuento": formatear_cop(detalle.valor_descontado),
+    }
+
+
+def _saldos_quincenas(
+    bd: Session,
+    id_usuario: str,
+    entrada: EntradaFinanzas,
+    liquidacion: LiquidacionNomina,
+) -> list[dict[str, object]]:
+    """Calcula los saldos de cada pago con los valores que se están editando.
+
+    SRS v1.4, REQ-04 y REQ-05: el recálculo en vivo debe reflejar en el panel de
+    quincenas los recargos y el descuento por incapacidad del formulario.
+
+    Args:
+        bd: Sesión de base de datos.
+        id_usuario: Dueño de los datos.
+        entrada: Entrada normalizada (incluye el perfil).
+        liquidacion: Liquidación del periodo ya calculada.
+
+    Returns:
+        Lista de diccionarios con número de pago, ingreso, deducciones, deducciones
+        fijas, saldo libre formateados y la bandera `negativo` para la interfaz.
+    """
+    resumen = quincenas.resumen_quincenas(
+        bd,
+        id_usuario,
+        entrada.perfil,
+        entrada.anio,
+        entrada.mes,
+        recargos=liquidacion.total_recargos,
+        descuento_incapacidad=entrada.deduccion_incapacidad,
+    )
+    return [
+        {
+            "numero": fila.numero,
+            "ingreso": formatear_cop(fila.ingreso),
+            "deducciones": formatear_cop(fila.deducciones),
+            "deducciones_fijas": formatear_cop(fila.deducciones_fijas),
+            "saldo_libre": formatear_cop(fila.saldo_libre),
+            "negativo": fila.saldo_libre < CERO,
+        }
+        for fila in resumen
     ]
 
 
@@ -403,7 +535,34 @@ def _contexto_calculadora(
             "error_chancuco": error_chancuco or None,
             # Panel izquierdo: ingresos, gastos y deducciones por quincena.
             "resumen_quincenas": quincenas.resumen_quincenas(
-                bd, usuario.id_usuario, perfil, entrada.anio, entrada.mes
+                bd,
+                usuario.id_usuario,
+                perfil,
+                entrada.anio,
+                entrada.mes,
+                recargos=resultado.total_recargos if resultado else CERO,
+                descuento_incapacidad=entrada.deduccion_incapacidad,
+            ),
+            # SRS v1.4, REQ-08: deducciones fijas del salario listadas en la liquidación.
+            "deducciones_fijas": deducciones_fijas.listar_deducciones(
+                bd, usuario.id_usuario
+            ),
+            "deducciones_fijas_periodo": (
+                deducciones_fijas.total_por_quincena(
+                    deducciones_fijas.listar_deducciones(bd, usuario.id_usuario),
+                    entrada.quincena,
+                )
+                if entrada.quincena in (1, 2)
+                else sum(
+                    (
+                        deducciones_fijas.total_por_quincena(
+                            deducciones_fijas.listar_deducciones(bd, usuario.id_usuario),
+                            numero,
+                        )
+                        for numero in (1, 2)
+                    ),
+                    CERO,
+                )
             ),
             # Chancucos embebidos: solo el administrador los ve y administra.
             "chancucos": (
@@ -565,6 +724,8 @@ async def calcular_finanzas_json(
                 and liquidacion.evaluacion_auxilio.aplica
             ),
             "rollover": str(entrada.deduccion_incapacidad),
+            "quincenas": _saldos_quincenas(bd, usuario.id_usuario, entrada, liquidacion),
+            "incapacidad": _detalle_incapacidad_json(entrada),
         }
     )
 

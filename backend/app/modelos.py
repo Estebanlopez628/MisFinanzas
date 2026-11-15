@@ -346,6 +346,31 @@ class AbonoProyeccion(Base):
     )
 
 
+class DeduccionFija(Base):
+    """Descuento fijo que la empresa aplica por nómina (§9.3, SRS v1.4).
+
+    Se resta de la quincena indicada antes de calcular el saldo libre del
+    usuario. No altera el cálculo de salud y pensión.
+    """
+
+    __tablename__ = "deducciones_fijas"
+    __table_args__ = (
+        CheckConstraint("valor >= 0", name="ck_deduccion_fija_valor"),
+        CheckConstraint("quincena IN (1, 2)", name="ck_deduccion_fija_quincena"),
+    )
+
+    id_deduccion: Mapped[str] = mapped_column(String(32), primary_key=True, default=nuevo_id)
+    id_usuario: Mapped[str] = mapped_column(
+        ForeignKey("usuarios.id_usuario", ondelete="CASCADE"), nullable=False, index=True
+    )
+    descripcion: Mapped[str] = mapped_column(String(150), nullable=False)
+    valor: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False)
+    quincena: Mapped[int] = mapped_column(SmallInteger, nullable=False)
+    fecha_creacion: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+
 class Cliente(Base):
     """Cliente de OLB_BYTE (§10.1)."""
 

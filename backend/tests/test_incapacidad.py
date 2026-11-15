@@ -201,8 +201,9 @@ def test_integracion_con_la_liquidacion_del_periodo() -> None:
         aplicar_auxilio_legal=True,
     )
 
-    # Descuento de ley 240.000 + incapacidad 33.330.
-    assert liquidacion.total_deducciones == Decimal("273330.00")
+    # SRS v1.4: salud y pensión sobre 3.000.000 − 33.330 = 2.966.670 (8 %).
+    # Ley 237.333,60 + incapacidad 33.330.
+    assert liquidacion.total_deducciones == Decimal("270663.60")
     # 3.000.000 no supera el tope de 2 SMMLV: conserva el auxilio.
     assert liquidacion.auxilio_transporte == Decimal("200000.00")
-    assert liquidacion.saldo_bolsillo == Decimal("2926670.00")
+    assert liquidacion.saldo_bolsillo == Decimal("2929336.40")
