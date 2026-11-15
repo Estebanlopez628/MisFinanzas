@@ -1,0 +1,28 @@
+{# Subnavegación interna del módulo "Mis Finanzas" (SRS v1.3, bloque 1).
+   Las pestañas permitidas son: Resumen/Liquidación, Gastos y Presupuesto,
+   Configurar Atajos de Pago e Historial de Registros. Incapacidades deja de
+   ser pestaña independiente y se integra en la columna derecha del resumen. #}
+<nav class="subnav-finanzas" aria-label="Secciones de Mis Finanzas">
+  <a class="subnav-finanzas__enlace {% if seccion|default('') == 'liquidacion' %}subnav-finanzas__enlace--activo{% endif %}"
+     href="{{ url_for('ver_finanzas') }}"
+     {% if seccion|default('') == 'liquidacion' %}aria-current="page"{% endif %}>
+    Resumen / Liquidación
+  </a>
+  <a class="subnav-finanzas__enlace {% if seccion|default('') == 'gastos' %}subnav-finanzas__enlace--activo{% endif %}"
+     href="{{ url_for('ver_presupuesto') }}"
+     {% if seccion|default('') == 'gastos' %}aria-current="page"{% endif %}>
+    Gastos y Presupuesto
+  </a>
+  {% if usuario and usuario.es_administrador %}
+    <a class="subnav-finanzas__enlace {% if seccion|default('') == 'atajos' %}subnav-finanzas__enlace--activo{% endif %}"
+       href="{{ url_for('ver_chancucos') }}"
+       {% if seccion|default('') == 'atajos' %}aria-current="page"{% endif %}>
+      Configurar Atajos de Pago
+    </a>
+  {% endif %}
+  <a class="subnav-finanzas__enlace {% if seccion|default('') == 'historial' %}subnav-finanzas__enlace--activo{% endif %}"
+     href="{{ url_for('ver_historial') }}"
+     {% if seccion|default('') == 'historial' %}aria-current="page"{% endif %}>
+    Historial de Registros
+  </a>
+</nav>

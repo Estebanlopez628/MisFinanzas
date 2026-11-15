@@ -1,0 +1,314 @@
+{% extends "base.html" %}
+{% block titulo %}OLB_BYTE{% endblock %}
+
+{% block contenido %}
+  <section class="heroe">
+    <h1 class="heroe__titulo">🛠️ OLB_BYTE</h1>
+    <p class="heroe__subtitulo">
+      Inventario, clientes, ventas multipartida y cartera de la tienda. Los abonos
+      actualizan el saldo y la factura se comparte por WhatsApp.
+    </p>
+  </section>
+
+  {% if guardado %}
+    <div class="alerta alerta--exito" role="status">Operación guardada correctamente.</div>
+  {% endif %}
+  {% if error %}
+    <div class="alerta alerta--error" role="alert">{{ error }}</div>
+  {% endif %}
+
+  <div class="rejilla-tarjetas">
+    <article class="tarjeta tarjeta--azul">
+      <span class="tarjeta__icono" aria-hidden="true">🧾</span>
+      <h3 class="tarjeta__titulo">{{ resumen.ventas_totales | cop }}</h3>
+      <p class="tarjeta__descripcion">{{ resumen.numero_ventas }} venta(s) registrada(s).</p>
+    </article>
+    <article class="tarjeta tarjeta--rojo">
+      <span class="tarjeta__icono" aria-hidden="true">⏳</span>
+      <h3 class="tarjeta__titulo">{{ resumen.cartera | cop }}</h3>
+      <p class="tarjeta__descripcion">Cartera pendiente de cobro.</p>
+    </article>
+    <article class="tarjeta tarjeta--ambar">
+      <span class="tarjeta__icono" aria-hidden="true">📦</span>
+      <h3 class="tarjeta__titulo">{{ resumen.productos }} producto(s)</h3>
+      <p class="tarjeta__descripcion">{{ resumen.stock_bajo }} con stock bajo (≤ 3).</p>
+    </article>
+  </div>
+
+  <div class="rejilla-paneles">
+    {# ------------------------------ Inventario ----------------------------- #}
+    <section class="panel">
+      <h2 class="panel__titulo">Nuevo producto</h2>
+      <form class="formulario" method="post" action="{{ url_for('crear_producto') }}">
+        <label class="campo">
+          <span class="campo__etiqueta">SKU</span>
+          <input class="campo__control" type="text" name="sku" placeholder="OLB-001" required />
+        </label>
+        <label class="campo">
+          <span class="campo__etiqueta">Nombre</span>
+          <input class="campo__control" type="text" name="nombre" required />
+        </label>
+        <div class="fila-campos">
+          <label class="campo">
+            <span class="campo__etiqueta">Costo (COP)</span>
+            <input class="campo__control" type="text" name="costo" inputmode="decimal" value="0" />
+          </label>
+          <label class="campo">
+            <span class="campo__etiqueta">Precio venta (COP)</span>
+            <input class="campo__control" type="text" name="precio_venta" inputmode="decimal" required />
+          </label>
+        </div>
+        <div class="fila-campos">
+          <label class="campo">
+            <span class="campo__etiqueta">Stock inicial</span>
+            <input class="campo__control" type="number" name="stock" min="0" value="0" />
+          </label>
+          <label class="campo">
+            <span class="campo__etiqueta">Garantía (meses)</span>
+            <input class="campo__control" type="number" name="garantia_meses" min="0" />
+          </label>
+        </div>
+        <button class="boton boton--primario" type="submit">Agregar producto</button>
+      </form>
+    </section>
+
+    {# ------------------------------- Clientes ------------------------------ #}
+    <section class="panel">
+      <h2 class="panel__titulo">Nuevo cliente</h2>
+      <form class="formulario" method="post" action="{{ url_for('crear_cliente') }}">
+        <label class="campo">
+          <span class="campo__etiqueta">Nombre</span>
+          <input class="campo__control" type="text" name="nombre" required />
+        </label>
+        <label class="campo">
+          <span class="campo__etiqueta">WhatsApp</span>
+          <input class="campo__control" type="tel" name="telefono_whatsapp" placeholder="3001234567" />
+          <span class="ayuda">Se usa para enviar la factura por WhatsApp.</span>
+        </label>
+        <label class="campo">
+          <span class="campo__etiqueta">Correo</span>
+          <input class="campo__control" type="email" name="correo" />
+        </label>
+        <label class="campo">
+          <span class="campo__etiqueta">Dirección</span>
+          <input class="campo__control" type="text" name="direccion" />
+        </label>
+        <button class="boton boton--primario" type="submit">Agregar cliente</button>
+      </form>
+    </section>
+  </div>
+
+  {# --------------------------- Venta multipartida -------------------------- #}
+  <section class="panel">
+    <h2 class="panel__titulo">Registrar venta</h2>
+    <p class="panel__descripcion">
+      Agrega una fila por producto. El stock se descuenta automáticamente y la
+      venta queda en cartera hasta que se abone el total.
+    </p>
+    {% if clientes and productos %}
+      <form class="formulario" method="post" action="{{ url_for('registrar_venta') }}" data-venta>
+        <label class="campo">
+          <span class="campo__etiqueta">Cliente</span>
+          <select class="campo__control" name="id_cliente" required>
+            {% for cliente in clientes %}
+              <option value="{{ cliente.id_cliente }}">{{ cliente.nombre }}</option>
+            {% endfor %}
+          </select>
+        </label>
+
+        <div class="tabla-contenedor">
+          <table class="tabla tabla--editable">
+            <thead>
+              <tr>
+                <th scope="col">Producto</th>
+                <th scope="col">Cantidad</th>
+                <th scope="col">Precio unitario (opcional)</th>
+              </tr>
+            </thead>
+            <tbody data-lineas>
+              {% for indice in range(3) %}
+                <tr>
+                  <td>
+                    <select class="campo__control" name="id_producto">
+                      <option value="">—</option>
+                      {% for producto in productos %}
+                        <option value="{{ producto.id_producto }}">
+                          {{ producto.nombre }} · stock {{ producto.stock }} · {{ producto.precio_venta | cop }}
+                        </option>
+                      {% endfor %}
+                    </select>
+                  </td>
+                  <td>
+                    <input class="campo__control campo__control--compacto" type="number"
+                           name="cantidad" min="1" value="1" />
+                  </td>
+                  <td>
+                    <input class="campo__control campo__control--compacto" type="text"
+                           name="precio_unitario" inputmode="decimal" placeholder="Precio del catálogo" />
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="acciones-formulario">
+          <button class="boton boton--secundario" type="button" data-agregar-linea>Agregar línea</button>
+          <button class="boton boton--primario" type="submit">Registrar venta</button>
+        </div>
+      </form>
+    {% else %}
+      <p class="tabla__vacia">
+        Primero registra al menos un producto y un cliente para poder vender.
+      </p>
+    {% endif %}
+  </section>
+
+  {# ------------------------------- Inventario ----------------------------- #}
+  <section class="panel panel--tabla">
+    <h2 class="panel__titulo">Inventario</h2>
+    {% if productos %}
+      <div class="tabla-contenedor">
+        <table class="tabla">
+          <thead>
+            <tr>
+              <th scope="col">SKU</th>
+              <th scope="col">Producto</th>
+              <th scope="col">Costo</th>
+              <th scope="col">Precio</th>
+              <th scope="col">Stock</th>
+              <th scope="col">Garantía</th>
+              <th scope="col">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for producto in productos %}
+              <tr>
+                <td>{{ producto.sku }}</td>
+                <td>{{ producto.nombre }}</td>
+                <td class="tabla__numero">{{ producto.costo | cop }}</td>
+                <td class="tabla__numero">{{ producto.precio_venta | cop }}</td>
+                <td class="tabla__numero {% if producto.stock <= 3 %}valor-negativo{% endif %}">
+                  {{ producto.stock }}
+                </td>
+                <td>{{ producto.garantia_meses ~ ' mes(es)' if producto.garantia_meses else '—' }}</td>
+                <td>
+                  <form method="post" action="{{ url_for('eliminar_producto', id_producto=producto.id_producto) }}"
+                        onsubmit="return confirm('¿Eliminar este producto?');">
+                    <button class="boton boton--peligro boton--pequeno" type="submit">Eliminar</button>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="tabla__vacia">El inventario está vacío.</p>
+    {% endif %}
+  </section>
+
+  {# --------------------------------- Cartera ------------------------------ #}
+  <section class="panel panel--tabla">
+    <h2 class="panel__titulo">Cartera y abonos</h2>
+    {% if cartera %}
+      <div class="tabla-contenedor">
+        <table class="tabla">
+          <thead>
+            <tr>
+              <th scope="col">Venta</th>
+              <th scope="col">Cliente</th>
+              <th scope="col">Fecha</th>
+              <th scope="col">Total</th>
+              <th scope="col">Saldo</th>
+              <th scope="col">Estado</th>
+              <th scope="col">Abono</th>
+              <th scope="col">Factura</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for venta in cartera %}
+              <tr>
+                <td>{{ venta.id_venta[:8] }}</td>
+                <td>{{ venta.id_cliente[:8] }}</td>
+                <td>{{ venta.fecha_venta | fecha_larga }}</td>
+                <td class="tabla__numero">{{ venta.total | cop }}</td>
+                <td class="tabla__numero valor-negativo">{{ venta.saldo_pendiente | cop }}</td>
+                <td>{{ venta.estado }}</td>
+                <td>
+                  <form class="formulario-en-linea" method="post"
+                        action="{{ url_for('registrar_abono', id_venta=venta.id_venta) }}">
+                    <input class="campo__control campo__control--compacto" type="text" name="monto"
+                           inputmode="decimal" placeholder="100.000" required />
+                    <select class="campo__control campo__control--compacto" name="metodo_pago">
+                      {% for metodo in metodos_pago %}
+                        <option value="{{ metodo }}">{{ metodo }}</option>
+                      {% endfor %}
+                    </select>
+                    <button class="boton boton--secundario boton--pequeno" type="submit">Abonar</button>
+                  </form>
+                </td>
+                <td>
+                  <a class="boton boton--secundario boton--pequeno"
+                     href="{{ url_for('ver_factura', id_venta=venta.id_venta) }}">Ver</a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="tabla__vacia">No hay saldos pendientes: toda la cartera está cobrada.</p>
+    {% endif %}
+  </section>
+
+  {# --------------------------- Historial de ventas ------------------------ #}
+  <section class="panel panel--tabla">
+    <h2 class="panel__titulo">Ventas registradas</h2>
+    {% if ventas %}
+      <div class="tabla-contenedor">
+        <table class="tabla">
+          <thead>
+            <tr>
+              <th scope="col">Venta</th>
+              <th scope="col">Cliente</th>
+              <th scope="col">Fecha</th>
+              <th scope="col">Productos</th>
+              <th scope="col">Total</th>
+              <th scope="col">Saldo</th>
+              <th scope="col">Estado</th>
+              <th scope="col">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for fila in ventas %}
+              <tr>
+                <td>{{ fila.venta.id_venta[:8] }}</td>
+                <td>{{ fila.cliente.nombre if fila.cliente else '—' }}</td>
+                <td>{{ fila.venta.fecha_venta | fecha_larga }}</td>
+                <td>
+                  {% for linea in fila.lineas %}
+                    {{ linea.nombre }} × {{ linea.cantidad }}{% if not loop.last %}, {% endif %}
+                  {% endfor %}
+                </td>
+                <td class="tabla__numero">{{ fila.venta.total | cop }}</td>
+                <td class="tabla__numero">{{ fila.venta.saldo_pendiente | cop }}</td>
+                <td>{{ fila.venta.estado }}</td>
+                <td class="tabla__acciones">
+                  <a class="boton boton--secundario boton--pequeno"
+                     href="{{ url_for('ver_factura', id_venta=fila.venta.id_venta) }}">Factura</a>
+                  {% if fila.enlace_whatsapp != '#' %}
+                    <a class="boton boton--primario boton--pequeno" href="{{ fila.enlace_whatsapp }}"
+                       target="_blank" rel="noopener">WhatsApp</a>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="tabla__vacia">Aún no hay ventas registradas.</p>
+    {% endif %}
+  </section>
+{% endblock %}

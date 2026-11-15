@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0F172A" />
+  <meta name="description" content="Finanzas personales, nómina colombiana y administración OLB_BYTE." />
+  <title>{% block titulo %}{{ titulo_pagina or "Finanzas y OLB_BYTE" }}{% endblock %} · OLB_BYTE</title>
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('estaticos', path='img/favicon.svg') }}" />
+  <link rel="apple-touch-icon" href="{{ url_for('estaticos', path='img/icono-192.svg') }}" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="stylesheet" href="{{ url_for('estaticos', path='css/estilos.css') }}" />
+</head>
+<body>
+  <div class="contenedor-app">
+
+    {# Encabezado: marca institucional + alias del usuario y badge de rol. #}
+    <header class="cabecera">
+      <a class="marca" href="{{ url_for('ver_dashboard') }}">
+        <span class="marca__sigla">OLB</span><span class="marca__punto">·</span><span class="marca__texto">Finanzas</span>
+      </a>
+
+      {% if usuario %}
+        <div class="usuario">
+          <span class="usuario__alias">Hola, {{ usuario.alias }}</span>
+          <span class="badge badge--{{ 'admin' if usuario.es_administrador else 'publico' }}">
+            {{ usuario.rol }}
+          </span>
+        </div>
+      {% endif %}
+    </header>
+
+    {# Navegación principal (SRS v1.3): Inicio, Mi Perfil y Salir con estado
+       activo y realce al pasar el cursor. Los módulos se abren desde las
+       tarjetas del dashboard y los submódulos viven en "Mis Finanzas". #}
+    {% if usuario %}
+      <nav class="navegacion" aria-label="Navegación principal">
+        <a class="navegacion__enlace {% if request.url.path == '/' %}navegacion__enlace--activo{% endif %}"
+           href="{{ url_for('ver_dashboard') }}"
+           {% if request.url.path == '/' %}aria-current="page"{% endif %}>Inicio</a>
+        <a class="navegacion__enlace {% if request.url.path.startswith('/perfil') %}navegacion__enlace--activo{% endif %}"
+           href="{{ url_for('ver_perfil') }}"
+           {% if request.url.path.startswith('/perfil') %}aria-current="page"{% endif %}>Mi Perfil</a>
+        <span class="navegacion__espaciador"></span>
+        <form class="navegacion__salida" method="post" action="/salir">
+          <button class="navegacion__enlace navegacion__enlace--boton" type="submit">Salir</button>
+        </form>
+      </nav>
+    {% endif %}
+
+    <main class="contenido">
+      {% block contenido %}{% endblock %}
+    </main>
+
+    {# Publicidad no invasiva: solo para el rol público y si está activa. #}
+    {% if usuario and not usuario.es_administrador and configuracion.publicidad_activa %}
+      <aside class="banner-publicidad" aria-label="Espacio publicitario">
+        <span class="banner-publicidad__etiqueta">Publicidad</span>
+        {% if configuracion.publicidad_url %}
+          <a class="banner-publicidad__texto banner-publicidad__enlace"
+             href="{{ configuracion.publicidad_url }}" rel="sponsored noopener" target="_blank">
+            {{ configuracion.publicidad_texto }}
+          </a>
+        {% else %}
+          <p class="banner-publicidad__texto">{{ configuracion.publicidad_texto }}</p>
+        {% endif %}
+      </aside>
+    {% endif %}
+
+    <footer class="pie">
+      <span>{{ configuracion.nombre }} · v{{ configuracion.version }}</span>
+      <span class="pie__separador">|</span>
+      <span>Entorno: {{ configuracion.entorno }}</span>
+      <span class="pie__separador">|</span>
+      <span>© {{ anio_actual }}</span>
+    </footer>
+  </div>
+  <script src="{{ url_for('estaticos', path='js/app.js') }}" defer></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

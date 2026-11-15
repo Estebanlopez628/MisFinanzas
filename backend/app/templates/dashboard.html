@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block titulo %}Panel principal{% endblock %}
+
+{% block contenido %}
+  {# Saludo personalizado usando el alias del perfil (RF-02). #}
+  <section class="heroe">
+    <h1 class="heroe__titulo">¡Hola, {{ usuario.alias }}!</h1>
+    <p class="heroe__subtitulo">
+      Este es tu centro de control financiero. Elige un módulo para continuar.
+    </p>
+  </section>
+
+  {% if guardado %}
+    <div class="alerta alerta--exito" role="status">
+      Perfil configurado. Ya puedes usar todos los módulos.
+    </div>
+  {% endif %}
+
+  <section aria-labelledby="titulo-modulos">
+    <h2 id="titulo-modulos" class="seccion__titulo">Módulos</h2>
+    <div class="rejilla-tarjetas">
+      {% for tarjeta in tarjetas %}
+        {% if tarjeta.disponible %}
+          <a class="tarjeta tarjeta--{{ tarjeta.acento }}" href="{{ tarjeta.url }}">
+            <span class="tarjeta__icono" aria-hidden="true">{{ tarjeta.icono }}</span>
+            <h3 class="tarjeta__titulo">{{ tarjeta.titulo }}</h3>
+            <p class="tarjeta__descripcion">{{ tarjeta.descripcion }}</p>
+            <span class="tarjeta__accion">Abrir módulo →</span>
+          </a>
+        {% else %}
+          <article class="tarjeta tarjeta--{{ tarjeta.acento }} tarjeta--inactiva" aria-disabled="true">
+            <span class="tarjeta__icono" aria-hidden="true">{{ tarjeta.icono }}</span>
+            <h3 class="tarjeta__titulo">{{ tarjeta.titulo }}</h3>
+            <p class="tarjeta__descripcion">{{ tarjeta.descripcion }}</p>
+            <span class="tarjeta__etiqueta">Próximamente</span>
+          </article>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </section>
+
+  {# Resumen de parámetros legales vigentes: transparencia del cálculo. #}
+  <section class="seccion" aria-labelledby="titulo-parametros">
+    <h2 id="titulo-parametros" class="seccion__titulo">Parámetros legales vigentes</h2>
+    <ul class="lista-parametros">
+      <li><span>Jornada mensual</span><strong>{{ parametros.horas_mensuales | int }} horas</strong></li>
+      <li><span>Salud (empleado)</span><strong>{{ (parametros.porcentaje_salud * 100) | porcentaje }}</strong></li>
+      <li><span>Pensión (empleado)</span><strong>{{ (parametros.porcentaje_pension * 100) | porcentaje }}</strong></li>
+      <li><span>Tope auxilio de transporte</span><strong>{{ parametros.tope_auxilio_transporte | cop }}</strong></li>
+    </ul>
+  </section>
+{% endblock %}

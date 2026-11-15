@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+{% block titulo %}Gastos y Presupuesto{% endblock %}
+
+{% block contenido %}
+  <section class="heroe">
+    <h1 class="heroe__titulo">Gastos y Presupuesto</h1>
+    <p class="heroe__subtitulo">
+      Tu asistente de ahorro: proyecta metas sobre el dinero que realmente te
+      queda y registra cada abono mes a mes.
+    </p>
+  </section>
+
+  {% include "finanzas/_subnav.html" %}
+
+  {% if guardado %}
+    <div class="alerta alerta--exito" role="status">Cambios guardados en el planificador.</div>
+  {% endif %}
+  {% if error %}
+    <div class="alerta alerta--error" role="alert">{{ error }}</div>
+  {% endif %}
+
+  {# ------------------------- Banner de diagnóstico ------------------------ #}
+  <section class="panel panel--diagnostico" aria-live="polite">
+    <h2 class="panel__titulo">Diagnóstico del mes</h2>
+
+    {% if diagnostico.saldo_libre >= 0 %}
+      <p class="diagnostico__mensaje">
+        {{ usuario.alias }}, te sobran del sueldo
+        <strong class="diagnostico__monto">{{ diagnostico.saldo_libre | cop }}</strong>
+        de los cuales podemos ahorrar o proyectar metas.
+      </p>
+    {% else %}
+      <p class="diagnostico__mensaje">
+        {{ usuario.alias }}, tu saldo libre del mes está en
+        <strong class="diagnostico__monto valor-negativo">{{ diagnostico.saldo_libre | cop }}</strong>.
+        Antes de proyectar una meta conviene revisar deudas y gastos fijos.
+      </p>
+    {% endif %}
+
+    {% if diagnostico.alerta %}
+      <div class="alerta alerta--critica" role="alert">
+        {{ usuario.alias }}, te está quedando menos de $300.000 pesos mensuales;
+        te aconsejo disminuir tus deudas antes de proyectar un nuevo gasto.
+      </div>
+    {% endif %}
+
+    <p class="ayuda">
+      El saldo libre se calcula sumando lo que queda después de cada quincena,
+      una vez restados gastos fijos y deducciones de ley.
+    </p>
+  </section>
+
+  {# ---------------------- Nueva proyección de ahorro --------------------- #}
+  <section class="panel">
+    <h2 class="panel__titulo">Proyectar una meta</h2>
+    <form class="formulario" method="post" action="{{ url_for('crear_proyeccion') }}">
+      <div class="fila-campos">
+        <label class="campo">
+          <span class="campo__etiqueta">Categoría</span>
+          <input class="campo__control" type="text" name="categoria" list="categorias-meta"
+                 placeholder="Ahorro, predial, vacaciones…" required />
+          <datalist id="categorias-meta">
+            {% for categoria in categorias %}
+              <option value="{{ categoria }}"></option>
+            {% endfor %}
+          </datalist>
+          <span class="ayuda">Elige una sugerencia o escribe la tuya.</span>
+        </label>
+        <label class="campo">
+          <span class="campo__etiqueta">Descripción</span>
+          <input class="campo__control" type="text" name="descripcion"
+                 placeholder="Viaje a Santa Marta, cuota del carro…" required />
+        </label>
+        <label class="campo">
+          <span class="campo__etiqueta">Valor mensual / cuota (COP)</span>
+          <input class="campo__control" type="text" name="valor_mensual"
+                 inputmode="decimal" placeholder="100.000" required />
+        </label>
+      </div>
+
+      <div class="fila-campos">
+        <label class="campo">
+          <span class="campo__etiqueta">Tipo de duración</span>
+          <select class="campo__control" name="tipo_duracion" data-duracion>
+            <option value="FIJO">Gasto fijo mensual (indefinido)</option>
+            <option value="LIMITADO">Por tiempo limitado</option>
+          </select>
+        </label>
+        <label class="campo">
+          <span class="campo__etiqueta">Tiempo de pago (meses)</span>
+          <input class="campo__control" type="number" name="meses" min="1" max="120"
+                 step="1" placeholder="12" data-meses disabled />
+          <span class="ayuda">Solo aplica cuando la duración es limitada.</span>
+        </label>
+        <label class="campo">
+          <span class="campo__etiqueta">Fecha de inicio</span>
+          <input class="campo__control" type="date" name="fecha_inicio" value="{{ fecha_hoy }}" />
+        </label>
+        <label class="campo">
+          <span class="campo__etiqueta">Quincena de descuento</span>
+          <select class="campo__control" name="quincena">
+            <option value="1">Quincena 1 · día 15</option>
+            <option value="2">Quincena 2 · día 30</option>
+          </select>
+        </label>
+      </div>
+
+      <p class="ayuda" data-total-proyectado>
+        Total acumulado proyectado: se calcula al escribir la cuota y los meses.
+      </p>
+
+      <button class="boton boton--primario" type="submit">Crear meta</button>
+      <a class="boton boton--secundario" href="{{ url_for('ver_gastos') }}">
+        Registrar gastos fijos
+      </a>
+    </form>
+  </section>
+
+  {# ------------------------ Seguimiento de metas ------------------------- #}
+  <section class="panel panel--tabla" aria-labelledby="titulo-metas">
+    <h2 id="titulo-metas" class="panel__titulo">Mis metas y abonos</h2>
+
+    {% if metas %}
+      <div class="lista-metas">
+        {% for meta in metas %}
+          <article class="meta">
+            <header class="meta__cabecera">
+              <div>
+                <h3 class="meta__titulo">{{ meta.proyeccion.descripcion }}</h3>
+                <p class="meta__detalle">
+                  {{ meta.proyeccion.categoria }} · {{ meta.proyeccion.valor_mensual | cop }} ·
+                  Quincena {{ meta.proyeccion.quincena }}
+                </p>
+              </div>
+              <form method="post"
+                    action="{{ url_for('eliminar_proyeccion', id_proyeccion=meta.proyeccion.id_proyeccion) }}"
+                    onsubmit="return confirm('¿Eliminar esta meta y sus abonos?');">
+                <button class="boton boton--peligro boton--pequeno" type="submit">Eliminar</button>
+              </form>
+            </header>
+
+            <ul class="lista-parametros lista-parametros--compacta">
+              <li>
+                <span>Total proyectado</span>
+                <strong>
+                  {%- if meta.total_proyectado is not none -%}
+                    {{ meta.total_proyectado | cop }}
+                    <small>({{ meta.proyeccion.meses }} meses)</small>
+                  {%- else -%}
+                    Indefinido · se compara con 12 meses
+                  {%- endif -%}
+                </strong>
+              </li>
+              <li>
+                <span>Acumulado</span>
+                <strong class="valor-positivo">{{ meta.acumulado | cop }}</strong>
+              </li>
+            </ul>
+
+            <div class="barra-progreso" role="progressbar"
+                 aria-valuemin="0" aria-valuemax="100"
+                 aria-valuenow="{{ meta.porcentaje | int }}"
+                 aria-label="Avance de {{ meta.proyeccion.descripcion }}">
+              <span class="barra-progreso__relleno" style="width: {{ meta.porcentaje | int }}%"></span>
+            </div>
+            <p class="ayuda">{{ meta.porcentaje | porcentaje }} del total proyectado.</p>
+
+            <h4 class="bloque-gastos__subtitulo">Registrar abono mensual</h4>
+            <ul class="cuadricula-abonos">
+              {% for mes in meta.meses %}
+                <li class="mes-abono {% if mes.registrado %}mes-abono--registrado{% endif %}">
+                  <span class="mes-abono__etiqueta">{{ mes.etiqueta }}</span>
+                  <form method="post"
+                        action="{{ url_for('registrar_abono_proyeccion', id_proyeccion=meta.proyeccion.id_proyeccion) }}">
+                    <input type="hidden" name="anio" value="{{ mes.anio }}" />
+                    <input type="hidden" name="mes" value="{{ mes.mes }}" />
+                    <input class="campo__control campo__control--compacto" type="text"
+                           name="valor" inputmode="decimal"
+                           value="{{ (mes.abono if mes.abono is not none else mes.planeado) | cop(false) }}" />
+                    <button class="boton boton--secundario boton--pequeno" type="submit">
+                      {{ 'Corregir' if mes.registrado else 'Registrar' }}
+                    </button>
+                  </form>
+                  {% if mes.registrado %}
+                    <span class="mes-abono__estado">✓ registrado</span>
+                  {% endif %}
+                </li>
+              {% endfor %}
+            </ul>
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="tabla__vacia">
+        Aún no tienes metas. Empieza por una: un fondo de emergencia o el predial
+        del próximo año.
+      </p>
+    {% endif %}
+  </section>
+{% endblock %}
+
+{% block scripts %}
+  <script src="{{ url_for('estaticos', path='js/presupuesto.js') }}" defer></script>
+{% endblock %}

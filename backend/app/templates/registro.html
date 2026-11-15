@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block titulo %}Crear cuenta{% endblock %}
+
+{% block contenido %}
+  <section class="acceso">
+    <div class="acceso__panel">
+      <h1 class="acceso__titulo">Crear cuenta</h1>
+      <p class="acceso__subtitulo">
+        El registro público crea siempre una cuenta de finanzas personales.
+      </p>
+
+      {% if errores %}
+        <div class="alerta alerta--error" role="alert">
+          <strong>Revisa los datos:</strong>
+          <ul>
+            {% for error in errores %}
+              <li>{{ error }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+
+      <form class="formulario" method="post" action="/registro">
+        <label class="campo">
+          <span class="campo__etiqueta">Alias</span>
+          <input class="campo__control" type="text" name="alias" minlength="2"
+                 placeholder="Cómo quieres que te llamemos"
+                 value="{{ valores.alias | default('', true) }}" required />
+        </label>
+        <label class="campo">
+          <span class="campo__etiqueta">Correo electrónico</span>
+          <input class="campo__control" type="email" name="correo" autocomplete="email"
+                 placeholder="tu@correo.com" value="{{ valores.correo | default('', true) }}" required />
+        </label>
+        <label class="campo">
+          <span class="campo__etiqueta">Contraseña</span>
+          <input class="campo__control" type="password" name="contrasena"
+                 autocomplete="new-password" minlength="8" placeholder="Mínimo 8 caracteres" required />
+        </label>
+        <label class="campo">
+          <span class="campo__etiqueta">Confirmar contraseña</span>
+          <input class="campo__control" type="password" name="confirmar_contrasena"
+                 autocomplete="new-password" minlength="8" required />
+        </label>
+        <button class="boton boton--primario" type="submit">Crear cuenta</button>
+      </form>
+
+      <p class="acceso__pie">
+        ¿Ya tienes cuenta?
+        <a class="enlace" href="{{ url_for('ver_login') }}">Inicia sesión</a>
+      </p>
+      <p class="ayuda">
+        El rol de administrador OLB_BYTE no se puede obtener por auto-registro:
+        lo asigna el propietario del sistema.
+      </p>
+    </div>
+  </section>
+{% endblock %}

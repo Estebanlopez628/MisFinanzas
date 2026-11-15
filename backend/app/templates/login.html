@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block titulo %}Iniciar sesión{% endblock %}
+
+{% block contenido %}
+  <section class="acceso">
+    <div class="acceso__panel">
+      <h1 class="acceso__titulo">Iniciar sesión</h1>
+      <p class="acceso__subtitulo">
+        Accede a tu cuadro de nómina y presupuesto quincenal.
+      </p>
+
+      {% if registrado %}
+        <div class="alerta alerta--exito" role="status">
+          Cuenta creada correctamente. Ya puedes iniciar sesión.
+        </div>
+      {% endif %}
+
+      {% if error %}
+        <div class="alerta alerta--error" role="alert">{{ error }}</div>
+      {% endif %}
+
+      {# Formulario real: la validación y la sesión viven en el servidor. #}
+      <form class="formulario" method="post" action="/login">
+        <label class="campo">
+          <span class="campo__etiqueta">Correo electrónico</span>
+          <input class="campo__control" type="email" name="correo" autocomplete="email"
+                 placeholder="tu@correo.com" value="{{ correo_ingresado | default('', true) }}" required autofocus />
+        </label>
+        <label class="campo">
+          <span class="campo__etiqueta">Contraseña</span>
+          <input class="campo__control" type="password" name="contrasena"
+                 autocomplete="current-password" placeholder="••••••••" required />
+        </label>
+        <button class="boton boton--primario" type="submit">Entrar</button>
+      </form>
+
+      <p class="acceso__pie">
+        ¿No tienes cuenta?
+        <a class="enlace" href="{{ url_for('ver_registro') }}">Crear una cuenta gratis</a>
+      </p>
+
+      {# Cuentas de demostración: se eliminan al conectar la base de datos. #}
+      <div class="acceso__demo">
+        <h2 class="acceso__demo-titulo">Cuentas de demostración</h2>
+        <ul class="lista-parametros">
+          {% for cuenta in cuentas_demo %}
+            <li>
+              <span>{{ cuenta.rol }}</span>
+              <strong>{{ cuenta.correo }} · {{ cuenta.contrasena }}</strong>
+            </li>
+          {% endfor %}
+        </ul>
+        <p class="ayuda">Disponibles solo en entorno de desarrollo.</p>
+      </div>
+    </div>
+  </section>
+{% endblock %}

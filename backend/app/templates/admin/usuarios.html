@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block titulo %}Usuarios{% endblock %}
+
+{% block contenido %}
+  <section class="heroe">
+    <h1 class="heroe__titulo">Usuarios</h1>
+    <p class="heroe__subtitulo">
+      Administra roles y estado de las cuentas. Solo un <strong>ADMIN_OLB</strong>
+      puede llegar a esta pantalla.
+    </p>
+  </section>
+
+  {% if error %}
+    <div class="alerta alerta--error" role="alert">{{ error }}</div>
+  {% endif %}
+
+  <section class="panel panel--tabla">
+    <h2 class="panel__titulo">Cuentas registradas</h2>
+    <div class="tabla-contenedor">
+      <table class="tabla">
+        <thead>
+          <tr>
+            <th scope="col">Alias</th>
+            <th scope="col">Correo</th>
+            <th scope="col">Rol</th>
+            <th scope="col">Estado</th>
+            <th scope="col">Último acceso</th>
+            <th scope="col">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for cuenta in usuarios %}
+            <tr>
+              <td>{{ cuenta.alias }}</td>
+              <td>{{ cuenta.correo }}</td>
+              <td>
+                <form class="formulario-en-linea" method="post"
+                      action="{{ url_for('cambiar_rol_usuario', id_usuario=cuenta.id_usuario) }}">
+                  <select class="campo__control campo__control--compacto" name="rol"
+                          {% if cuenta.id_usuario == usuario.id_usuario %}disabled{% endif %}>
+                    {% for opcion in roles %}
+                      <option value="{{ opcion }}" {% if cuenta.rol == opcion %}selected{% endif %}>{{ opcion }}</option>
+                    {% endfor %}
+                  </select>
+                  <button class="boton boton--secundario boton--pequeno" type="submit"
+                          {% if cuenta.id_usuario == usuario.id_usuario %}disabled{% endif %}>Cambiar</button>
+                </form>
+              </td>
+              <td>
+                <span class="badge badge--{{ 'admin' if cuenta.activo else 'inactivo' }}">
+                  {{ 'Activa' if cuenta.activo else 'Inactiva' }}
+                </span>
+              </td>
+              <td>{{ cuenta.ultimo_acceso | fecha_larga if cuenta.ultimo_acceso else '—' }}</td>
+              <td>
+                <form method="post"
+                      action="{{ url_for('cambiar_estado_usuario', id_usuario=cuenta.id_usuario) }}">
+                  <input type="hidden" name="activo" value="{{ '0' if cuenta.activo else '1' }}" />
+                  <button class="boton {{ 'boton--peligro' if cuenta.activo else 'boton--secundario' }} boton--pequeno"
+                          type="submit" {% if cuenta.id_usuario == usuario.id_usuario %}disabled{% endif %}>
+                    {{ 'Desactivar' if cuenta.activo else 'Activar' }}
+                  </button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="ayuda">
+      Un usuario desactivado pierde el acceso de inmediato aunque conserve la cookie,
+      porque la sesión se valida contra la base de datos.
+    </p>
+  </section>
+{% endblock %}

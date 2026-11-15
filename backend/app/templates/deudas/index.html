@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block titulo %}Resumen de Deudas{% endblock %}
+
+{% block contenido %}
+  <section class="heroe">
+    <h1 class="heroe__titulo">📉 Resumen de Deudas</h1>
+    <p class="heroe__subtitulo">
+      Controla el saldo de cada pasivo, su cuota mensual y la fecha límite. Los
+      abonos actualizan el saldo y marcan la deuda como pagada.
+    </p>
+  </section>
+
+  {% if guardado %}
+    <div class="alerta alerta--exito" role="status">Deuda registrada.</div>
+  {% endif %}
+  {% if error %}
+    <div class="alerta alerta--error" role="alert">{{ error }}</div>
+  {% endif %}
+
+  <div class="rejilla-tarjetas">
+    <article class="tarjeta tarjeta--rojo">
+      <span class="tarjeta__icono" aria-hidden="true">💳</span>
+      <h3 class="tarjeta__titulo">{{ resumen.saldo_total | cop }}</h3>
+      <p class="tarjeta__descripcion">Saldo pendiente de deudas activas.</p>
+    </article>
+    <article class="tarjeta tarjeta--ambar">
+      <span class="tarjeta__icono" aria-hidden="true">📆</span>
+      <h3 class="tarjeta__titulo">{{ resumen.cuota_mensual | cop }}</h3>
+      <p class="tarjeta__descripcion">Cuota mensual comprometida.</p>
+    </article>
+    <article class="tarjeta tarjeta--verde">
+      <span class="tarjeta__icono" aria-hidden="true">✅</span>
+      <h3 class="tarjeta__titulo">{{ resumen.pagadas }} pagada(s)</h3>
+      <p class="tarjeta__descripcion">{{ resumen.activas }} deuda(s) activa(s).</p>
+    </article>
+  </div>
+
+  <div class="rejilla-paneles">
+    <section class="panel">
+      <h2 class="panel__titulo">Nueva deuda</h2>
+      <form class="formulario" method="post" action="{{ url_for('crear_deuda') }}">
+        <label class="campo">
+          <span class="campo__etiqueta">Acreedor</span>
+          <input class="campo__control" type="text" name="acreedor" required />
+        </label>
+        <label class="campo">
+          <span class="campo__etiqueta">Descripción</span>
+          <input class="campo__control" type="text" name="descripcion" />
+        </label>
+        <label class="campo">
+          <span class="campo__etiqueta">Saldo total (COP)</span>
+          <input class="campo__control" type="text" name="saldo_total" inputmode="decimal" required />
+        </label>
+        <label class="campo">
+          <span class="campo__etiqueta">Cuota mensual (COP)</span>
+          <input class="campo__control" type="text" name="cuota_mensual" inputmode="decimal" />
+        </label>
+        <label class="campo">
+          <span class="campo__etiqueta">Tasa de interés (%)</span>
+          <input class="campo__control" type="number" name="tasa_interes" min="0" step="0.01" />
+        </label>
+        <label class="campo">
+          <span class="campo__etiqueta">Fecha límite</span>
+          <input class="campo__control" type="date" name="fecha_limite" />
+        </label>
+        <button class="boton boton--primario" type="submit">Guardar deuda</button>
+      </form>
+    </section>
+
+    <section class="panel panel--tabla">
+      <h2 class="panel__titulo">Deudas registradas</h2>
+      {% if deudas %}
+        <div class="tabla-contenedor">
+          <table class="tabla">
+            <thead>
+              <tr>
+                <th scope="col">Acreedor</th>
+                <th scope="col">Saldo</th>
+                <th scope="col">Cuota</th>
+                <th scope="col">Límite</th>
+                <th scope="col">Estado</th>
+                <th scope="col">Abono</th>
+                <th scope="col"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for deuda in deudas %}
+                <tr>
+                  <td>
+                    <strong>{{ deuda.acreedor }}</strong>
+                    {% if deuda.descripcion %}<br /><span class="ayuda">{{ deuda.descripcion }}</span>{% endif %}
+                  </td>
+                  <td class="tabla__numero">{{ deuda.saldo_total | cop }}</td>
+                  <td class="tabla__numero">{{ deuda.cuota_mensual | cop if deuda.cuota_mensual else '—' }}</td>
+                  <td>{{ deuda.fecha_limite | fecha_larga if deuda.fecha_limite else '—' }}</td>
+                  <td>{{ deuda.estado }}</td>
+                  <td>
+                    {% if deuda.estado == 'ACTIVA' %}
+                      <form class="formulario-en-linea" method="post"
+                            action="{{ url_for('abonar_deuda', id_deuda=deuda.id_deuda) }}">
+                        <input class="campo__control campo__control--compacto" type="text" name="monto"
+                               inputmode="decimal" placeholder="100.000" required />
+                        <button class="boton boton--secundario boton--pequeno" type="submit">Abonar</button>
+                      </form>
+                    {% else %}
+                      —
+                    {% endif %}
+                  </td>
+                  <td>
+                    <form method="post" action="{{ url_for('eliminar_deuda', id_deuda=deuda.id_deuda) }}"
+                          onsubmit="return confirm('¿Eliminar esta deuda?');">
+                      <button class="boton boton--peligro boton--pequeno" type="submit">Eliminar</button>
+                    </form>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="tabla__vacia">Aún no hay deudas registradas.</p>
+      {% endif %}
+    </section>
+  </div>
+{% endblock %}

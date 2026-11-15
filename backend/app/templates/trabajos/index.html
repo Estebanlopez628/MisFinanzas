@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block titulo %}Trabajos Extras{% endblock %}
+
+{% block contenido %}
+  <section class="heroe">
+    <h1 class="heroe__titulo">🚀 Trabajos Extras</h1>
+    <p class="heroe__subtitulo">
+      Registra ingresos por fuera del salario, marca los cobrados y consulta lo que
+      aún está pendiente.
+    </p>
+  </section>
+
+  {% if guardado %}
+    <div class="alerta alerta--exito" role="status">Trabajo registrado.</div>
+  {% endif %}
+  {% if error %}
+    <div class="alerta alerta--error" role="alert">{{ error }}</div>
+  {% endif %}
+
+  <div class="rejilla-tarjetas">
+    <article class="tarjeta tarjeta--verde">
+      <span class="tarjeta__icono" aria-hidden="true">✅</span>
+      <h3 class="tarjeta__titulo">{{ resumen.cobrado | cop }}</h3>
+      <p class="tarjeta__descripcion">{{ resumen.cobrados }} trabajo(s) cobrado(s).</p>
+    </article>
+    <article class="tarjeta tarjeta--ambar">
+      <span class="tarjeta__icono" aria-hidden="true">⏳</span>
+      <h3 class="tarjeta__titulo">{{ resumen.pendiente | cop }}</h3>
+      <p class="tarjeta__descripcion">{{ resumen.pendientes }} trabajo(s) pendiente(s) de cobro.</p>
+    </article>
+  </div>
+
+  <div class="rejilla-paneles">
+    <section class="panel">
+      <h2 class="panel__titulo">Nuevo trabajo</h2>
+      <form class="formulario" method="post" action="{{ url_for('crear_trabajo') }}">
+        <label class="campo">
+          <span class="campo__etiqueta">Descripción</span>
+          <input class="campo__control" type="text" name="descripcion"
+                 placeholder="Reparación, diseño, asesoría…" required />
+        </label>
+        <label class="campo">
+          <span class="campo__etiqueta">Cliente</span>
+          <input class="campo__control" type="text" name="cliente" />
+        </label>
+        <label class="campo">
+          <span class="campo__etiqueta">Valor (COP)</span>
+          <input class="campo__control" type="text" name="valor" inputmode="decimal" required />
+        </label>
+        <label class="campo">
+          <span class="campo__etiqueta">Fecha</span>
+          <input class="campo__control" type="date" name="fecha" value="{{ fecha_hoy }}" />
+        </label>
+        <button class="boton boton--primario" type="submit">Registrar trabajo</button>
+      </form>
+    </section>
+
+    <section class="panel panel--tabla">
+      <h2 class="panel__titulo">Trabajos registrados</h2>
+      {% if trabajos %}
+        <div class="tabla-contenedor">
+          <table class="tabla">
+            <thead>
+              <tr>
+                <th scope="col">Fecha</th>
+                <th scope="col">Descripción</th>
+                <th scope="col">Cliente</th>
+                <th scope="col">Valor</th>
+                <th scope="col">Estado</th>
+                <th scope="col">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for trabajo in trabajos %}
+                <tr>
+                  <td>{{ trabajo.fecha | fecha_larga }}</td>
+                  <td>{{ trabajo.descripcion }}</td>
+                  <td>{{ trabajo.cliente or '—' }}</td>
+                  <td class="tabla__numero">{{ trabajo.valor | cop }}</td>
+                  <td>{{ trabajo.estado }}</td>
+                  <td class="tabla__acciones">
+                    <form method="post"
+                          action="{{ url_for('cambiar_estado_trabajo', id_trabajo=trabajo.id_trabajo) }}">
+                      <input type="hidden" name="estado"
+                             value="{{ 'PENDIENTE' if trabajo.estado == 'COBRADO' else 'COBRADO' }}" />
+                      <button class="boton boton--secundario boton--pequeno" type="submit">
+                        {{ 'Marcar pendiente' if trabajo.estado == 'COBRADO' else 'Marcar cobrado' }}
+                      </button>
+                    </form>
+                    <form method="post" action="{{ url_for('eliminar_trabajo', id_trabajo=trabajo.id_trabajo) }}"
+                          onsubmit="return confirm('¿Eliminar este trabajo?');">
+                      <button class="boton boton--peligro boton--pequeno" type="submit">Eliminar</button>
+                    </form>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="tabla__vacia">Aún no hay trabajos registrados.</p>
+      {% endif %}
+    </section>
+  </div>
+{% endblock %}

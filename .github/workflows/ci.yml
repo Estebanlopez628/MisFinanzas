@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+permissions:
+  contents: read
+
+jobs:
+  pruebas:
+    name: Pruebas (Python ${{ matrix.python }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.11", "3.12"]
+
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v4
+
+      - name: Preparar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+          cache-dependency-path: |
+            backend/requirements.txt
+            backend/requirements-dev.txt
+
+      - name: Instalar dependencias
+        working-directory: backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      - name: Verificar sintaxis
+        working-directory: backend
+        run: python -m compileall -q app tests scripts
+
+      - name: Ejecutar pruebas
+        working-directory: backend
+        env:
+          ENTORNO: pruebas
+          CLAVE_SECRETA: clave-secreta-solo-para-ci-0123456789
+        run: python -m pytest -q
+
+      - name: Probar el respaldo de SQLite
+        working-directory: backend
+        env:
+          ENTORNO: pruebas
+        run: |
+          python -c "from app.core.base_datos import inicializar_base_datos; inicializar_base_datos()"
+          python scripts/respaldo.py --destino respaldos_ci --conservar 2
+          python -c "from pathlib import Path; assert list(Path('respaldos_ci').glob('finanzas_*.db')), 'No se creó el respaldo'"

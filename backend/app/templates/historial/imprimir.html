@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block titulo %}Liquidación {{ etiqueta }}{% endblock %}
+
+{% block contenido %}
+  <section class="heroe">
+    <h1 class="heroe__titulo">Liquidación de nómina</h1>
+    <p class="heroe__subtitulo">{{ etiqueta }} · {{ usuario.alias }}</p>
+    <button class="boton boton--secundario boton--pequeno" type="button" onclick="window.print()">
+      Imprimir o guardar como PDF
+    </button>
+  </section>
+
+  <section class="panel">
+    <h2 class="panel__titulo">Resumen del periodo</h2>
+    <ul class="lista-parametros">
+      <li><span>Sueldo básico</span><strong>{{ periodo.sueldo_basico_periodo | cop }}</strong></li>
+      <li><span>Valor hora ordinaria</span><strong>{{ periodo.valor_hora_ordinaria | cop }}</strong></li>
+      <li><span>Horas extras y recargos</span><strong>{{ periodo.total_horas_extra }} h · {{ periodo.total_recargos | cop }}</strong></li>
+      <li><span>Salud</span><strong class="valor-negativo">− {{ periodo.deduccion_salud | cop }}</strong></li>
+      <li><span>Pensión</span><strong class="valor-negativo">− {{ periodo.deduccion_pension | cop }}</strong></li>
+      <li><span>Auxilio de transporte</span><strong class="valor-positivo">{{ periodo.auxilio_transporte | cop }}</strong></li>
+      <li><span>Descuento por incapacidad</span><strong class="valor-negativo">− {{ periodo.deduccion_incapacidad | cop }}</strong></li>
+      <li><span>Total devengado</span><strong>{{ periodo.total_devengado | cop }}</strong></li>
+      <li><span>Total deducciones</span><strong class="valor-negativo">− {{ periodo.total_deducciones | cop }}</strong></li>
+      <li><span>Gastos del mes</span><strong class="valor-negativo">− {{ periodo.total_gastos | cop }}</strong></li>
+      <li class="lista-parametros__total">
+        <span>Saldo para el bolsillo</span>
+        <strong>{{ periodo.saldo_bolsillo | cop }}</strong>
+      </li>
+      <li class="lista-parametros__total">
+        <span>Disponible después de gastos</span>
+        <strong>{{ (periodo.saldo_bolsillo - periodo.total_gastos) | cop }}</strong>
+      </li>
+    </ul>
+    <p class="ayuda">
+      Generado por {{ configuracion.nombre }} v{{ configuracion.version }} ·
+      {{ periodo.fecha_actualizacion | fecha_larga }}
+    </p>
+  </section>
+{% endblock %}

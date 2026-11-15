@@ -1,0 +1,1631 @@
+/* =========================================================================
+   Hoja de estilos principal — Finanzas y OLB_BYTE
+   Paleta oficial definida en `AGENTS.md` §8. No modificar sin ADR.
+   Enfoque: mobile-first, sin frameworks, contraste AA sobre fondo oscuro.
+   ========================================================================= */
+
+:root {
+  /* Fondo y superficies */
+  --bg-primary: #0F172A;      /* Slate Oscuro */
+  --bg-card: #1E293B;         /* Tarjetas de Módulo */
+  --bg-elevada: #273449;      /* Superficies secundarias */
+  --borde-suave: rgba(148, 163, 184, 0.18);
+
+  /* Acentos de marca */
+  --accent-blue: #0284C7;     /* OLB_BYTE Brand Blue */
+  --accent-green: #10B981;    /* Indicador Positivo / Bolsillo */
+  --accent-amber: #F59E0B;    /* Alertas SMMLV / Incapacidades */
+  --accent-red: #EF4444;      /* Deducciones / Gastos */
+
+  /* Texto */
+  --text-primary: #F8FAFC;
+  --text-muted: #94A3B8;
+
+  /* Formas */
+  --radio-md: 14px;
+  --radio-lg: 20px;
+  --sombra-tarjeta: 0 12px 30px rgba(2, 6, 23, 0.45);
+  --transicion: 180ms ease;
+
+  --fuente-base: "Segoe UI", "Inter", system-ui, -apple-system, sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  min-height: 100vh;
+  background:
+    radial-gradient(1200px 600px at 15% -10%, rgba(2, 132, 199, 0.22), transparent 60%),
+    radial-gradient(900px 500px at 110% 10%, rgba(16, 185, 129, 0.14), transparent 55%),
+    var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--fuente-base);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ------------------------------ Estructura ------------------------------ */
+
+.contenedor-app {
+  width: min(1120px, 100%);
+  margin: 0 auto;
+  padding: 24px 20px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-height: 100vh;
+}
+
+.contenido {
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+  flex: 1;
+}
+
+/* ------------------------------- Cabecera ------------------------------- */
+
+.cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.marca {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  color: var(--text-primary);
+  text-decoration: none;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+}
+
+.marca__sigla {
+  color: var(--accent-blue);
+  font-size: 1.35rem;
+}
+
+.marca__punto {
+  color: var(--accent-green);
+}
+
+.marca__texto {
+  font-size: 1.05rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.usuario {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.usuario__alias {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+}
+
+.badge--admin {
+  color: #cffafe;
+  background: rgba(2, 132, 199, 0.22);
+  border-color: rgba(2, 132, 199, 0.55);
+}
+
+.badge--publico {
+  color: #d1fae5;
+  background: rgba(16, 185, 129, 0.16);
+  border-color: rgba(16, 185, 129, 0.5);
+}
+
+/* ----------------------------- Navegación ------------------------------ */
+
+.navegacion {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 8px;
+  background: rgba(30, 41, 59, 0.65);
+  border: 1px solid var(--borde-suave);
+  border-radius: 999px;
+  backdrop-filter: blur(6px);
+}
+
+.navegacion__enlace {
+  padding: 8px 14px;
+  border-radius: 999px;
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: background var(--transicion), color var(--transicion),
+    transform var(--transicion), box-shadow var(--transicion);
+}
+
+.navegacion__enlace:hover,
+.navegacion__enlace:focus-visible {
+  background: rgba(2, 132, 199, 0.18);
+  color: var(--text-primary);
+  transform: translateY(-1px);
+  outline: none;
+}
+
+/* Estado activo: fondo más sólido y borde interno para diferenciarlo del hover. */
+.navegacion__enlace--activo {
+  background: rgba(2, 132, 199, 0.28);
+  color: var(--text-primary);
+  box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.45);
+}
+
+.navegacion__enlace--bloqueado {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.navegacion__enlace--suave {
+  margin-left: auto;
+}
+
+.navegacion__espaciador {
+  flex: 1;
+}
+
+/* El botón de salida se ve como un enlace, pero vive dentro de un formulario
+   POST para que el cierre de sesión no dependa de JavaScript. */
+.navegacion__enlace--boton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.navegacion__salida {
+  margin: 0;
+  display: inline-flex;
+}
+
+/* --------------------------------- Heroe -------------------------------- */
+
+.heroe__titulo {
+  margin: 0 0 6px;
+  font-size: clamp(1.6rem, 4vw, 2.3rem);
+  letter-spacing: -0.02em;
+}
+
+.heroe__subtitulo {
+  margin: 0;
+  color: var(--text-muted);
+  max-width: 60ch;
+}
+
+/* ------------------------------- Secciones ------------------------------ */
+
+.seccion__titulo {
+  margin: 0 0 16px;
+  font-size: 1.05rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+}
+
+/* ------------------------------- Tarjetas ------------------------------- */
+
+.rejilla-tarjetas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 18px;
+}
+
+.tarjeta {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 22px;
+  background: linear-gradient(160deg, var(--bg-card), #182234);
+  border: 1px solid var(--borde-suave);
+  border-radius: var(--radio-lg);
+  box-shadow: var(--sombra-tarjeta);
+  color: inherit;
+  text-decoration: none;
+  transition: transform var(--transicion), border-color var(--transicion), box-shadow var(--transicion);
+  overflow: hidden;
+}
+
+/* Línea de acento superior según el módulo. */
+.tarjeta::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: var(--acento, var(--accent-blue));
+  opacity: 0.9;
+}
+
+.tarjeta--verde { --acento: var(--accent-green); }
+.tarjeta--azul { --acento: var(--accent-blue); }
+.tarjeta--rojo { --acento: var(--accent-red); }
+.tarjeta--ambar { --acento: var(--accent-amber); }
+.tarjeta--destacada { --acento: var(--accent-amber); }
+
+a.tarjeta:hover,
+a.tarjeta:focus-visible {
+  transform: translateY(-4px);
+  border-color: var(--acento, var(--accent-blue));
+  box-shadow: 0 18px 40px rgba(2, 6, 23, 0.6);
+  outline: none;
+}
+
+.tarjeta--inactiva {
+  opacity: 0.72;
+  cursor: default;
+}
+
+.tarjeta__icono {
+  font-size: 1.7rem;
+  line-height: 1;
+}
+
+.tarjeta__titulo {
+  margin: 0;
+  font-size: 1.12rem;
+}
+
+.tarjeta__descripcion {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  flex: 1;
+}
+
+.tarjeta__accion {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--acento, var(--accent-blue));
+}
+
+.tarjeta__etiqueta {
+  align-self: flex-start;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--acento, var(--text-muted));
+  background: rgba(148, 163, 184, 0.12);
+  border-radius: 999px;
+  padding: 4px 10px;
+}
+
+/* -------------------------------- Paneles ------------------------------- */
+
+.rejilla-paneles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 18px;
+}
+
+.panel {
+  background: rgba(30, 41, 59, 0.75);
+  border: 1px solid var(--borde-suave);
+  border-radius: var(--radio-lg);
+  padding: 22px;
+}
+
+.panel__titulo {
+  margin: 0 0 6px;
+  font-size: 1.05rem;
+}
+
+.panel__descripcion {
+  margin: 0 0 18px;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+/* ------------------------ Layout interno de Mis Finanzas ---------------- */
+
+.rejilla-finanzas {
+  display: grid;
+  grid-template-columns: minmax(300px, 0.85fr) minmax(360px, 1.15fr);
+  gap: 18px;
+  align-items: start;
+}
+
+/* SRS v1.3: la vista principal de Mis Finanzas exige dos columnas
+   exactamente iguales (50 % / 50 %). El modificador se declara aquí y no
+   dentro del media query para que la regla de apilado siga ganando en móvil. */
+.rejilla-finanzas--5050 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.columna-finanzas {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* Sub-bloques verticales de la columna izquierda (Quincena 1, Quincena 2
+   y Atajos de Pago): cada uno se separa con un filete punteado para que se
+   lea como un contenedor independiente sin añadir otra tarjeta. */
+.columna-finanzas--quincenas > .panel + .panel {
+  margin-top: 0;
+}
+
+.bloque-gastos-quincena {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--borde-suave);
+}
+
+.bloque-gastos__subtitulo {
+  margin: 0 0 10px;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* En pantallas angostas las dos columnas se apilan sin perder el orden. */
+@media (max-width: 900px) {
+  .rejilla-finanzas,
+  .rejilla-finanzas--5050 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ------------------- Bloques de la columna derecha (v1.3) ---------------- */
+
+/* Identificador visual del bloque de liquidación: un filo azul a la izquierda
+   distingue la columna de cálculo de la columna de quincenas. */
+.panel--liquidacion {
+  position: relative;
+  border-left: 3px solid var(--accent-blue);
+}
+
+.bloque-sueldo {
+  margin-bottom: 16px;
+}
+
+/* El sueldo básico es el dato que dispara todos los cálculos: se resalta. */
+.campo__control--destacado {
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.bloque-deducciones {
+  margin: 0 0 18px;
+  padding: 14px 16px;
+  border: 1px solid var(--borde-suave);
+  border-radius: var(--radio-lg);
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.bloque-deducciones__titulo {
+  margin: 0 0 10px;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.lista-deducciones {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lista-deducciones li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.95rem;
+}
+
+.lista-deducciones strong {
+  font-variant-numeric: tabular-nums;
+}
+
+/* -------------------- Horas extras: cuadrícula 2 × 3 --------------------- */
+
+.grupo-horas--cuadricula {
+  margin: 0 0 18px;
+  padding: 0;
+  border: 0;
+}
+
+/* Tres columnas iguales obligan a que los seis conceptos queden en dos
+   filas simétricas, sin importar el largo de la etiqueta. */
+.cuadricula-horas {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.cuadricula-horas .campo--horas {
+  margin: 0;
+  text-align: center;
+}
+
+.cuadricula-horas .campo__control {
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 560px) {
+  .cuadricula-horas {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Los tres botones de la liquidación comparten una sola fila inferior. */
+.acciones-formulario--liquidacion {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  padding-top: 4px;
+  border-top: 1px dashed var(--borde-suave);
+}
+
+/* --------------------- Auxilio de transporte (2 SMMLV) ------------------- */
+
+.panel--auxilio {
+  border-left: 3px solid var(--accent-amber);
+}
+
+.auxilio__valor {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.auxilio__etiqueta {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.auxilio__monto {
+  font-size: 1.5rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Sin derecho al auxilio (tope de 2 SMMLV superado): el monto pasa a cero y
+   pierde protagonismo para que la advertencia sea lo primero que se lee. */
+.auxilio__monto--anulado {
+  color: var(--text-muted);
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+}
+
+/* Confirmación breve del copiado rápido en los atajos de pago. */
+.boton--copiado {
+  border-color: var(--accent-green);
+  color: var(--accent-green);
+  background: rgba(16, 185, 129, 0.16);
+}
+
+/* ------------------ Planificador de ahorro (SRS v1.3, bloque 3) ----------- */
+
+/* El diagnóstico de liquidez abre la pestaña: filo verde cuando hay margen. */
+.panel--diagnostico {
+  border-left: 3px solid var(--accent-green);
+}
+
+.diagnostico__mensaje {
+  margin: 0 0 10px;
+  font-size: 1.02rem;
+  line-height: 1.55;
+}
+
+.diagnostico__monto {
+  font-size: 1.25rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Alerta de liquidez crítica (< $300.000): debe detener la mirada. */
+.alerta--critica {
+  margin: 12px 0;
+  padding: 14px 16px;
+  border: 1px solid rgba(239, 68, 68, 0.55);
+  border-left: 4px solid var(--accent-red);
+  border-radius: var(--radio-md, 10px);
+  background: rgba(239, 68, 68, 0.12);
+  color: var(--text-primary);
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.lista-metas {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.meta {
+  padding: 18px;
+  border: 1px solid var(--borde-suave);
+  border-radius: var(--radio-lg);
+  background: rgba(15, 23, 42, 0.42);
+}
+
+.meta__cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.meta__titulo {
+  margin: 0 0 4px;
+  font-size: 1rem;
+}
+
+.meta__detalle {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.86rem;
+}
+
+/* Barra de progreso: el relleno lo dimensiona la plantilla con `width`. */
+.barra-progreso {
+  height: 10px;
+  margin: 12px 0 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.22);
+}
+
+.barra-progreso__relleno {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent-blue), var(--accent-green));
+  transition: width var(--transicion);
+}
+
+/* Un botón por mes planificado, en rejilla fluida. */
+.cuadricula-abonos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mes-abono {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid var(--borde-suave);
+  border-radius: var(--radio-md, 10px);
+  background: rgba(15, 23, 42, 0.55);
+}
+
+.mes-abono--registrado {
+  border-color: rgba(16, 185, 129, 0.55);
+}
+
+.mes-abono__etiqueta {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.mes-abono form {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.mes-abono__estado {
+  color: var(--accent-green);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.campo__control--compacto {
+  min-width: 0;
+  padding: 6px 8px;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Cuando el tope de 2 SMMLV se supera, el valor del auxilio queda en cero y la
+   advertencia toma protagonismo (el color lo aplica `finanzas.js`). */
+.aviso--auxilio[data-aplica="si"] {
+  border-left: 3px solid var(--accent-red);
+  padding-left: 12px;
+  color: var(--text-primary);
+}
+
+/* Refuerzo visual del bloque compacto de incapacidades. */
+.panel--incapacidad .fila-campos {
+  gap: 12px;
+}
+
+/* ---------------------- Atajos de pago (solo lectura) -------------------- */
+
+.panel--atajos {
+  border-left: 3px solid var(--accent-green);
+}
+
+.lista-atajos {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Cada atajo se lee como una fila: descripción, referencia copiable y pago. */
+.lista-atajos__item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid var(--borde-suave);
+  border-radius: var(--radio-md, 10px);
+  background: rgba(15, 23, 42, 0.4);
+}
+
+.lista-atajos__descripcion {
+  min-width: 0;
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lista-atajos__referencia {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lista-atajos__referencia code {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+}
+
+@media (max-width: 560px) {
+  .lista-atajos__item {
+    grid-template-columns: 1fr;
+    justify-items: start;
+  }
+}
+
+/* --------------------- Edición en línea de gastos fijos ------------------ */
+
+.lista-gastos__acciones {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* El resumen se comporta como botón sin perder el marcador nativo de <details>. */
+.edicion-gasto {
+  position: relative;
+}
+
+.edicion-gasto > summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.edicion-gasto > summary::-webkit-details-marker {
+  display: none;
+}
+
+.edicion-gasto[open] {
+  flex-basis: 100%;
+}
+
+/* El formulario de edición se despliega a todo el ancho de la fila. */
+.edicion-gasto[open] .formulario--compacto {
+  margin-top: 10px;
+  padding: 12px;
+  border: 1px dashed var(--borde-suave);
+  border-radius: var(--radio-md, 10px);
+  background: rgba(15, 23, 42, 0.5);
+}
+
+.subnav-finanzas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 18px;
+  padding: 6px;
+  border: 1px solid var(--borde-suave);
+  border-radius: 999px;
+  background: rgba(30, 41, 59, 0.55);
+  backdrop-filter: blur(6px);
+}
+
+.subnav-finanzas__enlace {
+  padding: 9px 16px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  color: var(--text-muted);
+  font-size: 0.84rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background var(--transicion), color var(--transicion),
+    transform var(--transicion), box-shadow var(--transicion);
+}
+
+.subnav-finanzas__enlace:hover,
+.subnav-finanzas__enlace:focus-visible {
+  color: var(--text-primary);
+  background: rgba(2, 132, 199, 0.18);
+  transform: translateY(-1px);
+  outline: none;
+}
+
+.subnav-finanzas__enlace--activo {
+  color: #ffffff;
+  border-color: rgba(56, 189, 248, 0.6);
+  background: linear-gradient(135deg, rgba(2, 132, 199, 0.85), rgba(14, 116, 144, 0.85));
+  box-shadow: 0 6px 16px rgba(2, 132, 199, 0.25);
+}
+
+.panel--quincena {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.quincena__cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.quincena__titulo {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.quincena__saldo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 14px;
+  border: 1px solid var(--borde-suave);
+  border-radius: var(--radio-md);
+  background: rgba(15, 23, 42, 0.55);
+}
+
+.quincena__saldo-etiqueta {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.quincena__saldo-valor {
+  font-size: 1.45rem;
+  color: var(--accent-green);
+}
+
+.quincena__saldo-valor.valor-negativo {
+  color: var(--accent-red);
+}
+
+.lista-parametros--compacta {
+  margin: 0;
+}
+
+.lista-gastos {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lista-gastos__item {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--borde-suave);
+  border-radius: var(--radio-md);
+  background: rgba(15, 23, 42, 0.35);
+}
+
+.lista-gastos__descripcion {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.9rem;
+}
+
+.lista-gastos__categoria {
+  color: var(--text-muted);
+  font-size: 0.74rem;
+}
+
+.lista-gastos__valor {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.formulario--compacto {
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--borde-suave);
+}
+
+.panel--chancucos {
+  margin-top: 18px;
+}
+
+/* ------------------------------ Formularios ----------------------------- */
+
+.formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* --------------------- Onboarding de quincenas -------------------------- */
+
+.grupo-quincenal {
+  margin: 0;
+  padding: 16px;
+  border: 1px solid var(--borde-suave);
+  border-radius: var(--radio-md);
+  display: grid;
+  gap: 12px;
+}
+
+.grupo-quincenal[hidden],
+.subgrupo-quincenal[hidden],
+.aviso-modalidad[hidden] {
+  display: none;
+}
+
+/* En modalidad mensual el aviso ocupa el lugar de la configuración quincenal. */
+.aviso-modalidad {
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px dashed var(--borde-suave);
+  border-radius: var(--radio-md);
+  background: rgba(2, 132, 199, 0.08);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.grupo-quincenal legend {
+  padding: 0 6px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.subgrupo-quincenal {
+  display: grid;
+  gap: 12px;
+}
+
+.opciones {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.opcion {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+}
+
+.opcion input[type="radio"] {
+  margin-top: 3px;
+  accent-color: var(--accent-blue);
+}
+
+/* Calculadora: la entrada y el resultado conviven en dos columnas. */
+.rejilla-paneles--calculadora {
+  align-items: start;
+}
+
+.grupo-horas {
+  margin: 4px 0 0;
+  padding: 14px;
+  border: 1px solid var(--borde-suave);
+  border-radius: var(--radio-md);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.grupo-horas legend {
+  padding: 0 6px;
+}
+
+.campo--horas {
+  gap: 4px;
+}
+
+.campo__etiqueta--suave {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+
+.campo__factor {
+  color: var(--accent-blue);
+  font-variant-numeric: tabular-nums;
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.campo__etiqueta {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.campo__control {
+  width: 100%;
+  padding: 12px 14px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  border: 1px solid var(--borde-suave);
+  border-radius: var(--radio-md);
+  font-size: 0.95rem;
+  font-family: inherit;
+  transition: border-color var(--transicion), box-shadow var(--transicion);
+}
+
+.campo__control:focus-visible {
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.25);
+  outline: none;
+}
+
+.campo__control:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+/* -------------------------------- Botones ------------------------------- */
+
+.boton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 18px;
+  border-radius: var(--radio-md);
+  border: 1px solid transparent;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  text-decoration: none;
+  transition: transform var(--transicion), filter var(--transicion), background var(--transicion);
+}
+
+.boton:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.boton--primario {
+  background: var(--accent-blue);
+  color: #f0f9ff;
+}
+
+.boton--primario:hover:not(:disabled) {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+.boton--secundario {
+  background: rgba(148, 163, 184, 0.1);
+  border-color: var(--borde-suave);
+  color: var(--text-primary);
+}
+
+.boton--secundario:hover {
+  background: rgba(2, 132, 199, 0.18);
+}
+
+/* ------------------------------ Listas clave ---------------------------- */
+
+.lista-parametros {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.lista-parametros li {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 11px 2px;
+  border-bottom: 1px dashed var(--borde-suave);
+  font-size: 0.92rem;
+}
+
+.lista-parametros li span {
+  color: var(--text-muted);
+}
+
+.lista-parametros li:last-child {
+  border-bottom: none;
+}
+
+.lista-parametros__total {
+  font-size: 1.02rem;
+  color: var(--accent-green);
+}
+
+.lista-parametros__total strong {
+  color: var(--accent-green);
+}
+
+/* Cifras de la calculadora: el color comunica el efecto del concepto. */
+.valor-negativo {
+  color: #fca5a5;
+}
+
+.valor-positivo {
+  color: var(--accent-green);
+}
+
+.resultado-principal {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 18px;
+  padding: 20px;
+  background: linear-gradient(150deg, rgba(16, 185, 129, 0.16), rgba(2, 132, 199, 0.08));
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  border-radius: var(--radio-lg);
+}
+
+.resultado-principal__etiqueta {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.resultado-principal__valor {
+  font-size: clamp(1.8rem, 5vw, 2.5rem);
+  line-height: 1.1;
+  color: var(--accent-green);
+  font-variant-numeric: tabular-nums;
+}
+
+.resultado-principal__nota {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+/* -------------------------------- Avisos -------------------------------- */
+
+.aviso {
+  margin: 14px 0 0;
+  padding: 12px 14px;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  background: rgba(245, 158, 11, 0.08);
+  border-left: 3px solid var(--accent-amber);
+  border-radius: 0 var(--radio-md) var(--radio-md) 0;
+}
+
+.alerta {
+  padding: 16px 18px;
+  border-radius: var(--radio-md);
+  font-size: 0.9rem;
+  border: 1px solid transparent;
+}
+
+.alerta ul {
+  margin: 8px 0 0;
+  padding-left: 20px;
+}
+
+.alerta--error {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.45);
+  color: #fecaca;
+}
+
+.alerta--exito {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.45);
+  color: #a7f3d0;
+  margin-bottom: 18px;
+}
+
+.alerta--error + .formulario,
+.alerta + .formulario {
+  margin-top: 16px;
+}
+
+.ayuda {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.enlace {
+  color: var(--accent-blue);
+  font-weight: 600;
+}
+
+/* El aviso del auxilio cambia de color según conserve o pierda el beneficio. */
+.aviso--auxilio[data-aplica="si"] {
+  background: rgba(16, 185, 129, 0.08);
+  border-left-color: var(--accent-green);
+  color: #a7f3d0;
+}
+
+.aviso--auxilio[data-aplica="no"] {
+  background: rgba(239, 68, 68, 0.08);
+  border-left-color: var(--accent-red);
+  color: #fecaca;
+}
+
+/* -------------------------------- Tablas -------------------------------- */
+
+.panel--tabla {
+  margin-top: 18px;
+}
+
+.tabla-contenedor {
+  overflow-x: auto;
+  border: 1px solid var(--borde-suave);
+  border-radius: var(--radio-md);
+}
+
+.tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.86rem;
+  min-width: 640px;
+}
+
+.tabla th,
+.tabla td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--borde-suave);
+  white-space: nowrap;
+}
+
+.tabla thead th {
+  background: rgba(15, 23, 42, 0.7);
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.tabla tbody tr:hover {
+  background: rgba(2, 132, 199, 0.08);
+}
+
+.tabla tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.tabla tfoot th,
+.tabla tfoot td {
+  background: rgba(30, 41, 59, 0.9);
+  font-weight: 700;
+  border-top: 2px solid var(--borde-suave);
+}
+
+.tabla__numero {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.tabla__vacia {
+  color: var(--text-muted);
+  font-style: italic;
+  text-align: center;
+}
+
+/* ------------------------------- Acceso --------------------------------- */
+
+.acceso {
+  display: flex;
+  justify-content: center;
+  padding-top: 12px;
+}
+
+.acceso__panel {
+  width: min(440px, 100%);
+  background: rgba(30, 41, 59, 0.8);
+  border: 1px solid var(--borde-suave);
+  border-radius: var(--radio-lg);
+  padding: 28px;
+  box-shadow: var(--sombra-tarjeta);
+}
+
+.acceso__titulo {
+  margin: 0 0 6px;
+  font-size: 1.5rem;
+}
+
+.acceso__subtitulo {
+  margin: 0 0 20px;
+  color: var(--text-muted);
+  font-size: 0.92rem;
+}
+
+.acceso__atajos {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.acceso__pie {
+  margin: 18px 0 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.acceso__demo {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--borde-suave);
+}
+
+.acceso__demo-titulo {
+  margin: 0 0 10px;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+}
+
+.acceso__demo .lista-parametros li {
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.82rem;
+}
+
+.acceso__demo .lista-parametros strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+/* ------------------------------ Bitácora -------------------------------- */
+
+.bitacora {
+  margin: 0;
+  padding-left: 22px;
+  color: var(--text-muted);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 0.92rem;
+}
+
+.bitacora strong {
+  color: var(--text-primary);
+}
+
+/* ----------------------------- Publicidad ------------------------------- */
+
+.banner-publicidad {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  background: rgba(30, 41, 59, 0.55);
+  border: 1px dashed var(--borde-suave);
+  border-radius: var(--radio-md);
+}
+
+.banner-publicidad__etiqueta {
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-weight: 700;
+  color: var(--text-muted);
+  border: 1px solid var(--borde-suave);
+  border-radius: 4px;
+  padding: 2px 6px;
+  flex-shrink: 0;
+}
+
+.banner-publicidad__texto {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+/* --------------------------------- Pie ---------------------------------- */
+
+.pie {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  padding-top: 20px;
+  border-top: 1px solid var(--borde-suave);
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+
+.pie__separador {
+  opacity: 0.4;
+}
+
+/* ------------------------- Variantes de formulario ---------------------- */
+
+.fila-campos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.acciones-formulario {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.plantillas-horas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.campo--casilla {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+
+.campo--casilla input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent-blue);
+}
+
+.campo__control--compacto {
+  padding: 7px 10px;
+  font-size: 0.82rem;
+  min-width: 90px;
+}
+
+.formulario-en-linea {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+/* --------------------------- Variantes de botón ------------------------- */
+
+.boton--pequeno {
+  padding: 7px 12px;
+  font-size: 0.78rem;
+  border-radius: 10px;
+}
+
+.boton--peligro {
+  background: rgba(239, 68, 68, 0.14);
+  border-color: rgba(239, 68, 68, 0.5);
+  color: #fecaca;
+}
+
+.boton--peligro:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.24);
+}
+
+.alerta--aviso {
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.45);
+  color: #fde68a;
+  margin-bottom: 18px;
+}
+
+.aviso--rollover,
+.aviso--guardado {
+  border-left-color: var(--accent-amber);
+  background: rgba(245, 158, 11, 0.08);
+  color: #fde68a;
+}
+
+.resultado-principal--compacto {
+  padding: 14px 16px;
+  margin-bottom: 12px;
+}
+
+/* --------------------------- Tablas editables --------------------------- */
+
+.tabla--editable {
+  min-width: 520px;
+}
+
+/* Historial cronológico (SRS v1.3, bloque 5): ocho columnas necesitan aire. */
+.tabla--historial {
+  min-width: 880px;
+}
+
+.tabla__fecha {
+  white-space: nowrap;
+  color: var(--text-muted);
+  font-size: 0.86rem;
+}
+
+/* La variación se muestra como nota al pie del saldo neto final. */
+.tabla__variacion {
+  display: block;
+  margin-top: 2px;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.tabla__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.tabla__acciones form {
+  margin: 0;
+}
+
+/* ------------------------------ Responsive ------------------------------ */
+
+@media (max-width: 640px) {
+  .contenedor-app {
+    padding: 18px 14px 36px;
+    gap: 20px;
+  }
+
+  .navegacion {
+    border-radius: var(--radio-lg);
+    justify-content: center;
+  }
+
+  .navegacion__enlace--suave {
+    margin-left: 0;
+  }
+
+  .banner-publicidad {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+/* Accesibilidad: respeta la preferencia de movimiento reducido. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* ------------------------------- Impresión ------------------------------ */
+
+@media print {
+  :root {
+    --bg-primary: #ffffff;
+    --bg-card: #ffffff;
+    --text-primary: #111827;
+    --text-muted: #4b5563;
+    --borde-suave: rgba(17, 24, 39, 0.2);
+  }
+
+  body {
+    background: #ffffff;
+    color: #111827;
+  }
+
+  .cabecera,
+  .navegacion,
+  .pie,
+  .banner-publicidad,
+  .acciones-formulario,
+  .boton,
+  .alerta {
+    display: none !important;
+  }
+
+  .contenedor-app {
+    padding: 0;
+    max-width: 100%;
+  }
+
+  .panel,
+  .tarjeta {
+    box-shadow: none;
+    border: 1px solid #d1d5db;
+    background: #ffffff;
+  }
+
+  .tabla thead th {
+    background: #f3f4f6;
+    color: #111827;
+  }
+
+  .valor-negativo,
+  .valor-positivo {
+    color: #111827;
+  }
+}

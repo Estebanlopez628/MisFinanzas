@@ -1,0 +1,27 @@
+# ---------------------------- Python ----------------------------
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ------------------- Datos locales y respaldos ------------------
+# La base SQLite contiene información financiera real: nunca se versiona.
+backend/datos/
+backend/respaldos/
+respaldos_ci/
+
+# ------------------------- Configuración ------------------------
+# Claves y secretos del despliegue.
+.env
+*.env
+!.env.example
+
+# ---------------------------- Editores --------------------------
+.idea/
+*.swp
+.DS_Store
+Thumbs.db

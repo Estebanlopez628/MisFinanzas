@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block titulo %}Historial de Registros{% endblock %}
+
+{% block contenido %}
+  <section class="heroe">
+    <h1 class="heroe__titulo">Historial de Registros</h1>
+    <p class="heroe__subtitulo">
+      Todas tus liquidaciones guardadas, en orden cronológico. Revisa cuándo las
+      guardaste, cuánto ganaste, cuánto se descontó y con cuánto te quedaste.
+    </p>
+  </section>
+
+  {% include "finanzas/_subnav.html" %}
+
+  {% if guardado %}
+    <div class="alerta alerta--exito" role="status">Periodo guardado correctamente.</div>
+  {% endif %}
+
+  <div class="rejilla-tarjetas">
+    <article class="tarjeta tarjeta--verde">
+      <span class="tarjeta__icono" aria-hidden="true">💰</span>
+      <h3 class="tarjeta__titulo">{{ total_bolsillo | cop }}</h3>
+      <p class="tarjeta__descripcion">Saldo acumulado para el bolsillo en los periodos guardados.</p>
+    </article>
+    <article class="tarjeta tarjeta--azul">
+      <span class="tarjeta__icono" aria-hidden="true">📈</span>
+      <h3 class="tarjeta__titulo">{{ total_devengado | cop }}</h3>
+      <p class="tarjeta__descripcion">Total devengado acumulado (sueldo + recargos).</p>
+    </article>
+    <article class="tarjeta tarjeta--ambar">
+      <span class="tarjeta__icono" aria-hidden="true">🗂️</span>
+      <h3 class="tarjeta__titulo">{{ filas | length }} periodo(s)</h3>
+      <p class="tarjeta__descripcion">Liquidaciones guardadas por este usuario.</p>
+      <a class="enlace" href="{{ url_for('exportar_historial_csv') }}">Exportar CSV</a>
+    </article>
+  </div>
+
+  <section class="panel panel--tabla">
+    <h2 class="panel__titulo">Registros cronológicos</h2>
+    <p class="ayuda">
+      «Gastos quincenales» es la suma de los gastos fijos registrados en el
+      momento de guardar; el saldo neto final es lo que queda después de
+      deducciones y gastos.
+    </p>
+
+    <div class="tabla-contenedor">
+      <table class="tabla tabla--historial">
+        <thead>
+          <tr>
+            <th scope="col">Fecha de guardado</th>
+            <th scope="col">Periodo</th>
+            <th scope="col">Sueldo base</th>
+            <th scope="col">Total extras</th>
+            <th scope="col">Total deducciones</th>
+            <th scope="col">Gastos quincenales</th>
+            <th scope="col">Saldo neto final</th>
+            <th scope="col">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if filas %}
+            {% for fila in filas %}
+              <tr>
+                <td class="tabla__fecha">{{ fila.fecha_guardado }}</td>
+                <td>{{ fila.etiqueta }}</td>
+                <td class="tabla__numero">{{ fila.periodo.sueldo_basico_periodo | cop }}</td>
+                <td class="tabla__numero">{{ fila.total_extras | cop }}</td>
+                <td class="tabla__numero valor-negativo">{{ fila.periodo.total_deducciones | cop }}</td>
+                <td class="tabla__numero">{{ fila.periodo.total_gastos | cop }}</td>
+                <td class="tabla__numero">
+                  <strong>{{ fila.periodo.saldo_bolsillo | cop }}</strong>
+                  {% if fila.anterior %}
+                    <span class="tabla__variacion {% if fila.variacion > 0 %}valor-positivo{% elif fila.variacion < 0 %}valor-negativo{% endif %}">
+                      {{ '+' if fila.variacion > 0 else '' }}{{ fila.variacion | cop }} vs. anterior
+                    </span>
+                  {% else %}
+                    <span class="tabla__variacion">Primer registro</span>
+                  {% endif %}
+                </td>
+                <td class="tabla__acciones">
+                  <a class="boton boton--secundario boton--pequeno"
+                     href="{{ url_for('imprimir_periodo', id_periodo=fila.periodo.id_periodo) }}">Imprimir</a>
+                  <form method="post"
+                        action="{{ url_for('eliminar_periodo', id_periodo=fila.periodo.id_periodo) }}"
+                        onsubmit="return confirm('¿Eliminar este periodo? Los saldos de incapacidad volverán a quedar pendientes.');">
+                    <button class="boton boton--peligro boton--pequeno" type="submit">Eliminar</button>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          {% else %}
+            {# La cabecera se mantiene visible para que se entienda qué verá aquí. #}
+            <tr>
+              <td colspan="8" class="tabla__vacia">
+                Aún no hay liquidaciones guardadas. Calcula un periodo y usa
+                <strong>Guardar periodo</strong>.
+              </td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+{% endblock %}

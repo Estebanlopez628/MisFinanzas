@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block titulo %}{{ modulo.titulo }}{% endblock %}
+
+{% block contenido %}
+  <section class="heroe">
+    <h1 class="heroe__titulo">{{ modulo.icono }} {{ modulo.titulo }}</h1>
+    <p class="heroe__subtitulo">{{ modulo.descripcion }}</p>
+  </section>
+
+  {# Módulo privado: sólo un ADMIN_OLB llega a esta plantilla. #}
+  <div class="rejilla-paneles">
+    <section class="panel">
+      <h2 class="panel__titulo">Módulo privado</h2>
+      <p class="panel__descripcion">
+        Este espacio está reservado para la operación de OLB_BYTE. La estructura
+        de datos (inventario, ventas, cartera y abonos) ya está definida en el
+        diccionario de datos y se conectará con la persistencia de la Fase 2.
+      </p>
+      <ul class="lista-parametros">
+        <li><span>Rol requerido</span><strong>ADMIN_OLB</strong></li>
+        <li><span>Acceso</span><strong>{{ usuario.alias }}</strong></li>
+        <li><span>Clave interna</span><strong>{{ clave_modulo }}</strong></li>
+      </ul>
+    </section>
+
+    <section class="panel">
+      <h2 class="panel__titulo">Estado</h2>
+      <p class="panel__descripcion">
+        La navegación y el bloqueo por rol ya están activos; el contenido
+        operativo llega con la base de datos.
+      </p>
+      <p class="aviso">
+        Un usuario con rol <strong>USER_FINANZAS</strong> que intente abrir esta
+        ruta recibe un error 403 del servidor, aunque escriba la URL a mano.
+      </p>
+      <a class="boton boton--secundario" href="{{ url_for('ver_dashboard') }}">Volver al panel</a>
+    </section>
+  </div>
+{% endblock %}

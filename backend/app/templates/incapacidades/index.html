@@ -1,0 +1,264 @@
+{% extends "base.html" %}
+{% block titulo %}Incapacidades{% endblock %}
+
+{% block contenido %}
+  <section class="heroe">
+    <h1 class="heroe__titulo">Incapacidades</h1>
+    <p class="heroe__subtitulo">
+      Registra el rango de fechas y el sistema liquida el descuento del mes,
+      dejando el saldo pendiente para el periodo siguiente.
+    </p>
+  </section>
+
+  {% include "finanzas/_subnav.html" %}
+
+  {% if guardado %}
+    <div class="alerta alerta--exito" role="status">
+      Incapacidad guardada. El descuento se aplicará automáticamente en Mis Finanzas.
+    </div>
+  {% endif %}
+
+  {% if perfil is none %}
+    <div class="alerta alerta--aviso" role="status">
+      Configura tu sueldo en <a class="enlace" href="{{ url_for('ver_perfil') }}">Mi perfil</a>
+      para no escribirlo en cada incapacidad.
+    </div>
+  {% endif %}
+
+  {# Errores de validación: se conserva lo escrito para corregir sin reescribir. #}
+  {% if errores %}
+    <div class="alerta alerta--error" role="alert">
+      <strong>Revisa los datos:</strong>
+      <ul>
+        {% for error in errores %}
+          <li>{{ error }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+
+  <div class="rejilla-paneles">
+    <section class="panel">
+      <h2 class="panel__titulo">Datos de la incapacidad</h2>
+      <p class="panel__descripcion">Origen común. Los días 1 y 2 los paga el empleador al 100%.</p>
+
+      <form class="formulario" method="post" action="{{ url_for('calcular_incapacidad_formulario') }}"
+            data-proteccion>
+        <label class="campo">
+          <span class="campo__etiqueta">Número de incapacidad (opcional)</span>
+          <input class="campo__control" type="text" name="numero_incapacidad"
+                 value="{{ valores.numero_incapacidad }}" placeholder="EPS-2026-001" />
+        </label>
+
+        <label class="campo">
+          <span class="campo__etiqueta">Fecha de inicio</span>
+          <input class="campo__control" type="date" name="fecha_inicio"
+                 value="{{ valores.fecha_inicio }}" required />
+        </label>
+
+        <label class="campo">
+          <span class="campo__etiqueta">Fecha de fin</span>
+          <input class="campo__control" type="date" name="fecha_fin"
+                 value="{{ valores.fecha_fin }}" required />
+        </label>
+
+        <label class="campo">
+          <span class="campo__etiqueta">Sueldo básico mensual (COP)</span>
+          <input class="campo__control" type="text" name="sueldo_basico" inputmode="decimal"
+                 placeholder="3.000.000" value="{{ valores.sueldo_basico }}" required />
+          <span class="ayuda">Si lo dejas vacío se toma del perfil.</span>
+        </label>
+
+        <label class="campo">
+          <span class="campo__etiqueta">Mes a liquidar</span>
+          <input class="campo__control" type="month" name="periodo_mes"
+                 value="{{ valores.periodo_mes }}" />
+          <span class="ayuda">Si lo dejas vacío se liquida el mes de la fecha de inicio.</span>
+        </label>
+
+        <div class="acciones-formulario">
+          <button class="boton boton--primario" type="submit">Calcular incapacidad</button>
+          <button class="boton boton--secundario" type="submit"
+                  formaction="{{ url_for('guardar_incapacidad') }}">Guardar incapacidad</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="panel">
+      <h2 class="panel__titulo">Cómo se calcula</h2>
+      <ul class="lista-parametros">
+        <li>
+          <span>Días 1 y 2</span>
+          <strong>{{ 100 | porcentaje }} · pago del empleador</strong>
+        </li>
+        <li>
+          <span>Desde el día 3</span>
+          <strong>{{ parametros.porcentaje_pago_desde_dia_tres | porcentaje }} EPS</strong>
+        </li>
+        <li>
+          <span>Descuento al trabajador</span>
+          <strong>{{ parametros.porcentaje_descuento_incapacidad | porcentaje }}</strong>
+        </li>
+        <li>
+          <span>Valor del día</span>
+          <strong>Sueldo básico ÷ 30</strong>
+        </li>
+      </ul>
+      <p class="aviso">
+        Si la incapacidad cruza de mes, se descuenta la parte del mes elegido y el
+        resto queda como saldo para el periodo siguiente.
+      </p>
+    </section>
+  </div>
+
+  {% if resultado %}
+    <section class="seccion" aria-labelledby="titulo-resultado">
+      <h2 id="titulo-resultado" class="seccion__titulo">Resultado de la liquidación</h2>
+
+      <div class="rejilla-tarjetas">
+        <article class="tarjeta tarjeta--azul">
+          <span class="tarjeta__icono" aria-hidden="true">📅</span>
+          <h3 class="tarjeta__titulo">{{ resultado.dias_liquidados }} día(s) en el mes</h3>
+          <p class="tarjeta__descripcion">
+            {{ resultado.dias_al_100 }} sin descuento ·
+            {{ resultado.dias_al_66 }} al {{ parametros.porcentaje_pago_desde_dia_tres | porcentaje }}
+          </p>
+        </article>
+
+        <article class="tarjeta tarjeta--rojo">
+          <span class="tarjeta__icono" aria-hidden="true">➖</span>
+          <h3 class="tarjeta__titulo">{{ resultado.valor_descontado | cop }}</h3>
+          <p class="tarjeta__descripcion">
+            Descuento a aplicar en {{ resultado.anio | mes_anio(resultado.mes) }}.
+          </p>
+        </article>
+
+        <article class="tarjeta tarjeta--ambar">
+          <span class="tarjeta__icono" aria-hidden="true">🔁</span>
+          <h3 class="tarjeta__titulo">{{ resultado.dias_arrastrados }} día(s) arrastrados</h3>
+          <p class="tarjeta__descripcion">
+            {{ resultado.valor_arrastrado | cop }} pendientes para el mes siguiente.
+          </p>
+        </article>
+      </div>
+
+      <div class="panel panel--tabla">
+        <h3 class="panel__titulo">Desglose por mes</h3>
+        <div class="tabla-contenedor">
+          <table class="tabla">
+            <thead>
+              <tr>
+                <th scope="col">Periodo</th>
+                <th scope="col">Desde</th>
+                <th scope="col">Hasta</th>
+                <th scope="col">Días</th>
+                <th scope="col">Al 100%</th>
+                <th scope="col">Al 66,67%</th>
+                <th scope="col">Descuento</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for tramo in liquidacion.tramos %}
+                <tr>
+                  <td>{{ tramo.anio | mes_anio(tramo.mes) }}</td>
+                  <td>{{ tramo.fecha_inicio | fecha_larga }}</td>
+                  <td>{{ tramo.fecha_fin | fecha_larga }}</td>
+                  <td>{{ tramo.dias }}</td>
+                  <td>{{ tramo.dias_al_100 }}</td>
+                  <td>{{ tramo.dias_al_66 }}</td>
+                  <td class="tabla__numero">{{ tramo.valor_descontado | cop }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+            <tfoot>
+              <tr>
+                <th scope="row" colspan="3">Total del rango</th>
+                <td>{{ liquidacion.dias_totales }}</td>
+                <td>{{ liquidacion.dias_al_100 }}</td>
+                <td>{{ liquidacion.dias_al_66 }}</td>
+                <td class="tabla__numero">{{ liquidacion.valor_descontado | cop }}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+
+      {% if resultado.saldos_pendientes %}
+        <div class="panel panel--tabla">
+          <h3 class="panel__titulo">Saldos que se arrastran</h3>
+          <p class="panel__descripcion">
+            Estos valores se inyectarán automáticamente como deducción en el periodo indicado.
+          </p>
+          <div class="tabla-contenedor">
+            <table class="tabla">
+              <thead>
+                <tr>
+                  <th scope="col">Periodo destino</th>
+                  <th scope="col">Desde</th>
+                  <th scope="col">Hasta</th>
+                  <th scope="col">Días pendientes</th>
+                  <th scope="col">Valor pendiente</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for saldo in resultado.saldos_pendientes %}
+                  <tr>
+                    <td>{{ saldo.anio | mes_anio(saldo.mes) }}</td>
+                    <td>{{ saldo.fecha_inicio | fecha_larga }}</td>
+                    <td>{{ saldo.fecha_fin | fecha_larga }}</td>
+                    <td>{{ saldo.dias_pendientes }}</td>
+                    <td class="tabla__numero">{{ saldo.valor_pendiente | cop }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      {% else %}
+        <p class="aviso">La incapacidad no cruza de mes: no hay saldos pendientes.</p>
+      {% endif %}
+    </section>
+  {% endif %}
+
+  {# Incapacidades persistidas: permiten eliminar y alimentan el rollover. #}
+  <section class="panel panel--tabla" aria-labelledby="titulo-registradas">
+    <h2 id="titulo-registradas" class="panel__titulo">Incapacidades registradas</h2>
+    {% if incapacidades %}
+      <div class="tabla-contenedor">
+        <table class="tabla">
+          <thead>
+            <tr>
+              <th scope="col">Número</th>
+              <th scope="col">Desde</th>
+              <th scope="col">Hasta</th>
+              <th scope="col">Días</th>
+              <th scope="col">Descuento</th>
+              <th scope="col">Estado</th>
+              <th scope="col">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in incapacidades %}
+              <tr>
+                <td>{{ item.numero_incapacidad or "—" }}</td>
+                <td>{{ item.fecha_inicio | fecha_larga }}</td>
+                <td>{{ item.fecha_fin | fecha_larga }}</td>
+                <td>{{ item.dias_totales }}</td>
+                <td class="tabla__numero">{{ item.valor_descontado | cop }}</td>
+                <td>{{ item.estado }}</td>
+                <td>
+                  <form method="post" action="{{ url_for('eliminar_incapacidad', id_incapacidad=item.id_incapacidad) }}"
+                        onsubmit="return confirm('¿Eliminar esta incapacidad y sus saldos pendientes?');">
+                    <button class="boton boton--peligro boton--pequeno" type="submit">Eliminar</button>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="tabla__vacia">Aún no hay incapacidades guardadas.</p>
+    {% endif %}
+  </section>
+{% endblock %}

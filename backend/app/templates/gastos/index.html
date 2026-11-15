@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block titulo %}Gastos{% endblock %}
+
+{% block contenido %}
+  <section class="heroe">
+    <h1 class="heroe__titulo">Registro de gastos fijos</h1>
+    <p class="heroe__subtitulo">
+      Registra tus gastos fijos y variables. Los gastos fijos se restan del saldo
+      libre de la quincena que elijas dentro de Mis Finanzas.
+    </p>
+    <p class="ayuda">
+      <a class="enlace" href="{{ url_for('ver_presupuesto') }}">
+        Ir al planificador de ahorro y metas →
+      </a>
+    </p>
+  </section>
+
+  {% include "finanzas/_subnav.html" %}
+
+  {% if guardado %}
+    <div class="alerta alerta--exito" role="status">Gasto registrado.</div>
+  {% endif %}
+  {% if error %}
+    <div class="alerta alerta--error" role="alert">{{ error }}</div>
+  {% endif %}
+
+  <div class="rejilla-paneles">
+    <section class="panel">
+      <h2 class="panel__titulo">Nuevo gasto</h2>
+      <form class="formulario" method="post" action="{{ url_for('crear_gasto') }}">
+        <label class="campo">
+          <span class="campo__etiqueta">Categoría</span>
+          <input class="campo__control" type="text" name="categoria" list="categorias"
+                 placeholder="Vivienda, transporte, ocio…" required />
+          <datalist id="categorias">
+            <option value="Vivienda"></option>
+            <option value="Alimentación"></option>
+            <option value="Transporte"></option>
+            <option value="Servicios"></option>
+            <option value="Salud"></option>
+            <option value="Ocio"></option>
+            <option value="Educación"></option>
+          </datalist>
+        </label>
+        <label class="campo">
+          <span class="campo__etiqueta">Descripción</span>
+          <input class="campo__control" type="text" name="descripcion" required />
+        </label>
+        <label class="campo">
+          <span class="campo__etiqueta">Valor (COP)</span>
+          <input class="campo__control" type="text" name="valor" inputmode="decimal"
+                 placeholder="150.000" required />
+        </label>
+        <label class="campo">
+          <span class="campo__etiqueta">Fecha</span>
+          <input class="campo__control" type="date" name="fecha" value="{{ fecha_hoy }}" />
+        </label>
+        <label class="campo campo--casilla">
+          <input type="checkbox" name="es_fijo" value="1" />
+          <span>Es un gasto fijo mensual</span>
+        </label>
+        <label class="campo">
+          <span class="campo__etiqueta">¿A qué quincena se descuenta?</span>
+          <select class="campo__control" name="quincena">
+            <option value="">Mes completo (no se imputa a una quincena)</option>
+            <option value="1">Quincena 1 · día 15</option>
+            <option value="2">Quincena 2 · día 30</option>
+          </select>
+          <span class="ayuda">
+            Solo aplica a gastos fijos que se pagan con una quincena concreta.
+          </span>
+        </label>
+        <button class="boton boton--primario" type="submit">Registrar gasto</button>
+      </form>
+    </section>
+
+    <section class="panel">
+      <h2 class="panel__titulo">Resumen</h2>
+      <div class="resultado-principal resultado-principal--compacto">
+        <span class="resultado-principal__etiqueta">Gastos del mes en curso</span>
+        <strong class="resultado-principal__valor">{{ total_mes | cop }}</strong>
+      </div>
+      {% if resumen %}
+        <ul class="lista-parametros">
+          {% for fila in resumen %}
+            <li>
+              <span>{{ fila.categoria }}</span>
+              <strong>{{ fila.total | cop }} · {{ fila.porcentaje | porcentaje }}</strong>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="tabla__vacia">Aún no hay gastos registrados.</p>
+      {% endif %}
+    </section>
+  </div>
+
+  <section class="panel panel--tabla">
+    <h2 class="panel__titulo">Gastos registrados</h2>
+    {% if gastos %}
+      <div class="tabla-contenedor">
+        <table class="tabla">
+          <thead>
+            <tr>
+              <th scope="col">Fecha</th>
+              <th scope="col">Categoría</th>
+              <th scope="col">Descripción</th>
+              <th scope="col">Tipo</th>
+              <th scope="col">Quincena</th>
+              <th scope="col">Valor</th>
+              <th scope="col">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for gasto in gastos %}
+              <tr>
+                <td>{{ gasto.fecha | fecha_larga }}</td>
+                <td>{{ gasto.categoria }}</td>
+                <td>{{ gasto.descripcion }}</td>
+                <td>{{ 'Fijo' if gasto.es_fijo else 'Variable' }}</td>
+                <td>
+                  {%- if gasto.quincena == 1 -%}Q1 · día 15
+                  {%- elif gasto.quincena == 2 -%}Q2 · día 30
+                  {%- else -%}Mes completo{%- endif -%}
+                </td>
+                <td class="tabla__numero">{{ gasto.valor | cop }}</td>
+                <td>
+                  <form method="post" action="{{ url_for('eliminar_gasto', id_gasto=gasto.id_gasto) }}"
+                        onsubmit="return confirm('¿Eliminar este gasto?');">
+                    <button class="boton boton--peligro boton--pequeno" type="submit">Eliminar</button>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="tabla__vacia">Aún no hay gastos registrados.</p>
+    {% endif %}
+  </section>
+{% endblock %}

@@ -1,0 +1,870 @@
+{% extends "base.html" %} {% block titulo %}Mis Finanzas{% endblock %} {% block
+contenido %}
+<section class="heroe">
+  <h1 class="heroe__titulo">Mis Finanzas</h1>
+  <p class="heroe__subtitulo">
+    Quincenas, liquidación de nómina y gastos fijos en un solo lugar, {{
+    usuario.alias }}. El sueldo y el descuento de incapacidad se precargan desde
+    tu perfil y tus saldos pendientes.
+  </p>
+</section>
+
+{% include "finanzas/_subnav.html" %} {% if guardado %}
+<div class="alerta alerta--exito" role="status">
+  Liquidación guardada en el historial.
+</div>
+{% endif %} {% if guardado_gasto %}
+<div class="alerta alerta--exito" role="status">
+  Gasto fijo agregado a la quincena.
+</div>
+{% endif %} {% if error_gasto %}
+<div class="alerta alerta--error" role="alert">{{ error_gasto }}</div>
+{% endif %} {% if guardado_chancuco %}
+<div class="alerta alerta--exito" role="status">Atajo de pago guardado.</div>
+{% endif %} {% if error_chancuco %}
+<div class="alerta alerta--error" role="alert">{{ error_chancuco }}</div>
+{% endif %}
+
+<div class="rejilla-finanzas rejilla-finanzas--5050">
+  {# ------------------------------------------------------------------ #} {#
+  Columna izquierda: Quincena 1, Quincena 2 y Atajos de Pago. #} {#
+  ------------------------------------------------------------------ #}
+  <section
+    class="columna-finanzas columna-finanzas--quincenas"
+    id="quincenas"
+    aria-labelledby="titulo-quincenas"
+  >
+    <h2 id="titulo-quincenas" class="seccion__titulo">
+      Tus quincenas y gastos fijos
+    </h2>
+    <p class="ayuda">
+      Cada gasto fijo se resta del ingreso proyectado de su quincena. Las
+      deducciones de ley (salud y pensión) se imputan a la quincena que elegiste
+      en tu perfil.
+    </p>
+
+    {% for quincena in resumen_quincenas %} {# Sub-contenedor 1 y 2: resumen de
+    la quincena y sus gastos fijos. #}
+    <article
+      class="panel panel--quincena"
+      data-quincena="{{ quincena.numero }}"
+    >
+      <header class="quincena__cabecera">
+        <h3 class="quincena__titulo">{{ quincena.etiqueta }}</h3>
+        {% if quincena.numero %}
+        <span class="badge badge--publico"
+          >{{ quincena.porcentaje | porcentaje }} del sueldo</span
+        >
+        {% endif %}
+      </header>
+
+      <div class="quincena__saldo">
+        <span class="quincena__saldo-etiqueta">Saldo libre restante</span>
+        <strong
+          class="quincena__saldo-valor {{ 'valor-negativo' if quincena.saldo_libre < 0 }}"
+          data-saldo-quincena="{{ quincena.numero }}"
+        >
+          {{ quincena.saldo_libre | cop }}
+        </strong>
+      </div>
+
+      <ul class="lista-parametros lista-parametros--compacta">
+        <li>
+          <span>Ingreso proyectado</span>
+          <strong>{{ quincena.ingreso | cop }}</strong>
+        </li>
+        <li>
+          <span>Gastos fijos</span>
+          <strong class="valor-negativo">− {{ quincena.gastos | cop }}</strong>
+        </li>
+        <li>
+          <span>Deducciones de ley</span>
+          <strong class="valor-negativo"
+            >− {{ quincena.deducciones | cop }}</strong
+          >
+        </li>
+      </ul>
+
+      {% if quincena.deducciones > 0 %}
+      <p class="ayuda">
+        Incluye 4 % de salud y 4 % de pensión del mes, descontados en esta
+        quincena según tu perfil.
+      </p>
+      {% endif %} {# Gastos fijos asignados: cada uno se puede editar o
+      eliminar. #}
+      <div class="bloque-gastos-quincena">
+        <h4 class="bloque-gastos__subtitulo">Gastos fijos asignados</h4>
+        {% if quincena.gastos_detalle %}
+        <ul class="lista-gastos">
+          {% for gasto in quincena.gastos_detalle %} {# MODIFICACIÓN: Cambiamos
+          a un contenedor flexible en fila única #}
+          <li
+            class="lista-gastos__item flex items-center justify-between py-2 border-b border-slate-700/40"
+          >
+            {# Descripción a la izquierda #}
+            <span class="lista-gastos__descripcion">
+              {{ gasto.descripcion }}
+              <small
+                class="lista-gastos__categoria block text-xs text-slate-400"
+              >
+                {{ gasto.categoria }}{% if gasto.quincena is none %} · todo el
+                mes{% endif %}
+              </small>
+            </span>
+
+            {# Lado derecho: Valor + Botones de acciones en línea horizontal #}
+            <div class="flex items-center gap-3">
+              <span class="lista-gastos__valor font-semibold text-white"
+                >{{ gasto.valor | cop }}</span
+              >
+
+              <div class="lista-gastos__acciones flex items-center gap-1.5">
+                <details class="edicion-gasto relative">
+                  <summary
+                    class="boton boton--secundario boton--pequeno cursor-pointer"
+                  >
+                    Editar
+                  </summary>
+                  <form
+                    class="formulario formulario--compacto absolute right-0 mt-2 z-10 bg-slate-900 p-4 border border-slate-700 rounded-lg shadow-xl"
+                    method="post"
+                    action="/gastos/{{ gasto.id_gasto }}/editar"
+                    data-proteccion
+                  >
+                    <input type="hidden" name="origen" value="finanzas" />
+                    <input
+                      type="hidden"
+                      name="quincena"
+                      value="{{ gasto.quincena or '' }}"
+                    />
+                    <label class="campo">
+                      <span class="campo__etiqueta">Descripción</span>
+                      <input
+                        class="campo__control"
+                        type="text"
+                        name="descripcion"
+                        value="{{ gasto.descripcion }}"
+                        required
+                      />
+                    </label>
+                    <label class="campo">
+                      <span class="campo__etiqueta">Valor (COP)</span>
+                      <input
+                        class="campo__control"
+                        type="text"
+                        name="valor"
+                        inputmode="decimal"
+                        value="{{ gasto.valor }}"
+                        required
+                      />
+                    </label>
+                    <button
+                      class="boton boton--primario boton--pequeno mt-2"
+                      type="submit"
+                    >
+                      Actualizar
+                    </button>
+                  </form>
+                </details>
+
+                <form
+                  method="post"
+                  action="{{ url_for('eliminar_gasto', id_gasto=gasto.id_gasto) }}"
+                  data-proteccion
+                  class="inline"
+                >
+                  <input type="hidden" name="origen" value="finanzas" />
+                  <button
+                    class="boton boton--peligro boton--pequeno px-2"
+                    type="submit"
+                    aria-label="Eliminar {{ gasto.descripcion }}"
+                  >
+                    ×
+                  </button>
+                </form>
+              </div>
+            </div>
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <p class="ayuda">Sin gastos fijos asignados a este pago.</p>
+        {% endif %}
+      </div>
+      {# Alta de gasto fijo: se resta de inmediato al volver al panel. #}
+      <form
+        class="formulario formulario--compacto"
+        method="post"
+        action="{{ url_for('crear_gasto') }}"
+        data-proteccion
+      >
+        <input type="hidden" name="origen" value="finanzas" />
+        <input type="hidden" name="es_fijo" value="1" />
+        <input type="hidden" name="quincena" value="{{ quincena.numero }}" />
+        <div class="fila-campos">
+          <label class="campo">
+            <span class="campo__etiqueta">Gasto fijo</span>
+            <input
+              class="campo__control"
+              type="text"
+              name="descripcion"
+              placeholder="Gasolina, mercado, arriendo…"
+              required
+            />
+          </label>
+          <label class="campo">
+            <span class="campo__etiqueta">Categoría</span>
+            <input
+              class="campo__control"
+              type="text"
+              name="categoria"
+              list="categorias-gasto"
+              value="Hogar"
+              required
+            />
+          </label>
+          <label class="campo">
+            <span class="campo__etiqueta">Valor (COP)</span>
+            <input
+              class="campo__control"
+              type="text"
+              name="valor"
+              inputmode="decimal"
+              placeholder="150.000"
+              required
+            />
+          </label>
+        </div>
+        <button class="boton boton--secundario boton--pequeno" type="submit">
+          + Agregar gasto fijo
+        </button>
+      </form>
+    </article>
+    {% endfor %}
+
+    <datalist id="categorias-gasto">
+      <option value="Hogar"></option>
+      <option value="Alimentación"></option>
+      <option value="Transporte"></option>
+      <option value="Servicios"></option>
+      <option value="Salud"></option>
+      <option value="Ocio"></option>
+      <option value="Educación"></option>
+    </datalist>
+
+    {# ------------- Sub-contenedor 3: Atajos de Pago (lectura) ---------- #}
+    <section
+      class="panel panel--atajos"
+      id="atajos"
+      aria-labelledby="titulo-atajos"
+    >
+      <h3 id="titulo-atajos" class="panel__titulo">🔗 Atajos de pago</h3>
+      <p class="panel__descripcion">
+        Referencias ya configuradas, listas para copiar y pagar sin salir de Mis
+        Finanzas.
+      </p>
+
+      {% if chancucos %}
+      <ul class="lista-atajos">
+        {% for item in chancucos %}
+        <li class="lista-atajos__item">
+          <span class="lista-atajos__descripcion">{{ item.descripcion }}</span>
+          <span class="lista-atajos__referencia">
+            <code>{{ item.numero_referencia }}</code>
+            <button
+              class="boton boton--secundario boton--pequeno"
+              type="button"
+              data-copiar="{{ item.numero_referencia }}"
+            >
+              Copiar
+            </button>
+          </span>
+          {% if item.url_pago %}
+          <a
+            class="boton boton--primario boton--pequeno"
+            href="{{ item.url_pago }}"
+            target="_blank"
+            rel="noopener"
+            >Pagar</a
+          >
+          {% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="ayuda">Aún no hay atajos de pago configurados.</p>
+      {% endif %}
+    </section>
+
+    <p class="ayuda">
+      <a class="enlace" href="{{ url_for('ver_gastos') }}"
+        >Ver todos los gastos fijos →</a
+      >
+    </p>
+  </section>
+
+  {# ------------------------------------------------------------------ #} {#
+  Columna derecha: liquidación, deducciones, horas, auxilio, #} {# incapacidades
+  y resultados. #} {#
+  ------------------------------------------------------------------ #}
+  <div class="columna-finanzas columna-finanzas--liquidacion" id="liquidacion">
+    <section class="panel panel--liquidacion">
+      <h2 class="panel__titulo">Liquidación del periodo</h2>
+      <p class="panel__descripcion">
+        Base legal de {{ parametros.horas_mensuales | int }} horas mensuales.
+      </p>
+
+      {# Errores servidos por el POST clásico (respaldo sin JavaScript). #} {%
+      if errores %}
+      <div class="alerta alerta--error" role="alert">
+        <strong>Revisa los datos:</strong>
+        <ul>
+          {% for error in errores %}
+          <li>{{ error }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %} {# Bloque que la mejora progresiva rellena con los errores del
+      endpoint JSON. #}
+      <div class="alerta alerta--error" data-errores role="alert" hidden></div>
+
+      <form
+        class="formulario"
+        method="post"
+        action="{{ url_for('procesar_finanzas') }}"
+        data-calculadora
+        data-proteccion
+        novalidate
+      >
+        {# SRS v1.3: año, mes y quincena dejan de mostrarse en la cabecera, pero
+        siguen viajando en el POST para no perder el periodo que se está
+        liquidando. #}
+        <input
+          type="hidden"
+          name="anio"
+          value="{{ valores.get('anio', anio_actual) }}"
+          data-entrada
+        />
+        <input
+          type="hidden"
+          name="mes"
+          value="{{ valores.get('mes', '') }}"
+          data-entrada
+        />
+        <input
+          type="hidden"
+          name="quincena"
+          value="{{ valores.get('quincena', '0') }}"
+          data-entrada
+        />
+        <input
+          type="hidden"
+          name="aplicar_rollover"
+          value="{{ valores.get('aplicar_rollover', '0') }}"
+          data-entrada
+        />
+
+        {# ----------------------- Sueldo básico ------------------------- #}
+        <div class="bloque-sueldo">
+          <label class="campo">
+            <span class="campo__etiqueta">Sueldo básico del periodo (COP)</span>
+            <input
+              class="campo__control campo__control--destacado"
+              type="text"
+              name="sueldo_basico"
+              inputmode="decimal"
+              placeholder="3.000.000"
+              autocomplete="off"
+              value="{{ valores.get('sueldo_basico', '') }}"
+              required
+              data-entrada
+            />
+            <span class="ayuda">
+              Acepta puntos de miles: 3.000.000. {% if perfil %}Se toma de tu
+              perfil si lo dejas vacío.{% endif %}
+            </span>
+          </label>
+        </div>
+
+        {# ------------- Deducciones de ley con valor en pesos ----------- #}
+        <div class="bloque-deducciones" aria-live="polite">
+          <h3 class="bloque-deducciones__titulo">Deducciones de ley</h3>
+          <ul class="lista-deducciones">
+            <li>
+              <span
+                >Salud ({{ (parametros.porcentaje_salud * 100) | porcentaje
+                }})</span
+              >
+              <strong class="valor-negativo" data-deduccion="salud">
+                {%- if resultado %}− {{ resultado.deducciones_ley.salud | cop
+                }}{% else %}—{% endif -%}
+              </strong>
+            </li>
+            <li>
+              <span
+                >Pensión ({{ (parametros.porcentaje_pension * 100) | porcentaje
+                }})</span
+              >
+              <strong class="valor-negativo" data-deduccion="pension">
+                {%- if resultado %}− {{ resultado.deducciones_ley.pension | cop
+                }}{% else %}—{% endif -%}
+              </strong>
+            </li>
+          </ul>
+          <p class="ayuda">
+            Se calculan sobre el ingreso base de cotización: sueldo básico más
+            horas extras y recargos del periodo.
+          </p>
+        </div>
+
+        {# La incapacidad ya no se captura en la cabecera: el descuento llega
+        del bloque compacto o del rollover pendiente. #}
+        <input
+          type="hidden"
+          name="deduccion_incapacidad"
+          value="{{ valores.get('deduccion_incapacidad', '0') }}"
+          data-entrada
+        />
+
+        {% if rollover.hay_saldo %}
+        <p class="aviso aviso--rollover">
+          Rollover pendiente: {{ rollover.dias }} día(s) por {{ rollover.valor |
+          cop }}. Al guardar la liquidación se marcarán como aplicados.
+        </p>
+        {% endif %} {# ---------------- Horas extras y recargos (2 × 3)
+        -------------- #}
+        <fieldset class="grupo-horas grupo-horas--cuadricula">
+          <legend class="campo__etiqueta">Horas extras y recargos</legend>
+          <div class="cuadricula-horas">
+            {% for tipo in tipos_hora %}
+            <label class="campo campo--horas">
+              <span class="campo__etiqueta campo__etiqueta--suave"
+                >{{ tipo.etiqueta }}</span
+              >
+              <input
+                class="campo__control"
+                type="number"
+                name="horas_{{ tipo.clave }}"
+                min="0"
+                step="0.01"
+                inputmode="decimal"
+                autocomplete="off"
+                value="{{ valores.get('horas_' ~ tipo.clave, '0') }}"
+                data-entrada
+              />
+            </label>
+            {% endfor %}
+          </div>
+        </fieldset>
+
+        <div class="acciones-formulario acciones-formulario--liquidacion">
+          <button class="boton boton--primario" type="submit">
+            Calcular liquidación
+          </button>
+          <button
+            class="boton boton--secundario"
+            type="button"
+            data-plantilla="limpiar"
+          >
+            Limpiar
+          </button>
+          <button
+            class="boton boton--secundario"
+            type="submit"
+            formaction="{{ url_for('guardar_liquidacion') }}"
+          >
+            Guardar periodo
+          </button>
+        </div>
+        <p class="ayuda" data-aviso-cambios hidden>Hay cambios sin guardar.</p>
+      </form>
+    </section>
+
+    {# ------------------ Auxilio de transporte (2 SMMLV) --------------- #}
+    <section class="panel panel--auxilio" aria-live="polite">
+      <h2 class="panel__titulo">Auxilio de transporte</h2>
+      <div class="auxilio__valor">
+        <span class="auxilio__etiqueta">Valor del auxilio</span>
+        <strong class="auxilio__monto" data-auxilio-valor>
+          {%- if resultado %}{{ resultado.auxilio_transporte | cop }}{% else
+          %}—{% endif -%}
+        </strong>
+      </div>
+      <p class="ayuda">
+        Tope de 2 SMMLV: {{ parametros.tope_auxilio_transporte | cop }}.
+      </p>
+
+      {# Mensaje del validador de 2 SMMLV, actualizado en vivo por la UI. #}
+      <p
+        class="aviso aviso--auxilio"
+        data-mensaje-auxilio
+        data-aplica="{{ 'si' if resultado and resultado.evaluacion_auxilio and resultado.evaluacion_auxilio.aplica else 'no' }}"
+      >
+        {%- if resultado and resultado.evaluacion_auxilio -%} {{
+        resultado.evaluacion_auxilio.mensaje }} {%- else -%} Como tu salario
+        supera el tope de los dos salarios mínimos, no tendrías derecho al
+        auxilio de transporte. {%- endif -%}
+      </p>
+    </section>
+
+    {# ------------------- Incapacidades (compacto) --------------------- #}
+    <section
+      class="panel panel--incapacidad"
+      aria-labelledby="titulo-incapacidad"
+    >
+      <h2 id="titulo-incapacidad" class="panel__titulo">Incapacidades</h2>
+      <p class="panel__descripcion">
+        Días 1 y 2 al 100 % (empleador); desde el día 3, al 66,67 %.
+      </p>
+      <form
+        class="formulario formulario--compacto"
+        method="post"
+        action="{{ url_for('calcular_incapacidad_formulario') }}"
+        data-proteccion
+      >
+        <div class="fila-campos">
+          <label class="campo">
+            <span class="campo__etiqueta">Fecha de inicio</span>
+            <input
+              class="campo__control"
+              type="date"
+              name="fecha_inicio"
+              required
+            />
+          </label>
+          <label class="campo">
+            <span class="campo__etiqueta">Fecha de fin</span>
+            <input
+              class="campo__control"
+              type="date"
+              name="fecha_fin"
+              required
+            />
+          </label>
+          <label class="campo">
+            <span class="campo__etiqueta">Número de días</span>
+            <input
+              class="campo__control"
+              type="number"
+              name="dias"
+              min="1"
+              step="1"
+              placeholder="Según el rango"
+            />
+          </label>
+        </div>
+        <div class="acciones-formulario">
+          <button class="boton boton--primario boton--pequeno" type="submit">
+            Calcular incapacidad
+          </button>
+          <button
+            class="boton boton--secundario boton--pequeno"
+            type="submit"
+            formaction="{{ url_for('guardar_incapacidad') }}"
+          >
+            Guardar incapacidad
+          </button>
+          <button class="boton boton--secundario boton--pequeno" type="reset">
+            Limpiar
+          </button>
+        </div>
+      </form>
+      <p class="ayuda">
+        <a class="enlace" href="{{ url_for('ver_incapacidades') }}"
+          >Ver el detalle completo →</a
+        >
+      </p>
+    </section>
+
+    {# --------------------------- Resultado en vivo -------------------- #}
+    <section class="panel panel--resultado" aria-live="polite">
+      <h2 class="panel__titulo">Resultado del periodo</h2>
+      <p class="panel__descripcion">{{ entrada.etiqueta_periodo }}</p>
+
+      <div class="resultado-principal">
+        <span class="resultado-principal__etiqueta"
+          >Saldo para el bolsillo</span
+        >
+        <strong class="resultado-principal__valor" data-campo="saldo_bolsillo">
+          {%- if resultado %}{{ resultado.saldo_bolsillo | cop }}{% else %}—{%
+          endif -%}
+        </strong>
+        <span class="resultado-principal__nota">
+          Ingresos totales menos deducciones de ley e incapacidad. Gastos del
+          periodo: {{ gasto_periodo | cop }}.
+        </span>
+      </div>
+
+      <ul class="lista-parametros">
+        <li>
+          <span>Valor hora ordinaria</span>
+          <strong data-campo="valor_hora">
+            {%- if resultado %}{{ resultado.valor_hora_ordinaria | cop }}{% else
+            %}—{% endif -%}
+          </strong>
+        </li>
+        <li>
+          <span>Horas extras y recargos</span>
+          <strong data-campo="total_recargos">
+            {%- if resultado %}{{ resultado.total_recargos | cop }}{% else %}—{%
+            endif -%}
+          </strong>
+        </li>
+        <li>
+          <span
+            >Salud ({{ (parametros.porcentaje_salud * 100) | porcentaje
+            }})</span
+          >
+          <strong class="valor-negativo" data-campo="deduccion_salud">
+            {%- if resultado %}− {{ resultado.deducciones_ley.salud | cop }}{%
+            else %}—{% endif -%}
+          </strong>
+        </li>
+        <li>
+          <span
+            >Pensión ({{ (parametros.porcentaje_pension * 100) | porcentaje
+            }})</span
+          >
+          <strong class="valor-negativo" data-campo="deduccion_pension">
+            {%- if resultado %}− {{ resultado.deducciones_ley.pension | cop }}{%
+            else %}—{% endif -%}
+          </strong>
+        </li>
+        <li>
+          <span>Auxilio de transporte</span>
+          <strong class="valor-positivo" data-campo="auxilio_transporte">
+            {%- if resultado %}{{ resultado.auxilio_transporte | cop }}{% else
+            %}—{% endif -%}
+          </strong>
+        </li>
+        <li>
+          <span>Descuento por incapacidad</span>
+          <strong class="valor-negativo" data-campo="deduccion_incapacidad">
+            {%- if resultado %}− {{ resultado.deduccion_incapacidad | cop }}{%
+            else %}—{% endif -%}
+          </strong>
+        </li>
+        <li>
+          <span>Total devengado (sueldo + recargos)</span>
+          <strong data-campo="total_devengado">
+            {%- if resultado %}{{ resultado.total_devengado | cop }}{% else
+            %}—{% endif -%}
+          </strong>
+        </li>
+        <li>
+          <span>Total ingresos</span>
+          <strong data-campo="total_ingresos">
+            {%- if resultado %}{{ resultado.total_ingresos | cop }}{% else %}—{%
+            endif -%}
+          </strong>
+        </li>
+        <li>
+          <span>Total deducciones</span>
+          <strong class="valor-negativo" data-campo="total_deducciones">
+            {%- if resultado %}− {{ resultado.total_deducciones | cop }}{% else
+            %}—{% endif -%}
+          </strong>
+        </li>
+        {% if resultado %}
+        <li class="lista-parametros__total">
+          <span>Disponible después de gastos</span>
+          <strong
+            >{{ (resultado.saldo_bolsillo - gasto_periodo) | cop }}</strong
+          >
+        </li>
+        {% endif %}
+      </ul>
+
+      {% if periodo_guardado %}
+      <p class="aviso aviso--guardado">
+        Este periodo ya está guardado. Al guardar de nuevo se actualizará.
+        <a class="enlace" href="{{ url_for('ver_historial') }}">Ver historial</a
+        >.
+      </p>
+      {% endif %}
+    </section>
+
+    {# ------------------------ Desglose de recargos -------------------- #}
+    <section class="panel panel--tabla" aria-labelledby="titulo-detalle">
+      <h2 id="titulo-detalle" class="panel__titulo">
+        Desglose de horas extras y recargos
+      </h2>
+      <div class="tabla-contenedor">
+        <table class="tabla">
+          <thead>
+            <tr>
+              <th scope="col">Concepto</th>
+              <th scope="col">Factor</th>
+              <th scope="col">Horas</th>
+              <th scope="col">Valor</th>
+            </tr>
+          </thead>
+          <tbody data-detalle>
+            {% if resultado and resultado.detalle_recargos %} {% for item in
+            resultado.detalle_recargos %}
+            <tr>
+              <td>{{ item.etiqueta }}</td>
+              <td>× {{ item.factor }}</td>
+              <td class="tabla__numero">
+                {{ '%.2f' | format(item.cantidad_horas) | replace('.', ',') }}
+              </td>
+              <td class="tabla__numero">{{ item.valor_total | cop }}</td>
+            </tr>
+            {% endfor %} {% else %}
+            <tr>
+              <td colspan="4" class="tabla__vacia">
+                Sin horas extras ni recargos registrados.
+              </td>
+            </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+      <p class="ayuda">
+        <a class="enlace" href="{{ url_for('ver_historial') }}"
+          >Historial y comparación</a
+        >
+        ·
+        <a class="enlace" href="{{ url_for('exportar_historial_csv') }}"
+          >Exportar CSV</a
+        >
+      </p>
+    </section>
+  </div>
+</div>
+
+{# ------------------------------------------------------------------ #} {#
+Gestión de atajos de pago (solo ADMIN_OLB). #} {#
+------------------------------------------------------------------ #} {% if
+usuario.es_administrador %}
+<section
+  class="panel panel--chancucos"
+  id="chancucos"
+  aria-labelledby="titulo-chancucos"
+>
+  <h2 id="titulo-chancucos" class="panel__titulo">
+    🔗 Configurar atajos de pago
+  </h2>
+  <p class="panel__descripcion">
+    Tres datos por atajo: descripción, número de referencia y link de pago.
+  </p>
+
+  <form
+    class="formulario formulario--compacto"
+    method="post"
+    action="{{ url_for('crear_chancuco') }}"
+    data-proteccion
+  >
+    <input type="hidden" name="origen" value="finanzas" />
+    <div class="fila-campos">
+      <label class="campo">
+        <span class="campo__etiqueta">Descripción</span>
+        <input
+          class="campo__control"
+          type="text"
+          name="descripcion"
+          placeholder="EPM energía, Claro internet…"
+          required
+        />
+      </label>
+      <label class="campo">
+        <span class="campo__etiqueta">Número de referencia</span>
+        <input
+          class="campo__control"
+          type="text"
+          name="numero_referencia"
+          required
+        />
+      </label>
+      <label class="campo">
+        <span class="campo__etiqueta">Link de pago (opcional)</span>
+        <input
+          class="campo__control"
+          type="url"
+          name="url_pago"
+          placeholder="https://pagos.entidad.com"
+        />
+      </label>
+    </div>
+    <label class="campo campo--casilla">
+      <input type="checkbox" name="favorito" value="1" />
+      <span>Marcar como favorito</span>
+    </label>
+    <button class="boton boton--secundario boton--pequeno" type="submit">
+      Guardar atajo de pago
+    </button>
+  </form>
+
+  {% if chancucos %}
+  <div class="tabla-contenedor">
+    <table class="tabla">
+      <thead>
+        <tr>
+          <th scope="col">Favorito</th>
+          <th scope="col">Descripción</th>
+          <th scope="col">Referencia</th>
+          <th scope="col">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in chancucos %}
+        <tr>
+          <td>
+            <form
+              method="post"
+              action="{{ url_for('alternar_favorito_chancuco', id_chancuco=item.id_chancuco) }}"
+            >
+              <input type="hidden" name="origen" value="finanzas" />
+              <button
+                class="boton boton--secundario boton--pequeno"
+                type="submit"
+                aria-label="{{ 'Quitar de favoritos' if item.favorito else 'Marcar como favorito' }}"
+              >
+                {{ '★' if item.favorito else '☆' }}
+              </button>
+            </form>
+          </td>
+          <td>{{ item.descripcion }}</td>
+          <td class="tabla__numero">
+            <code>{{ item.numero_referencia }}</code>
+            <button
+              class="boton boton--secundario boton--pequeno"
+              type="button"
+              data-copiar="{{ item.numero_referencia }}"
+            >
+              Copiar
+            </button>
+          </td>
+          <td class="tabla__acciones">
+            {% if item.url_pago %}
+            <a
+              class="boton boton--primario boton--pequeno"
+              href="{{ item.url_pago }}"
+              target="_blank"
+              rel="noopener"
+              >Pagar</a
+            >
+            {% endif %}
+            <form
+              method="post"
+              action="{{ url_for('eliminar_chancuco', id_chancuco=item.id_chancuco) }}"
+              onsubmit="return confirm('¿Eliminar esta referencia?');"
+            >
+              <input type="hidden" name="origen" value="finanzas" />
+              <button class="boton boton--peligro boton--pequeno" type="submit">
+                Eliminar
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="tabla__vacia">Aún no hay referencias guardadas.</p>
+  {% endif %}
+</section>
+{% endif %} {% endblock %} {% block scripts %}
+<script src="{{ url_for('estaticos', path='js/finanzas.js') }}" defer></script>
+{% endblock %}
