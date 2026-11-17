@@ -2,13 +2,15 @@
 
 Responsabilidad
 ---------------
-- Precargar el sueldo y el descuento de incapacidad desde el perfil y los
-  saldos pendientes (rollover).
+- Precargar el sueldo desde el perfil y el descuento de incapacidad del mes a
+  partir de las fechas registradas.
 - Liquidar el periodo en el servidor (POST clásico, sin JavaScript) y en JSON
   para el recálculo en vivo.
 - Guardar la liquidación con su periodo (mensual o quincenal), listar el
   historial, comparar meses, exportar a CSV e imprimir.
-- Administrar los saldos de incapacidad que se aplican al guardar.
+
+SRS v1.5: la incapacidad se descuenta por tramo mensual. No hay rollover: cada
+periodo toma solo los días que le corresponden del rango registrado.
 
 La aritmética vive en `app.servicios.nomina`; este router solo valida entradas,
 persiste y presenta resultados.
@@ -38,11 +40,17 @@ from app.core.texto import (
     parsear_monto,
 )
 from app.dependencias import UsuarioSesion, obtener_usuario_actual
-from app.modelos import PerfilFinanciero, PeriodoNomina
+from app.modelos import DeduccionFija, PerfilFinanciero, PeriodoNomina
 from app.routers.vistas import contexto_base, plantillas
-from app.servicios import auditoria, gastos, perfiles, periodos
+from app.servicios import auditoria, gastos, pagos_metas, perfiles, periodos, registro_incapacidades
 from app.servicios import deducciones_fijas
-from app.servicios.incapacidad import ResultadoMesIncapacidad, liquidar_mes_incapacidad
+from app.servicios.incapacidad import (
+    LiquidacionIncapacidad,
+    ResultadoMesIncapacidad,
+    TramoMensual,
+    calcular_incapacidad,
+    liquidar_mes_incapacidad,
+)
 from app.servicios import chancucos as servicio_chancucos
 from app.servicios import quincenas
 from app.servicios.nomina import (
@@ -70,7 +78,6 @@ class EntradaFinanzas:
         anio: Año del periodo seleccionado.
         mes: Mes del periodo (1–12).
         quincena: `0` mensual, `1` o `2` quincenal.
-        aplicar_rollover: `True` si el descuento incluye saldos arrastrados.
         perfil: Perfil financiero del usuario, si ya lo configuró.
         errores: Mensajes de validación para mostrar al usuario.
     """
@@ -82,9 +89,12 @@ class EntradaFinanzas:
     anio: int = field(default_factory=lambda: date.today().year)
     mes: int = field(default_factory=lambda: date.today().month)
     quincena: int = 0
-    aplicar_rollover: bool = False
     perfil: PerfilFinanciero | None = None
     detalle_incapacidad: ResultadoMesIncapacidad | None = None
+    # SRS v1.5: rango completo y tramos por mes para mostrar el desglose; el
+    # descuento que se aplica es solo el del periodo elegido.
+    liquidacion_incapacidad: LiquidacionIncapacidad | None = None
+    tramos_incapacidad: list[TramoMensual] = field(default_factory=list)
     errores: list[str] = field(default_factory=list)
 
     @property
@@ -174,10 +184,14 @@ def _descuento_por_fechas(datos: Mapping[str, Any], entrada: EntradaFinanzas) ->
         detalle = liquidar_mes_incapacidad(
             inicio, fin, base, anio=entrada.anio, mes=entrada.mes
         )
+        liquidacion = calcular_incapacidad(inicio, fin, base)
     except ValueError as error:
         entrada.errores.append(str(error))
         return CERO
     entrada.detalle_incapacidad = detalle
+    entrada.liquidacion_incapacidad = liquidacion
+    # SRS v1.5: todos los tramos se muestran; solo el del periodo se descuenta.
+    entrada.tramos_incapacidad = list(liquidacion.tramos)
     return detalle.valor_descontado
 
 
@@ -190,7 +204,7 @@ def _leer_entradas(
 
     Args:
         datos: Campos enviados por formulario o JSON.
-        bd: Sesión de base de datos (para perfil y rollover).
+        bd: Sesión de base de datos (para el perfil y las incapacidades).
         id_usuario: Dueño de la liquidación.
 
     Returns:
@@ -250,43 +264,36 @@ def _leer_entradas(
         elif cantidad > CERO:
             entrada.horas[tipo] = cantidad
 
-    # Rollover: saldo de incapacidades arrastrado desde meses anteriores.
-    rollover = periodos.resumen_rollover(
-        bd, id_usuario, entrada.anio, entrada.mes
-    )
-    # SRS v1.4 (REQ-05): cuando el formulario envía las fechas de incapacidad, el
-    # descuento del mes sale del motor legal (días 1–2 al 100 %; desde el día 3,
-    # descuento del 33,33 %) y se suma al saldo arrastrado. El cliente siempre
-    # envía esas claves, así que el valor oculto ya no decide el resultado.
-    fechas_enviadas = "incapacidad_inicio" in datos or "incapacidad_fin" in datos
-    if fechas_enviadas:
-        descuento_fechas = _descuento_por_fechas(datos, entrada)
-        arrastre = rollover.valor if rollover.hay_saldo else CERO
-        texto_deduccion = f"{descuento_fechas + arrastre:.2f}"
-        envio_explicito = False
+    # SRS v1.5: la incapacidad se descuenta por tramo del mes elegido. Si el
+    # formulario trae fechas, manda el rango escrito; si no, se toman las
+    # incapacidades registradas que cubren el periodo (reemplazo del rollover).
+    texto_inicio = _texto(datos, "incapacidad_inicio")
+    texto_fin = _texto(datos, "incapacidad_fin")
+    # SRS v1.6: «Limpiar» omite las registradas para este cálculo: el sueldo y las
+    # quincenas vuelven a su valor base sin borrar nada.
+    omitir_registradas = _texto(datos, "incapacidad_omitir") == "1"
+    if texto_inicio and texto_fin:
+        entrada.deduccion_incapacidad = _descuento_por_fechas(datos, entrada)
+        entrada.valores["incapacidad_inicio"] = texto_inicio
+        entrada.valores["incapacidad_fin"] = texto_fin
+    elif omitir_registradas:
+        entrada.deduccion_incapacidad = CERO
     else:
-        envio_explicito = "deduccion_incapacidad" in datos
-        texto_deduccion = _texto(datos, "deduccion_incapacidad")
-        if not envio_explicito and rollover.hay_saldo:
-            texto_deduccion = f"{rollover.valor:.2f}"
+        base_incapacidad = (
+            entrada.perfil.sueldo_basico
+            if entrada.perfil is not None
+            else entrada.sueldo
+        )
+        if base_incapacidad is not None and base_incapacidad > CERO:
+            tramos = registro_incapacidades.tramos_del_mes(
+                bd, id_usuario, entrada.anio, entrada.mes, base_incapacidad
+            )
+            entrada.tramos_incapacidad = tramos
+            entrada.deduccion_incapacidad = redondear_dinero(
+                sum((tramo.valor_descontado for tramo in tramos), start=CERO)
+            )
 
-    try:
-        deduccion = parsear_monto(texto_deduccion or "0")
-        if deduccion < CERO:
-            entrada.errores.append("El descuento por incapacidad no puede ser negativo.")
-        else:
-            entrada.deduccion_incapacidad = deduccion
-    except ValueError:
-        entrada.errores.append("El descuento por incapacidad no es un número válido.")
-
-    marcar_rollover = _texto(datos, "aplicar_rollover") in {"1", "si", "sí", "true"}
-    entrada.aplicar_rollover = bool(
-        rollover.hay_saldo
-        and (not envio_explicito or marcar_rollover)
-        and entrada.deduccion_incapacidad >= rollover.valor
-    )
-    entrada.valores["deduccion_incapacidad"] = texto_deduccion or "0"
-    entrada.valores["aplicar_rollover"] = "1" if entrada.aplicar_rollover else "0"
+    entrada.valores["deduccion_incapacidad"] = f"{entrada.deduccion_incapacidad:.2f}"
     return entrada
 
 
@@ -393,17 +400,19 @@ def _datos_formateados(liquidacion: LiquidacionNomina) -> dict[str, str]:
 def _detalle_formateado(liquidacion: LiquidacionNomina) -> list[dict[str, str]]:
     """Convierte el desglose de recargos en filas listas para la tabla.
 
+    SRS v1.5: solo se publican concepto, horas y valor. El factor se omite para
+    que la tabla quepa sin desplazamiento horizontal en el móvil.
+
     Args:
         liquidacion: Resultado del motor de nómina.
 
     Returns:
-        Lista de diccionarios con etiqueta, horas, factor y valor.
+        Lista de diccionarios con etiqueta, horas y valor.
     """
     return [
         {
             "etiqueta": item.etiqueta,
             "horas": f"{item.cantidad_horas:.2f}".replace(".", ","),
-            "factor": f"{item.factor:.2f}".replace(".", ","),
             "valor": formatear_cop(item.valor_total),
         }
         for item in liquidacion.detalle_recargos
@@ -411,23 +420,102 @@ def _detalle_formateado(liquidacion: LiquidacionNomina) -> list[dict[str, str]]:
 
 
 def _detalle_incapacidad_json(entrada: EntradaFinanzas) -> dict[str, object] | None:
-    """Resume el cálculo de incapacidad para mostrarlo junto al formulario.
+    """Resume la incapacidad del periodo y sus tramos mensuales.
+
+    SRS v1.5: la interfaz muestra el desglose por mes y solo descuenta el tramo
+    del periodo elegido.
 
     Args:
-        entrada: Entrada normalizada; `detalle_incapacidad` se llena al calcular.
+        entrada: Entrada normalizada con los tramos ya calculados.
 
     Returns:
-        Días sin descuento, días con descuento y descuento del mes; `None` si no
-        se enviaron fechas de incapacidad.
+        Días del mes, reparto 100 %/66,67 %, descuento aplicado y la lista de
+        tramos; `None` si no hay incapacidad.
     """
-    detalle = entrada.detalle_incapacidad
-    if detalle is None:
+    tramos = entrada.tramos_incapacidad
+    if not tramos:
         return None
+
+    actuales = [
+        tramo
+        for tramo in tramos
+        if (tramo.anio, tramo.mes) == (entrada.anio, entrada.mes)
+    ]
     return {
-        "dias_al_100": detalle.dias_al_100,
-        "dias_al_66": detalle.dias_al_66,
-        "descuento": formatear_cop(detalle.valor_descontado),
+        "dias_mes": sum(tramo.dias for tramo in actuales),
+        "dias_al_100": sum(tramo.dias_al_100 for tramo in actuales),
+        "dias_al_66": sum(tramo.dias_al_66 for tramo in actuales),
+        "descuento": formatear_cop(entrada.deduccion_incapacidad),
+        "tramos": [
+            {
+                "periodo": formatear_mes_anio(tramo.anio, tramo.mes),
+                "anio": tramo.anio,
+                "mes": tramo.mes,
+                "dias": tramo.dias,
+                "dias_al_100": tramo.dias_al_100,
+                "dias_al_66": tramo.dias_al_66,
+                "descuento": formatear_cop(tramo.valor_descontado),
+                "actual": (tramo.anio, tramo.mes) == (entrada.anio, entrada.mes),
+            }
+            for tramo in tramos
+        ],
     }
+
+
+def _fijas_del_periodo(
+    bd: Session, id_usuario: str, quincena: int
+) -> list[DeduccionFija]:
+    """Devuelve las deducciones fijas que se restan del periodo consultado.
+
+    Args:
+        bd: Sesión de base de datos.
+        id_usuario: Dueño de las deducciones.
+        quincena: `0` mes completo, `1` o `2` quincena.
+
+    Returns:
+        Las deducciones que aplican al periodo. En el mes completo se incluyen
+        las de las dos quincenas.
+    """
+    fijas = deducciones_fijas.listar_deducciones(bd, id_usuario)
+    if quincena in (1, 2):
+        return [deduccion for deduccion in fijas if deduccion.quincena == quincena]
+    return fijas
+
+
+def _total_fijas(fijas: list[DeduccionFija]) -> Decimal:
+    """Suma el valor de las deducciones fijas de un periodo.
+
+    Args:
+        fijas: Deducciones que aplican al periodo.
+
+    Returns:
+        Total en pesos redondeado a centavos.
+    """
+    return redondear_dinero(sum((deduccion.valor for deduccion in fijas), start=CERO))
+
+
+def _total_deducciones_ley(
+    liquidacion: LiquidacionNomina | None, fijas: list[DeduccionFija]
+) -> Decimal:
+    """Suma salud, pensión, incapacidad del mes y deducciones fijas.
+
+    SRS v1.5: la caja «Deducciones de ley» muestra un único total con todo lo
+    que se descuenta del periodo, incluida la incapacidad.
+
+    Args:
+        liquidacion: Resultado del motor de nómina, o `None` si no se ha calculado.
+        fijas: Deducciones fijas que aplican al periodo.
+
+    Returns:
+        Total en pesos; cero cuando todavía no hay liquidación.
+    """
+    if liquidacion is None:
+        return CERO
+    return redondear_dinero(
+        liquidacion.deducciones_ley.total
+        + liquidacion.deduccion_incapacidad
+        + _total_fijas(fijas)
+    )
 
 
 def _saldos_quincenas(
@@ -501,8 +589,10 @@ def _contexto_calculadora(
     Returns:
         Diccionario para la plantilla.
     """
+    # SRS v1.6: las metas se muestran como gastos fijos del mes visible.
+    pagos_metas.asegurar_gastos_de_metas(bd, usuario.id_usuario, entrada.anio, entrada.mes)
     perfil = perfiles.obtener_perfil(bd, usuario.id_usuario)
-    rollover = periodos.resumen_rollover(bd, usuario.id_usuario, entrada.anio, entrada.mes)
+    fijas_periodo = _fijas_del_periodo(bd, usuario.id_usuario, entrada.quincena)
     periodo_guardado = periodos.obtener_periodo(
         bd, usuario.id_usuario, entrada.anio, entrada.mes, entrada.quincena
     )
@@ -510,6 +600,7 @@ def _contexto_calculadora(
     contexto.update(
         {
             "titulo_pagina": "Mis Finanzas",
+            "hoy": date.today(),
             "tipos_hora": [
                 {"clave": tipo, "etiqueta": ETIQUETAS_TIPO_HORA[tipo], "factor": factor}
                 for tipo, factor in FACTORES_RECARGO.items()
@@ -519,8 +610,19 @@ def _contexto_calculadora(
             "resultado": resultado,
             "entrada": entrada,
             "perfil": perfil,
-            "rollover": rollover,
             "periodo_guardado": periodo_guardado,
+            # SRS v1.5: sueldo de solo lectura que se muestra en la liquidación.
+            "sueldo_periodo": (
+                entrada.sueldo
+                if entrada.sueldo is not None
+                else (
+                    perfiles.sueldo_del_periodo(perfil, entrada.quincena)
+                    if perfil is not None
+                    else None
+                )
+            ),
+            # SRS v1.5: tramos mensuales de la incapacidad para el desglose.
+            "tramos_incapacidad": entrada.tramos_incapacidad,
             "gasto_mes": gastos.total_gastos_mes(
                 bd, usuario.id_usuario, entrada.anio, entrada.mes
             ),
@@ -544,26 +646,11 @@ def _contexto_calculadora(
                 descuento_incapacidad=entrada.deduccion_incapacidad,
             ),
             # SRS v1.4, REQ-08: deducciones fijas del salario listadas en la liquidación.
-            "deducciones_fijas": deducciones_fijas.listar_deducciones(
-                bd, usuario.id_usuario
-            ),
-            "deducciones_fijas_periodo": (
-                deducciones_fijas.total_por_quincena(
-                    deducciones_fijas.listar_deducciones(bd, usuario.id_usuario),
-                    entrada.quincena,
-                )
-                if entrada.quincena in (1, 2)
-                else sum(
-                    (
-                        deducciones_fijas.total_por_quincena(
-                            deducciones_fijas.listar_deducciones(bd, usuario.id_usuario),
-                            numero,
-                        )
-                        for numero in (1, 2)
-                    ),
-                    CERO,
-                )
-            ),
+            # SRS v1.5: se muestran una por una dentro de la caja de deducciones y
+            # su valor se suma al total del periodo.
+            "detalle_fijas_periodo": fijas_periodo,
+            "deducciones_fijas_periodo": _total_fijas(fijas_periodo),
+            "total_deducciones_ley": _total_deducciones_ley(resultado, fijas_periodo),
             # Chancucos embebidos: solo el administrador los ve y administra.
             "chancucos": (
                 servicio_chancucos.listar_chancucos(bd, usuario.id_usuario)
@@ -713,6 +800,7 @@ async def calcular_finanzas_json(
         if liquidacion.evaluacion_auxilio is not None
         else ""
     )
+    fijas_periodo = _fijas_del_periodo(bd, usuario.id_usuario, entrada.quincena)
     return JSONResponse(
         {
             "ok": True,
@@ -723,7 +811,11 @@ async def calcular_finanzas_json(
                 liquidacion.evaluacion_auxilio
                 and liquidacion.evaluacion_auxilio.aplica
             ),
-            "rollover": str(entrada.deduccion_incapacidad),
+            # SRS v1.5: total de la caja de deducciones de ley (incluye fijas).
+            "deducciones_fijas_periodo": formatear_cop(_total_fijas(fijas_periodo)),
+            "total_deducciones_ley": formatear_cop(
+                _total_deducciones_ley(liquidacion, fijas_periodo)
+            ),
             "quincenas": _saldos_quincenas(bd, usuario.id_usuario, entrada, liquidacion),
             "incapacidad": _detalle_incapacidad_json(entrada),
         }
@@ -756,8 +848,6 @@ async def guardar_liquidacion(
             request, "finanzas/index.html", contexto, status_code=status.HTTP_400_BAD_REQUEST
         )
 
-    rollover = periodos.resumen_rollover(bd, usuario.id_usuario, entrada.anio, entrada.mes)
-    ids_saldos = rollover.ids if entrada.aplicar_rollover else ()
     periodo = periodos.guardar_liquidacion(
         bd,
         usuario.id_usuario,
@@ -766,7 +856,6 @@ async def guardar_liquidacion(
         entrada.quincena,
         liquidacion,
         entrada.horas,
-        ids_saldos,
         gastos.total_gastos_mes(bd, usuario.id_usuario, entrada.anio, entrada.mes),
     )
     auditoria.registrar(

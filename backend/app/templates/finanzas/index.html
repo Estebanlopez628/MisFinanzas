@@ -96,11 +96,15 @@ contenido %}
         <ul class="lista-gastos">
           {% for gasto in quincena.gastos_detalle %} {# MODIFICACIÓN: Cambiamos
           a un contenedor flexible en fila única #}
-          <li class="lista-gastos__item">
+          {% set inhabilitado = gasto.inhabilitado_hasta is not none and gasto.inhabilitado_hasta > hoy %}
+          <li class="lista-gastos__item{% if inhabilitado %} lista-gastos__item--inhabilitado{% elif gasto.pagado %} lista-gastos__item--pagado{% endif %}">
             <span class="lista-gastos__nombre">
               {{ gasto.descripcion }} - {{ gasto.categoria }}{% if gasto.quincena is none %} · todo el mes{% endif %}
+              {% if inhabilitado %}
+              <small class="lista-gastos__estado">Inhabilitado hasta {{ gasto.inhabilitado_hasta.strftime('%d/%m') }}</small>
+              {% endif %}
             </span>
-            <span class="lista-gastos__valor">Valor: {{ gasto.valor | cop }}</span>
+            <span class="lista-gastos__valor">{{ gasto.valor | cop }}</span>
             <div class="lista-gastos__acciones">
               <details class="edicion-gasto">
                 <summary class="boton boton--secundario lista-gastos__boton">Editar</summary>
@@ -127,13 +131,50 @@ contenido %}
                     action="{{ url_for('eliminar_gasto', id_gasto=gasto.id_gasto) }}"
                     data-proteccion>
                 <input type="hidden" name="origen" value="finanzas" />
-                <button class="boton boton--peligro lista-gastos__boton" type="submit"
-                        aria-label="Eliminar {{ gasto.descripcion }}">×</button>
+                <button class="boton boton--peligro boton-circular" type="submit"
+                        aria-label="{{ 'Saltar pago de' if gasto.id_proyeccion else 'Eliminar' }} {{ gasto.descripcion }}"
+                        title="{{ 'Saltar este pago 8 días' if gasto.id_proyeccion else 'Eliminar gasto' }}">×</button>
               </form>
+              {% if inhabilitado %}
+              {# Pago saltado: no admite ✔; solo un abono manual por si quedó dinero. #}
+              <form class="formulario-abono-manual" method="post"
+                    action="{{ url_for('registrar_abono_gasto', id_gasto=gasto.id_gasto) }}"
+                    data-proteccion>
+                <input type="hidden" name="origen" value="finanzas" />
+                <input class="campo__control campo__control--compacto" type="text"
+                       name="valor" inputmode="decimal" placeholder="Abonar"
+                       aria-label="Monto a abonar en {{ gasto.descripcion }}" required />
+                <button class="boton boton--secundario boton--pequeno" type="submit">Abonar</button>
+              </form>
+              {% elif gasto.pagado %}
+              <span class="boton-circular boton-circular--marcado" aria-label="Pagado"
+                    title="Pagado{% if gasto.pagado_en %} el {{ gasto.pagado_en.strftime('%d/%m') }}{% endif %}">✔</span>
+              {% else %}
+              <form method="post"
+                    action="{{ url_for('marcar_pagado_gasto', id_gasto=gasto.id_gasto) }}"
+                    data-proteccion>
+                <input type="hidden" name="origen" value="finanzas" />
+                <button class="boton-circular boton-circular--check" type="submit"
+                        aria-label="Marcar {{ gasto.descripcion }} como pagado"
+                        title="Marcar como pagado">✔</button>
+              </form>
+              {% endif %}
             </div>
           </li>
           {% endfor %}
         </ul>
+        {% if quincena.gastos_detalle | selectattr('pagado') | selectattr('check_visible') | list %}
+        <form class="acciones-formulario" method="post"
+              action="{{ url_for('limpiar_pagos_gastos') }}" data-proteccion>
+          <input type="hidden" name="origen" value="finanzas" />
+          <input type="hidden" name="anio" value="{{ entrada.anio }}" />
+          <input type="hidden" name="mes" value="{{ entrada.mes }}" />
+          <input type="hidden" name="quincena" value="{{ quincena.numero }}" />
+          <button class="boton boton--secundario boton--pequeno" type="submit">
+            {{ 'Limpiar checks' if quincena.numero == 0 else 'Limpiar checks de esta quincena' }}
+          </button>
+        </form>
+        {% endif %}
         {% else %}
         <p class="ayuda">Sin gastos fijos asignados a este pago.</p>
         {% endif %}
@@ -306,33 +347,26 @@ contenido %}
           value="{{ valores.get('quincena', '0') }}"
           data-entrada
         />
-        <input
-          type="hidden"
-          name="aplicar_rollover"
-          value="{{ valores.get('aplicar_rollover', '0') }}"
-          data-entrada
-        />
 
-        {# ----------------------- Sueldo básico ------------------------- #}
+        {# SRS v1.5: el sueldo es de solo lectura en la liquidación. Se cambia
+           únicamente desde Mi Perfil para no liquidar con un valor distinto al
+           que alimenta las quincenas y el historial. #}
         <div class="bloque-sueldo">
-          <label class="campo">
+          <div class="campo">
             <span class="campo__etiqueta">Sueldo básico del periodo (COP)</span>
-            <input
-              class="campo__control campo__control--destacado"
-              type="text"
-              name="sueldo_basico"
-              inputmode="decimal"
-              placeholder="3.000.000"
-              autocomplete="off"
-              value="{{ valores.get('sueldo_basico', '') }}"
-              required
-              data-entrada
-            />
+            <strong class="campo__valor campo__valor--destacado">
+              {%- if sueldo_periodo is not none %}{{ sueldo_periodo | cop }}{% else %}—{% endif -%}
+            </strong>
             <span class="ayuda">
-              Acepta puntos de miles: 3.000.000. {% if perfil %}Se toma de tu
-              perfil si lo dejas vacío.{% endif %}
+              {% if perfil %}
+              Se toma de tu perfil.
+              <a class="enlace" href="{{ url_for('ver_perfil') }}">Cambiarlo en Mi Perfil</a>
+              {% else %}
+              Configura tu sueldo en
+              <a class="enlace" href="{{ url_for('ver_perfil') }}">Mi Perfil</a>.
+              {% endif %}
             </span>
-          </label>
+          </div>
           <p class="sueldo-proyectado">
             Sueldo proyectado del periodo:
             <strong data-campo="sueldo_proyectado"
@@ -345,7 +379,9 @@ contenido %}
           </p>
         </div>
 
-        {# ------------- Deducciones de ley con valor en pesos ----------- #}
+        {# SRS v1.5: una sola caja con salud, pensión, incapacidad del mes,
+           deducciones fijas y el total del periodo. Los valores van en rojo y
+           sin signo menos: el título ya indica que son descuentos. #}
         <div class="bloque-deducciones" aria-live="polite">
           <h3 class="bloque-deducciones__titulo">Deducciones de ley</h3>
           <ul class="lista-deducciones">
@@ -355,7 +391,7 @@ contenido %}
                 }})</span
               >
               <strong class="valor-negativo" data-deduccion="salud">
-                {%- if resultado %}− {{ resultado.deducciones_ley.salud | cop
+                {%- if resultado %}{{ resultado.deducciones_ley.salud | cop
                 }}{% else %}—{% endif -%}
               </strong>
             </li>
@@ -365,25 +401,51 @@ contenido %}
                 }})</span
               >
               <strong class="valor-negativo" data-deduccion="pension">
-                {%- if resultado %}− {{ resultado.deducciones_ley.pension | cop
+                {%- if resultado %}{{ resultado.deducciones_ley.pension | cop
                 }}{% else %}—{% endif -%}
               </strong>
             </li>
             <li>
-              <span>Deducciones fijas del salario</span>
-              <strong class="valor-negativo" data-deducciones-fijas>
-                − {{ deducciones_fijas_periodo | cop }}
+              <span>Incapacidad del mes</span>
+              <strong class="valor-negativo" data-deduccion="incapacidad">
+                {%- if resultado %}{{ resultado.deduccion_incapacidad | cop
+                }}{% else %}—{% endif -%}
               </strong>
             </li>
           </ul>
+
+          {% if detalle_fijas_periodo %}
+          <p class="bloque-deducciones__subtitulo">
+            Deducciones fijas del salario
+          </p>
+          <ul class="lista-deducciones lista-deducciones--fijas">
+            {% for deduccion in detalle_fijas_periodo %}
+            <li>
+              <span>{{ deduccion.descripcion }}</span>
+              <strong class="valor-negativo">{{ deduccion.valor | cop }}</strong>
+            </li>
+            {% endfor %}
+          </ul>
+          {% endif %}
+
+          <div class="bloque-deducciones__total">
+            <span>Total de deducciones de ley</span>
+            <strong class="valor-negativo" data-total-deducciones>
+              {%- if resultado %}{{ total_deducciones_ley | cop }}{% else %}—{%
+              endif -%}
+            </strong>
+          </div>
+
           <p class="ayuda">
-            Salud y pensión se calculan sobre el sueldo básico del periodo. Las
-            deducciones fijas se administran en Gastos y Presupuesto.
+            Salud y pensión se calculan sobre el salario devengado (sueldo +
+            horas extras − incapacidad). Las deducciones fijas se administran en
+            Gastos y Presupuesto.
           </p>
         </div>
 
-        {# La incapacidad ya no se captura en la cabecera: el descuento llega
-        del bloque compacto o del rollover pendiente. #}
+        {# La incapacidad no se captura aquí: el bloque compacto calcula el
+        tramo del mes y deja el descuento en este campo oculto para «Guardar
+        periodo». #}
         <input
           type="hidden"
           name="deduccion_incapacidad"
@@ -391,12 +453,7 @@ contenido %}
           data-entrada
         />
 
-        {% if rollover.hay_saldo %}
-        <p class="aviso aviso--rollover">
-          Rollover pendiente: {{ rollover.dias }} día(s) por {{ rollover.valor |
-          cop }}. Al guardar la liquidación se marcarán como aplicados.
-        </p>
-        {% endif %} {# ---------------- Horas extras y recargos (2 × 3)
+        {# ---------------- Horas extras y recargos (2 × 3)
         -------------- #}
         <fieldset class="grupo-horas grupo-horas--cuadricula">
           <legend class="campo__etiqueta">Horas extras y recargos</legend>
@@ -447,8 +504,8 @@ contenido %}
       <h2 id="titulo-detalle" class="panel__titulo">
         Desglose de horas extras y recargos
       </h2>
-      <div class="tabla-contenedor">
-        <table class="tabla">
+      <div class="tabla-contenedor tabla-contenedor--compacta">
+        <table class="tabla tabla--compacta">
           <thead>
             <tr>
               <th scope="col">Concepto</th>
@@ -520,13 +577,18 @@ contenido %}
     >
       <h2 id="titulo-incapacidad" class="panel__titulo">Incapacidades</h2>
       <p class="panel__descripcion">
-        Días 1 y 2 al 100 % (empleador); desde el día 3, al 66,67 %.
+        Días 1 y 2 al 100 % (empleador); desde el día 3, al 66,67 %. El número de
+        días se calcula solo con las fechas.
       </p>
       <p class="aviso aviso--incapacidad" data-incapacidad-resumen hidden></p>
+      <p class="aviso aviso--incapacidad" data-incapacidad-aviso hidden>
+        Las incapacidades registradas no se aplican en este cálculo.
+        <a href="{{ url_for('ver_incapacidades') }}">Administrarlas</a>
+      </p>
       <form
         class="formulario formulario--compacto"
         method="post"
-        action="{{ url_for('calcular_incapacidad_formulario') }}"
+        action="{{ url_for('guardar_incapacidad') }}"
         data-proteccion
       >
         <div class="fila-campos">
@@ -537,6 +599,7 @@ contenido %}
               type="date"
               name="fecha_inicio"
               required
+              value="{{ valores.get('incapacidad_inicio', '') }}"
               data-incapacidad-inicio
             />
           </label>
@@ -547,37 +610,49 @@ contenido %}
               type="date"
               name="fecha_fin"
               required
+              value="{{ valores.get('incapacidad_fin', '') }}"
               data-incapacidad-fin
             />
           </label>
-          <label class="campo">
-            <span class="campo__etiqueta">Número de días</span>
-            <input
-              class="campo__control"
-              type="number"
-              name="dias"
-              min="1"
-              step="1"
-              placeholder="Según el rango"
-            />
-          </label>
+          <div class="campo">
+            <span class="campo__etiqueta">Días (automático)</span>
+            <strong class="campo__valor" data-incapacidad-dias>—</strong>
+          </div>
         </div>
         <div class="acciones-formulario">
           <button class="boton boton--primario boton--pequeno" type="submit">
-            Calcular incapacidad
-          </button>
-          <button
-            class="boton boton--secundario boton--pequeno"
-            type="submit"
-            formaction="{{ url_for('guardar_incapacidad') }}"
-          >
             Guardar incapacidad
           </button>
-          <button class="boton boton--secundario boton--pequeno" type="reset">
+          <button class="boton boton--secundario boton--pequeno" type="button" data-incapacidad-limpiar>
             Limpiar
           </button>
         </div>
       </form>
+
+      {# SRS v1.5: desglose por mes. Solo el tramo del periodo elegido descuenta;
+         los demás se aplicarán cuando se liquide su propio mes. #}
+      <div class="tabla-contenedor tabla-contenedor--compacta" data-incapacidad-desglose hidden>
+        <table class="tabla tabla--compacta">
+          <thead>
+            <tr>
+              <th scope="col">Periodo</th>
+              <th scope="col">Días</th>
+              <th scope="col">Descuento</th>
+            </tr>
+          </thead>
+          <tbody data-incapacidad-tramos>
+            {% for tramo in tramos_incapacidad %}
+            <tr
+              class="{{ 'fila-periodo' if tramo.anio == entrada.anio and tramo.mes == entrada.mes }}"
+            >
+              <td>{{ tramo.anio | mes_anio(tramo.mes) }}</td>
+              <td>{{ tramo.dias }}</td>
+              <td class="tabla__numero">{{ tramo.valor_descontado | cop }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
       <p class="ayuda">
         <a class="enlace" href="{{ url_for('ver_incapacidades') }}"
           >Ver el detalle completo →</a
@@ -625,7 +700,7 @@ contenido %}
             }})</span
           >
           <strong class="valor-negativo" data-campo="deduccion_salud">
-            {%- if resultado %}− {{ resultado.deducciones_ley.salud | cop }}{%
+            {%- if resultado %}{{ resultado.deducciones_ley.salud | cop }}{%
             else %}—{% endif -%}
           </strong>
         </li>
@@ -635,7 +710,7 @@ contenido %}
             }})</span
           >
           <strong class="valor-negativo" data-campo="deduccion_pension">
-            {%- if resultado %}− {{ resultado.deducciones_ley.pension | cop }}{%
+            {%- if resultado %}{{ resultado.deducciones_ley.pension | cop }}{%
             else %}—{% endif -%}
           </strong>
         </li>
@@ -649,7 +724,7 @@ contenido %}
         <li>
           <span>Descuento por incapacidad</span>
           <strong class="valor-negativo" data-campo="deduccion_incapacidad">
-            {%- if resultado %}− {{ resultado.deduccion_incapacidad | cop }}{%
+            {%- if resultado %}{{ resultado.deduccion_incapacidad | cop }}{%
             else %}—{% endif -%}
           </strong>
         </li>
@@ -670,7 +745,7 @@ contenido %}
         <li>
           <span>Total deducciones</span>
           <strong class="valor-negativo" data-campo="total_deducciones">
-            {%- if resultado %}− {{ resultado.total_deducciones | cop }}{% else
+            {%- if resultado %}{{ resultado.total_deducciones | cop }}{% else
             %}—{% endif -%}
           </strong>
         </li>

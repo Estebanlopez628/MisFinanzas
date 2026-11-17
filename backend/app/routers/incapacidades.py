@@ -3,11 +3,14 @@
 Responsabilidad
 ---------------
 - Servir el formulario de registro.
-- Calcular y previsualizar el descuento del mes y los saldos arrastrados.
-- Persistir la incapacidad y sus saldos (`incapacidades` y
-  `saldos_incapacidad`), listar las registradas y eliminarlas.
+- Calcular y previsualizar el descuento del mes y el desglose por mes.
+- Persistir la incapacidad, listar las registradas y eliminarlas.
 
-El formulario tiene dos acciones: *Calcular* (no guarda) y *Guardar* (persiste).
+SRS v1.5: los días se calculan desde las fechas y cada mes descuenta solo su
+tramo. Ya no hay saldos que se arrastren.
+
+El formulario se recalcula en vivo con `static/js/incapacidades.js`; el POST
+clásico a `/incapacidades/calcular` sigue disponible como respaldo.
 La aritmética vive en `app.servicios.incapacidad`.
 """
 
@@ -233,7 +236,7 @@ async def guardar_incapacidad(
     usuario: UsuarioSesion = Depends(obtener_usuario_actual),
     bd: Session = Depends(obtener_bd),
 ) -> HTMLResponse | RedirectResponse:
-    """Persiste la incapacidad y sus saldos de rollover.
+    """Persiste la incapacidad con su rango de fechas.
 
     Args:
         request: Petición HTTP con los campos del formulario.
@@ -283,7 +286,7 @@ def eliminar_incapacidad(
     usuario: UsuarioSesion = Depends(obtener_usuario_actual),
     bd: Session = Depends(obtener_bd),
 ) -> RedirectResponse:
-    """Elimina una incapacidad y sus saldos pendientes.
+    """Elimina una incapacidad y sus saldos heredados del modelo anterior.
 
     Args:
         id_incapacidad: Incapacidad a eliminar.

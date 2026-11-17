@@ -1,22 +1,22 @@
-"""Incapacidades laborales y arrastre de saldos entre meses (Tarea 4).
+"""Incapacidades laborales y reparto de días por mes calendario (Tarea 4).
 
 Responsabilidad
 ---------------
 Calcular el descuento que asume el trabajador durante una incapacidad de origen
-común y repartir los días por mes calendario, generando el **saldo arrastrado**
-(*rollover*) que se aplicará en el periodo siguiente.
+común y repartir los días por mes calendario. Cada periodo liquida su propio
+tramo; SRS v1.5 retiró el mecanismo de saldos arrastrados.
 
 Reglas de negocio (SRS y `MEMORY.md`):
 - Días 1 y 2 de la incapacidad: pagados al 100% por el empleador → **sin descuento**.
 - Del día 3 en adelante: cubiertos al 66.67% por la EPS → **descuento del 33.33%**
   sobre el valor del día.
 - El valor del día se obtiene del sueldo básico mensual dividido entre 30.
-- Si el rango de fechas cruza de mes, se liquida la parte del mes activo y el
-  remanente se devuelve como `SaldoIncapacidad` para el mes siguiente.
+- Si el rango de fechas cruza de mes, cada mes liquida solo los días que le
+  corresponden; el primer par de días al 100 % se cuenta una sola vez sobre la
+  incapacidad completa.
 
-Las funciones son puras: no persisten ni conocen HTTP. La persistencia de
-`saldos_incapacidad` (ver `diccionario_datos.md`, §6) se realizará en la fase de
-base de datos.
+Las funciones son puras: no persisten ni conocen HTTP. La persistencia de las
+incapacidades vive en `servicios/registro_incapacidades.py`.
 """
 
 from __future__ import annotations
@@ -89,13 +89,17 @@ class TramoMensual:
 
 @dataclass(frozen=True)
 class SaldoIncapacidad:
-    """Saldo pendiente de una incapacidad para el periodo siguiente (rollover).
+    """Saldo de meses posteriores de una incapacidad (modelo heredado).
+
+    SRS v1.5 ya no persigue estos saldos: cada mes liquida su propio tramo desde
+    las fechas registradas. La estructura se conserva porque el diccionario de
+    datos mantiene la tabla y algunas pruebas del motor la inspeccionan.
 
     Attributes:
         anio: Año del periodo destino.
         mes: Mes del periodo destino (1–12).
         dias_pendientes: Días por liquidar.
-        valor_pendiente: Descuento ya calculado que se aplicará en el destino.
+        valor_pendiente: Descuento ya calculado que se aplicaría en el destino.
         fecha_inicio: Primer día pendiente.
         fecha_fin: Último día pendiente.
         dias_liquidados_previos: Días de la incapacidad ya liquidados antes de
@@ -147,9 +151,9 @@ class ResultadoMesIncapacidad:
         dias_al_100: Días sin descuento dentro del mes.
         dias_al_66: Días con descuento dentro del mes.
         valor_descontado: Descuento a aplicar en el periodo.
-        dias_arrastrados: Días que quedan para meses posteriores.
-        valor_arrastrado: Descuento correspondiente a los días arrastrados.
-        saldos_pendientes: Saldos por mes destino, listos para persistir.
+        dias_arrastrados: Días que quedan para meses posteriores (informativo).
+        valor_arrastrado: Descuento de esos días (informativo).
+        saldos_pendientes: Tramos posteriores listos para inspección.
     """
 
     anio: int

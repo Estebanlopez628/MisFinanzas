@@ -5,13 +5,18 @@
   <section class="heroe">
     <h1 class="heroe__titulo">📉 Resumen de Deudas</h1>
     <p class="heroe__subtitulo">
-      Controla el saldo de cada pasivo, su cuota mensual y la fecha límite. Los
-      abonos actualizan el saldo y marcan la deuda como pagada.
+      Registra el saldo, la cuota y cuántos pagos faltan. El sistema deriva la
+      tasa de interés implícita y descuenta cada cuota cuando vence.
     </p>
   </section>
 
   {% if guardado %}
     <div class="alerta alerta--exito" role="status">Deuda registrada.</div>
+  {% endif %}
+  {% if aplicadas %}
+    <div class="alerta alerta--aviso" role="status">
+      Se aplicaron {{ aplicadas }} cuota(s) vencida(s) automáticamente.
+    </div>
   {% endif %}
   {% if error %}
     <div class="alerta alerta--error" role="alert">{{ error }}</div>
@@ -28,6 +33,11 @@
       <h3 class="tarjeta__titulo">{{ resumen.cuota_mensual | cop }}</h3>
       <p class="tarjeta__descripcion">Cuota mensual comprometida.</p>
     </article>
+    <article class="tarjeta tarjeta--azul">
+      <span class="tarjeta__icono" aria-hidden="true">🧾</span>
+      <h3 class="tarjeta__titulo">{{ resumen.cuotas_pendientes }} cuota(s)</h3>
+      <p class="tarjeta__descripcion">Pagos que faltan en las deudas activas.</p>
+    </article>
     <article class="tarjeta tarjeta--verde">
       <span class="tarjeta__icono" aria-hidden="true">✅</span>
       <h3 class="tarjeta__titulo">{{ resumen.pagadas }} pagada(s)</h3>
@@ -38,31 +48,49 @@
   <div class="rejilla-paneles">
     <section class="panel">
       <h2 class="panel__titulo">Nueva deuda</h2>
+      <p class="panel__descripcion">
+        No necesitas conocer la tasa de interés: se calcula con el saldo, la cuota
+        y el número de pagos.
+      </p>
       <form class="formulario" method="post" action="{{ url_for('crear_deuda') }}">
-        <label class="campo">
-          <span class="campo__etiqueta">Acreedor</span>
-          <input class="campo__control" type="text" name="acreedor" required />
-        </label>
-        <label class="campo">
-          <span class="campo__etiqueta">Descripción</span>
-          <input class="campo__control" type="text" name="descripcion" />
-        </label>
-        <label class="campo">
-          <span class="campo__etiqueta">Saldo total (COP)</span>
-          <input class="campo__control" type="text" name="saldo_total" inputmode="decimal" required />
-        </label>
-        <label class="campo">
-          <span class="campo__etiqueta">Cuota mensual (COP)</span>
-          <input class="campo__control" type="text" name="cuota_mensual" inputmode="decimal" />
-        </label>
-        <label class="campo">
-          <span class="campo__etiqueta">Tasa de interés (%)</span>
-          <input class="campo__control" type="number" name="tasa_interes" min="0" step="0.01" />
-        </label>
-        <label class="campo">
-          <span class="campo__etiqueta">Fecha límite</span>
-          <input class="campo__control" type="date" name="fecha_limite" />
-        </label>
+        <div class="fila-campos">
+          <label class="campo">
+            <span class="campo__etiqueta">Acreedor</span>
+            <input class="campo__control" type="text" name="acreedor"
+                   placeholder="Banco, tienda, persona…" required />
+          </label>
+          <label class="campo">
+            <span class="campo__etiqueta">Descripción</span>
+            <input class="campo__control" type="text" name="descripcion"
+                   placeholder="Tarjeta, crédito de consumo…" />
+          </label>
+          <label class="campo">
+            <span class="campo__etiqueta">Saldo total (COP)</span>
+            <input class="campo__control" type="text" name="saldo_total"
+                   inputmode="decimal" placeholder="3.500.000" required />
+          </label>
+          <label class="campo">
+            <span class="campo__etiqueta">Cuota (COP)</span>
+            <input class="campo__control" type="text" name="cuota"
+                   inputmode="decimal" placeholder="100.000" required />
+          </label>
+          <label class="campo">
+            <span class="campo__etiqueta">Cuotas pendientes</span>
+            <input class="campo__control" type="number" name="cuotas_pendientes"
+                   min="1" max="600" step="1" placeholder="48" required />
+          </label>
+          <label class="campo">
+            <span class="campo__etiqueta">Periodicidad</span>
+            <select class="campo__control" name="periodicidad">
+              {% for opcion in periodicidades %}
+                <option value="{{ opcion }}"
+                        {% if opcion == 'MENSUAL' %}selected{% endif %}>
+                  {{ opcion | capitalize }}
+                </option>
+              {% endfor %}
+            </select>
+          </label>
+        </div>
         <button class="boton boton--primario" type="submit">Guardar deuda</button>
       </form>
     </section>
@@ -77,9 +105,10 @@
                 <th scope="col">Acreedor</th>
                 <th scope="col">Saldo</th>
                 <th scope="col">Cuota</th>
-                <th scope="col">Límite</th>
+                <th scope="col">Pendientes</th>
+                <th scope="col">Periodicidad</th>
+                <th scope="col">Tasa implícita</th>
                 <th scope="col">Estado</th>
-                <th scope="col">Abono</th>
                 <th scope="col"></th>
               </tr>
             </thead>
@@ -88,29 +117,99 @@
                 <tr>
                   <td>
                     <strong>{{ deuda.acreedor }}</strong>
-                    {% if deuda.descripcion %}<br /><span class="ayuda">{{ deuda.descripcion }}</span>{% endif %}
-                  </td>
-                  <td class="tabla__numero">{{ deuda.saldo_total | cop }}</td>
-                  <td class="tabla__numero">{{ deuda.cuota_mensual | cop if deuda.cuota_mensual else '—' }}</td>
-                  <td>{{ deuda.fecha_limite | fecha_larga if deuda.fecha_limite else '—' }}</td>
-                  <td>{{ deuda.estado }}</td>
-                  <td>
-                    {% if deuda.estado == 'ACTIVA' %}
-                      <form class="formulario-en-linea" method="post"
-                            action="{{ url_for('abonar_deuda', id_deuda=deuda.id_deuda) }}">
-                        <input class="campo__control campo__control--compacto" type="text" name="monto"
-                               inputmode="decimal" placeholder="100.000" required />
-                        <button class="boton boton--secundario boton--pequeno" type="submit">Abonar</button>
-                      </form>
-                    {% else %}
-                      —
+                    {% if deuda.descripcion %}
+                      <br /><span class="ayuda">{{ deuda.descripcion }}</span>
                     {% endif %}
                   </td>
+                  <td class="tabla__numero">{{ deuda.saldo_total | cop }}</td>
+                  <td class="tabla__numero">
+                    {{ deuda.cuota_mensual | cop if deuda.cuota_mensual else '—' }}
+                  </td>
+                  <td class="tabla__numero">{{ deuda.cuotas_pendientes }}</td>
+                  <td>{{ deuda.periodicidad | capitalize }}</td>
+                  <td class="tabla__numero">
+                    {%- if deuda.tasa_interes is not none -%}
+                      {{ (deuda.tasa_interes * 100) | porcentaje(4) }}
+                    {%- else -%}—{%- endif -%}
+                  </td>
+                  <td>{{ deuda.estado | capitalize }}</td>
                   <td>
-                    <form method="post" action="{{ url_for('eliminar_deuda', id_deuda=deuda.id_deuda) }}"
-                          onsubmit="return confirm('¿Eliminar esta deuda?');">
-                      <button class="boton boton--peligro boton--pequeno" type="submit">Eliminar</button>
+                    <form method="post"
+                          action="{{ url_for('eliminar_deuda', id_deuda=deuda.id_deuda) }}"
+                          onsubmit="return confirm('¿Eliminar esta deuda y sus pagos?');">
+                      <button class="boton boton--peligro boton--pequeno" type="submit">
+                        Eliminar
+                      </button>
                     </form>
+                  </td>
+                </tr>
+                <tr class="fila-detalle-deuda">
+                  <td colspan="8">
+                    <details class="edicion-gasto">
+                      <summary class="boton boton--secundario boton--pequeno">
+                        Ver amortización
+                      </summary>
+
+                      {% if pagos.get(deuda.id_deuda) %}
+                        <h4 class="panel__titulo">Cuotas aplicadas</h4>
+                        <div class="tabla-contenedor tabla-contenedor--compacta">
+                          <table class="tabla tabla--compacta">
+                            <thead>
+                              <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">Fecha</th>
+                                <th scope="col">Cuota</th>
+                                <th scope="col">Interés</th>
+                                <th scope="col">Capital</th>
+                                <th scope="col">Saldo</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {% for pago in pagos[deuda.id_deuda] %}
+                                <tr>
+                                  <td>{{ pago.numero_cuota }}</td>
+                                  <td>{{ pago.fecha_aplicacion | fecha_larga }}</td>
+                                  <td class="tabla__numero">{{ pago.valor_cuota | cop }}</td>
+                                  <td class="tabla__numero">{{ pago.interes | cop }}</td>
+                                  <td class="tabla__numero">{{ pago.abono_capital | cop }}</td>
+                                  <td class="tabla__numero">{{ pago.saldo_despues | cop }}</td>
+                                </tr>
+                              {% endfor %}
+                            </tbody>
+                          </table>
+                        </div>
+                      {% endif %}
+
+                      {% if planes.get(deuda.id_deuda) %}
+                        <h4 class="panel__titulo">Próximas cuotas</h4>
+                        <div class="tabla-contenedor tabla-contenedor--compacta">
+                          <table class="tabla tabla--compacta">
+                            <thead>
+                              <tr>
+                                <th scope="col">Fecha</th>
+                                <th scope="col">Cuota</th>
+                                <th scope="col">Interés</th>
+                                <th scope="col">Capital</th>
+                                <th scope="col">Saldo</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {% for cuota in planes[deuda.id_deuda] %}
+                                <tr {% if cuota.ultima %}class="fila-periodo"{% endif %}>
+                                  <td>{{ cuota.fecha | fecha_larga }}</td>
+                                  <td class="tabla__numero">{{ cuota.valor | cop }}</td>
+                                  <td class="tabla__numero">{{ cuota.interes | cop }}</td>
+                                  <td class="tabla__numero">{{ cuota.abono_capital | cop }}</td>
+                                  <td class="tabla__numero">{{ cuota.saldo_despues | cop }}</td>
+                                </tr>
+                              {% endfor %}
+                            </tbody>
+                          </table>
+                        </div>
+                      {% elif not pagos.get(deuda.id_deuda) %}
+                        <p class="tabla__vacia">Esta deuda no tiene cuotas pendientes.</p>
+                      {% endif %}
+                    </details>
                   </td>
                 </tr>
               {% endfor %}

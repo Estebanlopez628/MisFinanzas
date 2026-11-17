@@ -10,11 +10,16 @@ Cubren:
 
 from __future__ import annotations
 
+from datetime import date
 from decimal import Decimal
 
 from fastapi.testclient import TestClient
 
+from app.core.numeros import redondear_dinero
+from app.core.texto import formatear_cop
 from app.servicios import deducciones_fijas, perfiles, quincenas, usuarios
+from app.servicios.incapacidad import liquidar_mes_incapacidad
+from app.servicios.nomina import calcular_deducciones_ley
 
 
 def _id_admin(bd) -> str:
@@ -218,8 +223,51 @@ def test_presupuesto_ya_no_muestra_registro_de_gastos_fijos(cliente_admin) -> No
 
 
 def test_liquidacion_lista_las_deducciones_fijas(cliente_admin, bd) -> None:
-    """La liquidación muestra las deducciones fijas junto a las de ley."""
+    """SRS v1.5: la caja muestra cada deducción fija y el total del periodo."""
     deducciones_fijas.crear_deduccion(bd, _id_admin(bd), "Libranza", "80.000", 2)
     texto = " ".join(cliente_admin.get("/finanzas").text.split())
     assert "Deducciones fijas del salario" in texto
-    assert "data-deducciones-fijas" in texto
+    assert "Libranza" in texto
+    assert "Total de deducciones de ley" in texto
+    assert "data-total-deducciones" in texto
+    # El total agregado anterior desaparece: ahora se listan los conceptos.
+    assert "data-deducciones-fijas" not in texto
+
+
+def test_caja_de_deducciones_suma_ley_incapacidad_y_fijas(
+    cliente_admin: TestClient, bd
+) -> None:
+    """El total de la caja suma salud, pensión, incapacidad del mes y fijas."""
+    deducciones_fijas.crear_deduccion(bd, _id_admin(bd), "Libranza", "80.000", 1)
+
+    respuesta = cliente_admin.post(
+        "/finanzas/calcular",
+        json={
+            "anio": 2026,
+            "mes": 11,
+            "quincena": 0,
+            "sueldo_basico": "2.960.000",
+            "incapacidad_inicio": "2026-11-15",
+            "incapacidad_fin": "2026-11-30",
+        },
+    )
+
+    cuerpo = respuesta.json()
+    assert cuerpo["ok"] is True
+
+    # La base de cotización es el devengado menos la incapacidad del mes.
+    descuento = liquidar_mes_incapacidad(
+        date(2026, 11, 15),
+        date(2026, 11, 30),
+        Decimal("2960000"),
+        anio=2026,
+        mes=11,
+    ).valor_descontado
+    base = Decimal("2960000") - descuento
+    esperado = redondear_dinero(
+        calcular_deducciones_ley(base).total + descuento + Decimal("80000")
+    )
+
+    assert cuerpo["datos"]["deduccion_incapacidad"] == formatear_cop(descuento)
+    assert cuerpo["deducciones_fijas_periodo"] == "$80.000"
+    assert cuerpo["total_deducciones_ley"] == formatear_cop(esperado)

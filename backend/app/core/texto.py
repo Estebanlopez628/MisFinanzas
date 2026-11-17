@@ -32,7 +32,11 @@ MESES_ES = (
 def formatear_cop(valor: Decimal | int | float | str, con_simbolo: bool = True) -> str:
     """Formatea un monto como pesos colombianos con separador de miles.
 
-    Ejemplo: ``1234567.5`` → ``"$1.234.567,50"``.
+    Ejemplo: ``1234567.5`` → ``"$1.234.568"``.
+
+    SRS v1.6: los montos se muestran sin centavos en todo el programa, por
+    lo que se redondean al peso entero. Los cálculos internos conservan los
+    centavos; sólo cambia la presentación.
 
     Args:
         valor: Monto a formatear.
@@ -44,14 +48,11 @@ def formatear_cop(valor: Decimal | int | float | str, con_simbolo: bool = True) 
     Raises:
         ValueError: Si el valor no es numérico.
     """
-    numero = a_decimal(valor, "monto").quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    numero = a_decimal(valor, "monto").quantize(Decimal("1"), rounding=ROUND_HALF_UP)
     signo = "-" if numero < 0 else ""
-    entero, decimales = f"{abs(numero):.2f}".split(".")
-    entero_con_puntos = f"{int(entero):,}".replace(",", ".")
-    # Se conservan los centavos sólo cuando existen, para no ensuciar la lectura.
-    sufijo = f",{decimales}" if decimales != "00" else ""
+    entero_con_puntos = f"{abs(int(numero)):,}".replace(",", ".")
     prefijo = "$" if con_simbolo else ""
-    return f"{signo}{prefijo}{entero_con_puntos}{sufijo}"
+    return f"{signo}{prefijo}{entero_con_puntos}"
 
 
 def formatear_porcentaje(valor: Decimal | int | float | str, decimales: int = 2) -> str:

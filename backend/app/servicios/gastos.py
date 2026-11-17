@@ -22,6 +22,28 @@ from app.modelos import Gasto
 CERO = Decimal("0")
 
 
+def valor_computable(gasto: Gasto, hoy: date | None = None) -> Decimal:
+    """Devuelve el monto que cuenta en los totales del gasto.
+
+    SRS v1.6: un pago marcado cuenta por lo realmente pagado (`monto_pagado`).
+    Un pago saltado con × cuenta `0` mientras su plazo de inhabilitación no
+    venza; después vuelve a contar como gasto normal.
+
+    Args:
+        gasto: Gasto a evaluar.
+        hoy: Fecha de referencia; por defecto, hoy.
+
+    Returns:
+        Monto que se resta del saldo de la quincena.
+    """
+    if gasto.pagado:
+        return gasto.monto_pagado if gasto.monto_pagado is not None else gasto.valor
+    referencia = hoy or date.today()
+    if gasto.inhabilitado_hasta is not None and gasto.inhabilitado_hasta > referencia:
+        return CERO
+    return gasto.valor
+
+
 def crear_gasto(
     bd: Session,
     id_usuario: str,
@@ -146,7 +168,7 @@ def total_gastos_mes(bd: Session, id_usuario: str, anio: int, mes: int) -> Decim
         Total redondeado a centavos.
     """
     gastos = listar_gastos(bd, id_usuario, anio, mes)
-    return redondear_dinero(sum((gasto.valor for gasto in gastos), start=CERO))
+    return redondear_dinero(sum((valor_computable(gasto) for gasto in gastos), start=CERO))
 
 
 def total_gastos_quincena(
@@ -165,7 +187,7 @@ def total_gastos_quincena(
         Total redondeado a centavos.
     """
     gastos = listar_gastos(bd, id_usuario, anio, mes, quincena)
-    return redondear_dinero(sum((gasto.valor for gasto in gastos), start=CERO))
+    return redondear_dinero(sum((valor_computable(gasto) for gasto in gastos), start=CERO))
 
 
 def total_gastos_periodo(
@@ -194,7 +216,7 @@ def total_gastos_periodo(
         seleccionados = [gasto for gasto in del_mes if gasto.quincena in (None, 1)]
     else:
         seleccionados = [gasto for gasto in del_mes if gasto.quincena == 2]
-    return redondear_dinero(sum((gasto.valor for gasto in seleccionados), start=CERO))
+    return redondear_dinero(sum((valor_computable(gasto) for gasto in seleccionados), start=CERO))
 
 
 def resumen_por_categoria(bd: Session, id_usuario: str) -> list[dict[str, object]]:

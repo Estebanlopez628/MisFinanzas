@@ -34,6 +34,7 @@ from app.modelos import DeduccionFija, Gasto, PerfilFinanciero
 from app.servicios import deducciones_fijas as servicio_deducciones
 from app.servicios import gastos as servicio_gastos
 from app.servicios import perfiles
+from app.servicios.gastos import valor_computable
 from app.servicios.nomina import calcular_deducciones_ley
 
 CERO = Decimal("0")
@@ -120,7 +121,7 @@ def resumen_quincenas(
     )
 
     if perfil is None:
-        total = redondear_dinero(sum((gasto.valor for gasto in del_mes), start=CERO))
+        total = redondear_dinero(sum((valor_computable(gasto) for gasto in del_mes), start=CERO))
         return [
             ResumenQuincena(
                 numero=0,
@@ -148,7 +149,7 @@ def resumen_quincenas(
     deducciones_mes = calcular_deducciones_ley(base_cotizacion).total
 
     if perfil.modalidad_pago == perfiles.MODALIDAD_MENSUAL:
-        total = redondear_dinero(sum((gasto.valor for gasto in del_mes), start=CERO))
+        total = redondear_dinero(sum((valor_computable(gasto) for gasto in del_mes), start=CERO))
         return [
             ResumenQuincena(
                 numero=0,
@@ -183,7 +184,7 @@ def resumen_quincenas(
         if perfil.quincena_deducciones == numero:
             ingreso = redondear_dinero(ingreso + recargos_periodo)
         total_gastos = redondear_dinero(
-            sum((gasto.valor for gasto in detalle), start=CERO)
+            sum((valor_computable(gasto) for gasto in detalle), start=CERO)
         )
         # Las deducciones de ley del mes se imputan solo a la quincena elegida.
         deducciones = deducciones_mes if perfil.quincena_deducciones == numero else CERO

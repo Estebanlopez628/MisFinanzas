@@ -4,8 +4,9 @@ Responsabilidad
 ---------------
 - Crear metas de ahorro o gastos programados con cuota mensual, duración y
   quincena de descuento.
-- Registrar los abonos mensuales y calcular el progreso frente al total
-  proyectado.
+- Calcular el progreso frente al total proyectado. SRS v1.6: el abono de cada
+  mes no se digita; lo produce el check de pago del gasto fijo de la meta
+  (ver `app.servicios.pagos_metas`).
 - Entregar el diagnóstico de liquidez del mes (saldo libre total de las
   quincenas) para el banner de «Gastos y Presupuesto».
 
@@ -13,10 +14,10 @@ La aritmética salarial vive en `app.servicios.nomina` y el saldo por pago en
 `app.servicios.quincenas`; aquí solo se suma lo que ya está calculado.
 
 Reglas:
-- Una meta `LIMITADO` exige `meses` (1–120) y tiene total cerrado.
-- Una meta `FIJO` no tiene total: se compara contra una ventana de 12 meses.
-- Hay un único abono por meta y mes: volver a registrar el mismo mes actualiza
-  el monto en lugar de duplicarlo.
+- Toda meta exige un periodo (`meses`, de 1 a 600) escogido por el usuario.
+  Una meta `LIMITADO` y una `FIJO` calculan total = cuota × meses (SRS v1.6).
+- Las metas creadas antes de SRS v1.6 sin periodo usan la ventana de 12 meses.
+- Hay un único abono por meta y mes; es la suma de sus pagos marcados.
 - El umbral de alerta de liquidez es de $300.000 COP mensuales.
 """
 
@@ -31,17 +32,27 @@ from sqlalchemy.orm import Session
 
 from app.core.numeros import redondear_dinero
 from app.core.texto import parsear_monto
-from app.modelos import AbonoProyeccion, PerfilFinanciero, ProyeccionAhorro
+from app.modelos import AbonoProyeccion, Gasto, PerfilFinanciero, ProyeccionAhorro
 from app.servicios import quincenas as servicio_quincenas
+from app.servicios.gastos import valor_computable
 
 CERO = Decimal("0")
 
 DURACION_FIJA = "FIJO"
 DURACION_LIMITADA = "LIMITADO"
-MESES_MAXIMOS = 120
+# SRS v1.6: tanto la meta indefinida como la limitada tienen un periodo que el
+# usuario escoge en meses o años (hasta 50 años).
+MESES_MAXIMOS = 600
+# SRS v1.5: tercera opción del selector. La cuota mensual se reparte entre los
+# dos pagos en lugar de imputarse a uno solo.
+QUINCENA_AMBAS = 3
+QUINCENAS_VALIDAS = (1, 2, QUINCENA_AMBAS)
 # Ventana de comparación para los gastos fijos indefinidos, que no tienen final.
 MESES_VENTANA_FIJA = 12
 UMBRAL_ALERTA = Decimal("300000")
+# SRS v1.6: estado con el que queda archivada una meta en el historial.
+ESTADO_CUMPLIDA = "CUMPLIDA"
+ESTADO_ELIMINADA = "ELIMINADA"
 
 CATEGORIAS_SUGERIDAS = (
     "Ahorro",
@@ -77,7 +88,8 @@ class MesMeta:
         mes: Mes (1–12).
         etiqueta: Texto corto («ene 2027»).
         planeado: Cuota prevista para ese mes.
-        abono: Monto realmente abonado, o `None` si aún no se registra.
+        abono: Monto pagado (suma de los checks), o `None` si no hay pagos.
+        estado: `registrado`, `no_pagado` o `pendiente` (SRS v1.6).
     """
 
     anio: int
@@ -85,6 +97,7 @@ class MesMeta:
     etiqueta: str
     planeado: Decimal
     abono: Decimal | None = None
+    estado: str = "pendiente"
 
     @property
     def registrado(self) -> bool:
@@ -113,6 +126,64 @@ class MetaResumen:
     acumulado: Decimal
     porcentaje: Decimal
     meses: list[MesMeta] = field(default_factory=list)
+    cumplida: bool = False
+    fin_etiqueta: str = ""
+
+    @property
+    def etiqueta_quincena(self) -> str:
+        """Rótulo de la quincena de descuento («Quincena 1» o «Ambas quincenas»).
+
+        Returns:
+            Texto listo para la plantilla.
+        """
+        return etiqueta_quincena(self.proyeccion.quincena)
+
+    @property
+    def valor_por_pago(self) -> Decimal:
+        """Monto que la meta asigna a cada pago.
+
+        SRS v1.5: con «Ambas quincenas» es la mitad de la cuota mensual.
+
+        Returns:
+            Cuota por pago, redondeada a centavos.
+        """
+        return valor_por_pago(self.proyeccion.valor_mensual, self.proyeccion.quincena)
+
+
+def etiqueta_quincena(quincena: int) -> str:
+    """Devuelve el rótulo visible de la quincena de descuento de una meta.
+
+    Args:
+        quincena: `1`, `2` o `3` (ambas).
+
+    Returns:
+        Texto listo para la interfaz: «Quincena 1», «Quincena 2» o
+        «Ambas quincenas».
+    """
+    if quincena == QUINCENA_AMBAS:
+        return "Ambas quincenas"
+    return f"Quincena {quincena}"
+
+
+def valor_por_pago(
+    valor_mensual: Decimal | int | str, quincena: int
+) -> Decimal:
+    """Calcula cuánto aporta la cuota mensual a cada pago.
+
+    SRS v1.5: con «Ambas quincenas» el monto se reparte en partes iguales entre
+    los dos pagos; con quincena 1 o 2, el pago elegido asume la cuota completa.
+
+    Args:
+        valor_mensual: Cuota mensual de la meta.
+        quincena: `1`, `2` o `3` (ambas).
+
+    Returns:
+        Monto que corresponde a cada pago, redondeado a centavos.
+    """
+    monto = redondear_dinero(parsear_monto(str(valor_mensual)))
+    if quincena == QUINCENA_AMBAS:
+        return redondear_dinero(monto / Decimal("2"))
+    return monto
 
 
 def _mover_mes(anio: int, mes: int, avance: int) -> tuple[int, int]:
@@ -159,9 +230,6 @@ def _validar_duracion(tipo_duracion: str, meses: int | str | None) -> tuple[str,
     tipo = (tipo_duracion or DURACION_FIJA).strip().upper()
     if tipo not in (DURACION_FIJA, DURACION_LIMITADA):
         raise ValueError("El tipo de duración debe ser FIJO o LIMITADO.")
-    if tipo == DURACION_FIJA:
-        return tipo, None
-
     try:
         cantidad = int(meses) if meses not in (None, "") else 0
     except (TypeError, ValueError) as error:
@@ -220,9 +288,13 @@ def crear_proyeccion(
     try:
         numero_quincena = int(quincena)
     except (TypeError, ValueError) as error:
-        raise ValueError("La quincena de descuento debe ser 1 o 2.") from error
-    if numero_quincena not in (1, 2):
-        raise ValueError("La quincena de descuento debe ser 1 o 2.")
+        raise ValueError(
+            "La quincena de descuento debe ser 1, 2 o 3 (ambas quincenas)."
+        ) from error
+    if numero_quincena not in QUINCENAS_VALIDAS:
+        raise ValueError(
+            "La quincena de descuento debe ser 1, 2 o 3 (ambas quincenas)."
+        )
 
     inicio = fecha_inicio or date.today()
 
@@ -264,88 +336,230 @@ def listar_proyecciones(bd: Session, id_usuario: str) -> list[ProyeccionAhorro]:
     return list(bd.scalars(consulta))
 
 
-def eliminar_proyeccion(bd: Session, id_usuario: str, id_proyeccion: str) -> bool:
-    """Elimina una meta y, en cascada, sus abonos.
+def _posicion(anio: int, mes: int) -> int:
+    """Convierte un mes en un número consecutivo para compararlos.
+
+    Args:
+        anio: Año.
+        mes: Mes (1–12).
+
+    Returns:
+        Índice mensual que crece de uno en uno.
+    """
+    return anio * 12 + (mes - 1)
+
+
+def eliminar_proyeccion(
+    bd: Session,
+    id_usuario: str,
+    id_proyeccion: str,
+    hoy: date | None = None,
+) -> bool:
+    """Archiva una meta: conserva su historial y retira sus cuotas futuras.
+
+    SRS v1.6: la meta sale de la lista activa, pero queda en la base de datos
+    con su inicio, su fin, el total recogido y si se cumplió o se eliminó antes.
+    Se quitan los gastos de meses futuros que no están pagados; los pagos ya
+    registrados se conservan como historial.
 
     Args:
         bd: Sesión de base de datos.
-        id_usuario: Dueño de la meta (evita borrar datos ajenos).
+        id_usuario: Dueño de la meta (evita tocar datos ajenos).
         id_proyeccion: Identificador de la meta.
+        hoy: Fecha de referencia; por defecto, hoy.
 
     Returns:
-        `True` si se eliminó; `False` si no existe o es de otro usuario.
+        `True` si se archivó; `False` si no existe o es de otro usuario.
     """
     proyeccion = bd.get(ProyeccionAhorro, id_proyeccion)
     if proyeccion is None or proyeccion.id_usuario != id_usuario:
         return False
-    bd.delete(proyeccion)
+
+    referencia = hoy or date.today()
+    anio_fin, mes_fin = meses_de_la_meta(proyeccion)[-1]
+    cumplida = _posicion(referencia.year, referencia.month) > _posicion(anio_fin, mes_fin)
+    inicio_del_mes = date(referencia.year, referencia.month, 1)
+    futuros = bd.scalars(
+        select(Gasto).where(
+            Gasto.id_proyeccion == id_proyeccion,
+            Gasto.pagado.is_(False),
+            Gasto.fecha >= inicio_del_mes,
+        )
+    )
+    for gasto in list(futuros):
+        bd.delete(gasto)
+
+    proyeccion.activo = False
+    proyeccion.archivada_en = referencia
+    proyeccion.estado_final = ESTADO_CUMPLIDA if cumplida else ESTADO_ELIMINADA
     bd.commit()
     return True
 
 
-def registrar_abono(
+def extender_proyeccion(
     bd: Session,
     id_usuario: str,
     id_proyeccion: str,
-    anio: int,
-    mes: int,
-    valor: Decimal | str | int | float,
-) -> AbonoProyeccion | None:
-    """Registra o actualiza el abono de un mes concreto.
+    cantidad: int,
+    hoy: date | None = None,
+) -> ProyeccionAhorro | None:
+    """Agrega meses a una meta activa, a partir de su fin o del mes actual.
+
+    Si la meta ya se cumplió, la extensión cuenta desde el mes en curso. Si aún
+    está en curso, cuenta desde el último mes planificado.
 
     Args:
         bd: Sesión de base de datos.
         id_usuario: Dueño de la meta.
-        id_proyeccion: Meta a la que se abona.
-        anio: Año del abono.
-        mes: Mes del abono (1–12).
-        valor: Monto abonado; no puede ser negativo.
+        id_proyeccion: Meta a extender.
+        cantidad: Meses que se agregan (mayor que cero).
+        hoy: Fecha de referencia; por defecto, hoy.
 
     Returns:
-        El abono persistido, o `None` si la meta no existe o es de otro usuario.
+        La meta actualizada, o `None` si no existe o es de otro usuario.
 
     Raises:
-        ValueError: Si el mes está fuera de rango o el monto es inválido.
+        ValueError: Si la cantidad no es positiva, la meta está archivada o el
+            total supera el máximo permitido.
     """
     proyeccion = bd.get(ProyeccionAhorro, id_proyeccion)
     if proyeccion is None or proyeccion.id_usuario != id_usuario:
         return None
+    if not proyeccion.activo:
+        raise ValueError("Una meta eliminada no se puede extender.")
+    if cantidad < 1:
+        raise ValueError("La extensión debe ser de al menos un mes.")
 
-    if mes < 1 or mes > 12:
-        raise ValueError("El mes del abono debe estar entre 1 y 12.")
-
-    monto = redondear_dinero(parsear_monto(str(valor)))
-    if monto < CERO:
-        raise ValueError("El valor del abono no puede ser negativo.")
-
-    existente = bd.scalar(
-        select(AbonoProyeccion).where(
-            AbonoProyeccion.id_proyeccion == id_proyeccion,
-            AbonoProyeccion.anio == anio,
-            AbonoProyeccion.mes == mes,
+    referencia = hoy or date.today()
+    anio_fin, mes_fin = meses_de_la_meta(proyeccion)[-1]
+    base = max(
+        _posicion(anio_fin, mes_fin),
+        _posicion(referencia.year, referencia.month) - 1,
+    )
+    total = base + cantidad - _posicion(
+        proyeccion.fecha_inicio.year, proyeccion.fecha_inicio.month
+    ) + 1
+    if total > MESES_MAXIMOS:
+        raise ValueError(
+            f"La meta no puede superar {MESES_MAXIMOS} meses (50 años) en total."
         )
-    )
 
-    if existente is not None:
-        # Un solo abono por mes: volver a registrar corrige el monto anterior.
-        existente.valor = monto
-        bd.commit()
-        bd.refresh(existente)
-        return existente
-
-    abono = AbonoProyeccion(
-        id_proyeccion=id_proyeccion,
-        anio=anio,
-        mes=mes,
-        valor=monto,
-    )
-    bd.add(abono)
+    proyeccion.meses = total
     bd.commit()
-    bd.refresh(abono)
-    return abono
+    bd.refresh(proyeccion)
+    return proyeccion
 
 
-def _meses_de_la_meta(proyeccion: ProyeccionAhorro) -> list[tuple[int, int]]:
+def historial_metas(bd: Session, id_usuario: str) -> list[dict[str, object]]:
+    """Lista las metas archivadas con su inicio, fin y total recogido.
+
+    Args:
+        bd: Sesión de base de datos.
+        id_usuario: Dueño de las metas.
+
+    Returns:
+        Lista de diccionarios, de la más reciente a la más antigua.
+    """
+    consulta = (
+        select(ProyeccionAhorro)
+        .where(
+            ProyeccionAhorro.id_usuario == id_usuario,
+            ProyeccionAhorro.activo.is_(False),
+        )
+        .order_by(ProyeccionAhorro.archivada_en.desc())
+    )
+    filas: list[dict[str, object]] = []
+    for proyeccion in bd.scalars(consulta):
+        recogido = redondear_dinero(
+            sum(
+                (
+                    abono
+                    for abono in bd.scalars(
+                        select(AbonoProyeccion.valor).where(
+                            AbonoProyeccion.id_proyeccion == proyeccion.id_proyeccion
+                        )
+                    )
+                ),
+                start=CERO,
+            )
+        )
+        anio_fin, mes_fin = meses_de_la_meta(proyeccion)[-1]
+        filas.append(
+            {
+                "descripcion": proyeccion.descripcion,
+                "categoria": proyeccion.categoria,
+                "inicio": _etiqueta_mes(
+                    proyeccion.fecha_inicio.year, proyeccion.fecha_inicio.month
+                ),
+                "fin": _etiqueta_mes(anio_fin, mes_fin),
+                "estado": proyeccion.estado_final or ESTADO_ELIMINADA,
+                "total_recogido": recogido,
+                "archivada_en": proyeccion.archivada_en,
+                "pagos": _detalle_pagos(bd, proyeccion),
+            }
+        )
+    return filas
+
+
+def _detalle_pagos(bd: Session, proyeccion: ProyeccionAhorro) -> list[dict[str, object]]:
+    """Lista mes por mes lo pagado de una meta archivada.
+
+    Un mes con abono muestra su monto y la fecha de pago. Un mes sin abono que
+    ocurrió antes del archivado figura como «No pagado»; los meses posteriores al
+    archivado no se muestran como pendientes, porque la meta ya no los reclama.
+
+    Args:
+        bd: Sesión de base de datos.
+        proyeccion: Meta archivada.
+
+    Returns:
+        Lista de diccionarios con `etiqueta`, `estado`, `valor` y `fecha`.
+    """
+    abonos = {
+        (abono.anio, abono.mes): abono.valor
+        for abono in bd.scalars(
+            select(AbonoProyeccion).where(
+                AbonoProyeccion.id_proyeccion == proyeccion.id_proyeccion
+            )
+        )
+    }
+    fechas: dict[tuple[int, int], date] = {}
+    for gasto in bd.scalars(
+        select(Gasto).where(
+            Gasto.id_proyeccion == proyeccion.id_proyeccion,
+            Gasto.pagado.is_(True),
+        )
+    ):
+        clave = (gasto.fecha.year, gasto.fecha.month)
+        if gasto.pagado_en and (clave not in fechas or gasto.pagado_en > fechas[clave]):
+            fechas[clave] = gasto.pagado_en
+
+    corte = None
+    if proyeccion.archivada_en is not None:
+        corte = _posicion(proyeccion.archivada_en.year, proyeccion.archivada_en.month)
+
+    detalle: list[dict[str, object]] = []
+    for anio, mes in meses_de_la_meta(proyeccion):
+        clave = (anio, mes)
+        posicion = _posicion(anio, mes)
+        if clave in abonos:
+            estado, valor = "Pagado", redondear_dinero(abonos[clave])
+        elif corte is None or posicion <= corte:
+            estado, valor = "No pagado", None
+        else:
+            continue
+        detalle.append(
+            {
+                "etiqueta": _etiqueta_mes(anio, mes),
+                "estado": estado,
+                "valor": valor,
+                "fecha": fechas.get(clave),
+            }
+        )
+    return detalle
+
+
+def meses_de_la_meta(proyeccion: ProyeccionAhorro) -> list[tuple[int, int]]:
     """Calcula la línea de tiempo de una meta.
 
     Args:
@@ -354,15 +568,41 @@ def _meses_de_la_meta(proyeccion: ProyeccionAhorro) -> list[tuple[int, int]]:
     Returns:
         Lista de tuplas `(anio, mes)` desde el inicio hasta el final planificado.
     """
-    cantidad = (
-        proyeccion.meses
-        if proyeccion.tipo_duracion == DURACION_LIMITADA and proyeccion.meses
-        else MESES_VENTANA_FIJA
-    )
+    cantidad = proyeccion.meses or MESES_VENTANA_FIJA
     inicio = proyeccion.fecha_inicio
     return [
         _mover_mes(inicio.year, inicio.month, avance) for avance in range(cantidad)
     ]
+
+
+def _estado_mes(
+    id_proyeccion: str,
+    anio: int,
+    mes: int,
+    por_mes: dict[tuple[str, int, int], Decimal],
+    saltados: set[tuple[str, int, int]],
+    hoy: date,
+) -> str:
+    """Clasifica un mes de la meta para su tarjeta en «Gastos y Presupuesto».
+
+    Args:
+        id_proyeccion: Meta evaluada.
+        anio: Año del mes.
+        mes: Mes (1–12).
+        por_mes: Pagos registrados por meta y mes.
+        saltados: Meses con algún gasto inhabilitado (× desde la meta).
+        hoy: Fecha de referencia para distinguir meses vencidos.
+
+    Returns:
+        `registrado` si hay pagos, `no_pagado` si el mes se saltó o venció sin
+        pagos, y `pendiente` en cualquier otro caso.
+    """
+    clave = (id_proyeccion, anio, mes)
+    if clave in por_mes:
+        return "registrado"
+    if clave in saltados or (anio, mes) < (hoy.year, hoy.month):
+        return "no_pagado"
+    return "pendiente"
 
 
 def resumen_metas(bd: Session, id_usuario: str) -> list[MetaResumen]:
@@ -386,6 +626,18 @@ def resumen_metas(bd: Session, id_usuario: str) -> list[MetaResumen]:
         )
     )
     por_mes = {(abono.id_proyeccion, abono.anio, abono.mes): abono.valor for abono in abonos}
+    # SRS v1.6: un mes es «no pagado» si su gasto fue saltado con × o si ya pasó
+    # sin ningún pago registrado; el mes actual sin pagos sigue «pendiente».
+    hoy = date.today()
+    saltados = {
+        (gasto.id_proyeccion, gasto.fecha.year, gasto.fecha.month)
+        for gasto in bd.scalars(
+            select(Gasto).where(
+                Gasto.id_proyeccion.in_(ids),
+                Gasto.inhabilitado_hasta > hoy,
+            )
+        )
+    }
 
     resumenes: list[MetaResumen] = []
     for proyeccion in proyecciones:
@@ -396,8 +648,16 @@ def resumen_metas(bd: Session, id_usuario: str) -> list[MetaResumen]:
                 etiqueta=_etiqueta_mes(anio, mes),
                 planeado=proyeccion.valor_mensual,
                 abono=por_mes.get((proyeccion.id_proyeccion, anio, mes)),
+                estado=_estado_mes(
+                    proyeccion.id_proyeccion,
+                    anio,
+                    mes,
+                    por_mes,
+                    saltados,
+                    hoy,
+                ),
             )
-            for anio, mes in _meses_de_la_meta(proyeccion)
+            for anio, mes in meses_de_la_meta(proyeccion)
         ]
 
         acumulado = redondear_dinero(
@@ -411,7 +671,7 @@ def resumen_metas(bd: Session, id_usuario: str) -> list[MetaResumen]:
             )
         )
 
-        if proyeccion.tipo_duracion == DURACION_LIMITADA and proyeccion.meses:
+        if proyeccion.meses:
             total: Decimal | None = redondear_dinero(
                 proyeccion.valor_mensual * proyeccion.meses
             )
@@ -425,6 +685,9 @@ def resumen_metas(bd: Session, id_usuario: str) -> list[MetaResumen]:
         else:
             porcentaje = CERO
 
+        anio_fin, mes_fin = meses_de_la_meta(proyeccion)[-1]
+        cumplida = _posicion(hoy.year, hoy.month) > _posicion(anio_fin, mes_fin)
+
         resumenes.append(
             MetaResumen(
                 proyeccion=proyeccion,
@@ -432,6 +695,8 @@ def resumen_metas(bd: Session, id_usuario: str) -> list[MetaResumen]:
                 acumulado=acumulado,
                 porcentaje=porcentaje,
                 meses=meses,
+                cumplida=cumplida,
+                fin_etiqueta=_etiqueta_mes(anio_fin, mes_fin),
             )
         )
     return resumenes
@@ -477,12 +742,28 @@ def diagnostico(
         mes: Mes del periodo (1–12).
 
     Returns:
-        Diccionario con `saldo_libre` (Decimal), `alerta` (bool) y `umbral`
-        (Decimal); `alerta` indica que el saldo quedó por debajo de $300.000.
+        Diccionario con `saldo_libre` (Decimal), `alerta` (bool), `umbral`
+        (Decimal) y `metas_mes` (Decimal). `alerta` indica que el saldo quedó
+        por debajo de $300.000. `metas_mes` es informativo: ya está restado en
+        el saldo porque cada meta vive como gasto fijo (SRS v1.6).
     """
     saldo = saldo_libre_total(bd, id_usuario, perfil, anio, mes)
+    inicio = date(anio, mes, 1)
+    fin = date(anio + (mes // 12), (mes % 12) + 1, 1)
+    gastos_meta = bd.scalars(
+        select(Gasto).where(
+            Gasto.id_usuario == id_usuario,
+            Gasto.id_proyeccion.is_not(None),
+            Gasto.fecha >= inicio,
+            Gasto.fecha < fin,
+        )
+    )
+    metas_mes = redondear_dinero(
+        sum((valor_computable(gasto) for gasto in gastos_meta), start=CERO)
+    )
     return {
         "saldo_libre": saldo,
         "alerta": saldo < UMBRAL_ALERTA,
         "umbral": UMBRAL_ALERTA,
+        "metas_mes": metas_mes,
     }

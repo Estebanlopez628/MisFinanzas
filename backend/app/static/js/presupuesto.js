@@ -3,9 +3,8 @@
  *
  * Responsabilidad
  * ---------------
- * - Habilitar el campo de meses solo cuando la duración es limitada.
  * - Mostrar el total acumulado proyectado mientras el usuario escribe la cuota
- *   y el número de meses, sin enviar nada al servidor.
+ *   y el periodo (en meses o años), sin enviar nada al servidor.
  *
  * Sin JavaScript el formulario sigue funcionando: el servidor valida la
  * duración y rechaza los casos incoherentes con un mensaje en español.
@@ -21,6 +20,7 @@
 
   var selectorDuracion = formulario.querySelector("[data-duracion]");
   var campoMeses = formulario.querySelector("[data-meses]");
+  var selectorUnidad = formulario.querySelector("[data-unidad]");
   var campoValor = formulario.querySelector('input[name="valor_mensual"]');
   var avisoTotal = formulario.querySelector("[data-total-proyectado]");
 
@@ -67,19 +67,15 @@
       return;
     }
 
-    var esLimitado = selectorDuracion && selectorDuracion.value === "LIMITADO";
     var valor = aNumero(campoValor ? campoValor.value : "");
-    var meses = campoMeses ? parseInt(campoMeses.value, 10) : NaN;
-
-    if (!esLimitado) {
-      avisoTotal.textContent =
-        "Gasto fijo mensual: sin fecha de cierre, la comparación usa 12 meses.";
-      return;
-    }
+    var cantidad = campoMeses ? parseInt(campoMeses.value, 10) : NaN;
+    // SRS v1.6: el periodo puede escribirse en meses o en años.
+    var porAnios = selectorUnidad && selectorUnidad.value === "ANIOS";
+    var meses = porAnios ? cantidad * 12 : cantidad;
 
     if (!isFinite(valor) || valor <= 0 || !isFinite(meses) || meses <= 0) {
       avisoTotal.textContent =
-        "Total acumulado proyectado: escribe la cuota y los meses para verlo.";
+        "Total acumulado proyectado: escribe la cuota y el periodo para verlo.";
       return;
     }
 
@@ -93,23 +89,11 @@
       ".";
   }
 
-  /**
-   * Habilita o deshabilita el campo de meses según la duración elegida.
-   */
-  function sincronizarDuracion() {
-    if (!selectorDuracion || !campoMeses) {
-      return;
-    }
-    var esLimitado = selectorDuracion.value === "LIMITADO";
-    campoMeses.disabled = !esLimitado;
-    if (!esLimitado) {
-      campoMeses.value = "";
-    }
-    actualizarTotal();
-  }
-
   if (selectorDuracion) {
-    selectorDuracion.addEventListener("change", sincronizarDuracion);
+    selectorDuracion.addEventListener("change", actualizarTotal);
+  }
+  if (selectorUnidad) {
+    selectorUnidad.addEventListener("change", actualizarTotal);
   }
   if (campoMeses) {
     campoMeses.addEventListener("input", actualizarTotal);

@@ -20,7 +20,7 @@ from sqlalchemy.orm import Session
 from app.core.base_datos import obtener_bd
 from app.dependencias import UsuarioSesion, obtener_usuario_actual
 from app.routers.vistas import contexto_base, plantillas
-from app.servicios import auditoria, gastos
+from app.servicios import auditoria, gastos, pagos_metas
 
 router = APIRouter(tags=["Gastos"])
 
@@ -61,6 +61,7 @@ def ver_gastos(
         HTML del módulo.
     """
     hoy = date.today()
+    pagos_metas.asegurar_gastos_de_metas(bd, usuario.id_usuario, hoy.year, hoy.month)
     lista = gastos.listar_gastos(bd, usuario.id_usuario)
     contexto = contexto_base(usuario)
     contexto.update(
@@ -235,6 +236,7 @@ def editar_gasto(
             )
         return RedirectResponse(url="/gastos", status_code=status.HTTP_303_SEE_OTHER)
 
+    pagos_metas.propagar_valor(bd, gasto)
     auditoria.registrar(
         bd, usuario.id_usuario, "GASTO_ACTUALIZADO", "gastos", gasto.descripcion
     )
@@ -247,6 +249,21 @@ def editar_gasto(
     return RedirectResponse(url="/gastos?guardado=1", status_code=status.HTTP_303_SEE_OTHER)
 
 
+def _volver(origen: str) -> RedirectResponse:
+    """Redirige al panel de origen tras una acción sobre pagos.
+
+    Args:
+        origen: ``finanzas`` para volver a Mis Finanzas; cualquier otro valor
+            vuelve al listado de gastos.
+
+    Returns:
+        Redirección 303 al destino.
+    """
+    if origen == "finanzas":
+        return RedirectResponse(url="/finanzas#quincenas", status_code=status.HTTP_303_SEE_OTHER)
+    return RedirectResponse(url="/gastos", status_code=status.HTTP_303_SEE_OTHER)
+
+
 @router.post("/gastos/{id_gasto}/eliminar", name="eliminar_gasto")
 def eliminar_gasto(
     id_gasto: str,
@@ -254,7 +271,10 @@ def eliminar_gasto(
     bd: Session = Depends(obtener_bd),
     origen: Annotated[str, Form()] = "",
 ) -> RedirectResponse:
-    """Elimina un gasto del usuario.
+    """Quita un gasto fijo con la × según sea manual o de una meta.
+
+    Un gasto manual se elimina. Un gasto de meta se inhabilita en su quincena
+    durante 8 días y su pago se retira; la meta se conserva (SRS v1.6).
 
     Args:
         id_gasto: Identificador del gasto.
@@ -266,10 +286,119 @@ def eliminar_gasto(
     Returns:
         Redirección al listado correspondiente.
     """
-    if gastos.eliminar_gasto(bd, usuario.id_usuario, id_gasto):
+    hoy = date.today()
+    accion = pagos_metas.quitar_gasto(bd, usuario.id_usuario, id_gasto, hoy)
+    if accion == pagos_metas.ACCION_INHABILITADO:
+        auditoria.registrar(bd, usuario.id_usuario, "PAGO_INHABILITADO", "gastos", id_gasto)
+    elif accion == pagos_metas.ACCION_ELIMINADO:
         auditoria.registrar(bd, usuario.id_usuario, "GASTO_ELIMINADO", "gastos", id_gasto)
-    if origen == "finanzas":
-        return RedirectResponse(
-            url="/finanzas#quincenas", status_code=status.HTTP_303_SEE_OTHER
+    return _volver(origen)
+
+
+@router.post("/gastos/{id_gasto}/pagado", name="marcar_pagado_gasto")
+def marcar_pagado_gasto(
+    id_gasto: str,
+    usuario: UsuarioSesion = Depends(obtener_usuario_actual),
+    bd: Session = Depends(obtener_bd),
+    origen: Annotated[str, Form()] = "",
+) -> RedirectResponse:
+    """Marca el ✔ de un gasto fijo, registrando su pago y su abono de meta.
+
+    Args:
+        id_gasto: Gasto a marcar.
+        usuario: Usuario autenticado.
+        bd: Sesión de base de datos.
+        origen: ``finanzas`` para volver al panel de quincenas.
+
+    Returns:
+        Redirección al panel de origen.
+    """
+    try:
+        gasto = pagos_metas.marcar_pagado(bd, usuario.id_usuario, id_gasto, date.today())
+    except ValueError:
+        return _volver(origen)
+    if gasto is not None:
+        auditoria.registrar(bd, usuario.id_usuario, "GASTO_PAGADO", "gastos", id_gasto)
+    return _volver(origen)
+
+
+@router.post("/gastos/{id_gasto}/abono", name="registrar_abono_gasto")
+def registrar_abono_gasto(
+    id_gasto: str,
+    usuario: UsuarioSesion = Depends(obtener_usuario_actual),
+    bd: Session = Depends(obtener_bd),
+    valor: Annotated[str, Form()] = "",
+    origen: Annotated[str, Form()] = "",
+) -> RedirectResponse:
+    """Registra un abono manual en un pago saltado de una meta (SRS v1.6).
+
+    Args:
+        id_gasto: Gasto saltado con ×.
+        usuario: Usuario autenticado.
+        bd: Sesión de base de datos.
+        valor: Monto que se abona.
+        origen: ``finanzas`` para volver al panel de quincenas.
+
+    Returns:
+        Redirección al panel de origen; si hay error, se muestra en el panel.
+    """
+    try:
+        gasto = pagos_metas.registrar_abono_manual(
+            bd, usuario.id_usuario, id_gasto, valor, date.today()
         )
-    return RedirectResponse(url="/gastos", status_code=status.HTTP_303_SEE_OTHER)
+    except ValueError as error:
+        if origen == "finanzas":
+            return RedirectResponse(
+                url=f"/finanzas?error_gasto={quote(str(error))}#quincenas",
+                status_code=status.HTTP_303_SEE_OTHER,
+            )
+        return _volver(origen)
+    if gasto is not None:
+        auditoria.registrar(bd, usuario.id_usuario, "ABONO_MANUAL", "gastos", id_gasto)
+    return _volver(origen)
+
+
+@router.post("/gastos/limpiar-pagos", name="limpiar_pagos_gastos")
+def limpiar_pagos_gastos(
+    usuario: UsuarioSesion = Depends(obtener_usuario_actual),
+    bd: Session = Depends(obtener_bd),
+    anio: Annotated[str, Form()] = "",
+    mes: Annotated[str, Form()] = "",
+    quincena: Annotated[str, Form()] = "0",
+    origen: Annotated[str, Form()] = "",
+) -> RedirectResponse:
+    """Oculta los checks de una quincena; los pagos registrados se conservan.
+
+    Args:
+        usuario: Usuario autenticado.
+        bd: Sesión de base de datos.
+        anio: Año del periodo visible.
+        mes: Mes del periodo visible.
+        quincena: `1` o `2` para una quincena; `0` para limpiar todo el mes.
+        origen: ``finanzas`` para volver al panel de quincenas.
+
+    Returns:
+        Redirección al panel de origen.
+    """
+    hoy = date.today()
+    try:
+        numero_anio = int(anio) if anio else hoy.year
+        numero_mes = int(mes) if mes else hoy.month
+        numero_quincena = int(quincena) if quincena else 0
+    except ValueError:
+        return _volver(origen)
+    if numero_quincena not in (0, 1, 2) or not 1 <= numero_mes <= 12:
+        return _volver(origen)
+
+    limpiados = pagos_metas.limpiar_checks(
+        bd, usuario.id_usuario, numero_anio, numero_mes, numero_quincena
+    )
+    if limpiados:
+        auditoria.registrar(
+            bd,
+            usuario.id_usuario,
+            "CHECKS_LIMPIADOS",
+            "gastos",
+            f"{numero_anio}-{numero_mes} quincena {numero_quincena}",
+        )
+    return _volver(origen)

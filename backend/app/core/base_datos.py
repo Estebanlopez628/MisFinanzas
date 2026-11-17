@@ -92,6 +92,31 @@ def crear_esquema() -> None:
     Base.metadata.create_all(motor)
     _migrar_columnas_perfil()
     _migrar_columnas_gastos()
+    _migrar_columnas_metas()
+
+
+def _migrar_columnas_metas() -> None:
+    """Agrega el historial de archivado a `proyecciones_ahorro` (SRS v1.6).
+
+    Las metas existentes quedan activas (`activo` ya es verdadero por defecto) y
+    sin fecha de archivado. Es idempotente.
+    """
+    if not _conexion_sqlite:
+        return
+
+    with motor.begin() as conexion:
+        filas = conexion.exec_driver_sql(
+            "PRAGMA table_info(proyecciones_ahorro)"
+        ).fetchall()
+        existentes = {fila[1] for fila in filas}
+        if not existentes:
+            return
+        nuevas = {"archivada_en": "DATE", "estado_final": "VARCHAR(20)"}
+        for columna, tipo in nuevas.items():
+            if columna not in existentes:
+                conexion.exec_driver_sql(
+                    f"ALTER TABLE proyecciones_ahorro ADD COLUMN {columna} {tipo}"
+                )
 
 
 # Columnas agregadas después de la primera versión de `perfiles_financieros`.
@@ -159,6 +184,21 @@ def _migrar_columnas_gastos() -> None:
             conexion.exec_driver_sql(
                 "ALTER TABLE gastos ADD COLUMN quincena SMALLINT"
             )
+        if not existentes:
+            return
+        # SRS v1.6: checks de pago y gastos generados por metas. Las columnas
+        # booleanas llevan default para que SQLite acepte el `NOT NULL`.
+        nuevas = {
+            "id_proyeccion": "VARCHAR(32) REFERENCES proyecciones_ahorro (id_proyeccion) ON DELETE CASCADE",
+            "pagado": "BOOLEAN NOT NULL DEFAULT 0",
+            "pagado_en": "DATE",
+            "monto_pagado": "NUMERIC(14,2)",
+            "check_visible": "BOOLEAN NOT NULL DEFAULT 1",
+            "inhabilitado_hasta": "DATE",
+        }
+        for columna, tipo in nuevas.items():
+            if columna not in existentes:
+                conexion.exec_driver_sql(f"ALTER TABLE gastos ADD COLUMN {columna} {tipo}")
 
 
 def _migrar_chancucos() -> None:
@@ -233,6 +273,180 @@ def _migrar_chancucos() -> None:
         )
 
 
+def _migrar_columnas_deudas() -> None:
+    """Agrega el plan de pagos a una tabla `deudas` ya existente (SRS v1.5).
+
+    La versión anterior no tenía `cuotas_pendientes` ni `periodicidad`. SQLite no
+    permite añadir columnas `NOT NULL` sin valor por defecto, así que se crean con
+    default y se dejan las deudas heredadas sin cuotas pendientes (no se puede
+    inferir su calendario). Es idempotente.
+    """
+    if not _conexion_sqlite:
+        return
+
+    with motor.begin() as conexion:
+        filas = conexion.exec_driver_sql("PRAGMA table_info(deudas)").fetchall()
+        existentes = {fila[1] for fila in filas}
+        if not existentes:
+            return
+        if "cuotas_pendientes" not in existentes:
+            conexion.exec_driver_sql(
+                "ALTER TABLE deudas ADD COLUMN cuotas_pendientes "
+                "SMALLINT NOT NULL DEFAULT 0"
+            )
+        if "periodicidad" not in existentes:
+            conexion.exec_driver_sql(
+                "ALTER TABLE deudas ADD COLUMN periodicidad "
+                "VARCHAR(12) NOT NULL DEFAULT 'MENSUAL'"
+            )
+        if "fecha_creacion" not in existentes:
+            # SQLite no admite `DEFAULT CURRENT_TIMESTAMP` en `ALTER TABLE`, así
+            # que se agrega nullable y se rellena con la fecha de la migración.
+            conexion.exec_driver_sql(
+                "ALTER TABLE deudas ADD COLUMN fecha_creacion DATETIME"
+            )
+            conexion.exec_driver_sql(
+                "UPDATE deudas SET fecha_creacion = CURRENT_TIMESTAMP "
+                "WHERE fecha_creacion IS NULL"
+            )
+
+
+def _migrar_proyeccion_quincena() -> None:
+    """Permite `quincena = 3` («Ambas quincenas») en las metas de ahorro.
+
+    SRS v1.5 agregó la tercera opción al planificador. La tabla original tenía
+    `CHECK (quincena IN (1, 2))` y SQLite no altera restricciones existentes, así
+    que hay que reconstruir `proyecciones_ahorro` junto con su tabla hija
+    `abonos_proyeccion`: primero se crean las copias nuevas, se trasvasan las
+    filas, se eliminan las antiguas (hija antes que padre, por la clave foránea
+    en cascada) y se renombran.
+
+    Es idempotente: si el DDL guardado ya admite la opción 3 —o si las tablas
+    todavía no existen— no hace nada.
+    """
+    if not _conexion_sqlite:
+        return
+
+    with motor.begin() as conexion:
+        filas = conexion.exec_driver_sql(
+            "SELECT sql FROM sqlite_master WHERE type = 'table' "
+            "AND name = 'proyecciones_ahorro'"
+        ).fetchall()
+        if not filas or not filas[0][0]:
+            return
+        ddl = filas[0][0]
+        if "IN (1, 2, 3)" in ddl.replace("  ", " ") or "quincena" not in ddl:
+            return
+
+        conexion.exec_driver_sql(
+            """
+            CREATE TABLE proyecciones_ahorro_v15 (
+                id_proyeccion VARCHAR(32) NOT NULL PRIMARY KEY,
+                id_usuario VARCHAR(32) NOT NULL
+                    REFERENCES usuarios (id_usuario) ON DELETE CASCADE,
+                categoria VARCHAR(60) NOT NULL,
+                descripcion VARCHAR(150) NOT NULL,
+                valor_mensual NUMERIC(14, 2) NOT NULL,
+                tipo_duracion VARCHAR(20) NOT NULL,
+                meses SMALLINT,
+                fecha_inicio DATE NOT NULL,
+                quincena SMALLINT NOT NULL,
+                activo BOOLEAN NOT NULL DEFAULT 1,
+                fecha_creacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                CONSTRAINT ck_proyeccion_valor CHECK (valor_mensual >= 0),
+                CONSTRAINT ck_proyeccion_quincena CHECK (quincena IN (1, 2, 3)),
+                CONSTRAINT ck_proyeccion_duracion
+                    CHECK (tipo_duracion IN ('FIJO', 'LIMITADO'))
+            )
+            """
+        )
+        conexion.exec_driver_sql(
+            """
+            CREATE TABLE abonos_proyeccion_v15 (
+                id_abono VARCHAR(32) NOT NULL PRIMARY KEY,
+                id_proyeccion VARCHAR(32) NOT NULL
+                    REFERENCES proyecciones_ahorro_v15 (id_proyeccion)
+                    ON DELETE CASCADE,
+                anio SMALLINT NOT NULL,
+                mes SMALLINT NOT NULL,
+                valor NUMERIC(14, 2) NOT NULL,
+                fecha_registro DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                CONSTRAINT uq_abono_proyeccion_mes
+                    UNIQUE (id_proyeccion, anio, mes),
+                CONSTRAINT ck_abono_proyeccion_valor CHECK (valor >= 0)
+            )
+            """
+        )
+        conexion.exec_driver_sql(
+            """
+            INSERT INTO proyecciones_ahorro_v15 (
+                id_proyeccion, id_usuario, categoria, descripcion,
+                valor_mensual, tipo_duracion, meses, fecha_inicio, quincena,
+                activo, fecha_creacion
+            )
+            SELECT
+                id_proyeccion, id_usuario, categoria, descripcion,
+                valor_mensual, tipo_duracion, meses, fecha_inicio, quincena,
+                COALESCE(activo, 1), COALESCE(fecha_creacion, CURRENT_TIMESTAMP)
+            FROM proyecciones_ahorro
+            """
+        )
+        conexion.exec_driver_sql(
+            """
+            INSERT INTO abonos_proyeccion_v15 (
+                id_abono, id_proyeccion, anio, mes, valor, fecha_registro
+            )
+            SELECT
+                id_abono, id_proyeccion, anio, mes, valor,
+                COALESCE(fecha_registro, CURRENT_TIMESTAMP)
+            FROM abonos_proyeccion
+            """
+        )
+
+        # La tabla hija se elimina primero para no disparar el ON DELETE CASCADE.
+        conexion.exec_driver_sql("DROP TABLE abonos_proyeccion")
+        conexion.exec_driver_sql("DROP TABLE proyecciones_ahorro")
+        conexion.exec_driver_sql(
+            "ALTER TABLE proyecciones_ahorro_v15 RENAME TO proyecciones_ahorro"
+        )
+        conexion.exec_driver_sql(
+            "ALTER TABLE abonos_proyeccion_v15 RENAME TO abonos_proyeccion"
+        )
+        conexion.exec_driver_sql(
+            "CREATE INDEX IF NOT EXISTS ix_proyecciones_ahorro_id_usuario "
+            "ON proyecciones_ahorro (id_usuario)"
+        )
+        conexion.exec_driver_sql(
+            "CREATE INDEX IF NOT EXISTS ix_abonos_proyeccion_id_proyeccion "
+            "ON abonos_proyeccion (id_proyeccion)"
+        )
+
+
+def _migrar_saldos_incapacidad() -> None:
+    """Marca como aplicados los saldos de incapacidad heredados (SRS v1.5).
+
+    El modelo anterior encolaba saldos por mes y los aplicaba al guardar el
+    periodo. SRS v1.5 eliminó el rollover: cada mes recalcula su tramo desde las
+    fechas registradas. Los saldos pendientes que queden en una base migrada se
+    marcan como aplicados para que no parezcan deuda vigente en ninguna consulta.
+
+    Es idempotente: solo toca filas con `aplicado = 0`.
+    """
+    if not _conexion_sqlite:
+        return
+
+    with motor.begin() as conexion:
+        filas = conexion.exec_driver_sql(
+            "PRAGMA table_info(saldos_incapacidad)"
+        ).fetchall()
+        if not filas:
+            return
+        conexion.exec_driver_sql(
+            "UPDATE saldos_incapacidad SET aplicado = 1, id_periodo_aplicado = NULL "
+            "WHERE aplicado = 0"
+        )
+
+
 def inicializar_base_datos() -> None:
     """Prepara el esquema y siembra las cuentas de demostración.
 
@@ -245,5 +459,8 @@ def inicializar_base_datos() -> None:
     # La migración de atajos corre después de crear el esquema: si la tabla no
     # existía, ya se creó con la estructura nueva y la función no hace nada.
     _migrar_chancucos()
+    _migrar_columnas_deudas()
+    _migrar_proyeccion_quincena()
+    _migrar_saldos_incapacidad()
     with FabricaSesiones() as sesion:
         usuarios.sembrar_demostracion(sesion)

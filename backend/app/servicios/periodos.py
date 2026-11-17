@@ -5,8 +5,11 @@ Responsabilidad
 - Guardar (o actualizar) una liquidación en `periodos_nomina` y su detalle de
   recargos en `registros_horas_extra`.
 - Consultar el historial y los periodos puntuales.
-- Calcular y aplicar el **rollover** de incapacidades del mes.
-- Liberar los saldos si un periodo se elimina, para no perder el descuento.
+- Eliminar periodos del historial.
+
+SRS v1.5: el rollover de incapacidades se retiró. El descuento de cada mes sale
+de su propio tramo calendario, que se recalcula desde las fechas registradas
+(`servicios/registro_incapacidades`). Por eso este módulo ya no marca saldos.
 
 Toda la aritmética llega ya resuelta desde `servicios/nomina`; aquí solo se
 traduce a filas y se conservan las invariantes del diccionario.
@@ -14,7 +17,6 @@ traduce a filas y se conservan las invariantes del diccionario.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from decimal import Decimal
 
 from sqlalchemy import delete, select
@@ -23,35 +25,10 @@ from sqlalchemy.orm import Session
 from app.modelos import (
     PeriodoNomina,
     RegistroHorasExtra,
-    SaldoIncapacidad,
 )
 from app.servicios.nomina import LiquidacionNomina
 
 CERO = Decimal("0")
-
-
-@dataclass(frozen=True)
-class ResumenRollover:
-    """Saldo de incapacidad pendiente para un mes.
-
-    Attributes:
-        dias: Días pendientes de descontar.
-        valor: Dinero pendiente de descontar.
-        ids: Identificadores de los saldos que se aplicarían al guardar.
-    """
-
-    dias: int
-    valor: Decimal
-    ids: tuple[str, ...]
-
-    @property
-    def hay_saldo(self) -> bool:
-        """Indica si existe algo por aplicar.
-
-        Returns:
-            `True` si hay días o dinero pendientes.
-        """
-        return self.dias > 0 or self.valor > CERO
 
 
 def obtener_periodo(
@@ -117,35 +94,6 @@ def horas_del_periodo(bd: Session, id_periodo: str) -> dict[str, Decimal]:
     return {registro.tipo_hora: registro.cantidad_horas for registro in registros}
 
 
-def resumen_rollover(bd: Session, id_usuario: str, anio: int, mes: int) -> ResumenRollover:
-    """Suma los saldos de incapacidad pendientes del mes.
-
-    Args:
-        bd: Sesión de base de datos.
-        id_usuario: Dueño de los saldos.
-        anio: Año del periodo a liquidar.
-        mes: Mes del periodo a liquidar.
-
-    Returns:
-        `ResumenRollover` con días, dinero e identificadores pendientes.
-    """
-    saldos = list(
-        bd.scalars(
-            select(SaldoIncapacidad).where(
-                SaldoIncapacidad.id_usuario == id_usuario,
-                SaldoIncapacidad.anio == anio,
-                SaldoIncapacidad.mes == mes,
-                SaldoIncapacidad.aplicado.is_(False),
-            )
-        )
-    )
-    return ResumenRollover(
-        dias=sum(saldo.dias_pendientes for saldo in saldos),
-        valor=sum((saldo.valor_pendiente for saldo in saldos), start=CERO),
-        ids=tuple(saldo.id_saldo for saldo in saldos),
-    )
-
-
 def guardar_liquidacion(
     bd: Session,
     id_usuario: str,
@@ -154,7 +102,6 @@ def guardar_liquidacion(
     quincena: int,
     liquidacion: LiquidacionNomina,
     horas_por_tipo: dict[str, Decimal],
-    ids_saldos: tuple[str, ...] = (),
     total_gastos: Decimal = CERO,
 ) -> PeriodoNomina:
     """Guarda o actualiza la liquidación de un periodo.
@@ -167,7 +114,6 @@ def guardar_liquidacion(
         quincena: `0` mensual, `1` o `2` quincenal.
         liquidacion: Resultado del motor de nómina.
         horas_por_tipo: Horas registradas por tipo (para el detalle).
-        ids_saldos: Saldos de incapacidad que se aplican con este periodo.
         total_gastos: Gastos del mes que se dejan registrados junto al periodo.
 
     Returns:
@@ -219,19 +165,13 @@ def guardar_liquidacion(
             )
         )
 
-    for id_saldo in ids_saldos:
-        saldo = bd.get(SaldoIncapacidad, id_saldo)
-        if saldo is not None:
-            saldo.aplicado = True
-            saldo.id_periodo_aplicado = periodo.id_periodo
-
     bd.commit()
     bd.refresh(periodo)
     return periodo
 
 
 def eliminar_periodo(bd: Session, id_usuario: str, id_periodo: str) -> bool:
-    """Elimina un periodo y libera los saldos de incapacidad que aplicó.
+    """Elimina un periodo del historial.
 
     Args:
         bd: Sesión de base de datos.
@@ -244,15 +184,6 @@ def eliminar_periodo(bd: Session, id_usuario: str, id_periodo: str) -> bool:
     periodo = bd.get(PeriodoNomina, id_periodo)
     if periodo is None or periodo.id_usuario != id_usuario:
         return False
-
-    saldos = bd.scalars(
-        select(SaldoIncapacidad).where(
-            SaldoIncapacidad.id_periodo_aplicado == id_periodo
-        )
-    )
-    for saldo in saldos:
-        saldo.aplicado = False
-        saldo.id_periodo_aplicado = None
 
     bd.delete(periodo)
     bd.commit()

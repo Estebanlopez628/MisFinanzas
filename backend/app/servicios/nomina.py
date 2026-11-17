@@ -129,7 +129,7 @@ class LiquidacionNomina:
         total_recargos: Dinero por horas extras y recargos.
         deducciones_ley: Salud y pensión.
         auxilio_transporte: Auxilio aplicado (0 si no tiene derecho).
-        deduccion_incapacidad: Descuento por días 3+ de incapacidad y rollover.
+        deduccion_incapacidad: Descuento por los días 3+ de la incapacidad del periodo.
         total_devengado: Sueldo + recargos (definición del SRS, sin auxilio).
         total_ingresos: Total devengado + auxilio de transporte.
         total_deducciones: Salud + pensión + incapacidad.

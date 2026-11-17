@@ -462,6 +462,41 @@ a.tarjeta:focus-visible {
   font-variant-numeric: tabular-nums;
 }
 
+/* SRS v1.5: subtítulo y total dentro de la caja de deducciones de ley. El
+   subtítulo usa el mismo tratamiento que el título (mayúsculas y gris) para
+   que las deducciones fijas se lean como una sección, no como un ítem más. */
+.bloque-deducciones__subtitulo {
+  margin: 14px 0 8px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--borde-suave);
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.lista-deducciones--fijas li {
+  font-size: 0.9rem;
+}
+
+.bloque-deducciones__total {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--borde-suave);
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.bloque-deducciones__total strong {
+  font-size: 1.05rem;
+  font-variant-numeric: tabular-nums;
+}
+
 /* -------------------- Horas extras: cuadrícula 2 × 3 --------------------- */
 
 .grupo-horas--cuadricula {
@@ -648,11 +683,16 @@ a.tarjeta:focus-visible {
   list-style: none;
 }
 
+/* SRS v1.6: cada mes es de solo lectura; su contenido va centrado con el mismo
+   margen interior en todos los lados. */
 .mes-abono {
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
   gap: 6px;
-  padding: 10px;
+  padding: 12px;
+  text-align: center;
   border: 1px solid var(--borde-suave);
   border-radius: var(--radio-md, 10px);
   background: rgba(15, 23, 42, 0.55);
@@ -660,6 +700,15 @@ a.tarjeta:focus-visible {
 
 .mes-abono--registrado {
   border-color: rgba(16, 185, 129, 0.55);
+}
+
+.mes-abono--no_pagado {
+  border-color: rgba(245, 158, 11, 0.6);
+}
+
+.mes-abono__valor {
+  font-size: 1rem;
+  font-variant-numeric: tabular-nums;
 }
 
 .mes-abono__etiqueta {
@@ -670,16 +719,18 @@ a.tarjeta:focus-visible {
   text-transform: uppercase;
 }
 
-.mes-abono form {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-}
-
 .mes-abono__estado {
   color: var(--accent-green);
   font-size: 0.78rem;
   font-weight: 600;
+}
+
+.mes-abono__estado--no-pagado {
+  color: var(--accent-amber);
+}
+
+.mes-abono__estado--pendiente {
+  color: var(--text-muted);
 }
 
 .campo__control--compacto {
@@ -780,8 +831,8 @@ a.tarjeta:focus-visible {
 
 
 /* Submenú de Mis Finanzas (SRS v1.4, REQ-03): cada opción es un botón
-   independiente. En escritorio se reparten en una fila; en móvil la fila hace
-   scroll lateral táctil sin saltar de línea. */
+   independiente. En escritorio se reparten en una fila; en móvil la cuadrícula
+   2 × 2 de abajo los muestra sin scroll lateral. */
 .subnav-finanzas {
   display: flex;
   flex-wrap: nowrap;
@@ -830,10 +881,22 @@ a.tarjeta:focus-visible {
   box-shadow: 0 6px 16px rgba(2, 132, 199, 0.35);
 }
 
+/* SRS v1.5: en móvil el submenú pasa a una cuadrícula 2 × 2, sin scroll
+   lateral, para que las cuatro secciones se vean de un vistazo. */
 @media (max-width: 640px) {
+  .subnav-finanzas {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    overflow-x: visible;
+    padding-bottom: 2px;
+  }
+
   .subnav-finanzas__enlace {
-    flex: 0 0 auto;
-    padding: 10px 14px;
+    flex: 0 1 auto;
+    padding: 10px 12px;
+    white-space: normal;
+    text-align: center;
+    line-height: 1.25;
   }
 }
 
@@ -946,6 +1009,86 @@ a.tarjeta:focus-visible {
 
 .lista-gastos__item form {
   margin: 0;
+}
+
+/* SRS v1.6: ✔ y × comparten el mismo círculo de 2 rem. */
+.boton-circular,
+.boton.boton-circular {
+  box-sizing: border-box;
+  width: 2rem;
+  height: 2rem;
+  min-width: 2rem;
+  padding: 0;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+.boton-circular--check {
+  border: 2px solid var(--accent-green);
+  background: transparent;
+  color: var(--accent-green);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.boton-circular--check:hover,
+.boton-circular--check:focus-visible {
+  background: rgba(16, 185, 129, 0.18);
+  outline: none;
+}
+
+.boton-circular--marcado {
+  border: 2px solid var(--accent-green);
+  background: var(--accent-green);
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.lista-gastos__item--pagado {
+  border-color: rgba(16, 185, 129, 0.55);
+}
+
+/* Pago saltado con ×: se ve, pero atenuado y sin acciones de pago. */
+.lista-gastos__item--inhabilitado {
+  opacity: 0.6;
+  border-style: dashed;
+  border-color: rgba(245, 158, 11, 0.6);
+}
+
+/* SRS v1.6: abono manual en un pago saltado; compacto para caber en la fila. */
+.formulario-abono-manual {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+}
+
+.formulario-abono-manual .campo__control {
+  width: 90px;
+  padding: 4px 6px;
+}
+
+/* SRS v1.6: estado de una meta (en curso o cumplida). */
+.meta__estado {
+  margin: 4px 0 8px;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.meta__estado--cumplida {
+  color: var(--accent-green);
+}
+
+.lista-gastos__estado {
+  display: block;
+  color: var(--accent-amber);
+  font-size: 0.72rem;
+  font-weight: 600;
 }
 
 .edicion-gasto__formulario {
@@ -1563,7 +1706,6 @@ a.tarjeta:focus-visible {
   margin-bottom: 18px;
 }
 
-.aviso--rollover,
 .aviso--guardado {
   border-left-color: var(--accent-amber);
   background: rgba(245, 158, 11, 0.08);
@@ -1579,6 +1721,48 @@ a.tarjeta:focus-visible {
 
 .tabla--editable {
   min-width: 520px;
+}
+
+/* SRS v1.5: tabla compacta de tramos de incapacidad y fila del mes activo. */
+.tabla-contenedor--compacta {
+  margin-top: 14px;
+}
+
+.tabla--compacta {
+  min-width: 0;
+  font-size: 0.85rem;
+}
+
+.tabla--compacta th,
+.tabla--compacta td {
+  padding: 6px 8px;
+  /* SRS v1.5: sin desplazamiento horizontal; los conceptos largos parten línea. */
+  white-space: normal;
+}
+
+.fila-periodo {
+  background: rgba(2, 132, 199, 0.12);
+  box-shadow: inset 3px 0 0 var(--accent-blue);
+}
+
+/* Valor calculado que reemplaza a un input (días automáticos). */
+.campo__valor {
+  display: block;
+  padding: 10px 12px;
+  border: 1px dashed var(--borde-suave);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 1rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* SRS v1.5: sueldo de solo lectura, destacado como antes el input. */
+.campo__valor--destacado {
+  border-style: solid;
+  border-color: rgba(2, 132, 199, 0.45);
+  background: rgba(2, 132, 199, 0.08);
+  font-size: 1.15rem;
+  font-weight: 700;
 }
 
 /* Historial cronológico (SRS v1.3, bloque 5): ocho columnas necesitan aire. */
@@ -1633,6 +1817,29 @@ a.tarjeta:focus-visible {
   .banner-publicidad {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  /* SRS v1.5: cabecera y paneles proporcionados al ancho del teléfono. */
+  .heroe__titulo {
+    font-size: 1.4rem;
+  }
+
+  .heroe__subtitulo {
+    font-size: 0.9rem;
+  }
+
+  .panel {
+    padding: 16px;
+  }
+
+  /* SRS v1.5: los campos se apilan a una sola columna para que Gastos y
+     Presupuesto queden alineados de borde a borde. */
+  .fila-campos {
+    grid-template-columns: 1fr;
+  }
+
+  .acciones-formulario .boton {
+    width: 100%;
   }
 }
 

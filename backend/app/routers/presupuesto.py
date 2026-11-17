@@ -3,8 +3,9 @@
 Responsabilidad
 ---------------
 - Servir la pestaña «Gastos y Presupuesto» con el diagnóstico de liquidez, el
-  formulario de proyección y el seguimiento de abonos.
-- Crear metas, registrar o corregir el abono de un mes y eliminarlas.
+  formulario de proyección y el seguimiento de abonos (solo lectura desde
+  SRS v1.6: el abono lo registra el check del gasto fijo).
+- Crear metas y eliminarlas. Crear una meta genera sus gastos fijos.
 
 La aritmética vive en `app.servicios.ahorro`; aquí solo se traduce HTTP.
 """
@@ -22,7 +23,7 @@ from sqlalchemy.orm import Session
 from app.core.base_datos import obtener_bd
 from app.dependencias import UsuarioSesion, obtener_usuario_actual
 from app.routers.vistas import contexto_base, plantillas
-from app.servicios import ahorro, auditoria, deducciones_fijas, perfiles
+from app.servicios import ahorro, auditoria, deducciones_fijas, pagos_metas, perfiles
 
 router = APIRouter(tags=["Presupuesto"])
 
@@ -44,6 +45,29 @@ def _fecha_del_formulario(texto: str) -> date:
     return date.fromisoformat(texto.strip())
 
 
+def _meses_del_formulario(cantidad: str, unidad: str) -> str:
+    """Convierte el periodo escrito en el formulario a una cantidad de meses.
+
+    SRS v1.6: el usuario escribe la cantidad y elige meses o años.
+
+    Args:
+        cantidad: Número escrito en el campo; puede venir vacío.
+        unidad: `MESES` o `ANIOS`.
+
+    Returns:
+        Cantidad de meses como texto; vacío si el campo llegó vacío.
+
+    Raises:
+        ValueError: Si la cantidad no es un número entero.
+    """
+    texto = (cantidad or "").strip()
+    if not texto:
+        return ""
+    if not texto.isdigit():
+        raise ValueError("El periodo debe ser un número entero de meses o años.")
+    return str(int(texto) * 12) if unidad == "ANIOS" else str(int(texto))
+
+
 def _contexto(
     usuario: UsuarioSesion,
     bd: Session,
@@ -63,6 +87,7 @@ def _contexto(
         Diccionario listo para Jinja2.
     """
     hoy = date.today()
+    pagos_metas.asegurar_gastos_de_metas(bd, usuario.id_usuario, hoy.year, hoy.month)
     perfil = perfiles.obtener_perfil(bd, usuario.id_usuario)
     contexto = contexto_base(usuario)
     contexto.update(
@@ -73,6 +98,7 @@ def _contexto(
                 bd, usuario.id_usuario, perfil, hoy.year, hoy.month
             ),
             "metas": ahorro.resumen_metas(bd, usuario.id_usuario),
+            "historial": ahorro.historial_metas(bd, usuario.id_usuario),
             "deducciones": deducciones_fijas.listar_deducciones(bd, usuario.id_usuario),
             "categorias": ahorro.CATEGORIAS_SUGERIDAS,
             "fecha_hoy": hoy.isoformat(),
@@ -117,6 +143,7 @@ def crear_proyeccion(
     valor_mensual: Annotated[str, Form()] = "",
     tipo_duracion: Annotated[str, Form()] = ahorro.DURACION_FIJA,
     meses: Annotated[str, Form()] = "",
+    unidad_periodo: Annotated[str, Form()] = "MESES",
     fecha_inicio: Annotated[str, Form()] = "",
     quincena: Annotated[str, Form()] = "1",
 ) -> HTMLResponse | RedirectResponse:
@@ -132,7 +159,7 @@ def crear_proyeccion(
         tipo_duracion: `FIJO` o `LIMITADO`.
         meses: Cantidad de cuotas si es limitada.
         fecha_inicio: Primer mes de la proyección.
-        quincena: `1` o `2`.
+        quincena: `1`, `2` o `3` (ambas quincenas).
 
     Returns:
         Redirección al planificador o la vista con el error.
@@ -145,7 +172,7 @@ def crear_proyeccion(
             descripcion,
             valor_mensual,
             tipo_duracion=tipo_duracion,
-            meses=meses,
+            meses=_meses_del_formulario(meses, unidad_periodo),
             fecha_inicio=_fecha_del_formulario(fecha_inicio),
             quincena=quincena,
         )
@@ -156,6 +183,8 @@ def crear_proyeccion(
             "proyecciones_ahorro",
             proyeccion.descripcion,
         )
+        hoy = date.today()
+        pagos_metas.asegurar_gastos_de_metas(bd, usuario.id_usuario, hoy.year, hoy.month)
     except (ValueError, ArithmeticError) as error:
         contexto = _contexto(usuario, bd, error=str(error))
         return plantillas.TemplateResponse(
@@ -165,65 +194,6 @@ def crear_proyeccion(
             status_code=status.HTTP_400_BAD_REQUEST,
         )
 
-    return RedirectResponse(
-        url="/presupuesto?guardado=1", status_code=status.HTTP_303_SEE_OTHER
-    )
-
-
-@router.post(
-    "/presupuesto/metas/{id_proyeccion}/abono",
-    name="registrar_abono_proyeccion",
-    response_model=None,
-)
-def registrar_abono(
-    id_proyeccion: str,
-    usuario: UsuarioSesion = Depends(obtener_usuario_actual),
-    bd: Session = Depends(obtener_bd),
-    anio: Annotated[str, Form()] = "",
-    mes: Annotated[str, Form()] = "",
-    valor: Annotated[str, Form()] = "",
-) -> RedirectResponse:
-    """Registra o corrige el abono de un mes de la meta.
-
-    Args:
-        id_proyeccion: Meta a la que se abona.
-        usuario: Usuario autenticado.
-        bd: Sesión de base de datos.
-        anio: Año del abono.
-        mes: Mes del abono (1–12).
-        valor: Monto abonado.
-
-    Returns:
-        Redirección al planificador con el resultado.
-    """
-    try:
-        abono = ahorro.registrar_abono(
-            bd,
-            usuario.id_usuario,
-            id_proyeccion,
-            int(anio),
-            int(mes),
-            valor,
-        )
-    except (ValueError, ArithmeticError) as error:
-        return RedirectResponse(
-            url=f"/presupuesto?error={quote(str(error))}",
-            status_code=status.HTTP_303_SEE_OTHER,
-        )
-
-    if abono is None:
-        return RedirectResponse(
-            url=f"/presupuesto?error={quote('La meta no existe.')}",
-            status_code=status.HTTP_303_SEE_OTHER,
-        )
-
-    auditoria.registrar(
-        bd,
-        usuario.id_usuario,
-        "ABONO_META",
-        "abonos_proyeccion",
-        f"{id_proyeccion} {anio}-{mes}",
-    )
     return RedirectResponse(
         url="/presupuesto?guardado=1", status_code=status.HTTP_303_SEE_OTHER
     )
@@ -247,9 +217,59 @@ def eliminar_proyeccion(
     """
     if ahorro.eliminar_proyeccion(bd, usuario.id_usuario, id_proyeccion):
         auditoria.registrar(
-            bd, usuario.id_usuario, "META_ELIMINADA", "proyecciones_ahorro", id_proyeccion
+            bd, usuario.id_usuario, "META_ARCHIVADA", "proyecciones_ahorro", id_proyeccion
         )
     return RedirectResponse(url="/presupuesto", status_code=status.HTTP_303_SEE_OTHER)
+
+
+@router.post(
+    "/presupuesto/metas/{id_proyeccion}/extender",
+    name="extender_proyeccion",
+    response_model=None,
+)
+def extender_meta(
+    request: Request,
+    id_proyeccion: str,
+    usuario: UsuarioSesion = Depends(obtener_usuario_actual),
+    bd: Session = Depends(obtener_bd),
+    cantidad: Annotated[str, Form()] = "",
+    unidad_periodo: Annotated[str, Form()] = "MESES",
+) -> HTMLResponse | RedirectResponse:
+    """Extiende una meta cumplida o en curso y regenera sus cuotas.
+
+    Args:
+        request: Petición HTTP.
+        id_proyeccion: Meta a extender.
+        usuario: Usuario autenticado.
+        bd: Sesión de base de datos.
+        cantidad: Número de meses o años a agregar.
+        unidad_periodo: `MESES` o `ANIOS`.
+
+    Returns:
+        Redirección al planificador o la vista con el error.
+    """
+    try:
+        if not cantidad.strip():
+            raise ValueError("Escribe cuántos meses o años quieres extender.")
+        meses = int(_meses_del_formulario(cantidad, unidad_periodo))
+        proyeccion = ahorro.extender_proyeccion(bd, usuario.id_usuario, id_proyeccion, meses)
+    except ValueError as error:
+        return RedirectResponse(
+            url=f"/presupuesto?error={quote(str(error))}",
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
+    if proyeccion is None:
+        return RedirectResponse(
+            url=f"/presupuesto?error={quote('La meta no existe.')}",
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
+
+    auditoria.registrar(
+        bd, usuario.id_usuario, "META_EXTENDIDA", "proyecciones_ahorro", id_proyeccion
+    )
+    hoy = date.today()
+    pagos_metas.asegurar_gastos_de_metas(bd, usuario.id_usuario, hoy.year, hoy.month)
+    return RedirectResponse(url="/presupuesto?guardado=1", status_code=status.HTTP_303_SEE_OTHER)
 
 # ---------------------------------------------------------------------------
 # Deducciones fijas del salario (SRS v1.4, REQ-08)

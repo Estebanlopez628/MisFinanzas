@@ -1,8 +1,8 @@
-"""Pruebas de la vista de incapacidades (Tarea 4b).
+"""Pruebas de la vista de incapacidades (Tarea 4b y SRS v1.5).
 
-Verifican que el formulario se renderiza, que la liquidación se muestra con el
-descuento y el saldo arrastrado, y que los errores de captura se informan sin
-romper la página.
+Verifican que el formulario se renderiza, que la liquidación muestra el
+descuento y el desglose por mes, y que los errores de captura se informan sin
+romper la página. SRS v1.5 retiró el rollover: no hay saldos arrastrados.
 """
 
 from __future__ import annotations
@@ -23,6 +23,9 @@ def test_formulario_disponible(cliente_usuario: TestClient) -> None:
     assert 'name="sueldo_basico"' in respuesta.text
     assert 'name="periodo_mes"' in respuesta.text
     assert "Cómo se calcula" in respuesta.text
+    # SRS v1.5: el cálculo es automático y los días salen de las fechas.
+    assert "Calcular incapacidad" not in respuesta.text
+    assert "Guardar incapacidad" in respuesta.text
 
 
 def test_liquidacion_simple_muestra_descuento(cliente_usuario: TestClient) -> None:
@@ -43,8 +46,10 @@ def test_liquidacion_simple_muestra_descuento(cliente_usuario: TestClient) -> No
     assert "1 día(s) arrastrados" not in respuesta.text
 
 
-def test_liquidacion_que_cruza_de_mes_muestra_saldo(cliente_usuario: TestClient) -> None:
-    """Marzo 30 a abril 2: marzo sin descuento y saldo de 66.660 para abril."""
+def test_liquidacion_que_cruza_de_mes_muestra_desglose(
+    cliente_usuario: TestClient,
+) -> None:
+    """Marzo 30 a abril 2: marzo sin descuento y abril con 66.660."""
     respuesta = cliente_usuario.post(
         RUTA_CALCULO,
         data={
@@ -56,14 +61,16 @@ def test_liquidacion_que_cruza_de_mes_muestra_saldo(cliente_usuario: TestClient)
     )
 
     assert respuesta.status_code == 200
-    assert "Saldos que se arrastran" in respuesta.text
+    assert "Desglose por mes" in respuesta.text
     assert "Abril de 2026" in respuesta.text
     assert "66.660" in respuesta.text
-    assert "2 día(s) arrastrados" in respuesta.text
+    assert "Saldos que se arrastran" not in respuesta.text
 
 
-def test_mes_sin_dias_liquida_cero_y_arrastra_todo(cliente_usuario: TestClient) -> None:
-    """Si el mes elegido no tiene días, el saldo completo pasa al siguiente."""
+def test_mes_sin_dias_liquida_cero_y_muestra_el_total(
+    cliente_usuario: TestClient,
+) -> None:
+    """Si el mes elegido no tiene días, el descuento es cero pero el rango se ve."""
     respuesta = cliente_usuario.post(
         RUTA_CALCULO,
         data={
@@ -76,7 +83,7 @@ def test_mes_sin_dias_liquida_cero_y_arrastra_todo(cliente_usuario: TestClient) 
 
     assert respuesta.status_code == 200
     assert "0 día(s) en el mes" in respuesta.text
-    assert "3 día(s) arrastrados" in respuesta.text
+    assert "3 día(s) de incapacidad" in respuesta.text
 
 
 def test_rango_invertido_muestra_error(cliente_usuario: TestClient) -> None:

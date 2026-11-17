@@ -27,14 +27,6 @@
   // Tiempo que el botón de copiado muestra la confirmación antes de restaurarse.
   var DURACION_CONFIRMACION_MS = 1200;
 
-  // Campos que la interfaz muestra con signo negativo.
-  var CAMPOS_NEGATIVOS = {
-    deduccion_salud: true,
-    deduccion_pension: true,
-    deduccion_incapacidad: true,
-    total_deducciones: true
-  };
-
   var formulario = document.querySelector("[data-calculadora]");
   if (!formulario) {
     return;
@@ -48,6 +40,9 @@
   var temporizador = null;
   var peticionEnCurso = 0;
   var hayCambios = false;
+  // SRS v1.6: tras «Limpiar», la incapacidad registrada deja de aplicarse en el
+  // cálculo hasta que el usuario escriba nuevas fechas.
+  var incapacidadOmitida = false;
 
   /**
    * Reúne los campos del formulario en un objeto plano.
@@ -66,11 +61,15 @@
     var fin = document.querySelector("[data-incapacidad-fin]");
     datos.incapacidad_inicio = inicio ? inicio.value : "";
     datos.incapacidad_fin = fin ? fin.value : "";
+    datos.incapacidad_omitir = incapacidadOmitida ? "1" : "";
     return datos;
   }
 
   /**
    * Escribe un valor formateado en el elemento marcado con `data-campo`.
+   *
+   * SRS v1.5: las deducciones se muestran en rojo y sin signo menos; el rótulo
+   * ya indica que restan del salario.
    *
    * @param {string} campo Clave del campo devuelta por el servidor.
    * @param {string} valor Texto ya formateado en pesos.
@@ -80,7 +79,7 @@
     if (!destino) {
       return;
     }
-    destino.textContent = (CAMPOS_NEGATIVOS[campo] ? "− " : "") + valor;
+    destino.textContent = valor;
   }
 
   /**
@@ -88,15 +87,16 @@
    *
    * Existen dos destinos para salud y pensión (el bloque resumen y la tabla
    * final), por eso se recorre la lista completa en lugar de usar un único
-   * `querySelector`.
+   * `querySelector`. SRS v1.5: en la caja de deducciones el valor va en rojo y
+   * sin signo menos; el título ya indica que es un descuento.
    *
-   * @param {string} clave Identificador de la deducción (`salud` o `pension`).
+   * @param {string} clave Identificador de la deducción (`salud`, `pension` o `incapacidad`).
    * @param {string} valor Texto ya formateado en pesos.
    */
   function pintarDeduccion(clave, valor) {
     var destinos = document.querySelectorAll('[data-deduccion="' + clave + '"]');
     for (var i = 0; i < destinos.length; i += 1) {
-      destinos[i].textContent = "− " + valor;
+      destinos[i].textContent = valor;
     }
   }
 
@@ -225,23 +225,71 @@
     if (datos.deduccion_pension) {
       pintarDeduccion("pension", datos.deduccion_pension);
     }
+    if (datos.deduccion_incapacidad) {
+      pintarDeduccion("incapacidad", datos.deduccion_incapacidad);
+    }
     if (datos.auxilio_transporte) {
       pintarValorAuxilio(datos.auxilio_transporte, respuesta.aplica_auxilio);
+    }
+    // SRS v1.5: total de la caja (salud + pensión + incapacidad + fijas).
+    if (respuesta.total_deducciones_ley) {
+      pintarTexto("[data-total-deducciones]", respuesta.total_deducciones_ley);
     }
 
     pintarDetalle(respuesta.detalle);
     pintarAuxilio(respuesta.mensaje_auxilio, respuesta.aplica_auxilio);
     pintarQuincenas(respuesta.quincenas || []);
-    pintarIncapacidad(respuesta.incapacidad, respuesta.rollover);
+    pintarIncapacidad(
+      respuesta.incapacidad,
+      respuesta.datos ? respuesta.datos.deduccion_incapacidad : undefined
+    );
     pintarErrores([]);
   }
 
   /**
-   * Muestra el resumen de la incapacidad y guarda el descuento calculado en el
-   * campo oculto que usa «Guardar periodo» (SRS v1.4, REQ-05).
+   * Reconstruye la tabla de tramos mensuales de la incapacidad.
    *
-   * @param {{dias_al_100: number, dias_al_66: number, descuento: string}|null} detalle
-   * @param {string} descuentoTotal Descuento del periodo incluido el saldo arrastrado.
+   * @param {HTMLElement|null} cuerpo Destino `data-incapacidad-tramos`.
+   * @param {Array<Object>} tramos Tramos devueltos por el servidor.
+   */
+  function pintarTramos(cuerpo, tramos) {
+    if (!cuerpo) {
+      return;
+    }
+    cuerpo.innerHTML = "";
+    tramos.forEach(function (tramo) {
+      var tr = document.createElement("tr");
+      if (tramo.actual) {
+        tr.className = "fila-periodo";
+      }
+
+      var periodo = document.createElement("td");
+      periodo.textContent = tramo.periodo;
+
+      var dias = document.createElement("td");
+      dias.textContent = String(tramo.dias);
+
+      var descuento = document.createElement("td");
+      descuento.className = "tabla__numero";
+      descuento.textContent = tramo.descuento;
+
+      tr.appendChild(periodo);
+      tr.appendChild(dias);
+      tr.appendChild(descuento);
+      cuerpo.appendChild(tr);
+    });
+  }
+
+  /**
+   * Muestra la incapacidad del periodo y su desglose por mes (SRS v1.5).
+   *
+   * El número de días lo calcula el servidor a partir de las fechas. El descuento
+   * aplicado es solo el tramo del mes elegido; los demás tramos se listan para
+   * que el usuario sepa en qué periodo se descontarán.
+   *
+   * @param {{dias_mes: number, dias_al_100: number, dias_al_66: number,
+   *   descuento: string, tramos: Array<Object>}|null} detalle
+   * @param {string} descuentoTotal Descuento del periodo ya formateado.
    */
   function pintarIncapacidad(detalle, descuentoTotal) {
     var oculto = formulario.querySelector('input[name="deduccion_incapacidad"]');
@@ -249,20 +297,49 @@
       oculto.value = descuentoTotal;
     }
 
+    var dias = document.querySelector("[data-incapacidad-dias]");
     var resumen = document.querySelector("[data-incapacidad-resumen]");
-    if (!resumen) {
-      return;
-    }
+    var desglose = document.querySelector("[data-incapacidad-desglose]");
+    var cuerpo = document.querySelector("[data-incapacidad-tramos]");
+
     if (!detalle) {
-      resumen.hidden = true;
-      resumen.textContent = "";
+      if (dias) {
+        dias.textContent = "—";
+      }
+      if (resumen) {
+        resumen.hidden = true;
+        resumen.textContent = "";
+      }
+      if (desglose) {
+        desglose.hidden = true;
+      }
+      if (cuerpo) {
+        cuerpo.innerHTML = "";
+      }
       return;
     }
-    resumen.hidden = false;
-    resumen.textContent =
-      detalle.dias_al_100 + " día(s) sin descuento (empleador) y " +
-      detalle.dias_al_66 + " día(s) con descuento del 33,33 % (EPS). Descuento del mes: " +
-      detalle.descuento + ".";
+
+    var tramos = detalle.tramos || [];
+    var totalDias = 0;
+    tramos.forEach(function (tramo) {
+      totalDias += tramo.dias;
+    });
+
+    if (dias) {
+      dias.textContent = String(totalDias);
+    }
+    if (resumen) {
+      resumen.hidden = false;
+      resumen.textContent =
+        detalle.dias_mes + " día(s) en el periodo · " +
+        detalle.dias_al_100 + " sin descuento (empleador) · " +
+        detalle.dias_al_66 + " al 66,67 % (EPS) · Descuento aplicado: " +
+        detalle.descuento + ".";
+    }
+    pintarTramos(cuerpo, tramos);
+    if (desglose) {
+      desglose.hidden = tramos.length === 0;
+    }
   }
 
   /**
@@ -436,10 +513,48 @@
 
   // SRS v1.4, REQ-05: las fechas de la incapacidad viven fuera del formulario de
   // liquidación; cualquier cambio en ellas recalcula el sueldo y las quincenas.
+  var avisoIncapacidad = document.querySelector("[data-incapacidad-aviso]");
+
   document.querySelectorAll("[data-incapacidad-inicio], [data-incapacidad-fin]").forEach(function (campo) {
-    campo.addEventListener("input", programarCalculo);
+    campo.addEventListener("input", function () {
+      incapacidadOmitida = false;
+      if (avisoIncapacidad) {
+        avisoIncapacidad.hidden = true;
+      }
+      programarCalculo();
+    });
     campo.addEventListener("change", programarCalculo);
+    // SRS v1.6: Enter solo recalcula; nunca envía el formulario de guardado.
+    campo.addEventListener("keydown", function (evento) {
+      if (evento.key === "Enter") {
+        evento.preventDefault();
+        calcular();
+      }
+    });
   });
+
+  var botonLimpiarIncapacidad = document.querySelector("[data-incapacidad-limpiar]");
+  if (botonLimpiarIncapacidad) {
+    botonLimpiarIncapacidad.addEventListener("click", function () {
+      var inicioLimpio = document.querySelector("[data-incapacidad-inicio]");
+      var finLimpio = document.querySelector("[data-incapacidad-fin]");
+      var diasLimpio = document.querySelector("[data-incapacidad-dias]");
+      if (inicioLimpio) {
+        inicioLimpio.value = "";
+      }
+      if (finLimpio) {
+        finLimpio.value = "";
+      }
+      if (diasLimpio) {
+        diasLimpio.textContent = "—";
+      }
+      incapacidadOmitida = true;
+      if (avisoIncapacidad) {
+        avisoIncapacidad.hidden = false;
+      }
+      calcular();
+    });
+  }
 
   formulario.addEventListener("submit", function (evento) {
     var boton = evento.submitter;

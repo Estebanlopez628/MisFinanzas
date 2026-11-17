@@ -5,8 +5,8 @@
   <section class="heroe">
     <h1 class="heroe__titulo">Incapacidades</h1>
     <p class="heroe__subtitulo">
-      Registra el rango de fechas y el sistema liquida el descuento del mes,
-      dejando el saldo pendiente para el periodo siguiente.
+      Registra el rango de fechas y el sistema liquida el descuento: los días se
+      calculan solos y cada mes descuenta solo su tramo.
     </p>
   </section>
 
@@ -26,16 +26,18 @@
   {% endif %}
 
   {# Errores de validación: se conserva lo escrito para corregir sin reescribir. #}
-  {% if errores %}
-    <div class="alerta alerta--error" role="alert">
-      <strong>Revisa los datos:</strong>
-      <ul>
-        {% for error in errores %}
-          <li>{{ error }}</li>
-        {% endfor %}
-      </ul>
-    </div>
-  {% endif %}
+  <div id="errores-incapacidad">
+    {% if errores %}
+      <div class="alerta alerta--error" role="alert">
+        <strong>Revisa los datos:</strong>
+        <ul>
+          {% for error in errores %}
+            <li>{{ error }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+  </div>
 
   <div class="rejilla-paneles">
     <section class="panel">
@@ -43,7 +45,7 @@
       <p class="panel__descripcion">Origen común. Los días 1 y 2 los paga el empleador al 100%.</p>
 
       <form class="formulario" method="post" action="{{ url_for('calcular_incapacidad_formulario') }}"
-            data-proteccion>
+            data-proteccion data-incapacidad-auto>
         <label class="campo">
           <span class="campo__etiqueta">Número de incapacidad (opcional)</span>
           <input class="campo__control" type="text" name="numero_incapacidad"
@@ -77,7 +79,6 @@
         </label>
 
         <div class="acciones-formulario">
-          <button class="boton boton--primario" type="submit">Calcular incapacidad</button>
           <button class="boton boton--secundario" type="submit"
                   formaction="{{ url_for('guardar_incapacidad') }}">Guardar incapacidad</button>
         </div>
@@ -105,14 +106,16 @@
         </li>
       </ul>
       <p class="aviso">
-        Si la incapacidad cruza de mes, se descuenta la parte del mes elegido y el
-        resto queda como saldo para el periodo siguiente.
+        Si la incapacidad cruza de mes, cada mes descuenta solo sus días. El
+        primero y el segundo día al 100 % se cuentan una sola vez sobre la
+        incapacidad completa.
       </p>
     </section>
   </div>
 
-  {% if resultado %}
-    <section class="seccion" aria-labelledby="titulo-resultado">
+  <div id="zona-resultado-incapacidades">
+    {% if resultado %}
+    <section class="seccion" id="resultado-incapacidades" aria-labelledby="titulo-resultado">
       <h2 id="titulo-resultado" class="seccion__titulo">Resultado de la liquidación</h2>
 
       <div class="rejilla-tarjetas">
@@ -134,16 +137,21 @@
         </article>
 
         <article class="tarjeta tarjeta--ambar">
-          <span class="tarjeta__icono" aria-hidden="true">🔁</span>
-          <h3 class="tarjeta__titulo">{{ resultado.dias_arrastrados }} día(s) arrastrados</h3>
+          <span class="tarjeta__icono" aria-hidden="true">📆</span>
+          <h3 class="tarjeta__titulo">{{ liquidacion.dias_totales }} día(s) de incapacidad</h3>
           <p class="tarjeta__descripcion">
-            {{ resultado.valor_arrastrado | cop }} pendientes para el mes siguiente.
+            Total del rango: {{ liquidacion.valor_descontado | cop }} repartidos en
+            {{ liquidacion.tramos | length }} mes(es).
           </p>
         </article>
       </div>
 
       <div class="panel panel--tabla">
         <h3 class="panel__titulo">Desglose por mes</h3>
+        <p class="panel__descripcion">
+          Cada mes descuenta solo su tramo cuando se liquide ese periodo. No hay
+          saldos pendientes que arrastrar.
+        </p>
         <div class="tabla-contenedor">
           <table class="tabla">
             <thead>
@@ -159,7 +167,7 @@
             </thead>
             <tbody>
               {% for tramo in liquidacion.tramos %}
-                <tr>
+                <tr class="{{ 'fila-periodo' if tramo.anio == resultado.anio and tramo.mes == resultado.mes }}">
                   <td>{{ tramo.anio | mes_anio(tramo.mes) }}</td>
                   <td>{{ tramo.fecha_inicio | fecha_larga }}</td>
                   <td>{{ tramo.fecha_fin | fecha_larga }}</td>
@@ -182,45 +190,11 @@
           </table>
         </div>
       </div>
-
-      {% if resultado.saldos_pendientes %}
-        <div class="panel panel--tabla">
-          <h3 class="panel__titulo">Saldos que se arrastran</h3>
-          <p class="panel__descripcion">
-            Estos valores se inyectarán automáticamente como deducción en el periodo indicado.
-          </p>
-          <div class="tabla-contenedor">
-            <table class="tabla">
-              <thead>
-                <tr>
-                  <th scope="col">Periodo destino</th>
-                  <th scope="col">Desde</th>
-                  <th scope="col">Hasta</th>
-                  <th scope="col">Días pendientes</th>
-                  <th scope="col">Valor pendiente</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for saldo in resultado.saldos_pendientes %}
-                  <tr>
-                    <td>{{ saldo.anio | mes_anio(saldo.mes) }}</td>
-                    <td>{{ saldo.fecha_inicio | fecha_larga }}</td>
-                    <td>{{ saldo.fecha_fin | fecha_larga }}</td>
-                    <td>{{ saldo.dias_pendientes }}</td>
-                    <td class="tabla__numero">{{ saldo.valor_pendiente | cop }}</td>
-                  </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      {% else %}
-        <p class="aviso">La incapacidad no cruza de mes: no hay saldos pendientes.</p>
-      {% endif %}
     </section>
-  {% endif %}
+    {% endif %}
+  </div>
 
-  {# Incapacidades persistidas: permiten eliminar y alimentan el rollover. #}
+  {# Incapacidades persistidas: alimentan el cálculo de cada mes. #}
   <section class="panel panel--tabla" aria-labelledby="titulo-registradas">
     <h2 id="titulo-registradas" class="panel__titulo">Incapacidades registradas</h2>
     {% if incapacidades %}
@@ -261,4 +235,8 @@
       <p class="tabla__vacia">Aún no hay incapacidades guardadas.</p>
     {% endif %}
   </section>
+{% endblock %}
+
+{% block scripts %}
+  <script src="{{ url_for('estaticos', path='js/incapacidades.js') }}" defer></script>
 {% endblock %}

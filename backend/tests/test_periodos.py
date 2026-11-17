@@ -1,4 +1,4 @@
-"""Pruebas de persistencia de periodos, historial y rollover (bloque A)."""
+"""Pruebas de persistencia de periodos e historial (bloque A y SRS v1.5)."""
 
 from __future__ import annotations
 
@@ -10,6 +10,7 @@ from sqlalchemy import func, select
 
 from app.modelos import PeriodoNomina, SaldoIncapacidad
 from app.servicios import periodos, registro_incapacidades, usuarios
+from app.servicios.incapacidad import liquidar_mes_incapacidad
 from app.servicios.nomina import liquidar_periodo
 
 
@@ -85,8 +86,8 @@ def test_historial_ordena_del_mas_reciente_al_mas_antiguo(bd) -> None:
     assert [periodo.mes for periodo in lista] == [12, 1]
 
 
-def test_incapacidad_que_cruza_de_mes_genera_rollover(bd) -> None:
-    """La parte de diciembre queda pendiente y se ofrece en el resumen."""
+def test_incapacidad_que_cruza_de_mes_se_reparte_por_tramo(bd) -> None:
+    """Cada mes recibe solo sus días; no se generan saldos pendientes."""
     id_usuario = _id_admin(bd)
     registro_incapacidades.registrar_incapacidad(
         bd,
@@ -96,14 +97,25 @@ def test_incapacidad_que_cruza_de_mes_genera_rollover(bd) -> None:
         Decimal("2960000"),
     )
 
-    resumen = periodos.resumen_rollover(bd, id_usuario, 2026, 12)
-    assert resumen.hay_saldo is True
-    assert resumen.dias > 0
-    assert resumen.valor > Decimal("0")
+    tramos_noviembre = registro_incapacidades.tramos_del_mes(
+        bd, id_usuario, 2026, 11, Decimal("2960000")
+    )
+    tramos_diciembre = registro_incapacidades.tramos_del_mes(
+        bd, id_usuario, 2026, 12, Decimal("2960000")
+    )
+
+    assert [tramo.dias for tramo in tramos_noviembre] == [3]
+    assert [tramo.dias for tramo in tramos_diciembre] == [3]
+    # Noviembre aporta los dos días al 100 % y uno al 66,67 %; diciembre, tres.
+    assert tramos_noviembre[0].dias_al_66 == 1
+    assert tramos_diciembre[0].dias_al_66 == 3
+
+    # SRS v1.5: el rollover desapareció; no se crean filas de saldo.
+    assert list(bd.scalars(select(SaldoIncapacidad))) == []
 
 
-def test_aplicar_rollover_marca_el_saldo_y_eliminar_lo_libera(bd) -> None:
-    """Guardar el periodo aplica el saldo; eliminarlo lo deja pendiente otra vez."""
+def test_descuento_del_mes_sale_del_tramo_registrado(bd) -> None:
+    """Diciembre descuenta su tramo desde las fechas, sin saldo almacenado."""
     id_usuario = _id_admin(bd)
     registro_incapacidades.registrar_incapacidad(
         bd,
@@ -112,32 +124,16 @@ def test_aplicar_rollover_marca_el_saldo_y_eliminar_lo_libera(bd) -> None:
         date(2026, 12, 3),
         Decimal("2960000"),
     )
-    resumen = periodos.resumen_rollover(bd, id_usuario, 2026, 12)
-    assert resumen.hay_saldo
 
-    periodo = periodos.guardar_liquidacion(
-        bd,
-        id_usuario,
-        2026,
-        12,
-        0,
-        liquidar_periodo(Decimal("2960000"), deduccion_incapacidad=resumen.valor),
-        {},
-        ids_saldos=resumen.ids,
+    descuento = registro_incapacidades.descuento_del_mes(
+        bd, id_usuario, 2026, 12, Decimal("2960000")
     )
-    saldos = list(
-        bd.scalars(
-            select(SaldoIncapacidad).where(
-                SaldoIncapacidad.id_periodo_aplicado == periodo.id_periodo
-            )
-        )
-    )
-    assert saldos and all(saldo.aplicado for saldo in saldos)
+    esperado = liquidar_mes_incapacidad(
+        date(2026, 11, 28), date(2026, 12, 3), Decimal("2960000"), anio=2026, mes=12
+    ).valor_descontado
 
-    assert periodos.eliminar_periodo(bd, id_usuario, periodo.id_periodo) is True
-    bd.expire_all()
-    liberados = list(bd.scalars(select(SaldoIncapacidad)))
-    assert liberados and all(not saldo.aplicado for saldo in liberados)
+    assert descuento == esperado
+    assert descuento > Decimal("0")
 
 
 def test_eliminar_periodo_ajeno_no_hace_nada(bd) -> None:

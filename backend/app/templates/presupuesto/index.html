@@ -37,6 +37,12 @@
       </p>
     {% endif %}
 
+    {% if diagnostico.metas_mes > 0 %}
+      <p class="ayuda">
+        Metas de este mes: {{ diagnostico.metas_mes | cop }}, ya descontadas de tus gastos fijos.
+      </p>
+    {% endif %}
+
     {% if diagnostico.alerta %}
       <div class="alerta alerta--critica" role="alert">
         {{ usuario.alias }}, te está quedando menos de $300.000 pesos mensuales;
@@ -82,15 +88,22 @@
         <label class="campo">
           <span class="campo__etiqueta">Tipo de duración</span>
           <select class="campo__control" name="tipo_duracion" data-duracion>
-            <option value="FIJO">Gasto fijo mensual (indefinido)</option>
-            <option value="LIMITADO">Por tiempo limitado</option>
+            <option value="FIJO">Meta a largo plazo</option>
+            <option value="LIMITADO">Meta a corto plazo</option>
           </select>
         </label>
         <label class="campo">
-          <span class="campo__etiqueta">Tiempo de pago (meses)</span>
-          <input class="campo__control" type="number" name="meses" min="1" max="120"
-                 step="1" placeholder="12" data-meses disabled />
-          <span class="ayuda">Solo aplica cuando la duración es limitada.</span>
+          <span class="campo__etiqueta">Periodo</span>
+          <input class="campo__control" type="number" name="meses" min="1" max="600"
+                 step="1" placeholder="12" data-meses required />
+        </label>
+        <label class="campo">
+          <span class="campo__etiqueta">Unidad</span>
+          <select class="campo__control" name="unidad_periodo" data-unidad>
+            <option value="MESES">Meses</option>
+            <option value="ANIOS">Años</option>
+          </select>
+          <span class="ayuda">Hasta 50 años. Así se generan sus gastos fijos.</span>
         </label>
         <label class="campo">
           <span class="campo__etiqueta">Fecha de inicio</span>
@@ -101,6 +114,8 @@
           <select class="campo__control" name="quincena">
             <option value="1">Quincena 1 · día 15</option>
             <option value="2">Quincena 2 · día 30</option>
+            {# SRS v1.5: la cuota mensual se reparte entre los dos pagos. #}
+            <option value="3">Ambas quincenas · se reparte entre los dos pagos</option>
           </select>
         </label>
       </div>
@@ -143,8 +158,9 @@
           </select>
         </label>
       </div>
-      <button class="boton boton--secundario boton--pequeno" type="submit">
-        + Agregar deducción fija
+      {# SRS v1.5: mismo peso visual que «Crear meta»; sin el signo «+». #}
+      <button class="boton boton--primario" type="submit">
+        Agregar deducción fija
       </button>
     </form>
 
@@ -210,15 +226,34 @@
                 <h3 class="meta__titulo">{{ meta.proyeccion.descripcion }}</h3>
                 <p class="meta__detalle">
                   {{ meta.proyeccion.categoria }} · {{ meta.proyeccion.valor_mensual | cop }} ·
-                  Quincena {{ meta.proyeccion.quincena }}
+                  {{ meta.etiqueta_quincena }}
+                  {% if meta.proyeccion.quincena == 3 -%}
+                    ({{ meta.valor_por_pago | cop }} por pago)
+                  {%- endif %}
                 </p>
               </div>
               <form method="post"
                     action="{{ url_for('eliminar_proyeccion', id_proyeccion=meta.proyeccion.id_proyeccion) }}"
-                    onsubmit="return confirm('¿Eliminar esta meta y sus abonos?');">
+                    onsubmit="return confirm('¿Eliminar esta meta? Se archiva en el historial y se quitan sus cuotas futuras no pagadas.');">
                 <button class="boton boton--peligro boton--pequeno" type="submit">Eliminar</button>
               </form>
             </header>
+
+            <p class="meta__estado {% if meta.cumplida %}meta__estado--cumplida{% endif %}">
+              {% if meta.cumplida %}Meta cumplida · terminó en {{ meta.fin_etiqueta }}{% else %}En curso · termina en {{ meta.fin_etiqueta }}{% endif %}
+            </p>
+
+            <form class="formulario-abono-manual" method="post"
+                  action="{{ url_for('extender_proyeccion', id_proyeccion=meta.proyeccion.id_proyeccion) }}">
+              <span class="ayuda">Extender</span>
+              <input class="campo__control campo__control--compacto" type="number" name="cantidad"
+                     min="1" max="600" step="1" placeholder="Cantidad" required />
+              <select class="campo__control campo__control--compacto" name="unidad_periodo">
+                <option value="MESES">Meses</option>
+                <option value="ANIOS">Años</option>
+              </select>
+              <button class="boton boton--primario boton--pequeno" type="submit">Extender</button>
+            </form>
 
             <ul class="lista-parametros lista-parametros--compacta">
               <li>
@@ -246,24 +281,21 @@
             </div>
             <p class="ayuda">{{ meta.porcentaje | porcentaje }} del total proyectado.</p>
 
-            <h4 class="bloque-gastos__subtitulo">Registrar abono mensual</h4>
+            <h4 class="bloque-gastos__subtitulo">Abonos mensuales</h4>
+            <p class="ayuda">Se registran al marcar el ✔ del gasto fijo en Mis Finanzas.</p>
             <ul class="cuadricula-abonos">
               {% for mes in meta.meses %}
-                <li class="mes-abono {% if mes.registrado %}mes-abono--registrado{% endif %}">
+                <li class="mes-abono mes-abono--{{ mes.estado }}">
                   <span class="mes-abono__etiqueta">{{ mes.etiqueta }}</span>
-                  <form method="post"
-                        action="{{ url_for('registrar_abono_proyeccion', id_proyeccion=meta.proyeccion.id_proyeccion) }}">
-                    <input type="hidden" name="anio" value="{{ mes.anio }}" />
-                    <input type="hidden" name="mes" value="{{ mes.mes }}" />
-                    <input class="campo__control campo__control--compacto" type="text"
-                           name="valor" inputmode="decimal"
-                           value="{{ (mes.abono if mes.abono is not none else mes.planeado) | cop(false) }}" />
-                    <button class="boton boton--secundario boton--pequeno" type="submit">
-                      {{ 'Corregir' if mes.registrado else 'Registrar' }}
-                    </button>
-                  </form>
-                  {% if mes.registrado %}
-                    <span class="mes-abono__estado">✓ registrado</span>
+                  {% if mes.estado == 'registrado' %}
+                    <strong class="mes-abono__valor">{{ mes.abono | cop }}</strong>
+                    <span class="mes-abono__estado">✓ Abonado</span>
+                  {% elif mes.estado == 'no_pagado' %}
+                    <strong class="mes-abono__valor">{{ mes.planeado | cop }}</strong>
+                    <span class="mes-abono__estado mes-abono__estado--no-pagado">No pagado</span>
+                  {% else %}
+                    <strong class="mes-abono__valor">{{ mes.planeado | cop }}</strong>
+                    <span class="mes-abono__estado mes-abono__estado--pendiente">Pendiente</span>
                   {% endif %}
                 </li>
               {% endfor %}
@@ -278,6 +310,78 @@
       </p>
     {% endif %}
   </section>
+
+  {# SRS v1.6: historial de metas archivadas. Conserva inicio, fin y total recogido. #}
+  {% if historial %}
+  <section class="panel" aria-labelledby="titulo-historial">
+    <h2 id="titulo-historial" class="panel__titulo">Historial de metas</h2>
+    <div class="tabla-contenedor">
+      <table class="tabla">
+        <thead>
+          <tr>
+            <th scope="col">Meta</th>
+            <th scope="col">Inicio</th>
+            <th scope="col">Fin</th>
+            <th scope="col">Estado</th>
+            <th scope="col">Total recogido</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for fila in historial %}
+          <tr>
+            <td>{{ fila.descripcion }}</td>
+            <td>{{ fila.inicio }}</td>
+            <td>{{ fila.fin }}</td>
+            <td>
+              {% if fila.estado == 'CUMPLIDA' %}
+                <span class="meta__estado meta__estado--cumplida">Meta cumplida</span>
+              {% else %}
+                <span class="meta__estado">Eliminada antes de cumplir</span>
+              {% endif %}
+            </td>
+            <td>{{ fila.total_recogido | cop }}</td>
+          </tr>
+          <tr>
+            <td colspan="5">
+              <details>
+                <summary class="ayuda">Ver pagos de esta meta</summary>
+                <table class="tabla tabla--compacta">
+                  <thead>
+                    <tr>
+                      <th scope="col">Mes</th>
+                      <th scope="col">Estado</th>
+                      <th scope="col">Pagado</th>
+                      <th scope="col">Fecha de pago</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for pago in fila.pagos %}
+                    <tr>
+                      <td>{{ pago.etiqueta }}</td>
+                      <td>
+                        {% if pago.estado == 'Pagado' %}
+                          <span class="meta__estado meta__estado--cumplida">Pagado</span>
+                        {% else %}
+                          <span class="meta__estado">No pagado</span>
+                        {% endif %}
+                      </td>
+                      <td>{{ pago.valor | cop if pago.valor is not none else '—' }}</td>
+                      <td>{{ pago.fecha.strftime('%d/%m/%Y') if pago.fecha else '—' }}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="4">Sin pagos registrados.</td></tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </details>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+  {% endif %}
 {% endblock %}
 
 {% block scripts %}

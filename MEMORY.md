@@ -152,7 +152,7 @@ Recálculo en tiempo real (<100 ms) sin recargar página. Se implementa con func
   - Se crean `proyecciones_ahorro` y `abonos_proyeccion` (§9.1 y §9.2 del diccionario) y un router `/presupuesto` con su plantilla, su JavaScript y sus pruebas.
   - `/gastos` **se conserva** como listado secundario de gastos fijos; la pestaña de la subnavegación apunta al planificador y desde allí se llega al registro de gastos.
   - La cuota se descuenta de la quincena elegida (`quincena`), igual que los gastos fijos, para que el saldo libre del resumen siga siendo la fuente de verdad.
-  - Un gasto `FIJO` no tiene total cerrado: se compara contra una ventana de 12 meses. Un gasto `LIMITADO` exige `meses` (1–120) y calcula `valor_mensual × meses`.
+  - (Actualizado en SRS v1.6, ADR-28) Ambos tipos exigen un periodo en meses (1–600). El formulario acepta años y los convierte a meses.
   - Solo existe **un abono por meta y mes** (`UNIQUE(id_proyeccion, anio, mes)`): volver a registrarlo corrige el monto, nunca duplica.
   - El umbral de alerta de liquidez vive en `ahorro.UMBRAL_ALERTA = Decimal("300000")`, no repartido por la plantilla.
 - **Consecuencia:** el diagnóstico («te sobran $X del sueldo») y la alerta crítica son datos del servidor, no texto fijo; el planificador puede crecer (categorías, reportes) sin tocar el formulario de gastos. El coste es una pantalla más y dos tablas nuevas.
@@ -183,6 +183,71 @@ Recálculo en tiempo real (<100 ms) sin recargar página. Se implementa con func
 - **Consecuencia:** al escribir horas extras o fechas de incapacidad, salud y pensión se actualizan en vivo junto con el sueldo proyectado y las quincenas. Una incapacidad que deja la base en cero elimina salud y pensión de ese periodo.
 - **Supersede:** la regla «sobre el sueldo básico» de AGENTS.md §6.
 
+### ADR-20 — Caja única de deducciones e incapacidad por tramo mensual (SRS v1.5)
+- **Contexto:** la incapacidad vivía en un recuadro aparte y el descuento de un rango que cruzaba de mes se arrastraba al siguiente (`saldos_incapacidad`). Eso obligaba a mantener un saldo persistido y a explicar dos cifras de descuento.
+- **Decisión:**
+  - **Caja única:** salud + pensión + descuento de incapacidad + deducciones fijas se presentan y se suman juntas bajo «Deducciones de ley» (subtítulo «Deducciones fijas del salario» lista los conceptos). El total final resta esa caja completa. `_total_deducciones_ley` es la única fuente.
+  - **Tramo mensual:** los días son calendario (`fin − inicio + 1`), sin campo manual. La regla 100 % (días 1–2) / 66,67 % (día 3+) se aplica **una sola vez** sobre la incapacidad completa. `registro_incapacidades.tramos_del_mes` recorta lo que cae en cada mes y `descuento_del_mes` suma ese tramo; Mis Finanzas descuenta solo el tramo del mes consultado.
+  - Se elimina el rollover de `servicios/periodos.py`; `saldos_incapacidad` queda como tabla heredada sin uso activo.
+- **Consecuencias:** registrar una incapacidad de 20 días que cruza de mes descuenta en mayo solo sus días de mayo y en junio los suyos; no hay saldo arrastrado que corregir. La migración `_migrar_saldos_incapacidad` conserva las columnas por compatibilidad.
+- **Archivos:** `servicios/registro_incapacidades.py`, `servicios/incapacidad.py`, `servicios/periodos.py`, `routers/finanzas.py`, `routers/incapacidades.py`, `templates/finanzas/index.html`, `static/js/incapacidades.js`.
+
+### ADR-21 — Deudas con tasa implícita y amortización automática (SRS v1.5)
+- **Contexto:** el modelo anterior pedía tasa de interés y fecha límite, y el usuario abonaba a mano. En la práctica nadie conoce la tasa del crédito; sí conoce el saldo, la cuota y cuántos pagos faltan.
+- **Decisión:**
+  - Se capturan **seis campos**: acreedor, descripción, saldo total, cuota, cuotas pendientes y periodicidad (`QUINCENAL`/`MENSUAL`). Desaparecen tasa, fecha límite y abono manual (la ruta `/deudas/{id}/abonar` responde 404).
+  - La tasa se **deriva** por bisección de `saldo = cuota × (1 − (1+r)^−n) / r`, con `PRECISION_TASA = 0.0000000001` y se guarda en `deudas.tasa_interes NUMERIC(12,10)`. Si `cuota × n = saldo`, la tasa es 0; si `cuota × n < saldo`, se rechaza el plan.
+  - Al abrir el módulo, `aplicar_cuotas_vencidas` aplica las cuotas cuyo vencimiento pasó, con ancla en el último pago o en `fecha_creacion`. Cada pago se guarda en `pagos_deuda` con `UNIQUE(id_deuda, numero_cuota)`, lo que hace la operación idempotente.
+  - La última cuota se recalcula como `saldo + interés` y deja el saldo exacto en `0`.
+- **Consecuencias:** el ejemplo del SRS (3.500.000 en 48 cuotas de 100.000) produce tasa 0,0137085766, total pagado 4.800.000,02, intereses 1.300.000,02 y última cuota 100.000,02. Con 6 decimales de precisión la última cuota se desviaba 61 pesos, de ahí los 10 decimales.
+- **Archivos:** `servicios/deudas.py`, `routers/deudas.py`, `modelos.py` (`Deuda`, `PagoDeuda`), `core/base_datos.py` (`_migrar_columnas_deudas`), `templates/deudas/index.html`, `diccionario_datos.md` §8 y §8.1.
+
+### ADR-22 — Metas con «Ambas quincenas» (SRS v1.5)
+- **Contexto:** una meta de ahorro debía imputarse a un pago concreto, aunque el usuario aparta el dinero de los dos.
+- **Decisión:** `ProyeccionAhorro.quincena` admite `3` (`QUINCENA_AMBAS`). El valor guardado sigue siendo **mensual**; `valor_por_pago` lo divide entre dos y la interfaz muestra «Ambas quincenas (X por pago)». SQLite no altera el `CHECK` existente, así que `_migrar_proyeccion_quincena` reconstruye `proyecciones_ahorro` y `abonos_proyeccion` (hija primero) conservando filas e índices.
+- **Consecuencias:** la meta no se descuenta de una quincena específica del panel; el planificador la compara contra el saldo libre total. Se mantiene como herramienta de planificación, no como gasto devengado. Queda pendiente decidir si debe restarse del saldo libre (ver §Pendientes).
+- **Archivos:** `modelos.py`, `servicios/ahorro.py`, `routers/presupuesto.py`, `templates/presupuesto/index.html`, `core/base_datos.py`, `diccionario_datos.md` §9.1.
+
+### ADR-23 — Montos sin centavos en todo el programa (SRS v1.6)
+- **Contexto:** los montos mostraban centavos (`$10.369.047,63`) que el usuario no necesita para decidir.
+- **Decisión:** `core/texto.formatear_cop` redondea al peso (`ROUND_HALF_UP`) y no imprime decimales. Los cálculos internos conservan centavos; porcentajes y horas no cambian.
+- **Consecuencias:** solo cambia la presentación (HTML, JSON y CSV). Las deudas siguen cerrando en cero internamente.
+- **Archivos:** `core/texto.py`, pruebas de vistas de finanzas.
+
+### ADR-24 — Metas como gastos fijos con check de pago (SRS v1.6)
+- **Contexto:** una meta era un número aparte y el usuario la sentía como un compromiso sin efecto real en el saldo.
+- **Decisión:** cada meta genera sus gastos fijos (`gastos.id_proyeccion`), uno por quincena de descuento. El ✔ registra el pago (`pagado`, permanente) y el abono del mes es la suma de los pagos marcados (`pagos_metas.sincronizar_abono`). Se retira el formulario manual de abonos. Las metas restan del saldo solo a través de sus gastos; el banner de «Gastos y Presupuesto» muestra las metas del mes como informativo. Esto resuelve el pendiente de ADR-22.
+- **Reglas:** «Limpiar checks» solo oculta el ✔ (`check_visible`); el pago y el abono se conservan. Editar un gasto pagado actualiza el abono; editar un gasto no cambia la cuota de la meta (cada quincena es independiente). Eliminar la meta desde «Gastos y Presupuesto» borra sus gastos y abonos por cascada.
+- **Migración:** `_migrar_columnas_gastos` agrega las columnas nuevas. Los abonos heredados se convierten en pagos al generar el mes; su monto pasa a ser la cuota planeada.
+- **Archivos:** `modelos.py`, `servicios/pagos_metas.py` (nuevo), `servicios/ahorro.py`, `servicios/gastos.py`, `servicios/quincenas.py`, `routers/gastos.py`, `routers/presupuesto.py`, `routers/finanzas.py`, `templates/finanzas/index.html`, `templates/presupuesto/index.html`, `static/css/estilos.css`, `core/base_datos.py`, `diccionario_datos.md` §7 y §9.2.
+
+### ADR-25 — Saltar un pago de meta con × y reactivación (SRS v1.6)
+- **Contexto:** eliminar el gasto de una meta en una quincena no debe borrar la meta, y el dinero no pagado debe volver al saldo real de esa quincena.
+- **Decisión:** la × en un gasto de meta lo **inhabilita** (`inhabilitado_hasta = hoy + 15 días`) y retira su pago y abono. Mientras el plazo esté vigente no suma en el saldo de su quincena y no admite ✔; el mes se muestra en color «No pagado». Vencido el plazo, el pago vuelve a ser un gasto normal (vuelve a sumar y admite ✔). Un gasto manual sigue eliminándose.
+- **Abono manual (ADR-25.a):** mientras el plazo esté vigente, el pago admite un abono manual con un monto. Lo deja pagado con ese `monto_pagado`, quita la inhabilitación y ese monto cuenta en el saldo y en el abono del mes. No reabre un formulario general de abonos.
+- **Archivos:** `servicios/pagos_metas.py` (`inhabilitar_gasto`, `quitar_gasto`, `registrar_abono_manual`), `servicios/gastos.py` (`valor_computable`), `routers/gastos.py`, `templates/finanzas/index.html`.
+
+### ADR-28 — Periodo escogido por el usuario para toda meta (SRS v1.6)
+- **Contexto:** las metas indefinidas generaban solo 12 meses y las limitadas topaban en 120; el usuario quiere elegir la cantidad de años o meses en ambos casos.
+- **Decisión:** toda meta exige `meses` (1–600, 50 años). El formulario tiene campo «Periodo» con unidad Meses o Años; el servidor convierte años × 12. Las metas `FIJO` ahora calculan total = cuota × meses. Las metas anteriores sin periodo conservan la ventana de 12 meses.
+- **Archivos:** `servicios/ahorro.py` (`MESES_MAXIMOS = 600`, `_validar_duracion`, `meses_de_la_meta`, `resumen_metas`), `servicios/pagos_metas.py` (`_meses_a_generar`), `routers/presupuesto.py` (`_meses_del_formulario`), `templates/presupuesto/index.html`, `static/js/presupuesto.js`, `static/js/sw.js` (`olb-finanzas-v9`).
+
+### ADR-29 — Ciclo de vida de la meta: cumplida, extender y archivar (SRS v1.6)
+- **Contexto:** una meta debe terminar sola al cumplir su periodo, poder extenderse y, al eliminarla, conservar su historial en lugar de perderlo.
+- **Decisión:** `cumplida` se calcula por fecha (el mes actual supera el último mes del periodo). `extender_proyeccion` suma meses desde el último mes planificado, o desde el mes actual si ya se cumplió. `eliminar_proyeccion` ya no borra: archiva (`activo = false`, `archivada_en`, `estado_final`), quita los gastos futuros no pagados y conserva los pagados. `historial_metas` lista las archivadas con inicio, fin, total recogido y el detalle mes por mes (`_detalle_pagos`: pagado con monto y fecha, o no pagado hasta el mes de archivado) en un desplegable por meta. Las etiquetas del selector son «Meta a largo plazo» y «Meta a corto plazo»; ambas usan el mismo periodo.
+- **Archivos:** `modelos.py` (`archivada_en`, `estado_final`), `core/base_datos.py` (`_migrar_columnas_metas`), `servicios/ahorro.py`, `routers/presupuesto.py` (ruta `extender_proyeccion`), `templates/presupuesto/index.html`, `static/css/estilos.css`, `diccionario_datos.md` §9.1.
+
+### ADR-27 — Monto pagado, propagación de valor y ventana de generación (SRS v1.6)
+- **Contexto:** el abono de un mes debe reflejar lo realmente pagado, no la cuota; editar una quincena debe valer desde ese mes en adelante; una meta limitada debe generar toda su duración.
+- **Decisión:** nueva columna `gastos.monto_pagado`. El saldo y el abono cuentan `monto_pagado` cuando `pagado = true`. `propagar_valor` copia el valor editado a los meses posteriores de la misma meta y quincena que no estén pagados. Los meses nuevos toman el último valor de esa quincena. Las metas generan todo el periodo escogido por el usuario (ADR-28).
+- **Abonos heredados:** el abono de un mes anterior se convierte en pago con `monto_pagado` igual a ese abono (dividido entre las quincenas si es «Ambas»). El valor del gasto queda como la cuota planeada.
+- **Archivos:** `modelos.py`, `core/base_datos.py` (`monto_pagado`), `servicios/pagos_metas.py`, `servicios/gastos.py`, `servicios/ahorro.py`, `routers/gastos.py`.
+
+### ADR-26 — Incapacidades: Enter y «Limpiar» (SRS v1.6)
+- **Contexto:** Enter guardaba la incapacidad sin querer, y «Limpiar» (`type="reset"`) no recalculaba: el servidor volvía a cargar la incapacidad registrada.
+- **Decisión:** Enter solo recalcula (`finanzas.js`, `incapacidades.js`). «Limpiar» es un botón real que vacía fechas y envía `incapacidad_omitir=1`; el servidor entonces no aplica las registradas al cálculo (`_leer_entradas`). El registro **no se borra**; se muestra un aviso con enlace a `/incapacidades` que desaparece al escribir nuevas fechas.
+- **Archivos:** `static/js/finanzas.js`, `static/js/incapacidades.js`, `templates/finanzas/index.html`, `routers/finanzas.py`.
+
 ---
 
 ## Parámetros de Dominio Salarial (Colombia)
@@ -190,8 +255,8 @@ Recálculo en tiempo real (<100 ms) sin recargar página. Se implementa con func
 | Parámetro | Valor parametrizado | Regla |
 | --- | --- | --- |
 | Jornada mensual | 210 horas | Sobre 42 h semanales legales. |
-| Salud empleado | 4% | Automático, sólo lectura, sobre sueldo básico. |
-| Pensión empleado | 4% | Automático, sólo lectura, sobre sueldo básico. |
+| Salud empleado | 4% | Automático, sólo lectura, sobre el salario **devengado** (ADR-19). |
+| Pensión empleado | 4% | Automático, sólo lectura, sobre el salario **devengado** (ADR-19). |
 | Tope auxilio de transporte | 2 SMMLV (**$3.501.810 COP**) | Si `Sueldo + Recargos` > tope → auxilio = $0. |
 | Auxilio de transporte (valor) | Parametrizable | Se asigna sólo si no supera el tope. |
 | Incapacidad días 1–2 | 100% del salario | A cargo del empleador, sin descuento. |
@@ -201,11 +266,16 @@ Recálculo en tiempo real (<100 ms) sin recargar página. Se implementa con func
 
 ---
 
-## Módulo Especial: Cruce de Meses e Incapacidades (Rollover)
+## Módulo Especial: Cruce de Meses e Incapacidades (tramo mensual, SRS v1.5)
 
-- Cuando el rango de una incapacidad abarca días del mes siguiente, el sistema liquida los días del mes activo y **persiste** los días restantes.
-- Al iniciar el ciclo fiscal siguiente, la app inyecta ese saldo como **Deducción de Incapacidad Arrastrada**.
-- Entidades asociadas: `incapacidades` y `saldos_incapacidad` en `diccionario_datos.md`.
+- Una incapacidad se registra con **inicio y fin**; los días son calendario
+  (`fin − inicio + 1`) y no se capturan a mano.
+- La regla legal (días 1–2 al 100 %, desde el día 3 con descuento del 33,33 %) se
+  aplica **una sola vez** sobre la incapacidad completa.
+- Si el rango cruza de mes, `registro_incapacidades.tramos_del_mes` entrega solo los
+  días de ese mes y Mis Finanzas descuenta ese tramo. **No hay rollover**: se
+  eliminó el saldo arrastrado de `periodos.py` (ADR-20).
+- Entidades: `incapacidades`; `saldos_incapacidad` se conserva como tabla heredada.
 
 ---
 
@@ -219,6 +289,100 @@ Recálculo en tiempo real (<100 ms) sin recargar página. Se implementa con func
 ---
 
 ## Bitácora de Cambios
+
+### 2026-11-16 — SRS v1.6: montos sin centavos, metas como gastos con check, incapacidades
+
+**Cambios realizados**
+1. `core/texto.py` — `formatear_cop` sin centavos (ADR-23).
+2. `modelos.py` y `core/base_datos.py` — `gastos` con `id_proyeccion`, `pagado`, `pagado_en`, `check_visible` e `inhabilitado_hasta`; migración idempotente. Verificada sobre una base con el esquema anterior.
+3. `servicios/pagos_metas.py` (nuevo) — generación de gastos de meta, ✔, limpieza de checks, inhabilitación de 8 días, sincronización del abono (ADR-24, ADR-25).
+4. `servicios/ahorro.py` — se retira `registrar_abono`; `MesMeta.estado`; `diagnostico` devuelve `metas_mes`.
+5. `servicios/gastos.py` y `servicios/quincenas.py` — `valor_computable` excluye los pagos inhabilitados de los totales.
+6. `routers/gastos.py` — rutas `POST /gastos/{id}/pagado`, `POST /gastos/limpiar-pagos`; la × usa `quitar_gasto`; editar sincroniza el abono.
+7. `routers/presupuesto.py` — se retira la ruta de abono manual.
+8. `routers/finanzas.py` — genera los gastos del mes visible; `incapacidad_omitir` (ADR-26).
+9. Plantillas: `finanzas/index.html` (✔ y × circulares del mismo tamaño, «Limpiar checks» por quincena, estado inhabilitado, «Valor:» retirado de la fila para que quepa la descripción en el celular, aviso de incapacidades); `presupuesto/index.html` (meses de solo lectura centrados con estado, banner con metas del mes).
+10. `static/css/estilos.css` — círculos, estados y centrado de meses.
+11. `static/js/finanzas.js` e `incapacidades.js` — Enter solo recalcula; «Limpiar» real.
+12. `static/js/sw.js` — caché `olb-finanzas-v8`.
+13. `diccionario_datos.md` §7 y §9.2; `Guia.md` con la ficha de `pagos_metas.py`.
+14. Pruebas: `tests/test_metas_gastos.py` (nuevo, 17 pruebas); se reemplazan los abonos manuales en `test_presupuesto.py`; se agregan dos pruebas de incapacidades en `test_incapacidad_en_vivo.py`.
+
+**Verificación**
+- `pytest -q` → **275 pruebas en verde**.
+- `python -m compileall -q app scripts` sin errores.
+- `generar_guia.py --verificar` → «71 archivos con ficha y sin docstrings pendientes».
+
+**Ajustes posteriores (ADR-25.a y ADR-27)**
+- Plazo de inhabilitación de 15 días; abono manual solo en pagos saltados.
+- `gastos.monto_pagado`; abonos heredados como pagos con su monto real.
+- Ediciones de una quincena se propagan a los meses siguientes no pagados.
+- Metas generan toda su duración escogida, en meses o años (ADR-28).
+- Pruebas: **282 en verde**.
+
+**Pendiente**
+- Revisión visual en navegador (móvil y escritorio): botón ✔/× y alineación de meses.
+- Factura PDF de OLB_BYTE (aplazada).
+
+### 2026-11-16 — SRS v1.5, bloque 1: caja única de deducciones
+
+**Objetivo:** que el usuario vea una sola cifra de deducciones y no un descuento de incapacidad suelto.
+
+1. `routers/finanzas.py` — nuevos helpers `_fijas_del_periodo`, `_total_fijas` y `_total_deducciones_ley`; el contexto y el JSON publican `detalle_fijas_periodo`, `deducciones_fijas_periodo` y `total_deducciones_ley`.
+2. `templates/finanzas/index.html` — «Deducciones de ley» en rojo, sin signo menos, con subtítulo «Deducciones fijas del salario» que lista los conceptos; el total final suma salud + pensión + incapacidad + fijas.
+3. `static/js/finanzas.js` y `estilos.css` — repintado de la caja y estilos de la lista de conceptos.
+4. Pruebas de finanzas actualizadas al nuevo total.
+
+**Verificación:** `pytest -q` en verde; sin cambios de esquema.
+
+### 2026-11-16 — SRS v1.5, bloque 2: incapacidades por tramo mensual sin rollover
+
+1. `servicios/registro_incapacidades.py` — `tramos_del_mes()` y `descuento_del_mes()`; el descuento sale de las incapacidades registradas que cubren el mes.
+2. `servicios/periodos.py` — se elimina el rollover; el historial recalcula por tramo.
+3. `routers/finanzas.py` — autocargan las incapacidades del periodo y exponen `tramos` en el JSON.
+4. `static/js/incapacidades.js` (nuevo) — cálculo automático al cambiar fechas.
+5. `core/base_datos.py` — `_migrar_saldos_incapacidad` conserva columnas heredadas.
+
+**Decisión:** ADR-20. **Verificación:** pruebas de incapacidad y periodos en verde.
+
+### 2026-11-16 — SRS v1.5, bloques 3 a 5: sueldo de solo lectura, desglose y móvil
+
+1. **Sueldo de solo lectura:** la liquidación muestra el sueldo del perfil con `campo__valor--destacado` y un enlace «Cambiarlo en Mi Perfil»; el contexto publica `sueldo_periodo`. El backend sigue aceptando `sueldo_basico` inyectado para pruebas.
+2. **Desglose compacto:** `.tabla--compacta` sin `min-width` ni `nowrap`; `_detalle_formateado` deja de publicar `factor` (columnas Concepto, Horas, Valor) y desaparece el scroll horizontal.
+3. **Móvil:** submenú en cuadrícula 2 × 2 a 640 px, `.fila-campos` a una columna, paneles a 16 px, hero reducido y botones a ancho completo. «Agregar deducción fija» pasa a `boton boton--primario` sin `+`, idéntico a «Crear meta».
+4. `sw.js` — caché `olb-finanzas-v7`.
+
+**Verificación:** `compileall` OK y **251 pruebas** en verde; prueba nueva del botón homologado.
+
+### 2026-11-16 — SRS v1.5, bloque 6: metas con «Ambas quincenas»
+
+1. `servicios/ahorro.py` — `QUINCENA_AMBAS = 3`, `QUINCENAS_VALIDAS`, `etiqueta_quincena()` y `valor_por_pago()`; propiedades homónimas en `MetaResumen`.
+2. `modelos.py` — `CHECK (quincena IN (1, 2, 3))`.
+3. `core/base_datos.py` — `_migrar_proyeccion_quincena()` reconstruye metas y abonos (hija primero) conservando filas e índices; probada dos veces sobre una base con datos.
+4. `templates/presupuesto/index.html` — tercera opción y «(X por pago)».
+5. `diccionario_datos.md` §9.1 actualizado.
+
+**Decisión:** ADR-22. **Verificación:** **254 pruebas** en verde.
+
+### 2026-11-16 — SRS v1.5, bloque 7: deudas con amortización automática
+
+1. `servicios/deudas.py` reescrito — `tasa_implicita` (bisección, 10 decimales), `crear_deuda` de seis campos, `_aplicar_pago`, `aplicar_cuotas_vencidas`, `proyeccion_deuda`, `cuota_mensual_equivalente`, `resumen_deudas`.
+2. `modelos.py` — `Deuda` con `cuotas_pendientes`, `periodicidad`, `fecha_creacion` y `tasa_interes NUMERIC(12,10)`; nueva tabla `PagoDeuda` (`pagos_deuda`).
+3. `routers/deudas.py` — seis campos, sin abono manual, aplicación de cuotas al abrir y aviso de cuántas se aplicaron.
+4. `templates/deudas/index.html` — tarjetas de resumen, formulario y «Ver amortización» con cuotas aplicadas y próximas.
+5. `core/base_datos.py` — `_migrar_columnas_deudas`; `conftest.py` limpia `pagos_deuda`.
+6. `diccionario_datos.md` §8 reescrito y §8.1 nuevo.
+
+**Decisión:** ADR-21. **Verificación:** el ejemplo del SRS cierra en cero con última cuota 100.000,02; **260 pruebas** en verde.
+
+### 2026-11-16 — SRS v1.5, bloque 9: `Guia.md` y documentación
+
+1. `backend/scripts/generar_guia.py` (nuevo) — recorre `backend/app`, extrae módulos, clases, funciones y métodos con su docstring, reescribe el bloque `<!-- INVENTARIO:INICIO --> … <!-- INVENTARIO:FIN -->` de `Guia.md` y con `--verificar` falla si falta un docstring o una ficha.
+2. `Guia.md` (nuevo) — arquitectura, roles, inventario automático, **70 fichas por archivo**, flujos, fórmulas, migraciones, comandos y lista de verificación.
+3. `AGENTS.md` §5 y §9 — obligación de mantener la guía y estado verificado.
+4. `MEMORY.md` — ADR-20/21/22, parámetros de dominio corregidos y bitácoras del SRS v1.5.
+
+**Verificación:** `generar_guia.py --verificar` → «70 archivos con ficha y sin docstrings pendientes».
 
 ### 2026-11-16 — SRS v1.4: layout, navegación y deducciones fijas
 

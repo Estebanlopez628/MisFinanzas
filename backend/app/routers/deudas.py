@@ -2,13 +2,18 @@
 
 Responsabilidad
 ---------------
-Registrar pasivos, aplicar abonos y mostrar los totales de cartera. Es un módulo
-de acceso general: cada usuario ve únicamente sus propias deudas (SRS v1.2).
+- Registrar pasivos con seis datos: acreedor, descripción, saldo, cuota, cuotas
+  pendientes y periodicidad.
+- Aplicar automáticamente las cuotas vencidas al abrir el módulo.
+- Mostrar el plan de amortización de cada deuda y los totales de cartera.
+
+Es un módulo de acceso general: cada usuario ve únicamente sus propias deudas
+(SRS v1.2). La aritmética vive en `app.servicios.deudas`; este router solo valida
+entradas, invoca el servicio y presenta resultados.
 """
 
 from __future__ import annotations
 
-from datetime import date
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Form, Request, status
@@ -29,6 +34,7 @@ def _contexto(
     *,
     error: str | None = None,
     guardado: bool = False,
+    aplicadas: int = 0,
 ) -> dict[str, object]:
     """Prepara el contexto de la vista de deudas.
 
@@ -36,19 +42,35 @@ def _contexto(
         usuario: Usuario autenticado.
         bd: Sesión de base de datos.
         error: Mensaje de error opcional.
-        guardado: Bandera de éxito.
+        guardado: Bandera de éxito al registrar una deuda.
+        aplicadas: Cuotas descontadas automáticamente en esta visita.
 
     Returns:
         Diccionario para la plantilla.
     """
     contexto = contexto_base(usuario)
+    lista = deudas.listar_deudas(bd, usuario.id_usuario)
+    pagos = deudas.listar_pagos(bd, usuario.id_usuario)
+    planes = {
+        deuda.id_deuda: deudas.proyeccion_deuda(
+            deuda,
+            pagos[deuda.id_deuda][-1].fecha_aplicacion
+            if pagos.get(deuda.id_deuda)
+            else None,
+        )
+        for deuda in lista
+    }
     contexto.update(
         {
             "titulo_pagina": "Resumen de Deudas",
-            "deudas": deudas.listar_deudas(bd, usuario.id_usuario),
+            "deudas": lista,
+            "pagos": pagos,
+            "planes": planes,
             "resumen": deudas.resumen_deudas(bd, usuario.id_usuario),
+            "periodicidades": deudas.PERIODICIDADES,
             "error": error,
             "guardado": guardado,
+            "aplicadas": aplicadas,
         }
     )
     return contexto
@@ -61,19 +83,27 @@ def ver_deudas(
     bd: Session = Depends(obtener_bd),
     guardado: int = 0,
 ) -> HTMLResponse:
-    """Muestra las deudas y sus totales.
+    """Muestra las deudas, aplica las cuotas vencidas y lista los planes.
 
     Args:
         request: Petición HTTP.
         usuario: Usuario autenticado.
         bd: Sesión de base de datos.
-        guardado: Bandera de éxito.
+        guardado: Bandera de éxito del registro.
 
     Returns:
         HTML del módulo.
     """
+    aplicadas = deudas.aplicar_cuotas_vencidas(bd, usuario.id_usuario)
     return plantillas.TemplateResponse(
-        request, "deudas/index.html", _contexto(usuario, bd, guardado=bool(guardado))
+        request,
+        "deudas/index.html",
+        _contexto(
+            usuario,
+            bd,
+            guardado=bool(guardado),
+            aplicadas=aplicadas,
+        ),
     )
 
 
@@ -85,11 +115,11 @@ def crear_deuda(
     acreedor: Annotated[str, Form()] = "",
     descripcion: Annotated[str, Form()] = "",
     saldo_total: Annotated[str, Form()] = "",
-    cuota_mensual: Annotated[str, Form()] = "",
-    tasa_interes: Annotated[str, Form()] = "",
-    fecha_limite: Annotated[str, Form()] = "",
+    cuota: Annotated[str, Form()] = "",
+    cuotas_pendientes: Annotated[str, Form()] = "",
+    periodicidad: Annotated[str, Form()] = deudas.PERIODICIDAD_MENSUAL,
 ) -> HTMLResponse | RedirectResponse:
-    """Registra una deuda.
+    """Registra una deuda con su plan de pagos.
 
     Args:
         request: Petición HTTP.
@@ -97,36 +127,24 @@ def crear_deuda(
         bd: Sesión de base de datos.
         acreedor: Acreedor.
         descripcion: Detalle.
-        saldo_total: Saldo inicial.
-        cuota_mensual: Cuota pactada.
-        tasa_interes: Tasa porcentual.
-        fecha_limite: Fecha límite ISO.
+        saldo_total: Capital pendiente inicial.
+        cuota: Valor de cada pago.
+        cuotas_pendientes: Número de pagos que faltan.
+        periodicidad: `QUINCENAL` o `MENSUAL`.
 
     Returns:
         Redirección o vista con error.
     """
-    limite = None
-    if fecha_limite.strip():
-        try:
-            limite = date.fromisoformat(fecha_limite.strip())
-        except ValueError:
-            return plantillas.TemplateResponse(
-                request,
-                "deudas/index.html",
-                _contexto(usuario, bd, error="La fecha límite no tiene un formato válido."),
-                status_code=status.HTTP_400_BAD_REQUEST,
-            )
-
     try:
         deuda = deudas.crear_deuda(
             bd,
             usuario.id_usuario,
             acreedor,
             saldo_total,
+            cuota,
+            cuotas_pendientes,
+            periodicidad,
             descripcion or None,
-            cuota_mensual or None,
-            tasa_interes or None,
-            limite,
         )
         auditoria.registrar(bd, usuario.id_usuario, "DEUDA_CREADA", "deudas", deuda.acreedor)
     except (ValueError, ArithmeticError) as error:
@@ -140,46 +158,13 @@ def crear_deuda(
     return RedirectResponse(url="/deudas?guardado=1", status_code=status.HTTP_303_SEE_OTHER)
 
 
-@router.post("/deudas/{id_deuda}/abonar", name="abonar_deuda", response_model=None)
-def abonar_deuda(
-    request: Request,
-    id_deuda: str,
-    usuario: UsuarioSesion = Depends(obtener_usuario_actual),
-    bd: Session = Depends(obtener_bd),
-    monto: Annotated[str, Form()] = "",
-) -> HTMLResponse | RedirectResponse:
-    """Aplica un abono al saldo de una deuda.
-
-    Args:
-        request: Petición HTTP.
-        id_deuda: Deuda abonada.
-        usuario: Usuario autenticado.
-        bd: Sesión de base de datos.
-        monto: Dinero abonado.
-
-    Returns:
-        Redirección o vista con error.
-    """
-    try:
-        deudas.abonar_deuda(bd, usuario.id_usuario, id_deuda, monto)
-        auditoria.registrar(bd, usuario.id_usuario, "DEUDA_ABONADA", "deudas", id_deuda)
-    except (ValueError, ArithmeticError) as error:
-        return plantillas.TemplateResponse(
-            request,
-            "deudas/index.html",
-            _contexto(usuario, bd, error=str(error)),
-            status_code=status.HTTP_400_BAD_REQUEST,
-        )
-    return RedirectResponse(url="/deudas", status_code=status.HTTP_303_SEE_OTHER)
-
-
 @router.post("/deudas/{id_deuda}/eliminar", name="eliminar_deuda")
 def eliminar_deuda(
     id_deuda: str,
     usuario: UsuarioSesion = Depends(obtener_usuario_actual),
     bd: Session = Depends(obtener_bd),
 ) -> RedirectResponse:
-    """Elimina una deuda.
+    """Elimina una deuda y sus pagos registrados.
 
     Args:
         id_deuda: Deuda a eliminar.

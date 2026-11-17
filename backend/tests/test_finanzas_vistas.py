@@ -22,11 +22,13 @@ SEIS_CAMPOS_HORAS = (
 
 
 def test_formulario_incluye_todos_los_campos(cliente_usuario: TestClient) -> None:
-    """La calculadora expone sueldo, incapacidad y la matriz completa de recargos."""
+    """La calculadora muestra sueldo de solo lectura, incapacidad y recargos."""
     respuesta = cliente_usuario.get(RUTA)
 
     assert respuesta.status_code == 200
-    assert 'name="sueldo_basico"' in respuesta.text
+    # SRS v1.5: el sueldo se cambia solo desde Mi Perfil.
+    assert 'name="sueldo_basico"' not in respuesta.text
+    assert "Cambiarlo en Mi Perfil" in respuesta.text
     assert 'name="deduccion_incapacidad"' in respuesta.text
     for campo in SEIS_CAMPOS_HORAS:
         assert f'name="{campo}"' in respuesta.text, campo
@@ -68,12 +70,17 @@ def test_post_clasico_anula_auxilio_sobre_el_tope(cliente_usuario: TestClient) -
 
 
 def test_post_clasico_reporta_sueldo_invalido(cliente_usuario: TestClient) -> None:
-    """Un sueldo con letras no produce liquidación y conserva lo escrito."""
+    """Un sueldo con letras no produce liquidación.
+
+    SRS v1.5: la interfaz no envía el sueldo (es de solo lectura), pero el
+    endpoint sigue validando el valor inyectado y muestra el error.
+    """
     respuesta = cliente_usuario.post(RUTA, data={"sueldo_basico": "mucho"})
 
     assert respuesta.status_code == 200
     assert "no es un número válido" in respuesta.text
-    assert 'value="mucho"' in respuesta.text
+    # La pantalla conserva el sueldo del perfil como referencia.
+    assert "Cambiarlo en Mi Perfil" in respuesta.text
 
 
 def test_post_clasico_reporta_horas_negativas(cliente_usuario: TestClient) -> None:
@@ -115,9 +122,9 @@ def test_json_incluye_el_desglose_de_recargos(cliente_usuario: TestClient) -> No
     assert len(cuerpo["detalle"]) == 1
     fila = cuerpo["detalle"][0]
     assert fila["etiqueta"] == "Hora extra diurna dominical/festiva"
-    assert fila["factor"] == "2,00"
     assert fila["horas"] == "4,00"
-    assert fila["valor"] == "$114.285,71"
+    assert "factor" not in fila
+    assert fila["valor"] == "$114.286"
 
 
 def test_json_anula_el_auxilio_y_explica_el_motivo(cliente_usuario: TestClient) -> None:
@@ -152,6 +159,18 @@ def test_json_rechaza_cuerpo_no_objetivo(cliente_usuario: TestClient) -> None:
 
     assert respuesta.status_code == 400
     assert respuesta.json()["ok"] is False
+
+
+def test_panel_de_incapacidad_calcula_los_dias(cliente_admin: TestClient) -> None:
+    """SRS v1.5: sin campo de días ni botón Calcular; el desglose es automático."""
+    texto = " ".join(cliente_admin.get(RUTA).text.split())
+
+    assert 'name="dias"' not in texto
+    assert "Calcular incapacidad" not in texto
+    assert "Días (automático)" in texto
+    assert "data-incapacidad-dias" in texto
+    assert "data-incapacidad-desglose" in texto
+    assert "rollover" not in texto.lower()
 
 
 def test_json_exige_sesion(cliente: TestClient) -> None:

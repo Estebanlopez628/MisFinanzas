@@ -13,7 +13,7 @@ from decimal import Decimal
 from fastapi.testclient import TestClient
 
 from app.core.texto import formatear_cop
-from app.servicios import usuarios
+from app.servicios import registro_incapacidades, usuarios
 from app.servicios.incapacidad import liquidar_mes_incapacidad
 
 
@@ -152,4 +152,83 @@ def test_valor_oculto_queda_listo_para_guardar(cliente_admin: TestClient) -> Non
     esperado = liquidar_mes_incapacidad(
         date(2026, 11, 1), date(2026, 11, 5), Decimal("2960000"), anio=2026, mes=11
     ).valor_descontado
-    assert cuerpo["rollover"] == str(esperado)
+    assert cuerpo["datos"]["deduccion_incapacidad"] == formatear_cop(esperado)
+    assert len(cuerpo["incapacidad"]["tramos"]) == 1
+
+
+def test_incapacidad_que_cruza_de_mes_lista_dos_tramos(
+    cliente_admin: TestClient,
+) -> None:
+    """El desglose muestra cada mes y solo descuenta el tramo del periodo."""
+    cuerpo = _calcular(
+        cliente_admin,
+        incapacidad_inicio="2026-11-15",
+        incapacidad_fin="2026-12-05",
+    )
+
+    tramos = cuerpo["incapacidad"]["tramos"]
+    assert [tramo["mes"] for tramo in tramos] == [11, 12]
+    assert tramos[0]["actual"] is True
+    assert tramos[1]["actual"] is False
+
+    noviembre = liquidar_mes_incapacidad(
+        date(2026, 11, 15), date(2026, 12, 5), Decimal("2960000"), anio=2026, mes=11
+    )
+    assert cuerpo["datos"]["deduccion_incapacidad"] == formatear_cop(
+        noviembre.valor_descontado
+    )
+    # El primer par de días al 100 % se cuenta una sola vez sobre el rango.
+    assert tramos[0]["dias_al_100"] == 2
+    assert tramos[1]["dias_al_100"] == 0
+
+
+def test_incapacidad_registrada_se_aplica_al_mes_correspondiente(
+    cliente_admin: TestClient, bd
+) -> None:
+    """Sin fechas en el formulario, el periodo toma la incapacidad registrada.
+
+    Es el reemplazo del rollover: al liquidar diciembre, su tramo sale de la
+    incapacidad guardada que cruza de mes.
+    """
+    registro_incapacidades.registrar_incapacidad(
+        bd,
+        _id_admin(bd),
+        date(2026, 11, 15),
+        date(2026, 12, 5),
+        Decimal("2960000"),
+    )
+
+    cuerpo = _calcular(cliente_admin, mes=12)
+
+    esperado = liquidar_mes_incapacidad(
+        date(2026, 11, 15), date(2026, 12, 5), Decimal("2960000"), anio=2026, mes=12
+    ).valor_descontado
+    assert cuerpo["ok"] is True
+    assert cuerpo["datos"]["deduccion_incapacidad"] == formatear_cop(esperado)
+    assert [tramo["mes"] for tramo in cuerpo["incapacidad"]["tramos"]] == [12]
+
+
+def test_limpiar_omite_la_incapacidad_registrada(cliente_admin: TestClient, bd) -> None:
+    """SRS v1.6: con Limpiar (bandera omitir) el descuento vuelve a cero sin borrar el registro."""
+    registro_incapacidades.registrar_incapacidad(
+        bd,
+        _id_admin(bd),
+        date(2026, 11, 15),
+        date(2026, 12, 5),
+        Decimal("2960000"),
+    )
+
+    cuerpo = _calcular(cliente_admin, mes=12, incapacidad_omitir="1")
+
+    assert cuerpo["datos"]["deduccion_incapacidad"] == formatear_cop(0)
+    assert len(registro_incapacidades.listar_incapacidades(bd, _id_admin(bd))) == 1
+
+
+def test_panel_ofrece_limpiar_y_no_guarda_con_enter(cliente_admin: TestClient) -> None:
+    """La vista trae el boton Limpiar de incapacidades y su aviso con enlace."""
+    respuesta = cliente_admin.get("/finanzas")
+
+    assert respuesta.status_code == 200
+    assert "data-incapacidad-limpiar" in respuesta.text
+    assert "data-incapacidad-aviso" in respuesta.text
+    assert 'type="reset"' not in respuesta.text

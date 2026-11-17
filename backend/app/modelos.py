@@ -216,6 +216,11 @@ class Gasto(Base):
     `quincena` indica a qué pago pertenece el gasto fijo: `None` (mes completo),
     `1` (día 15) o `2` (día 30). Es la base del saldo libre por quincena del
     layout de "Mis Finanzas" (SRS v1.2, bloque 3).
+
+    SRS v1.6: `id_proyeccion` enlaza el gasto con la meta que lo originó. `pagado`
+    es el registro permanente del abono; `check_visible` solo oculta el ✔ tras
+    «Limpiar checks». `inhabilitado_hasta` marca un pago saltado con ×: el gasto
+    no cuenta en su quincena hasta esa fecha y no admite ✔.
     """
 
     __tablename__ = "gastos"
@@ -239,10 +244,26 @@ class Gasto(Base):
     es_fijo: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     fecha: Mapped[date] = mapped_column(Date, nullable=False)
     quincena: Mapped[int | None] = mapped_column(SmallInteger, nullable=True)
+    id_proyeccion: Mapped[str | None] = mapped_column(
+        ForeignKey("proyecciones_ahorro.id_proyeccion", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
+    )
+    pagado: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    pagado_en: Mapped[date | None] = mapped_column(Date, nullable=True)
+    monto_pagado: Mapped[Decimal | None] = mapped_column(Numeric(14, 2), nullable=True)
+    check_visible: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    inhabilitado_hasta: Mapped[date | None] = mapped_column(Date, nullable=True)
 
 
 class Deuda(Base):
-    """Pasivo del usuario (§8)."""
+    """Pasivo del usuario (§8, SRS v1.5).
+
+    La deuda se describe con seis datos: acreedor, descripción, saldo pendiente,
+    cuota, cuotas pendientes y periodicidad. La tasa de interés no se captura: se
+    deriva del saldo, la cuota y el número de pagos (interés implícito). Cada
+    cuota aplicada queda registrada en `pagos_deuda`.
+    """
 
     __tablename__ = "deudas"
 
@@ -254,9 +275,50 @@ class Deuda(Base):
     descripcion: Mapped[str | None] = mapped_column(String(150), nullable=True)
     saldo_total: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False)
     cuota_mensual: Mapped[Decimal | None] = mapped_column(Numeric(14, 2), nullable=True)
-    tasa_interes: Mapped[Decimal | None] = mapped_column(Numeric(5, 2), nullable=True)
+    cuotas_pendientes: Mapped[int] = mapped_column(
+        SmallInteger, nullable=False, default=0, server_default="0"
+    )
+    periodicidad: Mapped[str] = mapped_column(
+        String(12), nullable=False, default="MENSUAL", server_default="MENSUAL"
+    )
+    # Ancla del calendario de amortización: la primera cuota vence un periodo
+    # después de la creación.
+    fecha_creacion: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    # Interno: tasa implícita por periodo, derivada al registrar la deuda. La
+    # interfaz no la pide ni la edita; solo se muestra como dato informativo.
+    tasa_interes: Mapped[Decimal | None] = mapped_column(Numeric(12, 10), nullable=True)
+    # Columnas heredadas del modelo anterior; quedan sin uso y se conservan
+    # nulas para no romper bases ya desplegadas.
     fecha_limite: Mapped[date | None] = mapped_column(Date, nullable=True)
     estado: Mapped[str] = mapped_column(String(20), nullable=False, default="ACTIVA")
+
+
+class PagoDeuda(Base):
+    """Cuota efectivamente aplicada a una deuda (§8.1, SRS v1.5).
+
+    Se crea automáticamente cuando vence el periodo de la deuda y deja el saldo
+    exacto en cero en la última cuota. `UNIQUE(id_deuda, numero_cuota)` garantiza
+    que abrir el módulo dos veces no duplique el pago.
+    """
+
+    __tablename__ = "pagos_deuda"
+    __table_args__ = (
+        UniqueConstraint("id_deuda", "numero_cuota", name="uq_pago_deuda_cuota"),
+        CheckConstraint("numero_cuota >= 1", name="ck_pago_deuda_numero"),
+    )
+
+    id_pago: Mapped[str] = mapped_column(String(32), primary_key=True, default=nuevo_id)
+    id_deuda: Mapped[str] = mapped_column(
+        ForeignKey("deudas.id_deuda", ondelete="CASCADE"), nullable=False, index=True
+    )
+    numero_cuota: Mapped[int] = mapped_column(SmallInteger, nullable=False)
+    fecha_aplicacion: Mapped[date] = mapped_column(Date, nullable=False)
+    valor_cuota: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False)
+    abono_capital: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False)
+    interes: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False)
+    saldo_despues: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False)
 
 
 class Chancuco(Base):
@@ -286,15 +348,17 @@ class Chancuco(Base):
 class ProyeccionAhorro(Base):
     """Meta de ahorro o gasto programado (§9.1, SRS v1.3).
 
-    La cuota se descuenta de la quincena elegida. `tipo_duracion` distingue un
-    gasto fijo indefinido (`FIJO`) de una meta con número de cuotas
-    (`LIMITADO`), caso en el que `meses` define el total acumulado proyectado.
+    La cuota se descuenta de la quincena elegida. SRS v1.5 agregó
+    `quincena = 3` («Ambas quincenas»): la cuota mensual se reparte entre los dos
+    pagos. `tipo_duracion` distingue un gasto fijo indefinido (`FIJO`) de una
+    meta con número de cuotas (`LIMITADO`), caso en el que `meses` define el
+    total acumulado proyectado.
     """
 
     __tablename__ = "proyecciones_ahorro"
     __table_args__ = (
         CheckConstraint("valor_mensual >= 0", name="ck_proyeccion_valor"),
-        CheckConstraint("quincena IN (1, 2)", name="ck_proyeccion_quincena"),
+        CheckConstraint("quincena IN (1, 2, 3)", name="ck_proyeccion_quincena"),
         CheckConstraint(
             "tipo_duracion IN ('FIJO', 'LIMITADO')", name="ck_proyeccion_duracion"
         ),
@@ -314,6 +378,10 @@ class ProyeccionAhorro(Base):
     fecha_inicio: Mapped[date] = mapped_column(Date, nullable=False)
     quincena: Mapped[int] = mapped_column(SmallInteger, nullable=False)
     activo: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    # SRS v1.6: una meta archivada conserva su historial; `estado_final` dice si
+    # se cumplió o se eliminó antes de terminar.
+    archivada_en: Mapped[date | None] = mapped_column(Date, nullable=True)
+    estado_final: Mapped[str | None] = mapped_column(String(20), nullable=True)
     fecha_creacion: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )

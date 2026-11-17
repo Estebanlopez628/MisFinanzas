@@ -46,6 +46,7 @@ Plataforma web/móvil híbrida (PWA) con backend y frontend **100% Python**, arq
 ├── spec.md                             # Spec activa (corto alcance)
 ├── tasks.md                            # Backlog atómico activo
 ├── MEMORY.md                           # ADRs, decisiones y bitácora
+├── Guia.md                             # Manual por archivo y función (se regenera)
 ├── AGENTS.md                           # Este archivo
 ├── DESPLIEGUE.md                       # Guía de producción, respaldos y rollback
 ├── diccionario_datos.md                # Diccionario de datos (fuente para BD)
@@ -56,7 +57,8 @@ Plataforma web/móvil híbrida (PWA) con backend y frontend **100% Python**, arq
     ├── requirements-dev.txt            # pytest + httpx (solo desarrollo)
     ├── datos/finanzas.db               # Base SQLite local (no versionar)
     ├── scripts/respaldo.py             # Respaldo consistente y rotación
-    ├── tests/                          # Suite completa (244 pruebas)
+    ├── scripts/generar_guia.py        # Inventario de Guia.md + --verificar
+    ├── tests/                          # Suite completa (289 pruebas)
     └── app/
         ├── main.py                     # Punto de entrada FastAPI (fábrica de app)
         ├── dependencias.py             # Sesión, `SesionRequerida` y RBAC por rol
@@ -137,6 +139,7 @@ Plataforma web/móvil híbrida (PWA) con backend y frontend **100% Python**, arq
 4. **Cada módulo** inicia con un docstring de cabecera que describe su responsabilidad.
 5. **Trazabilidad**: todo cambio relevante se registra en `MEMORY.md` (bitácora + ADR si aplica) y en este archivo (estado verificado).
 6. **El diccionario de datos (`diccionario_datos.md`) es la fuente única** para crear la base de datos. Ninguna tabla se crea sin estar documentada allí.
+7. **`Guia.md` es obligatoria y viva**: se reescribe en cada cambio con una ficha por archivo (propósito, reglas, dependencias) y el inventario automático de clases, funciones y métodos. Antes de cerrar cualquier bloque se ejecuta `python scripts\generar_guia.py` y `python scripts\generar_guia.py --verificar`; el verificador falla si un módulo, clase, función o método no tiene docstring, o si un archivo carece de ficha. Nunca se edita a mano el bloque entre `<!-- INVENTARIO:INICIO -->` y `<!-- INVENTARIO:FIN -->`.
 
 ---
 
@@ -152,7 +155,9 @@ Plataforma web/móvil híbrida (PWA) con backend y frontend **100% Python**, arq
   - Recargo Nocturno: `0.35`
   - Recargo Dominical/Festivo: `1.90`
 - **Auxilio de Transporte:** se anula ($0) si `Sueldo Básico + Recargos` > 2 SMMLV (**COP 3.501.810**, parametrizable).
-- **Incapacidades (origen común):** días 1–2 al 100% (empleador); días 3+ al 66.67% (descuento del 33.33% a cargo de EPS). Soporta **rollover** de saldos al mes siguiente con persistencia.
+- **Incapacidades (origen común):** días 1–2 al 100% (empleador); días 3+ al 66.67% (descuento del 33.33% a cargo de EPS). Los días son **calendario** (`fin − inicio + 1`) y no se digitan; la regla 100 %/66,67 % se aplica una sola vez sobre la incapacidad completa. Si el rango cruza de mes, cada mes descuenta **solo su tramo** (`registro_incapacidades.tramos_del_mes`); **no hay rollover** (ADR-20). La incapacidad entra en la caja única de deducciones de ley.
+- **Deudas (SRS v1.5, ADR-21):** seis datos (acreedor, descripción, saldo, cuota, cuotas pendientes y periodicidad quincenal/mensual). Sin tasa capturada ni fecha límite: la tasa se deriva por bisección de `saldo = cuota × (1 − (1+r)^−n) / r` con 10 decimales. Al abrir el módulo se aplican las cuotas vencidas en `pagos_deuda` (idempotente por `UNIQUE(id_deuda, numero_cuota)`) y la última cuota deja el saldo exacto en cero. No existe abono manual.
+- **Metas con «Ambas quincenas» (ADR-22):** `quincena = 3` guarda la cuota mensual y la reparte entre los dos pagos (`valor_por_pago`). Sigue siendo planificación: no se resta del saldo libre.
 - **Onboarding obligatorio (SRS v1.2):** ninguna ruta de negocio se abre sin perfil financiero; `UsuarioSesion.perfil_configurado` se calcula por petición y `OnboardingRequerido` redirige a `/perfil?bienvenida=1` (303 HTML / 409 JSON).
 - **Quincenas independientes:** en modalidad `QUINCENAL`, `porcentaje_quincena_1 + porcentaje_quincena_2 = 100 %`. Las deducciones de ley se aplican **solo** a la quincena indicada en `quincena_deducciones`. Si el usuario no conoce los porcentajes, informa el neto de la quincena sin descuentos y el sistema deriva ambos porcentajes por descarte.
 - **Obligaciones fijas por quincena:** `gastos.quincena` (`1`, `2` o `NULL`) decide de qué pago se resta el gasto fijo. Los gastos sin quincena se muestran en la quincena 1 como «todo el mes» para conservar el total.
@@ -187,8 +192,9 @@ python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 
 ```bash
 cd backend
-.\.venv\Scripts\python -m pytest -q          # suite completa (238 pruebas)
+.\.venv\Scripts\python -m pytest -q          # suite completa (289 pruebas)
 .\.venv\Scripts\python scripts\respaldo.py   # copia consistente en backend/respaldos
+.\.venv\Scripts\python scripts\generar_guia.py --verificar  # docstrings y fichas de Guia.md
 ```
 
 ### Ejecutar desde VS Code (F5)
@@ -265,6 +271,19 @@ La configuración vive en `.vscode/launch.json`. También existe **Pruebas (pyte
 - [x] **SRS v1.4 — Layout, navegación y deducciones fijas:** submenú en botones con scroll móvil (REQ-03), columnas alineadas y liquidación primero en móvil (REQ-01, REQ-02), desglose bajo la liquidación (REQ-06), atajos solo en consulta (REQ-07), filas de gastos compactas (REQ-09), tabla `deducciones_fijas` y gestión en «Gastos y Presupuesto» (REQ-08), y recálculo en vivo de quincenas con recargos e incapacidad (REQ-04, REQ-05). Registrado en `MEMORY.md` (bitácora + ADR-18). Verificado: **238 pruebas** en verde.
 - [x] **Cálculo en vivo de incapacidades y sueldo proyectado:** el descuento sale del motor legal (días 1–2 al 100 %; desde el día 3, 33,33 %), el sueldo proyectado suma horas extras y resta la incapacidad, y las quincenas se recalculan al instante. Verificado: **244 pruebas** en verde (`MEMORY.md`, bitácora).
 - [x] **SRS v1.4 — Salud y pensión sobre el devengado (ADR-19):** la base es sueldo + extras − incapacidad, en el motor de nómina y en el panel de quincenas. Horas extras e incapacidad se ven en vivo en el sueldo proyectado, en salud/pensión y en las quincenas.
-- [ ] **SRS v1.4 — Revisión visual pendiente:** alineación de columnas y móvil; el usuario reportó desalineación de cuadros de horas corregida por CSS, verificar en navegador.
+- [x] **SRS v1.5 — Bloque 1 (caja única de deducciones):** salud + pensión + incapacidad + deducciones fijas se presentan y suman juntas; subtítulo con los conceptos, cifras en rojo sin signo menos y total final con la caja completa. Helpers `_fijas_del_periodo`, `_total_fijas` y `_total_deducciones_ley` en `routers/finanzas.py` (ADR-20).
+- [x] **SRS v1.5 — Bloque 2 (incapacidades por tramo):** días calendario automáticos, regla 100 %/66,67 % una sola vez, corte por mes calendario y **sin rollover**; `tramos_del_mes()`/`descuento_del_mes()` y `static/js/incapacidades.js`. Migración `_migrar_saldos_incapacidad` (ADR-20).
+- [x] **SRS v1.5 — Bloque 3 (sueldo de solo lectura):** el sueldo del periodo se edita solo en Mi Perfil; la liquidación lo muestra destacado con enlace de cambio.
+- [x] **SRS v1.5 — Bloque 4 (desglose compacto):** tabla sin columna Factor (Concepto, Horas, Valor), sin `min-width` ni `nowrap` y sin scroll horizontal.
+- [x] **SRS v1.5 — Bloque 5 (móvil y botones):** submenú 2 × 2 a 640 px, campos a una columna en Gastos y Presupuesto, paneles a 16 px y «Agregar deducción fija» con el mismo peso visual que «Crear meta», sin `+`. `sw.js` en `olb-finanzas-v7`.
+- [x] **SRS v1.5 — Bloque 6 (metas «Ambas quincenas»):** `quincena = 3`, reparto entre los dos pagos, migración por reconstrucción de `proyecciones_ahorro` + `abonos_proyeccion` y diccionario §9.1 (ADR-22).
+- [x] **SRS v1.5 — Bloque 7 (deudas con amortización automática):** seis campos, tasa implícita por bisección con 10 decimales, tabla `pagos_deuda`, aplicación de cuotas al abrir el módulo, última cuota en cero y `pagos_deuda` en `MODELOS_TRANSACCIONALES`; se retira el abono manual (ADR-21).
+- [x] **SRS v1.5 — Bloque 9 (documentación):** `Guia.md` con arquitectura, 70 fichas por archivo e inventario automático; `scripts/generar_guia.py` con `--verificar`. Obligación registrada en §5 y en `MEMORY.md`.
+- [x] Verificación SRS v1.5: `python -m compileall` OK, **260 pruebas** con `pytest` en verde y `generar_guia.py --verificar` sin problemas (70 archivos con ficha, sin docstrings pendientes). Migraciones de metas y deudas probadas dos veces sobre bases con datos.
+- [ ] **SRS v1.4/v1.5 — Revisión visual pendiente:** alineación de columnas y móvil (submenú 2 × 2, campos apilados); verificar en navegador.
+- [x] **SRS v1.6 — Metas como gastos fijos (ADR-24, ADR-25):** cada meta genera su gasto por quincena; el ✔ registra el abono; «Limpiar checks» conserva el pago; la × inhabilita 15 días sin borrar la meta; el abono manual solo aplica en pagos saltados. Resuelve la decisión pendiente de ADR-22: las metas sí restan del saldo, a través de sus gastos fijos.
+- [x] **SRS v1.6 — Montos sin centavos (ADR-23)** e **incapacidades: Enter y «Limpiar» (ADR-26).**
+- [x] Verificación SRS v1.6: `python -m compileall` OK, **289 pruebas** con `pytest` en verde, `generar_guia.py --verificar` sin problemas (71 archivos con ficha) y migración de `gastos` probada sobre una base con el esquema anterior.
+- [ ] **SRS v1.6 — Revisión visual pendiente:** botones ✔/× del mismo tamaño, meses centrados en «Gastos y Presupuesto» y «Valor:» retirado en el celular; verificar en navegador.
 - [ ] **Facturación PDF OLB_BYTE:** pendiente. Requiere elegir motor PDF (no hay ninguno instalado) y justificarlo en ADR.
 - [ ] **Fase 3 (opcional)** — Migración a PostgreSQL con Alembic y despliegue multi-instancia (ver `DESPLIEGUE.md` §11).

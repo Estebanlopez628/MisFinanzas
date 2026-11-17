@@ -172,17 +172,29 @@ Gastos fijos y variables que afectan el bolsillo del periodo.
 | `es_fijo` | `BOOLEAN` | No | Sí | Si es recurrente cada periodo. |
 | `fecha` | `DATE` | No | Sí | Fecha del gasto. |
 | `quincena` | `SMALLINT` | Sí | No | `1` o `2`: quincena a la que se imputa el gasto fijo. `NULL` = gasto del mes completo. `CHECK (quincena IN (1,2) OR quincena IS NULL)`. |
+| `id_proyeccion` | `UUID` (FK → `proyecciones_ahorro`) | Sí | No | SRS v1.6: meta que originó el gasto. `ON DELETE CASCADE`. `NULL` para gastos manuales. |
+| `pagado` | `BOOLEAN` | No | Sí | SRS v1.6: `DEFAULT false`. Registro permanente del pago (✔). No se revierte con «Limpiar». |
+| `pagado_en` | `DATE` | Sí | No | SRS v1.6: fecha en que se marcó el pago. |
+| `monto_pagado` | `NUMERIC(14,2)` | Sí | No | SRS v1.6: monto realmente pagado. Con ✔ es igual a `valor`; con abono manual es el monto abonado; en abonos heredados es el abono anterior. Es lo que cuenta en el saldo cuando `pagado = true`. |
+| `check_visible` | `BOOLEAN` | No | Sí | SRS v1.6: `DEFAULT true`. `false` tras «Limpiar checks»; solo oculta el ✔. |
+| `inhabilitado_hasta` | `DATE` | Sí | No | SRS v1.6: pago saltado con × desde una meta. Mientras la fecha sea posterior a hoy (plazo de 15 días), el gasto no suma en su quincena y no admite ✔; solo admite un abono manual. Vencido el plazo es un gasto normal. |
 
 **Reglas:**
 - Los gastos fijos con `quincena` se restan del ingreso proyectado de esa quincena en el panel de «Mis Finanzas» (SRS v1.2, bloque 3).
 - Los gastos con `quincena = NULL` (incluidos los creados antes del SRS v1.2) se cuentan en la quincena 1 y se marcan como «todo el mes» para no perder el total.
 - En modalidad `MENSUAL` todos los gastos del mes se acumulan en una sola tarjeta.
+- SRS v1.6, metas: cada meta genera un gasto por quincena de descuento (`Ambas quincenas` = dos mitades) con la descripción «Meta · nombre». Los gastos de meta se generan desde el mes visible hasta el final del periodo escogido por el usuario.
+- SRS v1.6, checks: `pagado` es permanente. Limpiar solo pone `check_visible = false`. Un gasto con `inhabilitado_hasta` vigente no cuenta en el saldo de su quincena y no admite ✔; solo admite abono manual, que lo deja pagado con el monto indicado.
+- SRS v1.6, valor: editar un gasto de meta cambia su valor en los meses posteriores de la misma quincena que aún no estén pagados. Los meses nuevos toman el último valor de esa quincena.
+- SRS v1.6: el abono de `abonos_proyeccion` es la suma de los gastos de la meta con `pagado = true` en ese mes; se recalcula al marcar, al editar un pago marcado y al saltar uno con ×.
 
 ---
 
 ## 8. `deudas`
 
-Pasivos del usuario (módulo `Resumen de Deudas`).
+Pasivos del usuario (módulo `Resumen de Deudas`). **SRS v1.5:** se capturan seis
+datos visibles; la tasa de interés no se pide, se deriva del saldo, la cuota y el
+número de pagos. Desaparecen la fecha límite y el abono manual.
 
 | Campo | Tipo | Nulo | Obligatorio | Descripción / Regla |
 | --- | --- | --- | --- | --- |
@@ -190,11 +202,35 @@ Pasivos del usuario (módulo `Resumen de Deudas`).
 | `id_usuario` | `UUID` (FK → `usuarios`) | No | Sí | Dueño. |
 | `acreedor` | `VARCHAR(100)` | No | Sí | Entidad o persona. |
 | `descripcion` | `VARCHAR(150)` | Sí | No | Detalle. |
-| `saldo_total` | `NUMERIC(14,2)` | No | Sí | Saldo capital pendiente. |
-| `cuota_mensual` | `NUMERIC(14,2)` | Sí | No | Valor de la cuota. |
-| `tasa_interes` | `NUMERIC(5,2)` | Sí | No | Porcentaje efectivo anual. |
-| `fecha_limite` | `DATE` | Sí | No | Próximo vencimiento. |
-| `estado` | `estado_deuda` | No | Sí | Default `ACTIVA`. |
+| `saldo_total` | `NUMERIC(14,2)` | No | Sí | Capital pendiente; se reduce con cada cuota aplicada. |
+| `cuota_mensual` | `NUMERIC(14,2)` | No | Sí | Valor de cada pago (mensual o quincenal según `periodicidad`). |
+| `cuotas_pendientes` | `SMALLINT` | No | Sí | Pagos que faltan; `1..600`. |
+| `periodicidad` | `VARCHAR(12)` | No | Sí | `QUINCENAL` o `MENSUAL`. |
+| `tasa_interes` | `NUMERIC(12,10)` | Sí | No | **Derivada**, no capturada. Tasa implícita por periodo (`0.0137085766` = 1,3709 %). |
+| `fecha_creacion` | `TIMESTAMPTZ` | No | Sí | Ancla del calendario de amortización. |
+| `fecha_limite` | `DATE` | Sí | No | Heredada; sin uso. |
+| `estado` | `estado_deuda` | No | Sí | `ACTIVA` o `PAGADA` (se actualiza al aplicar cuotas). |
+
+**Tasa implícita:** se resuelve por bisección
+`saldo = cuota × (1 − (1 + r)^−n) / r`. Si `cuota × n = saldo`, la tasa es cero.
+Si `cuota × n < saldo`, el plan no cubre la deuda y se rechaza.
+
+## 8.1 `pagos_deuda` — *Amortización automática* (SRS v1.5)
+
+Cada cuota que vence se registra aquí al abrir el módulo. `UNIQUE(id_deuda,
+numero_cuota)` hace la operación idempotente: abrir dos veces el mismo día no
+duplica pagos.
+
+| Campo | Tipo | Nulo | Obligatorio | Descripción / Regla |
+| --- | --- | --- | --- | --- |
+| `id_pago` | `UUID` (PK) | No | Sí | Identificador. |
+| `id_deuda` | `UUID` (FK → `deudas`) | No | Sí | Deuda amortizada; `ON DELETE CASCADE`. |
+| `numero_cuota` | `SMALLINT` | No | Sí | Consecutivo; `>= 1`. |
+| `fecha_aplicacion` | `DATE` | No | Sí | Fecha de vencimiento de la cuota. |
+| `valor_cuota` | `NUMERIC(14,2)` | No | Sí | Valor pagado; la última se ajusta al saldo exacto. |
+| `abono_capital` | `NUMERIC(14,2)` | No | Sí | Porción que reduce el capital. |
+| `interes` | `NUMERIC(14,2)` | No | Sí | Porción de intereses del periodo. |
+| `saldo_despues` | `NUMERIC(14,2)` | No | Sí | Saldo restante; la última cuota lo deja en `0`. |
 
 ---
 
@@ -224,7 +260,8 @@ lee ni la escribe.
 ## 9.1 `proyecciones_ahorro` — *Planificador de metas* (SRS v1.3)
 
 Metas de ahorro o gastos programados que el usuario planifica sobre su saldo
-libre mensual. La cuota se descuenta de la quincena indicada.
+libre mensual. La cuota se descuenta de la quincena indicada; con `3` («Ambas
+quincenas», SRS v1.5) se reparte en partes iguales entre los dos pagos.
 
 | Campo | Tipo | Nulo | Obligatorio | Descripción / Regla |
 | --- | --- | --- | --- | --- |
@@ -234,14 +271,21 @@ libre mensual. La cuota se descuenta de la quincena indicada.
 | `descripcion` | `VARCHAR(150)` | No | Sí | Detalle del objetivo. |
 | `valor_mensual` | `NUMERIC(14,2)` | No | Sí | Cuota mensual; `>= 0`. |
 | `tipo_duracion` | `VARCHAR(20)` | No | Sí | `FIJO` (indefinido) o `LIMITADO` (requiere `meses`). |
-| `meses` | `SMALLINT` | Sí | Si `LIMITADO` | Cantidad de cuotas; `1..120`. |
+| `meses` | `SMALLINT` | Sí | Sí (SRS v1.6) | Periodo de la meta en meses (el usuario lo escribe en meses o años); `1..600`. `NULL` solo en metas anteriores a SRS v1.6, que usan 12 meses. |
 | `fecha_inicio` | `DATE` | No | Sí | Primer mes de la proyección. |
-| `quincena` | `SMALLINT` | No | Sí | `1` o `2`: de qué pago se descuenta la cuota. |
-| `activo` | `BOOLEAN` | No | Sí | Default `true`. |
+| `quincena` | `SMALLINT` | No | Sí | `1`, `2` o `3`: pago del que se descuenta la cuota. `3` = ambas quincenas (se reparte entre los dos pagos). |
+| `activo` | `BOOLEAN` | No | Sí | Default `true`. `false` = meta archivada (SRS v1.6). |
+| `archivada_en` | `DATE` | Sí | No | SRS v1.6: fecha en que se archivó la meta. |
+| `estado_final` | `VARCHAR(20)` | Sí | No | SRS v1.6: `CUMPLIDA` si el periodo terminó antes de archivarla; `ELIMINADA` si se archivó antes de cumplirse. |
 | `fecha_creacion` | `TIMESTAMPTZ` | No | Sí | `now()`. |
 
-**Total acumulado proyectado** = `valor_mensual × meses` cuando es `LIMITADO`;
-en `FIJO` no existe total cerrado y se compara contra los 12 meses siguientes.
+**Total acumulado proyectado** = `valor_mensual × meses`.
+
+**Reglas (SRS v1.6):**
+- El periodo cuenta desde `fecha_inicio`. Una meta está **cumplida** cuando el mes actual supera su último mes.
+- Una meta cumplida conserva su estado en Gastos y Presupuesto y ofrece **extender** (suma meses desde el mes actual) o **eliminar**.
+- **Eliminar** archiva la meta (`activo = false`): se conserva con inicio, fin, total recogido y `estado_final`. Se eliminan sus gastos futuros no pagados; los pagados quedan como historial.
+- Una meta archivada no se puede extender. Las metas anteriores a SRS v1.6 sin periodo conservan la ventana de 12 meses.
 
 ## 9.2 `abonos_proyeccion` — *Seguimiento mensual*
 
@@ -256,9 +300,10 @@ Registro de cada cuota efectivamente abonada a una meta.
 | `valor` | `NUMERIC(14,2)` | No | Sí | Monto abonado; puede diferir de la cuota planeada. |
 | `fecha_registro` | `TIMESTAMPTZ` | No | Sí | `now()`. |
 
-**Regla:** un solo abono por meta y mes (`UNIQUE(id_proyeccion, anio, mes)`); un
-segundo registro sobre el mismo mes **actualiza** el monto en lugar de duplicar
-la fila.
+**Regla:** un solo abono por meta y mes (`UNIQUE(id_proyeccion, anio, mes)`).
+SRS v1.6: el abono ya no se registra a mano. Es la suma de los pagos marcados
+(`gastos.pagado`) de la meta en ese mes y lo mantiene `pagos_metas.sincronizar_abono`.
+Si el mes no tiene pagos, la fila se elimina.
 
 ## 9.3 `deducciones_fijas` — *Descuentos fijos del salario* (SRS v1.4, REQ-08)
 

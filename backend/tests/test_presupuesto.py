@@ -10,7 +10,7 @@ from __future__ import annotations
 from datetime import date
 from decimal import Decimal
 
-from app.servicios import ahorro, gastos, perfiles, usuarios
+from app.servicios import ahorro, gastos, pagos_metas, perfiles, usuarios
 
 
 def _id_admin(bd) -> str:
@@ -59,7 +59,7 @@ def test_crear_meta_limitada_calcula_total(bd) -> None:
 
 
 def test_meta_fija_no_tiene_total_cerrado(bd) -> None:
-    """Un gasto fijo indefinido compara contra 12 meses y no cierra total."""
+    """SRS v1.6: el gasto fijo tiene el periodo que escogió el usuario y su total."""
     id_usuario = _id_admin(bd)
     ahorro.crear_proyeccion(
         bd,
@@ -68,21 +68,36 @@ def test_meta_fija_no_tiene_total_cerrado(bd) -> None:
         "Cuota mensual del seguro",
         "180.000",
         tipo_duracion=ahorro.DURACION_FIJA,
+        meses=18,
         fecha_inicio=date(2026, 11, 1),
         quincena=2,
     )
 
     meta = ahorro.resumen_metas(bd, id_usuario)[0]
-    assert meta.proyeccion.meses is None
-    assert meta.total_proyectado is None
+    assert meta.proyeccion.meses == 18
+    assert meta.total_proyectado == Decimal("3240000.00")
     assert meta.porcentaje == Decimal("0.00")
-    assert len(meta.meses) == ahorro.MESES_VENTANA_FIJA
+    assert len(meta.meses) == 18
+
+
+def test_periodo_indefinido_antiguo_usa_ventana_de_12_meses(bd) -> None:
+    """Una meta sin periodo guardada antes de SRS v1.6 conserva la ventana de 12 meses."""
+    id_usuario = _id_admin(bd)
+    meta = ahorro.crear_proyeccion(
+        bd, id_usuario, "Ahorro", "Heredada", "100.000", fecha_inicio=date(2026, 11, 1), meses=12
+    )
+    meta.meses = None
+    bd.commit()
+
+    resumen = ahorro.resumen_metas(bd, id_usuario)[0]
+    assert resumen.total_proyectado is None
+    assert len(resumen.meses) == ahorro.MESES_VENTANA_FIJA
 
 
 def test_meta_limitada_exige_meses_validos(bd) -> None:
-    """La duración limitada exige entre 1 y 120 meses."""
+    """El periodo exige entre 1 y 600 meses (50 años)."""
     id_usuario = _id_admin(bd)
-    for meses in ("0", "121", ""):
+    for meses in ("0", "601", ""):
         try:
             ahorro.crear_proyeccion(
                 bd,
@@ -115,14 +130,49 @@ def test_meta_rechaza_categoria_vacia_y_monto_negativo(bd) -> None:
 
 
 def test_meta_rechaza_quincena_fuera_de_rango(bd) -> None:
-    """Solo se admite la quincena 1 o la 2."""
-    try:
-        ahorro.crear_proyeccion(
-            bd, _id_admin(bd), "Ahorro", "Quincena inválida", "100.000", quincena=3
+    """Solo se admiten las quincenas 1, 2 y 3 («ambas»)."""
+    for valida in (1, 2, 3):
+        meta = ahorro.crear_proyeccion(
+            bd,
+            _id_admin(bd),
+            "Ahorro",
+            f"Quincena {valida}",
+            "100.000",
+            quincena=valida,
+            meses=12,
         )
-    except ValueError:
-        return
-    raise AssertionError("Se aceptó la quincena 3.")
+        assert meta.quincena == valida
+
+    for invalida in (0, 4, -1):
+        try:
+            ahorro.crear_proyeccion(
+                bd,
+                _id_admin(bd),
+                "Ahorro",
+                "Quincena inválida",
+                "100.000",
+                quincena=invalida,
+                meses=12,
+            )
+        except ValueError:
+            continue
+        raise AssertionError(f"Se aceptó la quincena {invalida}.")
+
+
+def test_meta_con_ambas_quincenas_reparte_la_cuota(bd) -> None:
+    """SRS v1.5: «Ambas quincenas» divide la cuota mensual entre los dos pagos."""
+    meta = ahorro.crear_proyeccion(
+        bd, _id_admin(bd), "Ahorro", "Fondo compartido", "400.000", quincena=3, meses=12
+    )
+    resumen = next(
+        item
+        for item in ahorro.resumen_metas(bd, meta.id_usuario)
+        if item.proyeccion.id_proyeccion == meta.id_proyeccion
+    )
+
+    assert resumen.etiqueta_quincena == "Ambas quincenas"
+    assert resumen.valor_por_pago == Decimal("200000.00")
+    assert resumen.proyeccion.valor_mensual == Decimal("400000.00")
 
 
 # ---------------------------------------------------------------------------
@@ -130,69 +180,25 @@ def test_meta_rechaza_quincena_fuera_de_rango(bd) -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_abono_unico_por_mes_actualiza_el_monto(bd) -> None:
-    """Registrar dos veces el mismo mes corrige en lugar de duplicar."""
-    id_usuario = _id_admin(bd)
-    meta = ahorro.crear_proyeccion(
-        bd, id_usuario, "Ahorro", "Viaje", "200.000", fecha_inicio=date(2026, 11, 1)
-    )
-
-    ahorro.registrar_abono(bd, id_usuario, meta.id_proyeccion, 2026, 11, "200.000")
-    ahorro.registrar_abono(bd, id_usuario, meta.id_proyeccion, 2026, 11, "250.000")
-
-    resumen = ahorro.resumen_metas(bd, id_usuario)[0]
-    assert resumen.acumulado == Decimal("250000.00")
-    assert sum(1 for mes in resumen.meses if mes.registrado) == 1
-
-
-def test_abono_no_ajeno_devuelve_none(bd) -> None:
-    """Ningún usuario puede abonar a la meta de otro."""
-    id_admin = _id_admin(bd)
-    cuenta = usuarios.buscar_por_correo(bd, "usuario@finanzas.co")
-    assert cuenta is not None
-
-    meta = ahorro.crear_proyeccion(
-        bd, id_admin, "Ahorro", "Meta ajena", "100.000", fecha_inicio=date(2026, 11, 1)
-    )
-    assert (
-        ahorro.registrar_abono(
-            bd, cuenta.id_usuario, meta.id_proyeccion, 2026, 11, "100.000"
-        )
-        is None
-    )
-    assert (
-        ahorro.eliminar_proyeccion(bd, cuenta.id_usuario, meta.id_proyeccion) is False
-    )
-
-
-def test_abono_rechaza_mes_invalido(bd) -> None:
-    """El mes del abono debe estar entre 1 y 12."""
-    id_usuario = _id_admin(bd)
-    meta = ahorro.crear_proyeccion(
-        bd, id_usuario, "Ahorro", "Mes inválido", "100.000", fecha_inicio=date(2026, 11, 1)
-    )
-    try:
-        ahorro.registrar_abono(bd, id_usuario, meta.id_proyeccion, 2026, 13, "100.000")
-    except ValueError:
-        return
-    raise AssertionError("Se aceptó el mes 13.")
-
-
 def test_porcentaje_de_avance_tope_en_cien(bd) -> None:
     """El avance se calcula sobre el total y nunca supera el 100 %."""
     id_usuario = _id_admin(bd)
-    meta = ahorro.crear_proyeccion(
+    ahorro.crear_proyeccion(
         bd,
         id_usuario,
         "Ahorro",
         "Meta corta",
-        "100.000",
+        "150.000",
         tipo_duracion=ahorro.DURACION_LIMITADA,
         meses=2,
         fecha_inicio=date(2026, 11, 1),
     )
-    ahorro.registrar_abono(bd, id_usuario, meta.id_proyeccion, 2026, 11, "150.000")
-    ahorro.registrar_abono(bd, id_usuario, meta.id_proyeccion, 2026, 12, "150.000")
+    pagos_metas.asegurar_gastos_de_metas(bd, id_usuario, 2026, 11)
+    for gasto in gastos.listar_gastos(bd, id_usuario, 2026, 11):
+        pagos_metas.marcar_pagado(bd, id_usuario, gasto.id_gasto, date(2026, 11, 5))
+    pagos_metas.asegurar_gastos_de_metas(bd, id_usuario, 2026, 12)
+    for gasto in gastos.listar_gastos(bd, id_usuario, 2026, 12):
+        pagos_metas.marcar_pagado(bd, id_usuario, gasto.id_gasto, date(2026, 12, 5))
 
     resumen = ahorro.resumen_metas(bd, id_usuario)[0]
     assert resumen.acumulado == Decimal("300000.00")
@@ -270,6 +276,47 @@ def test_presupuesto_muestra_banner_y_alerta(cliente_admin, bd) -> None:
     assert "disminuir tus deudas" in critica.text
 
 
+def test_boton_de_deduccion_fija_homologado_al_de_meta(cliente_admin) -> None:
+    """SRS v1.5: «Agregar deducción fija» pesa igual que «Crear meta»."""
+    texto = " ".join(cliente_admin.get("/presupuesto").text.split())
+
+    assert "Crear meta" in texto
+    assert "Agregar deducción fija" in texto
+    assert "+ Agregar deducción fija" not in texto
+    # Ambos botones comparten la clase primaria.
+    assert texto.count('class="boton boton--primario"') >= 2
+
+
+def test_formulario_de_meta_ofrece_ambas_quincenas(cliente_admin) -> None:
+    """SRS v1.5: el selector de metas agrega la tercera opción."""
+    texto = cliente_admin.get("/presupuesto").text
+
+    assert "Ambas quincenas" in texto
+    assert 'value="3"' in texto
+
+
+def test_meta_por_formulario_con_ambas_quincenas(cliente_admin, bd) -> None:
+    """Al elegir «Ambas quincenas» la meta se guarda con quincena 3 y se reparte."""
+    respuesta = cliente_admin.post(
+        "/presupuesto/metas",
+        data={
+            "categoria": "Ahorro",
+            "descripcion": "Fondo compartido",
+            "valor_mensual": "400.000",
+            "tipo_duracion": "FIJO",
+            "meses": "12",
+            "fecha_inicio": "2026-11-01",
+            "quincena": "3",
+        },
+        follow_redirects=True,
+    )
+
+    assert respuesta.status_code == 200
+    texto = " ".join(respuesta.text.split())
+    assert "Ambas quincenas" in texto
+    assert "$200.000 por pago" in texto
+
+
 def test_presupuesto_crea_meta_por_formulario(cliente_admin, bd) -> None:
     """El formulario crea la meta y redirige con la bandera de guardado."""
     respuesta = cliente_admin.post(
@@ -300,6 +347,7 @@ def test_presupuesto_rechaza_meta_invalida(cliente_admin) -> None:
             "descripcion": "",
             "valor_mensual": "100.000",
             "tipo_duracion": "FIJO",
+            "meses": "12",
             "quincena": "1",
         },
     )
@@ -308,42 +356,41 @@ def test_presupuesto_rechaza_meta_invalida(cliente_admin) -> None:
     assert "La descripción de la meta es obligatoria." in respuesta.text
 
 
-def test_presupuesto_registra_y_corrige_abono(cliente_admin, bd) -> None:
-    """El abono del mes se guarda y se puede corregir desde la página."""
-    cliente_admin.post(
+def test_presupuesto_crea_meta_con_su_gasto_fijo(cliente_admin, bd) -> None:
+    """Crear una meta por la página genera su gasto fijo en la quincena elegida."""
+    respuesta = cliente_admin.post(
         "/presupuesto/metas",
         data={
             "categoria": "Ahorro",
             "descripcion": "Viaje",
             "valor_mensual": "200.000",
             "tipo_duracion": "FIJO",
+            "meses": "12",
             "fecha_inicio": "2026-11-01",
-            "quincena": "1",
+            "quincena": "2",
         },
         follow_redirects=False,
     )
+
+    assert respuesta.status_code == 303
     id_admin = _id_admin(bd)
     meta = ahorro.listar_proyecciones(bd, id_admin)[0]
-
-    for valor in ("200.000", "250.000"):
-        respuesta = cliente_admin.post(
-            f"/presupuesto/metas/{meta.id_proyeccion}/abono",
-            data={"anio": "2026", "mes": "11", "valor": valor},
-            follow_redirects=False,
-        )
-        assert respuesta.status_code == 303
-
-    resumen = ahorro.resumen_metas(bd, id_admin)[0]
-    assert resumen.acumulado == Decimal("250000.00")
+    generados = [
+        gasto
+        for gasto in gastos.listar_gastos(bd, id_admin, 2026, 11)
+        if gasto.id_proyeccion == meta.id_proyeccion
+    ]
+    assert len(generados) == 1
+    assert generados[0].quincena == 2
 
 
 def test_presupuesto_elimina_meta(cliente_admin, bd) -> None:
     """El botón de eliminar borra la meta y sus abonos."""
     id_admin = _id_admin(bd)
     meta = ahorro.crear_proyeccion(
-        bd, id_admin, "Ahorro", "Meta temporal", "100.000", fecha_inicio=date(2026, 11, 1)
+        bd, id_admin, "Ahorro", "Meta temporal", "100.000", fecha_inicio=date(2026, 11, 1), meses=12
     )
-    ahorro.registrar_abono(bd, id_admin, meta.id_proyeccion, 2026, 11, "100.000")
+    pagos_metas.asegurar_gastos_de_metas(bd, id_admin, 2026, 11)
 
     respuesta = cliente_admin.post(
         f"/presupuesto/metas/{meta.id_proyeccion}/eliminar", follow_redirects=False
