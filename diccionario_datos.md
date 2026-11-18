@@ -328,54 +328,135 @@ antes de calcular el saldo libre.
 
 ---
 
+## 10. OLB_BYTE — Gestión comercial (SRS OLB_BYTE v1.0, ADR-35)
+
+Modelo sin inventario físico: cada venta se compra al proveedor a crédito a precio
+de costo en el momento de la venta. No existe control de stock. Los datos de
+producto se guardan como **copia** dentro de la venta, para que un cambio posterior
+de precio no altere historiales ni garantías.
+
+Mapeo con el SRS: `ordenes_venta` = tabla `ventas`; `detalle_venta` = `venta_detalle`;
+`abonos_clientes` = `abonos`. Se conservan los nombres existentes para no romper datos.
+
 ### 10.1 `clientes`
 | Campo | Tipo | Nulo | Descripción |
 | --- | --- | --- | --- |
 | `id_cliente` | `UUID` (PK) | No | Identificador. |
 | `nombre` | `VARCHAR(120)` | No | Nombre completo. |
-| `telefono_whatsapp` | `VARCHAR(20)` | Sí | Para facturación y recordatorios. |
+| `telefono_whatsapp` | `VARCHAR(20)` | Sí | Celular de 10 dígitos (sin indicativo) para factura y WhatsApp. Se normaliza al guardar. |
 | `correo` | `VARCHAR(150)` | Sí | Opcional. |
 | `direccion` | `VARCHAR(200)` | Sí | Entrega. |
 | `fecha_registro` | `TIMESTAMPTZ` | No | `now()`. |
 
-### 10.2 `productos`
+### 10.2 `productos` — *Legado, sin uso en el flujo nuevo*
+Tabla existente con SKU, costo y precio. Se **conserva** para no perder datos
+históricos. Se elimina la columna `stock` (migración por reconstrucción). El flujo
+nuevo no la consulta; la venta guarda la copia de los datos del producto.
+
 | Campo | Tipo | Nulo | Descripción |
 | --- | --- | --- | --- |
 | `id_producto` | `UUID` (PK) | No | Identificador. |
 | `sku` | `VARCHAR(40)` | No | Único. |
 | `nombre` | `VARCHAR(120)` | No | Descripción comercial. |
-| `costo` | `NUMERIC(14,2)` | No | Costo de compra. |
+| `costo` | `NUMERIC(14,2)` | No | Último costo conocido. |
 | `precio_venta` | `NUMERIC(14,2)` | No | Precio público. |
-| `stock` | `INTEGER` | No | `CHECK (stock >= 0)`. |
-| `garantia_meses` | `SMALLINT` | Sí | Meses de garantía. |
+| `garantia_meses` | `SMALLINT` | Sí | Meses de garantía de referencia. |
 
-### 10.3 `ventas`
+### 10.3 `ventas` — *Órdenes de venta*
 | Campo | Tipo | Nulo | Descripción |
 | --- | --- | --- | --- |
-| `id_venta` | `UUID` (PK) | No | Identificador. |
-| `id_cliente` | `UUID` (FK) | No | Comprador. |
-| `fecha_venta` | `TIMESTAMPTZ` | No | `now()`. |
-| `total` | `NUMERIC(14,2)` | No | Valor total. |
-| `saldo_pendiente` | `NUMERIC(14,2)` | No | Cartera viva. |
-| `estado` | `estado_venta` | No | Default `PENDIENTE`. |
+| `id_venta` | `UUID` (PK) | No | Identificador interno. |
+| `numero_orden` | `INTEGER` | No | Consecutivo visible en factura. `UNIQUE`, empieza en 1 (confirmado por el propietario; aplicativo nuevo). Se asigna como máximo + 1 y **nunca se reutiliza**, ni al anular. |
+| `id_cliente` | `UUID` (FK) | No | Comprador. `ON DELETE RESTRICT`. |
+| `cliente_nombre` | `VARCHAR(120)` | No | Copia del nombre al vender. |
+| `cliente_telefono` | `VARCHAR(20)` | Sí | Copia del celular al vender. |
+| `fecha_venta` | `TIMESTAMPTZ` | No | Fecha y hora de la venta; la garantía inicia aquí. |
+| `subtotal` | `NUMERIC(14,2)` | No | Suma de `subtotal_item`. |
+| `total` | `NUMERIC(14,2)` | No | Valor total de la orden (`total_venta` del SRS). |
+| `total_costo` | `NUMERIC(14,2)` | No | Suma de `costo_unitario × cantidad`. Es la deuda con el proveedor. |
+| `ganancia_neta` | `NUMERIC(14,2)` | No | `Σ (precio − costo) × cantidad`. Cero si la orden está anulada. |
+| `total_abonado` | `NUMERIC(14,2)` | No | Suma de abonos del cliente. |
+| `saldo_pendiente` | `NUMERIC(14,2)` | No | `total − total_abonado`. Cartera viva. `CHECK (saldo_pendiente >= 0)`. |
+| `estado_pago` | `VARCHAR(20)` | No | `PENDIENTE`, `PARCIAL` o `PAGADA`. |
+| `estado_orden` | `VARCHAR(20)` | No | `ACTIVA` o `ANULADA`. Default `ACTIVA`. |
+| `garantia_texto` | `VARCHAR(200)` | No | Por defecto «3 meses por defectos de fábrica». Se puede editar por venta. |
+| `garantia_fecha_fin` | `DATE` | Sí | `fecha_venta` + meses de garantía. Base del semáforo. |
+| `motivo_anulacion` | `VARCHAR(200)` | Sí | Obligatorio si `estado_orden = ANULADA`. |
+| `fecha_anulacion` | `TIMESTAMPTZ` | Sí | Momento de la anulación. |
 
-### 10.4 `venta_detalle`
+**Reglas de anulación (ADR-35):** la orden anulada sale de la cartera, de los totales
+de venta, de la ganancia y de los rankings. **No** se revierte la deuda con el
+proveedor (`movimientos_proveedor` de tipo `COMPRA_CREDITO` permanece): la mercancía
+ya se compró. Si el cliente ya abonó, la anulación registra la devolución del dinero
+en `devoluciones_clientes` (§10.8); los abonos originales se conservan como historial.
+
+### 10.4 `venta_detalle` — *Líneas de la orden*
 | Campo | Tipo | Nulo | Descripción |
 | --- | --- | --- | --- |
 | `id_detalle` | `UUID` (PK) | No | Identificador. |
-| `id_venta` | `UUID` (FK) | No | Venta padre. |
-| `id_producto` | `UUID` (FK) | No | Producto vendido. |
+| `id_venta` | `UUID` (FK) | No | Orden padre. `ON DELETE CASCADE`. |
+| `id_producto` | `UUID` (FK) | Sí | Solo ventas anteriores a ADR-35. `NULL` en ventas nuevas. |
+| `producto_nombre` | `VARCHAR(120)` | No | Nombre del producto. |
+| `referencia` | `VARCHAR(60)` | Sí | Referencia o modelo. |
 | `cantidad` | `INTEGER` | No | `CHECK (cantidad > 0)`. |
-| `precio_unitario` | `NUMERIC(14,2)` | No | Precio al momento de la venta. |
+| `costo_unitario` | `NUMERIC(14,2)` | No | Precio proveedor, congelado. `CHECK (>= 0)`. |
+| `precio_unitario` | `NUMERIC(14,2)` | No | Precio al cliente. `CHECK (>= 0)`. |
+| `subtotal_item` | `NUMERIC(14,2)` | No | `precio_unitario × cantidad`. |
+| `garantia_texto` | `VARCHAR(200)` | Sí | Garantía de esta línea. |
 
-### 10.5 `abonos`
+### 10.5 `abonos` — *Pagos del cliente (`abonos_clientes` del SRS)*
 | Campo | Tipo | Nulo | Descripción |
 | --- | --- | --- | --- |
 | `id_abono` | `UUID` (PK) | No | Identificador. |
-| `id_venta` | `UUID` (FK) | No | Venta abonada. |
+| `id_venta` | `UUID` (FK) | No | Orden abonada. `ON DELETE CASCADE`. |
 | `monto` | `NUMERIC(14,2)` | No | `CHECK (monto > 0)`. |
-| `metodo_pago` | `VARCHAR(30)` | No | `EFECTIVO`, `NEQUI`, `TRANSFERENCIA`, `TARJETA`. |
-| `fecha_abono` | `TIMESTAMPTZ` | No | `now()`. |
+| `metodo_pago` | `VARCHAR(30)` | No | Nuevos registros: `EFECTIVO` o `TRANSFERENCIA`. Los históricos (`NEQUI`, `DAVIPLATA`, `TARJETA`) se conservan. |
+| `fecha_abono` | `TIMESTAMPTZ` | No | Fecha **y hora** del pago (RF-06). |
+
+### 10.6 `movimientos_proveedor` — *Cuenta por pagar al proveedor (RF-08)*
+| Campo | Tipo | Nulo | Descripción |
+| --- | --- | --- | --- |
+| `id_movimiento` | `UUID` (PK) | No | Identificador. |
+| `fecha` | `TIMESTAMPTZ` | No | Momento del movimiento. |
+| `tipo` | `VARCHAR(20)` | No | `COMPRA_CREDITO` (sube la deuda) o `ABONO` (la baja). |
+| `id_venta` | `UUID` (FK) | Sí | Orden que origina la compra. `ON DELETE RESTRICT`. `NULL` en abonos generales. |
+| `concepto` | `VARCHAR(200)` | No | Descripción legible. |
+| `monto` | `NUMERIC(14,2)` | No | `CHECK (monto > 0)`. |
+| `saldo_resultante` | `NUMERIC(14,2)` | No | Deuda con el proveedor después del movimiento. |
+
+Deuda con el proveedor = Σ `COMPRA_CREDITO` − Σ `ABONO`. Los movimientos no se editan
+ni se borran: una corrección se registra como un movimiento nuevo.
+
+### 10.7 `garantias_proveedor` — *Garantías en trámite (RF-05)*
+| Campo | Tipo | Nulo | Descripción |
+| --- | --- | --- | --- |
+| `id_garantia` | `UUID` (PK) | No | Identificador. |
+| `id_venta` | `UUID` (FK) | No | Orden original. `ON DELETE RESTRICT`. |
+| `id_detalle` | `UUID` (FK) | Sí | Línea con falla. |
+| `producto_referencia` | `VARCHAR(120)` | No | Copia del nombre o referencia, para el ranking de fallas. |
+| `estado_tramite` | `VARCHAR(20)` | No | `ABIERTA`, `EN_TRAMITE`, `RESUELTA` o `RECHAZADA`. |
+| `fecha_reclamo` | `TIMESTAMPTZ` | No | Fecha del reclamo. |
+| `fecha_resolucion` | `TIMESTAMPTZ` | Sí | Se llena al resolver o rechazar. |
+| `observacion` | `VARCHAR(300)` | Sí | Notas del trámite. |
+
+### 10.8 `devoluciones_clientes` — *Dinero devuelto al cliente tras anular*
+Se registra cuando una orden anulada devuelve al cliente lo que ya había abonado
+(ADR-35, decisión del 17/11/2026). Un abono devuelto no vuelve a la caja.
+
+| Campo | Tipo | Nulo | Descripción |
+| --- | --- | --- | --- |
+| `id_devolucion` | `UUID` (PK) | No | Identificador. |
+| `id_venta` | `UUID` (FK) | No | Orden anulada. `ON DELETE RESTRICT`. |
+| `fecha_devolucion` | `TIMESTAMPTZ` | No | Fecha y hora de la devolución. |
+| `monto` | `NUMERIC(14,2)` | No | `CHECK (monto > 0)`. La suma de devoluciones no supera el total abonado. |
+| `metodo_pago` | `VARCHAR(30)` | No | `EFECTIVO` o `TRANSFERENCIA`. |
+
+Dinero abonado pendiente de devolver = Σ `abonos` − Σ `devoluciones_clientes` de la orden.
+
+### 10.9 Índices y reglas transversales
+- Ganancia, cartera y deuda excluyen órdenes `ANULADA`.
+- Montos en `NUMERIC(14,2)` y en `Decimal`; redondeo al persistir (ADR-23 para mostrar sin centavos).
+- Teléfono: 10 dígitos colombianos en el registro. El indicativo `57` se agrega solo al generar el enlace de WhatsApp.
 
 ---
 

@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block titulo %}Pendientes de pago{% endblock %}
+
+{% block contenido %}
+  <section class="heroe">
+    <h1 class="heroe__titulo">⏳ Pendientes de pago</h1>
+    <p class="heroe__subtitulo">
+      Clientes con saldo por cobrar. Cada abono genera un recibo listo para compartir.
+    </p>
+    <div class="acciones-formulario">
+      <a class="boton boton--secundario boton--pequeno" href="{{ url_for('ver_olb_byte') }}">Volver al panel</a>
+    </div>
+  </section>
+
+  {% if error %}
+    <div class="alerta alerta--error" role="alert">{{ error }}</div>
+  {% endif %}
+
+  <section class="panel panel--tabla">
+    <form class="formulario formulario--compacto" method="get" action="{{ url_for('ver_pendientes') }}" role="search">
+      <label class="campo">
+        <span class="campo__etiqueta">Buscar por cliente, celular o número de orden</span>
+        <input class="campo__control" type="search" name="q" value="{{ q }}" placeholder="Ana, 3001234567 o 12" />
+      </label>
+      <div class="acciones-formulario">
+        <button class="boton boton--secundario boton--pequeno" type="submit">Buscar</button>
+        {% if q %}
+          <a class="boton boton--secundario boton--pequeno" href="{{ url_for('ver_pendientes') }}">Ver todos</a>
+        {% endif %}
+      </div>
+    </form>
+
+    {% if pendientes %}
+      <div class="tabla-contenedor">
+        <table class="tabla">
+          <thead>
+            <tr>
+              <th scope="col">No.</th>
+              <th scope="col">Cliente</th>
+              <th scope="col">Celular</th>
+              <th scope="col">Venta</th>
+              <th scope="col">Total</th>
+              <th scope="col">Abonado</th>
+              <th scope="col">Saldo</th>
+              <th scope="col">Cobrar</th>
+              <th scope="col">Recibos</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for fila in pendientes %}
+              {% set venta = fila.venta %}
+              <tr>
+                <td>{{ venta.numero_orden }}</td>
+                <td>{{ venta.cliente_nombre }}</td>
+                <td>{{ venta.cliente_telefono or '—' }}</td>
+                <td>{{ venta.fecha_venta.strftime('%d-%m-%Y') }}</td>
+                <td class="tabla__numero">{{ venta.total | cop }}</td>
+                <td class="tabla__numero">{{ venta.total_abonado | cop }}</td>
+                <td class="tabla__numero valor-negativo">{{ venta.saldo_pendiente | cop }}</td>
+                <td>
+                  <form class="formulario-en-linea" method="post"
+                        action="{{ url_for('registrar_abono', id_venta=venta.id_venta) }}">
+                    <input type="hidden" name="q" value="{{ q }}" />
+                    <input class="campo__control campo__control--compacto" type="text" name="monto"
+                           inputmode="decimal" placeholder="Monto" required aria-label="Monto del abono" />
+                    <select class="campo__control campo__control--compacto" name="metodo_pago" aria-label="Medio de pago">
+                      {% for metodo in metodos_pago %}
+                        <option value="{{ metodo }}">{{ metodo | capitalize }}</option>
+                      {% endfor %}
+                    </select>
+                    <input class="campo__control campo__control--compacto" type="datetime-local"
+                           name="fecha_abono" aria-label="Fecha y hora del abono" />
+                    <button class="boton boton--primario boton--pequeno" type="submit">Abonar</button>
+                  </form>
+                  {% if venta.cliente_telefono %}
+                    <a class="boton boton--secundario boton--pequeno" href="{{ fila.enlace_cobro }}"
+                       target="_blank" rel="noopener">Recordar cobro por WhatsApp</a>
+                  {% else %}
+                    <small class="ayuda">Sin celular: no se puede enviar el recordatorio.</small>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if fila.ultimo_abono %}
+                    <a class="boton boton--secundario boton--pequeno"
+                       href="{{ url_for('ver_recibo', id_abono=fila.ultimo_abono.id_abono) }}">Último recibo</a>
+                    <small class="ayuda">{{ fila.abonos | length }} abono(s)</small>
+                  {% else %}
+                    <small class="ayuda">Sin abonos todavía</small>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="tabla__vacia">
+        {% if q %}
+          No hay pendientes que coincidan con «{{ q }}».
+        {% else %}
+          No hay saldos pendientes: toda la cartera está cobrada.
+        {% endif %}
+      </p>
+    {% endif %}
+  </section>
+{% endblock %}

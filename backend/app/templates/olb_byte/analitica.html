@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+{% block titulo %}Analítica{% endblock %}
+
+{% block contenido %}
+  <section class="heroe">
+    <h1 class="heroe__titulo">📈 Analítica</h1>
+    <p class="heroe__subtitulo">
+      Ventas, costos y ganancia por mes y por año, los clientes que más compran y los
+      productos cuyo costo subió con el proveedor. Las órdenes anuladas no cuentan.
+    </p>
+    <div class="acciones-formulario">
+      <a class="boton boton--secundario boton--pequeno" href="{{ url_for('ver_olb_byte') }}">Volver al panel</a>
+    </div>
+  </section>
+
+  <section class="panel">
+    <form class="formulario formulario--compacto" method="get" action="{{ url_for('ver_analitica') }}">
+      <label class="campo">
+        <span class="campo__etiqueta">Año del reporte mensual</span>
+        <select class="campo__control" name="anio">
+          {% for opcion in anios %}
+            <option value="{{ opcion }}"{% if opcion == anio %} selected{% endif %}>{{ opcion }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <button class="boton boton--secundario boton--pequeno" type="submit">Ver año</button>
+    </form>
+  </section>
+
+  <section class="panel panel--tabla">
+    <h2 class="panel__titulo">Mes a mes · {{ anio }}</h2>
+    <div class="tabla-contenedor">
+      <table class="tabla">
+        <thead>
+          <tr>
+            <th scope="col">Mes</th>
+            <th scope="col">Ventas</th>
+            <th scope="col">Ingresos</th>
+            <th scope="col">Costos</th>
+            <th scope="col">Ganancia</th>
+            <th scope="col">Var. ganancia</th>
+            <th scope="col">Ingresos del mes</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for fila in mensual %}
+            <tr>
+              <td>{{ fila.mes }}</td>
+              <td class="tabla__numero">{{ fila.ventas }}</td>
+              <td class="tabla__numero">{{ fila.ingresos | cop }}</td>
+              <td class="tabla__numero">{{ fila.costos | cop }}</td>
+              <td class="tabla__numero">{{ fila.ganancia | cop }}</td>
+              <td class="tabla__numero">{{ fila.variacion ~ ' %' if fila.variacion is not none else '—' }}</td>
+              <td>
+                <div class="barra" aria-hidden="true"><span style="width: {{ fila.barra }}%"></span></div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel panel--tabla">
+    <h2 class="panel__titulo">Año tras año</h2>
+    {% if anual %}
+      <div class="tabla-contenedor">
+        <table class="tabla">
+          <thead>
+            <tr>
+              <th scope="col">Año</th>
+              <th scope="col">Ventas</th>
+              <th scope="col">Ingresos</th>
+              <th scope="col">Costos</th>
+              <th scope="col">Ganancia</th>
+              <th scope="col">Rentabilidad</th>
+              <th scope="col">Var. ganancia</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for fila in anual %}
+              <tr>
+                <td>{{ fila.anio }}</td>
+                <td class="tabla__numero">{{ fila.ventas }}</td>
+                <td class="tabla__numero">{{ fila.ingresos | cop }}</td>
+                <td class="tabla__numero">{{ fila.costos | cop }}</td>
+                <td class="tabla__numero">{{ fila.ganancia | cop }}</td>
+                <td class="tabla__numero">{{ fila.rentabilidad ~ ' %' if fila.rentabilidad is not none else '—' }}</td>
+                <td class="tabla__numero">{{ fila.variacion ~ ' %' if fila.variacion is not none else '—' }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <p class="ayuda">Rentabilidad = ganancia del año ÷ costo del año × 100.</p>
+    {% else %}
+      <p class="tabla__vacia">Aún no hay ventas activas para resumir por año.</p>
+    {% endif %}
+  </section>
+
+  <div class="rejilla-paneles">
+    <section class="panel panel--tabla">
+      <h2 class="panel__titulo">Clientes VIP</h2>
+      {% if vip %}
+        <div class="tabla-contenedor">
+          <table class="tabla">
+            <thead>
+              <tr>
+                <th scope="col">Cliente</th>
+                <th scope="col">Compras</th>
+                <th scope="col">Monto</th>
+                <th scope="col">Última compra</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for fila in vip %}
+                <tr>
+                  <td>
+                    {{ fila.cliente }}
+                    {% if fila.telefono %}<small class="ayuda">{{ fila.telefono }}</small>{% endif %}
+                  </td>
+                  <td class="tabla__numero">{{ fila.compras }}</td>
+                  <td class="tabla__numero">{{ fila.monto | cop }}</td>
+                  <td>{{ fila.ultima.strftime('%d-%m-%Y') }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="tabla__vacia">Aún no hay clientes con compras activas.</p>
+      {% endif %}
+    </section>
+
+    <section class="panel panel--tabla">
+      <h2 class="panel__titulo">Alertas de costo</h2>
+      <p class="panel__descripcion">
+        Productos cuyo costo con el proveedor subió frente a la compra anterior. Revisa si
+        el precio de venta todavía protege el margen.
+      </p>
+      {% if alertas.subidas %}
+        <div class="tabla-contenedor">
+          <table class="tabla">
+            <thead>
+              <tr>
+                <th scope="col">Producto</th>
+                <th scope="col">Costo anterior</th>
+                <th scope="col">Costo actual</th>
+                <th scope="col">Subida</th>
+                <th scope="col">Precio</th>
+                <th scope="col">Margen</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for fila in alertas.subidas %}
+                <tr>
+                  <td>{{ fila.producto }}</td>
+                  <td class="tabla__numero">{{ fila.costo_anterior | cop }}</td>
+                  <td class="tabla__numero">{{ fila.costo_actual | cop }}</td>
+                  <td class="tabla__numero">{{ fila.variacion ~ ' %' if fila.variacion is not none else '—' }}</td>
+                  <td class="tabla__numero">{{ fila.precio | cop }}</td>
+                  <td class="tabla__numero">
+                    {{ fila.margen ~ ' %' if fila.margen is not none else '—' }}
+                    {% if fila.margen_bajo %}
+                      <span class="insignia insignia--anulada">Margen bajo</span>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="tabla__vacia">No hay subidas de costo registradas.</p>
+      {% endif %}
+    </section>
+  </div>
+
+  <section class="panel panel--tabla">
+    <h2 class="panel__titulo">Último costo y margen por producto</h2>
+    {% if alertas.costos %}
+      <div class="tabla-contenedor">
+        <table class="tabla">
+          <thead>
+            <tr>
+              <th scope="col">Producto</th>
+              <th scope="col">Último costo</th>
+              <th scope="col">Último precio</th>
+              <th scope="col">Margen</th>
+              <th scope="col">Fecha</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for fila in alertas.costos %}
+              <tr>
+                <td>{{ fila.producto }}</td>
+                <td class="tabla__numero">{{ fila.costo | cop }}</td>
+                <td class="tabla__numero">{{ fila.precio | cop }}</td>
+                <td class="tabla__numero">{{ fila.margen ~ ' %' if fila.margen is not none else '—' }}</td>
+                <td>{{ fila.fecha.strftime('%d-%m-%Y') }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="tabla__vacia">Aún no hay compras registradas.</p>
+    {% endif %}
+  </section>
+{% endblock %}

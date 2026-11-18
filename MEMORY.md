@@ -262,6 +262,58 @@ Recálculo en tiempo real (<100 ms) sin recargar página. Se implementa con func
 - **Decisión:** `trabajos_extras` gana `tipo_contrato` (`INDEFINIDO` | `TERMINO_FIJO`), `frecuencia` (`MENSUAL` | `QUINCENAL`), `fecha_fin` y `fecha_pago`. `valor` es el monto **de cada pago**. Los pagos se generan de forma idempotente como filas de `gastos` con `id_trabajo`: reutilizan la macro `fila_gasto` (lápiz, «Cancelar», ×, ✔ y abono manual) pero `gastos.listar_gastos` los excluye, así que no tocan el sueldo, las quincenas ni los totales de gastos. El ✔ registra el cobro y `trabajos.extras_cobrados_mes` lo suma al `disponible` del diagnóstico del mes. La frecuencia quincenal crea dos pagos (día 15 y día 30 ajustado al último día); la mensual, uno en el día de `fecha_pago`. Un contrato indefinido mantiene una ventana móvil de 12 meses desde el mes visible; un término fijo se detiene en `fecha_fin`. La × inhabilita el pago 15 días en lugar de borrarlo, para que la generación idempotente no lo recree. Los trabajos anteriores se migran como término fijo de un solo mes para no inventar ingresos recurrentes.
 - **Archivos:** `modelos.py` (`TrabajoExtra`, `Gasto.id_trabajo`), `core/base_datos.py` (`_migrar_columnas_trabajos`, `id_trabajo` en `_migrar_columnas_gastos`), `servicios/trabajos.py`, `servicios/gastos.py`, `servicios/pagos_metas.py` (`quitar_gasto`), `servicios/ahorro.py` (`diagnostico`), `routers/trabajos.py`, `routers/gastos.py` (`_volver`), `templates/trabajos/index.html`, `templates/finanzas/_gasto_fijo.html`, `templates/presupuesto/index.html`, `static/js/app.js`, `diccionario_datos.md` §7 y §12, `tests/test_trabajos_extras.py`.
 
+### ADR-40 — Analítica: reglas de cálculo y umbral de margen (SRS OLB_BYTE v1.0, Fase 6)
+- **Contexto:** RF-12 a RF-14 piden reportes mensuales y anuales, rentabilidad, ranking de clientes VIP y alertas de subida de costo.
+- **Decisión:**
+  - Ingresos, ganancia, ventas y rankings solo usan órdenes activas (ADR-35). El historial de costos incluye todas las compras, porque la mercancía ya se compró aunque la orden se haya anulado.
+  - Variación = (actual − anterior) ÷ |anterior| × 100. Sin base de comparación (periodo anterior en cero) se muestra «—».
+  - Rentabilidad anual = ganancia ÷ costo × 100. Sin costo se muestra «—».
+  - Ranking VIP: monto total de compras activas; empate por número de compras; luego por nombre.
+  - Alerta de costo: el costo unitario de la compra más reciente es mayor que el de la compra anterior del mismo producto (nombre y referencia). Un producto con una sola compra no genera alerta.
+  - Margen = (último precio − último costo) ÷ último precio × 100. Por debajo de **15 %** (`UMBRAL_MARGEN_BAJO`) se marca «Margen bajo». El umbral es una decisión de negocio, no un dato legal: se puede ajustar en `servicios/analitica.py`.
+- **Archivos:** `servicios/analitica.py`, `routers/olb_byte.py` (`ver_analitica`), `templates/olb_byte/analitica.html`, `static/css/estilos.css` (`.barra`), `tests/test_analitica.py`.
+
+### ADR-39 — Garantías y tasa de fallas por producto (SRS OLB_BYTE v1.0, Fase 5)
+- **Contexto:** RF-05 pide reclamos en trámite con el proveedor y un ranking de productos con mayor tasa de fallas. La tabla `garantias_proveedor` ya existía desde la Fase 1.
+- **Decisión:**
+  - Un reclamo nace `ABIERTA` sobre una línea de una orden activa. Copia el producto con referencia (`Audífonos BT (AB-1)`) para que el ranking no dependa de la línea.
+  - El flujo es `ABIERTA → EN_TRAMITE → RESUELTA | RECHAZADA`. Un reclamo cerrado es final; si la falla vuelve, se abre uno nuevo. Ningún reclamo vuelve a `ABIERTA`.
+  - Tasa (%) = reclamos ÷ unidades vendidas en órdenes activas × 100. Cada reclamo cuenta como una falla. Un producto con reclamos y sin unidades activas se muestra como «—».
+  - La vigencia del reclamo compara su día con `garantia_fecha_fin` de la orden (la más temprana de sus líneas). No se guarda fin de garantía por línea para no duplicar el dato.
+- **Archivos:** `servicios/comercial.py` (`registrar_garantia`, `actualizar_estado_garantia`, `ranking_fallas`, `garantia_vigente_al_reclamo`, `opciones_garantia`), `routers/olb_byte.py` (`ver_garantias`, `registrar_garantia`, `actualizar_garantia`), `templates/olb_byte/garantias.html`, `tests/test_garantias.py`.
+
+### ADR-38 — Dona de cartera frente a deuda y signos de cartera (SRS OLB_BYTE v1.0, Fase 4)
+- **Contexto:** RF-11 pide una dona con la proporción entre cartera, deuda y balance. El balance es la diferencia de las otras dos cifras, así que no es una parte del total y no puede ser un arco.
+- **Decisión:** la dona tiene dos arcos (cartera por cobrar y deuda con el proveedor), calculados en Python como porcentajes de su suma y dibujados como SVG con `stroke-dasharray`, sin JavaScript. El balance va en el centro, con el signo y color de RF-10. Si no hay cartera ni deuda no se dibuja nada.
+- **Signos (RF-10):** `clasificar_saldo` aplica «−» y rojo a los déficits, y verde a los superávits. Solo se usa en el módulo de cartera. En el resto de la app los montos no llevan signo.
+- **Archivos:** `servicios/comercial.py` (`clasificar_saldo`, `tabla_balance`, `segmentos_dona`), `routers/olb_byte.py` (`ver_cartera`, `registrar_abono_proveedor`), `templates/olb_byte/cartera.html`, `static/css/estilos.css`, `tests/test_cartera.py`.
+
+### ADR-37 — Fechas comerciales en hora de la tienda (SRS OLB_BYTE v1.0, Fase 3)
+- **Contexto:** las ventas y abonos usaban UTC en Python y `func.now()` (también UTC) en la base. El recibo de un abono habría mostrado horas 5 h distintas a las de la venta, y la garantía de una venta nocturna habría vencido un día antes o después.
+- **Decisión:** `servicios/comercial.ahora_tienda()` devuelve `datetime.now(ZONA_TIENDA)` con desfase fijo UTC−5 (Colombia no tiene horario de verano; evita depender de `tzdata` en Windows). Todas las fechas comerciales (venta, abono, anulación, devolución y movimiento de proveedor) se fijan desde Python. Las vistas muestran la hora tal como quedó guardada.
+- **Consecuencias:** las filas creadas antes de este cambio con `func.now()` quedan en UTC; el sistema es nuevo y no tiene datos reales, así que no se migran.
+
+### ADR-35 — OLB_BYTE sin inventario, órdenes con snapshot y anulación sin reversa de proveedor (SRS OLB_BYTE v1.0)
+- **Contexto:** el negocio no maneja stock: cada venta se compra al proveedor a crédito al momento de vender. El modelo previo descontaba `stock` y bloqueaba ventas, lo que contradice el SRS. Además, un cambio posterior de precio de catálogo no debe alterar facturas ni garantías.
+- **Decisión:**
+  - Se elimina el control de stock (columna `productos.stock` y validación de existencias). `productos` queda como legado sin uso en el flujo nuevo; no se borran datos.
+  - Cada línea de venta guarda una copia de nombre, referencia, costo y precio (`venta_detalle`).
+  - `ventas` conserva su nombre (equivale a `ordenes_venta` del SRS) y gana `numero_orden` (consecutivo sin reutilización, empieza en 1, confirmado por el propietario), `estado_orden` (`ACTIVA`/`ANULADA`), motivo y fecha de anulación.
+  - La deuda con el proveedor es un libro de movimientos (`movimientos_proveedor`): `COMPRA_CREDITO` al vender y `ABONO` al pagar. Los movimientos no se editan.
+  - **Anulación:** la orden sale de cartera, totales, ganancia y rankings. La deuda con el proveedor **no se revierte** (la mercancía ya se compró). Si el cliente ya abonó, la anulación **registra la devolución** en `devoluciones_clientes` (monto y método). Los abonos originales se conservan como historial.
+  - **Consecutivo:** arranca en 1 (aplicativo nuevo, sin facturas previas).
+  - **Productos:** la venta se escribe a mano (nombre, referencia, costo, precio, garantía); no se autocompleta desde el catálogo.
+  - Abonos de clientes: nuevos registros solo `EFECTIVO` o `TRANSFERENCIA`, con fecha y hora. Los históricos se mantienen.
+  - Garantías con proveedor en `garantias_proveedor` (estados `ABIERTA`, `EN_TRAMITE`, `RESUELTA`, `RECHAZADA`).
+- **Consecuencias:** la migración reconstruye `productos` sin `stock`, agrega columnas a `ventas` y `venta_detalle` y asigna `numero_orden` a las ventas existentes en orden de fecha. Se probará sobre copia de `finanzas.db`.
+- **Archivos:** `diccionario_datos.md` §10 (fuente única), `modelos.py`, `core/base_datos.py`, `servicios/comercial.py`, `routers/olb_byte.py`, plantillas `olb_byte/`.
+
+### ADR-36 — Motor PDF: Playwright (Chromium headless) para la factura (SRS OLB_BYTE v1.0)
+- **Contexto:** el SRS pide HTML5 + CSS3 con `printBackground: true`, tarjetas, efecto cebra y logos. Las opciones evaluadas eran WeasyPrint (requiere GTK en Windows), xhtml2pdf (CSS limitado para la paleta y el layout) y Playwright.
+- **Decisión:** **Playwright para Python** renderiza la misma plantilla Jinja2 que la vista previa, en Chromium headless, con `printBackground=True` y formato Carta. Es la opción de mayor fidelidad visual y se mantiene en Python.
+- **Costos asumidos:** dependencia nueva en `requirements.txt` y una descarga única de Chromium con `playwright install chromium`. La generación requiere ese navegador en el servidor; en `DESPLIEGUE.md` se documenta el paso. Si el entorno no lo tiene, la vista HTML sigue disponible y la descarga PDF devuelve un error explícito.
+- **Archivos previstos:** `servicios/factura_pdf.py`, `routers/olb_byte.py`, `templates/olb_byte/factura_pdf.html`, `requirements.txt`, `DESPLIEGUE.md`.
+
 ### ADR-27 — Monto pagado, propagación de valor y ventana de generación (SRS v1.6)
 - **Contexto:** el abono de un mes debe reflejar lo realmente pagado, no la cuota; editar una quincena debe valer desde ese mes en adelante; una meta limitada debe generar toda su duración.
 - **Decisión:** nueva columna `gastos.monto_pagado`. El saldo y el abono cuentan `monto_pagado` cuando `pagado = true`. `propagar_valor` copia el valor editado a los meses posteriores de la misma meta y quincena que no estén pagados. Los meses nuevos toman el último valor de esa quincena. Las metas generan todo el periodo escogido por el usuario (ADR-28).
@@ -314,6 +366,82 @@ Recálculo en tiempo real (<100 ms) sin recargar página. Se implementa con func
 ---
 
 ## Bitácora de Cambios
+
+### 2026-11-17 — SRS OLB_BYTE v1.0, Fase 6: analítica, clientes VIP y alertas de costo
+
+**Cambios realizados**
+1. `servicios/analitica.py` (nuevo) — `reporte_mensual`, `reporte_anual`, `ranking_vip`, `alertas_costos`, `anios_con_ventas` (ADR-40).
+2. `routers/olb_byte.py` — `ver_analitica` (GET `/olb-byte/analitica?anio=`).
+3. `templates/olb_byte/analitica.html` (nuevo) y `static/css/estilos.css` (barra de ingresos mensual).
+4. `templates/olb_byte/index.html` — enlace «Analítica» en el panel.
+5. `tests/test_analitica.py` (nuevo, 13 pruebas).
+
+**Corrección en pruebas:** tres expectativas tenían error de cálculo (variación mensual, variación anual y orden del ranking VIP con empate). El código era correcto; se corrigieron las pruebas.
+
+**Verificación:** `pytest` en verde (411 pruebas). `generar_guia.py --verificar` solo marca las dos plantillas heredadas de SRS v1.7, que siguen pendientes de ficha.
+
+### 2026-11-17 — SRS OLB_BYTE v1.0, Fase 5: garantías en trámite y ranking de fallas
+
+**Cambios realizados**
+1. `templates/olb_byte/garantias.html` (nuevo) — formulario de reclamo, ranking de fallas, lista de reclamos con vigencia y avance de trámite.
+2. `servicios/comercial.py` — `opciones_garantia`, `registrar_garantia`, `actualizar_estado_garantia`, `listar_garantias`, `garantia_vigente_al_reclamo` y `ranking_fallas` (ADR-39).
+3. `routers/olb_byte.py` — `ver_garantias` (GET `/olb-byte/garantias`), `registrar_garantia` (POST) y `actualizar_garantia` (POST `/olb-byte/garantias/{id}/estado`), con auditoría.
+4. `templates/olb_byte/index.html` — enlace «Garantías y fallas» en el panel.
+5. `tests/test_garantias.py` (nuevo, 14 pruebas).
+
+**Corrección en pruebas:** una prueba comparaba dos estados sobre el mismo objeto en memoria; ahora revisa el estado intermedio antes de la segunda actualización.
+
+**Verificación:** `pytest` en verde (399 pruebas). `generar_guia.py --verificar` solo marca las dos plantillas heredadas de SRS v1.7; la ficha de `garantias.html` ya está en `Guia.md`.
+
+### 2026-11-17 — SRS OLB_BYTE v1.0, Fase 4: cartera, liquidez y deuda con proveedor
+
+**Cambios realizados**
+1. `templates/olb_byte/cartera.html` (nuevo) — tabla de balance (RF-09), dona SVG (RF-11), formulario de pago al proveedor (RF-08) y libro de movimientos.
+2. `servicios/comercial.py` — `clasificar_saldo` (RF-10), `tabla_balance` y `segmentos_dona`.
+3. `routers/olb_byte.py` — rutas `ver_cartera` (GET `/olb-byte/cartera`) y `registrar_abono_proveedor` (POST `/olb-byte/proveedor/abonos`), con auditoría `ABONO_PROVEEDOR`.
+4. `static/css/estilos.css` — estilos de la dona; enlace desde el panel principal.
+5. `tests/test_cartera.py` (nuevo, 10 pruebas).
+
+**Verificación:** `pytest` en verde (385 pruebas). `generar_guia.py --verificar` solo marca las dos plantillas de SRS v1.7 ya conocidas.
+
+### 2026-11-17 — SRS OLB_BYTE v1.0, Fase 3: pendientes de pago y recibos
+
+**Cambios realizados**
+1. `templates/olb_byte/pendientes.html` (nuevo) — vista filtrada de RF-06 con búsqueda, abono con fecha y hora, cobro por WhatsApp y acceso al último recibo.
+2. `templates/olb_byte/recibo.html` (nuevo) — recibo compacto de RF-07 con monto, medio, fecha y hora, desglose e insignia de saldo total; botones de WhatsApp, impresión y regreso.
+3. `routers/olb_byte.py` — rutas `ver_pendientes` y `ver_recibo`; el abono redirige a su recibo y, si falla, vuelve a pendientes conservando el filtro. El panel principal enlaza a pendientes y ya no muestra la cartera.
+4. `servicios/comercial.py` — `ahora_tienda()` para fijar todas las fechas en hora de Colombia (ADR-37); `buscar_cartera`, `abonos_de_venta`, `obtener_abono` y `enlace_whatsapp_recibo`.
+5. `static/css/estilos.css` — estilos del recibo y de la insignia de saldo total; clase `no-imprimir` para la impresión.
+6. `tests/test_cobros_vistas.py` (nuevo, 13 pruebas).
+
+**Verificación:** `pytest` en verde (374 pruebas). `generar_guia.py --verificar` solo marca las dos plantillas de SRS v1.7 ya conocidas.
+
+### 2026-11-17 — SRS OLB_BYTE v1.0, Fase 2: formulario de venta multi-producto y cobros
+
+**Cambios realizados**
+1. `templates/olb_byte/index.html` — reescrito sin inventario: formulario de venta con mini-tabla (lápiz, Actualizar/Cancelar, ×, «+ Agregar otro producto»), totales en vivo, cartera con abono (fecha y hora), órdenes con semáforo de garantía y acciones de anulación y devolución.
+2. `static/js/olb_byte.js` (nuevo) — modos vista/edición por fila con copia para «Cancelar», totales, limpieza de filas vacías antes de validar, autocompletado de celular y Contact Picker como mejora progresiva. `static/css/estilos.css` con modos de fila, insignias y semáforo.
+3. `routers/olb_byte.py` — reescrito: `registrar_venta` lee listas paralelas y repuebla el formulario tras un error; `registrar_abono` acepta fecha y hora; nuevas rutas `anular_venta` y `registrar_devolucion`; rutas de productos eliminadas.
+4. `servicios/comercial.py` — `estado_garantia` (semáforo) y validación de precios antes de tocar la sesión, para que un error no deje una orden a medias.
+5. `templates/olb_byte/factura.html` — consecutivo, referencia, garantía por línea y estado real.
+6. `static/js/sw.js` — `olb-finanzas-v14` con `olb_byte.js` en la precarga.
+7. `tests/test_olb_vistas.py` (nuevo, 13 pruebas HTTP y de semáforo).
+
+**Errores corregidos durante la verificación:** una fila en blanco con cantidad por defecto se tomaba como producto; un error de precio dejaba vacío el formulario repoblado; la prueba de abono leía un objeto desactualizado de la sesión.
+
+**Verificación:** `pytest` en verde (361 pruebas), `node --check` sobre el JavaScript y `generar_guia.py` regenerado con fichas nuevas. `--verificar` falla solo por las dos plantillas de SRS v1.7 ya conocidas.
+
+### 2026-11-17 — SRS OLB_BYTE v1.0, Fases 0 y 1: modelo sin inventario y servicio comercial
+
+**Cambios realizados**
+1. `diccionario_datos.md` §10 — modelo comercial completo (fuente única): `ventas` con `numero_orden`, `venta_detalle` con copia de datos, `movimientos_proveedor`, `garantias_proveedor` y `devoluciones_clientes` (§10.8). Decisiones en ADR-35 y ADR-36.
+2. `modelos.py` — `Producto` sin `stock`; `Venta` y `VentaDetalle` reescritas; nuevas `DevolucionCliente`, `MovimientoProveedor` y `GarantiaProveedor`.
+3. `core/base_datos.py` — `_reconstruir_comercial_sin_stock()` antes de `create_all`: detecta el esquema anterior, reconstruye si las tablas están vacías y se detiene si tienen datos.
+4. `servicios/comercial.py` — reescrito: consecutivo sin reutilizar, deuda con proveedor como libro de movimientos, abonos con fecha y hora (solo Efectivo o Transferencia), anulación con devolución opcional, devolución posterior, cartera, balance y efectivo libre. Zona horaria de garantías fijada en UTC−5 (Colombia sin horario de verano) para no depender de `tzdata` en Windows.
+5. `routers/olb_byte.py` — solo lectura adaptada al servicio nuevo; los formularios de escritura quedan para la Fase 2.
+6. `tests/test_comercial.py` (reescrito, 26 pruebas de servicio), `tests/test_migracion_olb.py` (3 pruebas en proceso aislado) y `tests/conftest.py` (nuevas tablas en la limpieza).
+
+**Verificación:** `pytest` en verde (345 pruebas). `generar_guia.py` regenerado; `--verificar` falla solo por dos plantillas sin ficha de un bloque anterior (ver AGENTS.md §9).
 
 ### 2026-11-17 — SRS v1.7, bloques A a D: UI móvil, metas dividir/duplicar, checks corregibles y días de pago
 

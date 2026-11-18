@@ -89,12 +89,56 @@ def crear_esquema() -> None:
     """
     from app import modelos  # Importación tardía para registrar los modelos.
 
+    _reconstruir_comercial_sin_stock()
     Base.metadata.create_all(motor)
     _migrar_columnas_perfil()
     _migrar_columnas_trabajos()
     _migrar_columnas_gastos()
     _migrar_columnas_metas()
     _migrar_columnas_chancucos()
+
+
+def _reconstruir_comercial_sin_stock() -> None:
+    """Reconstruye las tablas comerciales al esquema sin inventario (ADR-35).
+
+    El esquema anterior tenía `productos.stock` y líneas de venta ligadas al
+    catálogo. SQLite no puede quitar esas restricciones con `ALTER TABLE`, así que
+    se eliminan las tablas comerciales y `create_all` las vuelve a crear.
+
+    Solo se hace si se detecta el esquema anterior. Si alguna tabla tiene filas,
+    se detiene con un error: el aplicativo es nuevo y no debe perderse dinero
+    registrado por accidente. Es idempotente.
+
+    Raises:
+        RuntimeError: Si el esquema anterior tiene datos y no puede reconstruirse
+            sin pérdida.
+    """
+    if not _conexion_sqlite:
+        return
+
+    with motor.begin() as conexion:
+        columnas_productos = {
+            fila[1] for fila in conexion.exec_driver_sql("PRAGMA table_info(productos)").fetchall()
+        }
+        columnas_ventas = {
+            fila[1] for fila in conexion.exec_driver_sql("PRAGMA table_info(ventas)").fetchall()
+        }
+        es_anterior = "stock" in columnas_productos or (
+            bool(columnas_ventas) and "numero_orden" not in columnas_ventas
+        )
+        if not es_anterior:
+            return
+
+        tablas = ("abonos", "venta_detalle", "ventas", "productos")
+        for tabla in tablas:
+            filas = conexion.exec_driver_sql(f"SELECT COUNT(*) FROM {tabla}").scalar()
+            if filas:
+                raise RuntimeError(
+                    f"No se puede reconstruir OLB_BYTE: la tabla '{tabla}' tiene datos. "
+                    "Respalde la base y migre manualmente antes de iniciar."
+                )
+        for tabla in tablas:
+            conexion.exec_driver_sql(f"DROP TABLE IF EXISTS {tabla}")
 
 
 def _migrar_columnas_trabajos() -> None:

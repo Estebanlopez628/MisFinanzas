@@ -2058,3 +2058,287 @@ textarea.campo__control {
     color: #111827;
   }
 }
+
+/* ------------------------- OLB_BYTE: venta multi-producto ------------------------- */
+
+.fila-entrada {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.fila-entrada .campo__control {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.linea-venta-tabla td {
+  vertical-align: middle;
+}
+
+.linea-venta[data-modo="vista"] .linea-venta__edicion,
+.linea-venta[data-modo="edicion"] .linea-venta__vista,
+.linea-venta[data-modo="edicion"] [data-editar-linea] {
+  display: none;
+}
+
+.linea-venta .tabla__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.linea-venta .campo__control--compacto {
+  min-width: 0;
+  width: 100%;
+}
+
+.insignia {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.insignia--anulada {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--accent-red);
+}
+
+.fila-anulada td {
+  opacity: 0.6;
+}
+
+.semaforo {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.semaforo--verde {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--accent-green);
+}
+
+.semaforo--rojo {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--accent-red);
+}
+
+/* ---------------------------- OLB_BYTE: cobros y recibo ---------------------------- */
+
+.insignia--saldo-total {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--accent-green);
+  font-size: 1rem;
+  padding: 6px 14px;
+}
+
+.recibo {
+  max-width: 420px;
+  margin: 16px auto;
+  background: var(--bg-card);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+.recibo__cabecera {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px;
+  background: var(--accent-blue);
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.recibo__monto {
+  padding: 24px 20px 12px;
+  text-align: center;
+}
+
+.recibo__etiqueta,
+.recibo__detalle,
+.recibo__saldo {
+  display: block;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.recibo__cifra {
+  display: block;
+  font-size: 2rem;
+  color: var(--accent-green);
+  margin: 4px 0;
+}
+
+.recibo__cifra--saldo {
+  font-size: 1.4rem;
+}
+
+.recibo__datos {
+  margin: 0;
+  padding: 8px 20px;
+}
+
+.recibo__datos > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0;
+  border-bottom: 1px dashed var(--borde-suave, rgba(255, 255, 255, 0.12));
+}
+
+.recibo__datos dt {
+  color: var(--text-muted);
+}
+
+.recibo__datos dd {
+  margin: 0;
+  font-weight: 600;
+  text-align: right;
+}
+
+.recibo__subtitulo {
+  font-size: 0.95rem;
+  margin: 14px 20px 6px;
+}
+
+.recibo__desglose {
+  list-style: none;
+  margin: 0;
+  padding: 0 20px;
+}
+
+.recibo__desglose li {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  font-size: 0.9rem;
+}
+
+.recibo__desglose--actual {
+  color: var(--accent-green);
+  font-weight: 600;
+}
+
+.recibo__pie {
+  padding: 16px 20px 20px;
+  text-align: center;
+  border-top: 1px solid var(--borde-suave, rgba(255, 255, 255, 0.12));
+  margin-top: 12px;
+}
+
+@media print {
+  .no-imprimir {
+    display: none !important;
+  }
+}
+
+/* ---------------------------- OLB_BYTE: cartera y dona ----------------------------- */
+
+.dona-contenedor {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  align-items: center;
+  justify-content: center;
+}
+
+.dona {
+  position: relative;
+  width: 220px;
+  max-width: 100%;
+}
+
+.dona__svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.dona__fondo {
+  stroke: rgba(148, 163, 184, 0.2);
+}
+
+.dona__centro {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  pointer-events: none;
+}
+
+.dona__centro-etiqueta {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.dona__leyenda {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.barra {
+  width: 100%;
+  min-width: 80px;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.2);
+  overflow: hidden;
+}
+
+.barra > span {
+  display: block;
+  height: 100%;
+  background: var(--accent-blue);
+  border-radius: 999px;
+}
+
+.vista-previa {
+  width: min(900px, 95vw);
+  height: 88vh;
+  padding: 0;
+  border: 1px solid var(--borde-suave, rgba(255, 255, 255, 0.12));
+  border-radius: 12px;
+  background: var(--bg-card);
+}
+
+.vista-previa::backdrop {
+  background: rgba(15, 23, 42, 0.75);
+}
+
+.vista-previa__barra {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--borde-suave, rgba(255, 255, 255, 0.12));
+}
+
+.vista-previa__marco {
+  width: 100%;
+  height: calc(88vh - 56px);
+  border: 0;
+  background: #ffffff;
+}
+
+.dona__muestra {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  margin-right: 6px;
+  vertical-align: middle;
+}

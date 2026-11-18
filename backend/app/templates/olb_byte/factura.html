@@ -1,44 +1,54 @@
 {% extends "base.html" %}
-{% block titulo %}Factura {{ venta.id_venta[:8] }}{% endblock %}
+{% block titulo %}Factura No. {{ venta.numero_orden }}{% endblock %}
 
 {% block contenido %}
   <section class="heroe">
     <h1 class="heroe__titulo">Factura de venta</h1>
     <p class="heroe__subtitulo">
-      OLB_BYTE · {{ venta.fecha_venta | fecha_larga }} · N.º {{ venta.id_venta[:8] }}
+      OLB_BYTE · {{ venta.fecha_venta | fecha_larga }} · N.º {{ venta.numero_orden }}
+      {% if venta.estado_orden == 'ANULADA' %} · ANULADA{% endif %}
     </p>
     <div class="acciones-formulario">
+      <button class="boton boton--secundario boton--pequeno" type="button" data-vista-pdf>Vista previa PDF</button>
+      <a class="boton boton--primario boton--pequeno"
+         href="{{ url_for('ver_factura_pdf', id_venta=venta.id_venta) }}">Descargar PDF</a>
+      <button class="boton boton--secundario boton--pequeno" type="button"
+              data-compartir
+              data-pdf="{{ url_for('ver_factura_pdf', id_venta=venta.id_venta) }}"
+              data-nombre="{{ nombre_archivo }}"
+              data-whatsapp="{{ enlace_whatsapp }}">Compartir</button>
       <button class="boton boton--secundario boton--pequeno" type="button" onclick="window.print()">
-        Imprimir o guardar como PDF
+        Imprimir
       </button>
-      {% if enlace_whatsapp != '#' %}
-        <a class="boton boton--primario boton--pequeno" href="{{ enlace_whatsapp }}"
-           target="_blank" rel="noopener">Enviar por WhatsApp</a>
-      {% endif %}
     </div>
   </section>
+
+  <dialog class="vista-previa" data-dialogo-pdf aria-label="Vista previa de la factura">
+    <div class="vista-previa__barra">
+      <strong>Vista previa de la factura</strong>
+      <button class="boton boton--secundario boton--pequeno" type="button" data-cerrar-pdf>Cerrar</button>
+    </div>
+    <iframe class="vista-previa__marco" title="Factura en PDF" data-marco-pdf
+            data-src="{{ url_for('ver_factura_pdf', id_venta=venta.id_venta) }}?descargar=0"></iframe>
+  </dialog>
 
   <div class="rejilla-paneles">
     <section class="panel">
       <h2 class="panel__titulo">Cliente</h2>
-      {% if cliente %}
-        <ul class="lista-parametros">
-          <li><span>Nombre</span><strong>{{ cliente.nombre }}</strong></li>
-          <li><span>WhatsApp</span><strong>{{ cliente.telefono_whatsapp or '—' }}</strong></li>
-          <li><span>Correo</span><strong>{{ cliente.correo or '—' }}</strong></li>
-          <li><span>Dirección</span><strong>{{ cliente.direccion or '—' }}</strong></li>
-        </ul>
-      {% else %}
-        <p class="tabla__vacia">El cliente de esta venta ya no existe.</p>
-      {% endif %}
+      <ul class="lista-parametros">
+        <li><span>Nombre</span><strong>{{ venta.cliente_nombre }}</strong></li>
+        <li><span>WhatsApp</span><strong>{{ venta.cliente_telefono or '—' }}</strong></li>
+        <li><span>Garantía vence</span><strong>{{ venta.garantia_fecha_fin.strftime('%d-%m-%Y') if venta.garantia_fecha_fin else '—' }}</strong></li>
+      </ul>
     </section>
 
     <section class="panel">
       <h2 class="panel__titulo">Estado de la venta</h2>
       <ul class="lista-parametros">
         <li><span>Total</span><strong>{{ venta.total | cop }}</strong></li>
+        <li><span>Abonado</span><strong>{{ venta.total_abonado | cop }}</strong></li>
         <li><span>Saldo pendiente</span><strong class="valor-negativo">{{ venta.saldo_pendiente | cop }}</strong></li>
-        <li><span>Estado</span><strong>{{ venta.estado }}</strong></li>
+        <li><span>Estado</span><strong>{{ 'Anulada' if venta.estado_orden == 'ANULADA' else venta.estado_pago | capitalize }}</strong></li>
       </ul>
     </section>
   </div>
@@ -51,6 +61,7 @@
           <thead>
             <tr>
               <th scope="col">Producto</th>
+              <th scope="col">Referencia</th>
               <th scope="col">Cantidad</th>
               <th scope="col">Precio unitario</th>
               <th scope="col">Subtotal</th>
@@ -61,16 +72,17 @@
             {% for linea in lineas %}
               <tr>
                 <td>{{ linea.nombre }}</td>
+                <td>{{ linea.referencia or '—' }}</td>
                 <td class="tabla__numero">{{ linea.cantidad }}</td>
                 <td class="tabla__numero">{{ linea.precio_unitario | cop }}</td>
                 <td class="tabla__numero">{{ linea.subtotal | cop }}</td>
-                <td>{{ linea.garantia_meses ~ ' mes(es)' if linea.garantia_meses else '—' }}</td>
+                <td>{{ linea.garantia_texto or '—' }}</td>
               </tr>
             {% endfor %}
           </tbody>
           <tfoot>
             <tr>
-              <th scope="row" colspan="3">Total</th>
+              <th scope="row" colspan="4">Total</th>
               <td class="tabla__numero">{{ venta.total | cop }}</td>
               <td></td>
             </tr>
@@ -85,4 +97,8 @@
       No reemplaza la factura electrónica ante la DIAN.
     </p>
   </section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('estaticos', path='js/factura.js') }}" defer></script>
 {% endblock %}

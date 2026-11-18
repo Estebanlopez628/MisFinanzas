@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% block titulo %}Garantías{% endblock %}
+
+{% block contenido %}
+  <section class="heroe">
+    <h1 class="heroe__titulo">🛡️ Garantías</h1>
+    <p class="heroe__subtitulo">
+      Fallas reportadas en productos vendidos, su trámite con el proveedor y los
+      productos con más fallas frente a sus unidades vendidas.
+    </p>
+    <div class="acciones-formulario">
+      <a class="boton boton--secundario boton--pequeno" href="{{ url_for('ver_olb_byte') }}">Volver al panel</a>
+    </div>
+  </section>
+
+  {% if guardado %}
+    <div class="alerta alerta--exito" role="status">Operación guardada correctamente.</div>
+  {% endif %}
+  {% if error %}
+    <div class="alerta alerta--error" role="alert">{{ error }}</div>
+  {% endif %}
+
+  <div class="rejilla-paneles">
+    <section class="panel">
+      <h2 class="panel__titulo">Registrar falla</h2>
+      {% if opciones %}
+        <form class="formulario" method="post" action="{{ url_for('registrar_garantia') }}">
+          <label class="campo">
+            <span class="campo__etiqueta">Producto con falla</span>
+            <select class="campo__control" name="id_detalle" required>
+              <option value="">Elige un producto…</option>
+              {% for opcion in opciones %}
+                <option value="{{ opcion.id_detalle }}">{{ opcion.texto }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <label class="campo">
+            <span class="campo__etiqueta">Descripción de la falla</span>
+            <input class="campo__control" type="text" name="observacion" maxlength="300" />
+          </label>
+          <button class="boton boton--primario" type="submit">Abrir reclamo</button>
+        </form>
+      {% else %}
+        <p class="tabla__vacia">No hay órdenes activas para reclamar garantía.</p>
+      {% endif %}
+    </section>
+
+    <section class="panel">
+      <h2 class="panel__titulo">Ranking de fallas</h2>
+      <p class="panel__descripcion">Tasa = reclamos ÷ unidades vendidas × 100. Solo cuentan órdenes activas.</p>
+      {% if ranking %}
+        <div class="tabla-contenedor">
+          <table class="tabla">
+            <thead>
+              <tr>
+                <th scope="col">Producto</th>
+                <th scope="col">Vendidos</th>
+                <th scope="col">Fallas</th>
+                <th scope="col">Tasa</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for fila in ranking %}
+                <tr>
+                  <td>{{ fila.producto }}</td>
+                  <td class="tabla__numero">{{ fila.unidades }}</td>
+                  <td class="tabla__numero">{{ fila.fallas }}</td>
+                  <td class="tabla__numero">{{ fila.tasa ~ ' %' if fila.tasa is not none else '—' }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="tabla__vacia">Aún no hay ventas ni reclamos para calcular el ranking.</p>
+      {% endif %}
+    </section>
+  </div>
+
+  <section class="panel panel--tabla">
+    <h2 class="panel__titulo">Reclamos con el proveedor</h2>
+    {% if reclamos %}
+      <div class="tabla-contenedor">
+        <table class="tabla">
+          <thead>
+            <tr>
+              <th scope="col">Orden</th>
+              <th scope="col">Cliente</th>
+              <th scope="col">Producto</th>
+              <th scope="col">Reclamo</th>
+              <th scope="col">Vigencia</th>
+              <th scope="col">Trámite</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for fila in reclamos %}
+              {% set garantia = fila.garantia %}
+              <tr>
+                <td>{{ fila.venta.numero_orden if fila.venta else '—' }}</td>
+                <td>{{ fila.venta.cliente_nombre if fila.venta else '—' }}</td>
+                <td>{{ garantia.producto_referencia }}</td>
+                <td>
+                  {{ garantia.fecha_reclamo.strftime('%d-%m-%Y') }}
+                  {% if garantia.observacion %}<small class="ayuda">{{ garantia.observacion }}</small>{% endif %}
+                </td>
+                <td>
+                  {% if fila.vigente %}
+                    <span class="semaforo semaforo--verde">Dentro de garantía</span>
+                  {% else %}
+                    <span class="semaforo semaforo--rojo">Fuera de garantía</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if fila.cerrado %}
+                    <span class="insignia {{ 'insignia--saldo-total' if garantia.estado_tramite == 'RESUELTA' else 'insignia--anulada' }}">
+                      {{ 'Resuelta' if garantia.estado_tramite == 'RESUELTA' else 'Rechazada' }}
+                    </span>
+                    {% if garantia.fecha_resolucion %}
+                      <small class="ayuda">el {{ garantia.fecha_resolucion.strftime('%d-%m-%Y') }}</small>
+                    {% endif %}
+                  {% else %}
+                    <form class="formulario-en-linea" method="post"
+                          action="{{ url_for('actualizar_garantia', id_garantia=garantia.id_garantia) }}">
+                      <select class="campo__control campo__control--compacto" name="estado" aria-label="Estado del trámite">
+                        {% for estado in estados if estado != 'ABIERTA' %}
+                          <option value="{{ estado }}"{% if estado == garantia.estado_tramite %} selected{% endif %}>
+                            {{ estado | replace('_', ' ') | capitalize }}
+                          </option>
+                        {% endfor %}
+                      </select>
+                      <input class="campo__control campo__control--compacto" type="text" name="observacion"
+                             placeholder="Nota del trámite" aria-label="Nota del trámite" />
+                      <button class="boton boton--secundario boton--pequeno" type="submit">Actualizar</button>
+                    </form>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="tabla__vacia">No hay reclamos registrados.</p>
+    {% endif %}
+  </section>
+{% endblock %}

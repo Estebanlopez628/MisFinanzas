@@ -285,5 +285,24 @@ La configuración vive en `.vscode/launch.json`. También existe **Pruebas (pyte
 - [x] **SRS v1.6 — Montos sin centavos (ADR-23)** e **incapacidades: Enter y «Limpiar» (ADR-26).**
 - [x] Verificación SRS v1.6: `python -m compileall` OK, **289 pruebas** con `pytest` en verde, `generar_guia.py --verificar` sin problemas (71 archivos con ficha) y migración de `gastos` probada sobre una base con el esquema anterior.
 - [ ] **SRS v1.6 — Revisión visual pendiente:** botones ✔/× del mismo tamaño, meses centrados en «Gastos y Presupuesto» y «Valor:» retirado en el celular; verificar en navegador.
-- [ ] **Facturación PDF OLB_BYTE:** pendiente. Requiere elegir motor PDF (no hay ninguno instalado) y justificarlo en ADR.
+- [x] **SRS OLB_BYTE v1.0 — Fase 0 (decisiones):** modelo sin inventario, anulación con devolución y sin reversa de deuda con proveedor, consecutivo desde 1, productos escritos a mano y motor PDF Playwright (ADR-35 y ADR-36, `diccionario_datos.md` §10).
+- [x] **SRS OLB_BYTE v1.0 — Fase 1 (modelo y servicio):** tablas `ventas`, `venta_detalle`, `movimientos_proveedor`, `garantias_proveedor` y `devoluciones_clientes`; `productos` sin `stock`; reconstrucción `_reconstruir_comercial_sin_stock` que se detiene si hay datos; `servicios/comercial.py` reescrito (consecutivo, deuda con proveedor, abonos con fecha y hora, anulación con devolución, cartera y caja).
+- [x] Verificación Fase 1: `pytest` en verde (**345 pruebas**, incluidas 3 de migración en `tests/test_migracion_olb.py`).
+- [x] **SRS OLB_BYTE v1.0 — Fase 2 (venta multi-producto, RF-01 a RF-05):** formulario con mini-tabla (lápiz, Actualizar/Cancelar, ×, «+ Agregar otro producto»), totales en vivo (`static/js/olb_byte.js`), autocompletado de clientes, Contact Picker como mejora progresiva, semáforo de garantía y cobros, anulación y devolución desde el panel. Las rutas de productos y stock se retiran. `sw.js` en `olb-finanzas-v14`.
+- [x] Verificación Fase 2: `pytest` en verde (**361 pruebas**, incluidas 13 HTTP en `tests/test_olb_vistas.py`); `node --check` del JavaScript sin errores.
+- [x] **SRS OLB_BYTE v1.0 — Fase 3 (cobros y recibos, RF-06 y RF-07):** vista `/olb-byte/pendientes` con búsqueda por cliente, celular o número, abono con fecha y hora que redirige a su recibo, recibo compacto `/olb-byte/recibos/{id}` con desglose e insignia de saldo total, y cobro y recibo por WhatsApp. Fechas comerciales en hora de la tienda (ADR-37).
+- [x] Verificación Fase 3: `pytest` en verde (**374 pruebas**, incluidas 13 en `tests/test_cobros_vistas.py`); `generar_guia.py` regenerado.
+- [x] **SRS OLB_BYTE v1.0 — Fase 4 (cartera y liquidez, RF-08 a RF-11):** vista `/olb-byte/cartera` con balance (cartera, deuda, balance, caja, efectivo libre), signos y colores solo en este módulo (ADR-38), dona SVG de cartera frente a deuda, pago al proveedor con validación y libro de movimientos.
+- [x] Verificación Fase 4: `pytest` en verde (**385 pruebas**, incluidas 10 en `tests/test_cartera.py`); `generar_guia.py` regenerado.
+- [x] **SRS OLB_BYTE v1.0 — Fase 5 (garantías y fallas, RF-05):** reclamos sobre líneas de órdenes activas, trámite `ABIERTA → EN_TRAMITE → RESUELTA | RECHAZADA` con cierre final, vigencia frente a la fecha de fin de garantía y ranking por tasa de fallas (ADR-39). Vista `/olb-byte/garantias`.
+- [x] Verificación Fase 5: `pytest` en verde (**399 pruebas**, incluidas 14 en `tests/test_garantias.py`); `generar_guia.py` regenerado.
+- [x] **SRS OLB_BYTE v1.0 — Fase 6 (analítica, RF-12 a RF-14):** `servicios/analitica.py` con reportes mensual y anual (variación, rentabilidad), ranking de clientes VIP y alertas de subida de costo con margen y umbral de 15 % (ADR-40). Vista `/olb-byte/analitica`.
+- [x] Verificación Fase 6: `pytest` en verde (**411 pruebas**, incluidas 13 en `tests/test_analitica.py`); `generar_guia.py` regenerado.
+- [ ] **OLB_BYTE Fase 6 — revisión visual pendiente:** las barras mensuales y las tablas en móvil.
+- [ ] **OLB_BYTE Fase 5 — revisión visual pendiente:** los selectores de trámite en móvil.
+- [ ] **OLB_BYTE Fase 4 — revisión visual pendiente:** la dona en móvil y el contraste de «−» en rojo sobre fondo oscuro.
+- [ ] **OLB_BYTE Fase 3 — revisión visual pendiente:** recibo en celular y su impresión (`no-imprimir`), y el orden de los campos de abono en la vista de pendientes.
+- [ ] **OLB_BYTE Fase 2 — revisión visual pendiente:** mini-tabla en móvil, Contact Picker en un celular con HTTPS, y comportamiento de Cancelar en filas nuevas y guardadas; verificar en navegador.
+- [ ] **Deuda previa de documentación:** `Guia.md` no tiene ficha para `templates/chancucos/_dias.html` ni `templates/finanzas/_gasto_fijo.html` (`generar_guia.py --verificar` falla por ello desde SRS v1.7).
+- [ ] **Facturación PDF OLB_BYTE:** pendiente de implementar con Playwright (ADR-36); requiere `playwright install chromium` en el servidor.
 - [ ] **Fase 3 (opcional)** — Migración a PostgreSQL con Alembic y despliegue multi-instancia (ver `DESPLIEGUE.md` §11).

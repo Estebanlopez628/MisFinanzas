@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Service worker de la PWA.
  *
  * Responsabilidad
@@ -13,11 +13,13 @@
 
 "use strict";
 
-var CACHE = "olb-finanzas-v13";
+var CACHE = "olb-finanzas-v15";
 var RECURSOS = [
   "/estaticos/css/estilos.css",
   "/estaticos/js/app.js",
   "/estaticos/js/finanzas.js",
+  "/estaticos/js/olb_byte.js",
+  "/estaticos/js/factura.js",
   "/estaticos/js/perfil.js",
   "/estaticos/img/favicon.svg",
   "/estaticos/img/icono-192.svg",

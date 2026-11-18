@@ -482,55 +482,96 @@ class Cliente(Base):
 
 
 class Producto(Base):
-    """Producto del inventario de OLB_BYTE (§10.2)."""
+    """Producto del catálogo legado de OLB_BYTE (§10.2, ADR-35).
+
+    Ya no interviene en el flujo de venta ni controla existencias: las ventas
+    escriben nombre, referencia, costo y precio en `venta_detalle`.
+    """
 
     __tablename__ = "productos"
-    __table_args__ = (
-        UniqueConstraint("sku", name="uq_producto_sku"),
-        CheckConstraint("stock >= 0", name="ck_producto_stock"),
-    )
+    __table_args__ = (UniqueConstraint("sku", name="uq_producto_sku"),)
 
     id_producto: Mapped[str] = mapped_column(String(32), primary_key=True, default=nuevo_id)
     sku: Mapped[str] = mapped_column(String(40), nullable=False)
     nombre: Mapped[str] = mapped_column(String(120), nullable=False)
     costo: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False, default=0)
     precio_venta: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False, default=0)
-    stock: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     garantia_meses: Mapped[int | None] = mapped_column(SmallInteger, nullable=True)
 
 
 class Venta(Base):
-    """Venta de OLB_BYTE (§10.3)."""
+    """Orden de venta de OLB_BYTE (§10.3, ADR-35).
+
+    Equivale a `ordenes_venta` del SRS. `numero_orden` es el consecutivo visible
+    y nunca se reutiliza, ni siquiera al anular. Los datos del cliente se copian
+    para que la factura no cambie si luego se edita el cliente.
+    """
 
     __tablename__ = "ventas"
+    __table_args__ = (
+        UniqueConstraint("numero_orden", name="uq_venta_numero_orden"),
+        CheckConstraint("saldo_pendiente >= 0", name="ck_venta_saldo"),
+        CheckConstraint(
+            "estado_pago IN ('PENDIENTE', 'PARCIAL', 'PAGADA')",
+            name="ck_venta_estado_pago",
+        ),
+        CheckConstraint("estado_orden IN ('ACTIVA', 'ANULADA')", name="ck_venta_estado_orden"),
+    )
 
     id_venta: Mapped[str] = mapped_column(String(32), primary_key=True, default=nuevo_id)
+    numero_orden: Mapped[int] = mapped_column(Integer, nullable=False)
     id_cliente: Mapped[str] = mapped_column(
         ForeignKey("clientes.id_cliente", ondelete="RESTRICT"), nullable=False, index=True
     )
+    cliente_nombre: Mapped[str] = mapped_column(String(120), nullable=False)
+    cliente_telefono: Mapped[str | None] = mapped_column(String(20), nullable=True)
     fecha_venta: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
+    subtotal: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False, default=0)
     total: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False, default=0)
+    total_costo: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False, default=0)
+    ganancia_neta: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False, default=0)
+    total_abonado: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False, default=0)
     saldo_pendiente: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False, default=0)
-    estado: Mapped[str] = mapped_column(String(20), nullable=False, default="PENDIENTE")
+    estado_pago: Mapped[str] = mapped_column(String(20), nullable=False, default="PENDIENTE")
+    estado_orden: Mapped[str] = mapped_column(String(20), nullable=False, default="ACTIVA")
+    garantia_texto: Mapped[str] = mapped_column(
+        String(200), nullable=False, default="3 meses por defectos de fábrica"
+    )
+    garantia_fecha_fin: Mapped[date | None] = mapped_column(Date, nullable=True)
+    motivo_anulacion: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    fecha_anulacion: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
 class VentaDetalle(Base):
-    """Línea de detalle de una venta (§10.4)."""
+    """Línea de detalle de una orden (§10.4, ADR-35).
+
+    `costo_unitario` y `precio_unitario` quedan congelados al vender. `id_producto`
+    solo se llena en ventas anteriores a ADR-35.
+    """
 
     __tablename__ = "venta_detalle"
-    __table_args__ = (CheckConstraint("cantidad > 0", name="ck_detalle_cantidad"),)
+    __table_args__ = (
+        CheckConstraint("cantidad > 0", name="ck_detalle_cantidad"),
+        CheckConstraint("costo_unitario >= 0", name="ck_detalle_costo"),
+        CheckConstraint("precio_unitario >= 0", name="ck_detalle_precio"),
+    )
 
     id_detalle: Mapped[str] = mapped_column(String(32), primary_key=True, default=nuevo_id)
     id_venta: Mapped[str] = mapped_column(
         ForeignKey("ventas.id_venta", ondelete="CASCADE"), nullable=False, index=True
     )
-    id_producto: Mapped[str] = mapped_column(
-        ForeignKey("productos.id_producto", ondelete="RESTRICT"), nullable=False
+    id_producto: Mapped[str | None] = mapped_column(
+        ForeignKey("productos.id_producto", ondelete="RESTRICT"), nullable=True
     )
+    producto_nombre: Mapped[str] = mapped_column(String(120), nullable=False)
+    referencia: Mapped[str | None] = mapped_column(String(60), nullable=True)
     cantidad: Mapped[int] = mapped_column(Integer, nullable=False)
+    costo_unitario: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False)
     precio_unitario: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False)
+    subtotal_item: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False, default=0)
+    garantia_texto: Mapped[str | None] = mapped_column(String(200), nullable=True)
 
 
 class Abono(Base):
@@ -548,6 +589,77 @@ class Abono(Base):
     fecha_abono: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
+
+
+class DevolucionCliente(Base):
+    """Dinero devuelto al cliente al anular una orden (§10.8, ADR-35)."""
+
+    __tablename__ = "devoluciones_clientes"
+    __table_args__ = (CheckConstraint("monto > 0", name="ck_devolucion_monto"),)
+
+    id_devolucion: Mapped[str] = mapped_column(String(32), primary_key=True, default=nuevo_id)
+    id_venta: Mapped[str] = mapped_column(
+        ForeignKey("ventas.id_venta", ondelete="RESTRICT"), nullable=False, index=True
+    )
+    fecha_devolucion: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    monto: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False)
+    metodo_pago: Mapped[str] = mapped_column(String(30), nullable=False, default="EFECTIVO")
+
+
+class MovimientoProveedor(Base):
+    """Movimiento de la cuenta por pagar al proveedor (§10.6, RF-08).
+
+    Libro de solo inserción: una corrección se registra como un movimiento nuevo.
+    """
+
+    __tablename__ = "movimientos_proveedor"
+    __table_args__ = (
+        CheckConstraint("monto > 0", name="ck_movimiento_monto"),
+        CheckConstraint(
+            "tipo IN ('COMPRA_CREDITO', 'ABONO')", name="ck_movimiento_tipo"
+        ),
+    )
+
+    id_movimiento: Mapped[str] = mapped_column(String(32), primary_key=True, default=nuevo_id)
+    fecha: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    tipo: Mapped[str] = mapped_column(String(20), nullable=False)
+    id_venta: Mapped[str | None] = mapped_column(
+        ForeignKey("ventas.id_venta", ondelete="RESTRICT"), nullable=True, index=True
+    )
+    concepto: Mapped[str] = mapped_column(String(200), nullable=False)
+    monto: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False)
+    saldo_resultante: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False)
+
+
+class GarantiaProveedor(Base):
+    """Garantía en trámite con el proveedor (§10.7, RF-05)."""
+
+    __tablename__ = "garantias_proveedor"
+    __table_args__ = (
+        CheckConstraint(
+            "estado_tramite IN ('ABIERTA', 'EN_TRAMITE', 'RESUELTA', 'RECHAZADA')",
+            name="ck_garantia_estado",
+        ),
+    )
+
+    id_garantia: Mapped[str] = mapped_column(String(32), primary_key=True, default=nuevo_id)
+    id_venta: Mapped[str] = mapped_column(
+        ForeignKey("ventas.id_venta", ondelete="RESTRICT"), nullable=False, index=True
+    )
+    id_detalle: Mapped[str | None] = mapped_column(
+        ForeignKey("venta_detalle.id_detalle", ondelete="RESTRICT"), nullable=True
+    )
+    producto_referencia: Mapped[str] = mapped_column(String(120), nullable=False)
+    estado_tramite: Mapped[str] = mapped_column(String(20), nullable=False, default="ABIERTA")
+    fecha_reclamo: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    fecha_resolucion: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    observacion: Mapped[str | None] = mapped_column(String(300), nullable=True)
 
 
 class TrabajoExtra(Base):

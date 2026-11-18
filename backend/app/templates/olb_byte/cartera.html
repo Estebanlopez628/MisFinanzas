@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% block titulo %}Cartera y liquidez{% endblock %}
+
+{% block contenido %}
+  <section class="heroe">
+    <h1 class="heroe__titulo">📊 Cartera y liquidez</h1>
+    <p class="heroe__subtitulo">
+      Lo que te deben, lo que debes al proveedor y el efectivo que queda libre. Un
+      déficit se muestra en rojo con signo menos; un superávit, en verde.
+    </p>
+    <div class="acciones-formulario">
+      <a class="boton boton--secundario boton--pequeno" href="{{ url_for('ver_olb_byte') }}">Volver al panel</a>
+      <a class="boton boton--secundario boton--pequeno" href="{{ url_for('ver_pendientes') }}">Pendientes de pago</a>
+    </div>
+  </section>
+
+  {% if guardado %}
+    <div class="alerta alerta--exito" role="status">Pago al proveedor registrado.</div>
+  {% endif %}
+  {% if error %}
+    <div class="alerta alerta--error" role="alert">{{ error }}</div>
+  {% endif %}
+
+  <div class="rejilla-paneles">
+    <section class="panel">
+      <h2 class="panel__titulo">Balance</h2>
+      <div class="tabla-contenedor">
+        <table class="tabla">
+          <tbody>
+            {% for fila in filas_balance %}
+              <tr>
+                <th scope="row">
+                  {{ fila.etiqueta }}
+                  <small class="ayuda">{{ fila.explicacion }}</small>
+                </th>
+                <td class="tabla__numero {{ fila.clase }}">{{ fila.texto }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2 class="panel__titulo">Cartera frente a deuda</h2>
+      {% if segmentos %}
+        {% set balance = filas_balance | selectattr('etiqueta', 'equalto', 'Balance de cartera') | first %}
+        <div class="dona-contenedor">
+          <div class="dona">
+            <svg viewBox="0 0 42 42" class="dona__svg" role="img"
+                 aria-label="Cartera por cobrar frente a deuda con el proveedor">
+              <circle cx="21" cy="21" r="15.9155" fill="transparent" class="dona__fondo" stroke-width="6" />
+              {% for arco in segmentos %}
+                <circle cx="21" cy="21" r="15.9155" fill="transparent" stroke-width="6"
+                        style="stroke: {{ arco.color }}"
+                        stroke-dasharray="{{ arco.longitud }} {{ 100 - arco.longitud }}"
+                        stroke-dashoffset="{{ arco.desplazamiento }}"
+                        transform="rotate(-90 21 21)">
+                  <title>{{ arco.etiqueta }}: {{ arco.valor }} ({{ arco.porcentaje }} %)</title>
+                </circle>
+              {% endfor %}
+            </svg>
+            <div class="dona__centro">
+              <span class="dona__centro-etiqueta">Balance</span>
+              <strong class="{{ balance.clase }}">{{ balance.texto }}</strong>
+            </div>
+          </div>
+          <ul class="dona__leyenda">
+            {% for arco in segmentos %}
+              <li>
+                <span class="dona__muestra" style="background: {{ arco.color }}"></span>
+                {{ arco.etiqueta }}: <strong>{{ arco.valor }}</strong> ({{ arco.porcentaje }} %)
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% else %}
+        <p class="tabla__vacia">Aún no hay cartera ni deuda con el proveedor para graficar.</p>
+      {% endif %}
+    </section>
+  </div>
+
+  <div class="rejilla-paneles">
+    <section class="panel">
+      <h2 class="panel__titulo">Pago al proveedor</h2>
+      <p class="panel__descripcion">
+        Deuda actual: <strong>{{ deuda | cop }}</strong>. El pago no puede superarla.
+      </p>
+      <form class="formulario" method="post" action="{{ url_for('registrar_abono_proveedor') }}">
+        <label class="campo">
+          <span class="campo__etiqueta">Monto pagado (COP)</span>
+          <input class="campo__control" type="text" name="monto" inputmode="decimal" placeholder="100.000" required />
+        </label>
+        <label class="campo">
+          <span class="campo__etiqueta">Concepto</span>
+          <input class="campo__control" type="text" name="concepto" placeholder="Abono al proveedor" />
+        </label>
+        <button class="boton boton--primario" type="submit">Registrar pago</button>
+      </form>
+    </section>
+
+    <section class="panel panel--tabla">
+      <h2 class="panel__titulo">Movimientos con el proveedor</h2>
+      {% if movimientos %}
+        <div class="tabla-contenedor">
+          <table class="tabla">
+            <thead>
+              <tr>
+                <th scope="col">Fecha</th>
+                <th scope="col">Tipo</th>
+                <th scope="col">Concepto</th>
+                <th scope="col">Monto</th>
+                <th scope="col">Saldo</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for movimiento in movimientos %}
+                <tr>
+                  <td>{{ movimiento.fecha.strftime('%d/%m/%Y %H:%M') }}</td>
+                  <td>{{ 'Compra a crédito' if movimiento.tipo == 'COMPRA_CREDITO' else 'Pago' }}</td>
+                  <td>{{ movimiento.concepto }}</td>
+                  <td class="tabla__numero">{{ movimiento.monto | cop }}</td>
+                  <td class="tabla__numero">{{ movimiento.saldo_resultante | cop }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="tabla__vacia">Aún no hay compras a crédito ni pagos al proveedor.</p>
+      {% endif %}
+    </section>
+  </div>
+{% endblock %}

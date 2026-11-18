@@ -1,172 +1,311 @@
-"""Operación comercial de OLB_BYTE: inventario, ventas y cartera.
+"""Operación comercial de OLB_BYTE: ventas a crédito, cartera y deuda con proveedor.
 
 Responsabilidad
 ---------------
-- Mantener productos y clientes.
-- Registrar ventas con una o varias líneas, descontando stock de forma atómica.
-- Aplicar abonos y actualizar el saldo pendiente de cada venta.
-- Calcular la cartera y generar enlaces de factura por WhatsApp.
+- Registrar órdenes de venta con varias líneas, sin inventario (ADR-35): cada
+  línea guarda una copia de nombre, referencia, costo y precio.
+- Asignar el consecutivo `numero_orden`, que nunca se reutiliza.
+- Registrar la compra a crédito al proveedor y sus abonos en un libro de movimientos.
+- Aplicar abonos de clientes y actualizar el saldo de cada orden.
+- Anular órdenes con motivo y registrar la devolución del dinero abonado.
+- Calcular cartera, deuda con proveedor, caja y efectivo libre (RF-08 a RF-10).
 
-Las tablas involucradas están documentadas en `diccionario_datos.md` §10.
-Toda la aritmética usa `Decimal` y se redondea al persistir.
+Las tablas están documentadas en `diccionario_datos.md` §10. Toda la aritmética usa
+`Decimal` y se redondea al persistir. Los totales se suman en Python para evitar
+diferencias de tipo entre motores de base de datos.
 """
 
 from __future__ import annotations
 
+import calendar
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 from urllib.parse import quote
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.numeros import redondear_dinero
 from app.core.texto import parsear_monto
-from app.modelos import Abono, Cliente, Producto, Venta, VentaDetalle
+from app.modelos import (
+    Abono,
+    Cliente,
+    DevolucionCliente,
+    GarantiaProveedor,
+    MovimientoProveedor,
+    Venta,
+    VentaDetalle,
+)
 
+# La garantía y los rankings se miden en la hora de Colombia: una venta a las 11 p. m.
+# no debe quedar con la fecha del día siguiente en UTC. Colombia no tiene horario de
+# verano, así que un desfase fijo de −5 h es exacto y evita depender de tzdata en Windows.
+ZONA_TIENDA = timezone(timedelta(hours=-5))
 CERO = Decimal("0")
-ESTADO_PENDIENTE = "PENDIENTE"
-ESTADO_PARCIAL = "PARCIAL"
-ESTADO_PAGADA = "PAGADA"
-METODOS_PAGO = ("EFECTIVO", "TRANSFERENCIA", "NEQUI", "DAVIPLATA", "TARJETA")
+
+ESTADO_PAGO_PENDIENTE = "PENDIENTE"
+ESTADO_PAGO_PARCIAL = "PARCIAL"
+ESTADO_PAGO_PAGADA = "PAGADA"
+ESTADO_ACTIVA = "ACTIVA"
+ESTADO_ANULADA = "ANULADA"
+
+# ADR-35: solo estos dos medios para los abonos nuevos.
+METODOS_PAGO = ("EFECTIVO", "TRANSFERENCIA")
+
+GARANTIA_MESES_DEFECTO = 3
+TIPO_COMPRA = "COMPRA_CREDITO"
+TIPO_ABONO_PROVEEDOR = "ABONO"
 
 
 @dataclass(frozen=True)
 class LineaVenta:
-    """Línea solicitada para registrar una venta.
+    """Producto escrito en una venta.
 
     Attributes:
-        id_producto: Producto vendido.
-        cantidad: Unidades; debe ser positiva.
-        precio_unitario: Precio pactado; si es `None` se usa el del producto.
+        nombre: Nombre del producto.
+        cantidad: Unidades; debe ser mayor que cero.
+        precio_unitario: Valor de venta al cliente.
+        costo_unitario: Precio que cobra el proveedor.
+        referencia: Modelo o referencia opcional.
+        garantia_meses: Meses de garantía; `0` significa sin garantía.
     """
 
-    id_producto: str
+    nombre: str
     cantidad: int
-    precio_unitario: Decimal | None = None
+    precio_unitario: Decimal | str | int | float
+    costo_unitario: Decimal | str | int | float = CERO
+    referencia: str | None = None
+    garantia_meses: int = GARANTIA_MESES_DEFECTO
 
 
-def crear_producto(
-    bd: Session,
-    sku: str,
-    nombre: str,
-    precio_venta: Decimal | str | int | float,
-    costo: Decimal | str | int | float = CERO,
-    stock: int = 0,
-    garantia_meses: int | None = None,
-) -> Producto:
-    """Registra un producto del inventario.
+def ahora_tienda() -> datetime:
+    """Devuelve el momento actual en hora de la tienda.
+
+    Todas las fechas comerciales se generan con esta función para que la base guarde
+    la hora de Colombia. Si se usara UTC en unas y `now()` del servidor en otras, el
+    recibo de un abono mostraría horas distintas a las de la venta.
+
+    Returns:
+        Fecha y hora con la zona de la tienda.
+    """
+    return datetime.now(ZONA_TIENDA)
+
+
+def normalizar_telefono(texto: str | None) -> str | None:
+    """Deja un celular colombiano de 10 dígitos sin indicativo.
+
+    Acepta espacios, guiones, `+57` o `57` al inicio, porque así llegan los
+    contactos del celular. Un número distinto de 10 dígitos no sirve para
+    WhatsApp, por eso se rechaza en vez de guardarlo mal.
+
+    Args:
+        texto: Número tal como lo escribió el usuario o lo entregó la agenda.
+
+    Returns:
+        Los 10 dígitos, o `None` si no se escribió ningún número.
+
+    Raises:
+        ValueError: Si quedan dígitos pero no suman 10 tras quitar el indicativo.
+    """
+    if texto is None:
+        return None
+    digitos = "".join(caracter for caracter in texto if caracter.isdigit())
+    if not digitos:
+        return None
+    if len(digitos) == 12 and digitos.startswith("57"):
+        digitos = digitos[2:]
+    if len(digitos) != 10:
+        raise ValueError("El celular debe tener 10 dígitos (sin el indicativo 57).")
+    return digitos
+
+
+def _dinero(valor: Decimal | str | int | float) -> Decimal:
+    """Convierte un valor de formulario o de código a dinero redondeado.
+
+    Args:
+        valor: Monto en cualquier formato aceptado por `parsear_monto`.
+
+    Returns:
+        Monto con dos decimales.
+
+    Raises:
+        ValueError: Si el texto no es un monto válido.
+    """
+    if isinstance(valor, Decimal):
+        return redondear_dinero(valor)
+    return redondear_dinero(parsear_monto(str(valor)))
+
+
+def _sumar_meses(fecha: date, meses: int) -> date:
+    """Suma meses calendario a una fecha, ajustando el día al último del mes.
+
+    Args:
+        fecha: Fecha de partida.
+        meses: Meses a sumar (no negativo).
+
+    Returns:
+        Fecha resultante. El 31 de enero más un mes da el 28 o 29 de febrero.
+    """
+    indice = fecha.month - 1 + meses
+    anio = fecha.year + indice // 12
+    mes = indice % 12 + 1
+    dia = min(fecha.day, calendar.monthrange(anio, mes)[1])
+    return date(anio, mes, dia)
+
+
+def _texto_garantia(meses: int) -> str:
+    """Redacta la garantía de una línea según sus meses.
+
+    Args:
+        meses: Meses de garantía.
+
+    Returns:
+        Texto para la factura, por ejemplo «3 meses por defectos de fábrica».
+    """
+    if meses <= 0:
+        return "Sin garantía"
+    etiqueta = "mes" if meses == 1 else "meses"
+    return f"{meses} {etiqueta} por defectos de fábrica"
+
+
+def _validar_linea(linea: LineaVenta) -> None:
+    """Valida los datos de una línea antes de persistir la venta.
+
+    Args:
+        linea: Línea a revisar.
+
+    Raises:
+        ValueError: Si falta el nombre, la cantidad no es positiva, un precio o
+            costo es negativo o los meses de garantía no son válidos.
+    """
+    if not linea.nombre.strip():
+        raise ValueError("Cada producto necesita un nombre.")
+    if linea.cantidad <= 0:
+        raise ValueError("La cantidad de cada producto debe ser mayor que cero.")
+    if linea.garantia_meses < 0:
+        raise ValueError("La garantía no puede tener meses negativos.")
+
+
+def _cliente_para_venta(bd: Session, nombre: str, telefono: str | None) -> Cliente:
+    """Busca el cliente por celular o por nombre, o lo crea si no existe.
+
+    Con celular se busca por el número, porque dos personas pueden llamarse igual.
+    Sin celular se busca por nombre entre los clientes que no tienen número.
 
     Args:
         bd: Sesión de base de datos.
-        sku: Código único del producto.
-        nombre: Nombre comercial.
-        precio_venta: Precio al público.
-        costo: Costo de compra.
-        stock: Unidades disponibles.
-        garantia_meses: Meses de garantía ofrecidos.
+        nombre: Nombre escrito en la venta.
+        telefono: Celular normalizado o `None`.
 
     Returns:
-        El producto persistido.
-
-    Raises:
-        ValueError: Si el SKU o el nombre faltan, los precios son negativos, el
-            stock es negativo o el SKU ya existe.
+        Cliente existente o recién creado (todavía sin confirmar).
     """
-    sku_limpio = sku.strip().upper()
-    nombre_limpio = nombre.strip()
-    if not sku_limpio:
-        raise ValueError("El SKU es obligatorio.")
-    if not nombre_limpio:
-        raise ValueError("El nombre del producto es obligatorio.")
-
-    existente = bd.scalar(select(Producto).where(Producto.sku == sku_limpio))
+    if telefono:
+        existente = bd.scalar(select(Cliente).where(Cliente.telefono_whatsapp == telefono))
+    else:
+        existente = bd.scalar(
+            select(Cliente).where(
+                Cliente.telefono_whatsapp.is_(None),
+                func.lower(Cliente.nombre) == nombre.lower(),
+            )
+        )
     if existente is not None:
-        raise ValueError("Ya existe un producto con ese SKU.")
-
-    precio = redondear_dinero(parsear_monto(str(precio_venta)))
-    valor_costo = redondear_dinero(parsear_monto(str(costo)))
-    if precio < CERO or valor_costo < CERO:
-        raise ValueError("Los precios no pueden ser negativos.")
-    if stock < 0:
-        raise ValueError("El stock no puede ser negativo.")
-
-    producto = Producto(
-        sku=sku_limpio[:40],
-        nombre=nombre_limpio[:120],
-        costo=valor_costo,
-        precio_venta=precio,
-        stock=int(stock),
-        garantia_meses=garantia_meses,
-    )
-    bd.add(producto)
-    bd.commit()
-    bd.refresh(producto)
-    return producto
+        return existente
+    cliente = Cliente(nombre=nombre[:120], telefono_whatsapp=telefono)
+    bd.add(cliente)
+    bd.flush()
+    return cliente
 
 
-def listar_productos(bd: Session) -> list[Producto]:
-    """Lista el inventario ordenado por nombre.
+def _siguiente_numero_orden(bd: Session) -> int:
+    """Calcula el próximo consecutivo sin reutilizar números de órdenes anuladas.
 
     Args:
         bd: Sesión de base de datos.
 
     Returns:
-        Lista de productos.
+        Máximo `numero_orden` registrado más uno, o 1 si no hay órdenes.
     """
-    return list(bd.scalars(select(Producto).order_by(Producto.nombre)))
+    maximo = bd.scalar(select(func.max(Venta.numero_orden)))
+    return (maximo or 0) + 1
 
 
-def eliminar_producto(bd: Session, id_producto: str) -> bool:
-    """Elimina un producto sin ventas asociadas.
+def deuda_proveedor(bd: Session) -> Decimal:
+    """Calcula lo que se le debe al proveedor en este momento.
+
+    Deuda = compras a crédito − abonos hechos al proveedor. Las compras de órdenes
+    anuladas siguen contando, porque la mercancía ya se compró (ADR-35).
 
     Args:
         bd: Sesión de base de datos.
-        id_producto: Producto a eliminar.
 
     Returns:
-        `True` si se eliminó.
-
-    Raises:
-        ValueError: Si el producto tiene ventas registradas o no existe.
+        Saldo adeudado, nunca negativo.
     """
-    producto = bd.get(Producto, id_producto)
-    if producto is None:
-        return False
+    movimientos = bd.scalars(select(MovimientoProveedor)).all()
+    compras = sum((m.monto for m in movimientos if m.tipo == TIPO_COMPRA), start=CERO)
+    abonos = sum((m.monto for m in movimientos if m.tipo == TIPO_ABONO_PROVEEDOR), start=CERO)
+    return redondear_dinero(max(compras - abonos, CERO))
 
-    vendido = bd.scalar(
-        select(VentaDetalle).where(VentaDetalle.id_producto == id_producto).limit(1)
+
+def _registrar_movimiento_proveedor(
+    bd: Session,
+    tipo: str,
+    monto: Decimal,
+    concepto: str,
+    id_venta: str | None = None,
+) -> MovimientoProveedor:
+    """Agrega un movimiento al libro de la cuenta por pagar al proveedor.
+
+    Args:
+        bd: Sesión de base de datos.
+        tipo: `COMPRA_CREDITO` o `ABONO`.
+        monto: Valor positivo del movimiento.
+        concepto: Descripción legible para el historial.
+        id_venta: Orden asociada, si la hay.
+
+    Returns:
+        El movimiento agregado, con el saldo tras aplicarlo.
+    """
+    saldo_anterior = deuda_proveedor(bd)
+    if tipo == TIPO_COMPRA:
+        saldo_nuevo = saldo_anterior + monto
+    else:
+        saldo_nuevo = saldo_anterior - monto
+    movimiento = MovimientoProveedor(
+        fecha=ahora_tienda(),
+        tipo=tipo,
+        id_venta=id_venta,
+        concepto=concepto[:200],
+        monto=monto,
+        saldo_resultante=redondear_dinero(saldo_nuevo),
     )
-    if vendido is not None:
-        raise ValueError("No se puede eliminar un producto con ventas registradas.")
-
-    bd.delete(producto)
-    bd.commit()
-    return True
+    bd.add(movimiento)
+    return movimiento
 
 
-def crear_cliente(
+def registrar_cliente(
     bd: Session,
     nombre: str,
     telefono_whatsapp: str | None = None,
     correo: str | None = None,
     direccion: str | None = None,
 ) -> Cliente:
-    """Registra un cliente de la tienda.
+    """Registra un cliente desde la agenda de administración.
 
     Args:
         bd: Sesión de base de datos.
         nombre: Nombre del cliente.
-        telefono_whatsapp: Número con indicativo, sin espacios.
-        correo: Correo electrónico.
-        direccion: Dirección de entrega.
+        telefono_whatsapp: Celular; se normaliza a 10 dígitos.
+        correo: Correo electrónico opcional.
+        direccion: Dirección de entrega opcional.
 
     Returns:
         El cliente persistido.
 
     Raises:
-        ValueError: Si el nombre está vacío.
+        ValueError: Si el nombre está vacío o el celular no tiene 10 dígitos.
     """
     nombre_limpio = nombre.strip()
     if not nombre_limpio:
@@ -174,7 +313,7 @@ def crear_cliente(
 
     cliente = Cliente(
         nombre=nombre_limpio[:120],
-        telefono_whatsapp=(telefono_whatsapp or "").strip()[:20] or None,
+        telefono_whatsapp=normalizar_telefono(telefono_whatsapp),
         correo=(correo or "").strip()[:150] or None,
         direccion=(direccion or "").strip()[:200] or None,
     )
@@ -196,80 +335,207 @@ def listar_clientes(bd: Session) -> list[Cliente]:
     return list(bd.scalars(select(Cliente).order_by(Cliente.nombre)))
 
 
-def registrar_venta(
-    bd: Session,
-    id_cliente: str,
-    lineas: list[LineaVenta],
-    fecha_venta: datetime | None = None,
-) -> Venta:
-    """Registra una venta y descuenta el stock de cada producto.
+def buscar_clientes(bd: Session, texto: str, limite: int = 8) -> list[Cliente]:
+    """Busca clientes por nombre o celular para el autocompletado de la venta.
 
     Args:
         bd: Sesión de base de datos.
-        id_cliente: Cliente que compra.
-        lineas: Líneas de la venta.
-        fecha_venta: Fecha del documento; por defecto ahora.
+        texto: Fragmento escrito por el usuario.
+        limite: Máximo de resultados.
 
     Returns:
-        La venta persistida con su detalle.
+        Clientes que coinciden, ordenados por nombre. Vacío si el texto está en blanco.
+    """
+    buscado = texto.strip()
+    if not buscado:
+        return []
+    patron = f"%{buscado}%"
+    consulta = (
+        select(Cliente)
+        .where((Cliente.nombre.ilike(patron)) | (Cliente.telefono_whatsapp.like(patron)))
+        .order_by(Cliente.nombre)
+        .limit(limite)
+    )
+    return list(bd.scalars(consulta))
+
+
+def registrar_venta(
+    bd: Session,
+    cliente_nombre: str,
+    cliente_telefono: str | None,
+    lineas: list[LineaVenta],
+    fecha_venta: datetime | None = None,
+) -> Venta:
+    """Registra una orden de venta a crédito y la compra al proveedor.
+
+    La venta no descuenta inventario: la mercancía se compra al proveedor al
+    mismo tiempo. Se suma la deuda con el proveedor, y la ganancia se calcula como
+    `Σ (precio − costo) × cantidad`. La garantía vence según la línea que antes
+    expire, para que el semáforo sea conservador.
+
+    Args:
+        bd: Sesión de base de datos.
+        cliente_nombre: Nombre del comprador tal como se escribe en el formulario.
+        cliente_telefono: Celular opcional; se normaliza a 10 dígitos.
+        lineas: Productos de la orden; debe haber al menos uno.
+        fecha_venta: Momento de la venta; por defecto ahora.
+
+    Returns:
+        La orden persistida con su consecutivo.
 
     Raises:
-        ValueError: Si el cliente no existe, no hay líneas, una cantidad es
-            inválida o no hay stock suficiente.
+        ValueError: Si falta el nombre del cliente, no hay líneas o alguna línea
+            es inválida.
     """
-    cliente = bd.get(Cliente, id_cliente)
-    if cliente is None:
-        raise ValueError("El cliente seleccionado no existe.")
+    nombre = cliente_nombre.strip()
+    if not nombre:
+        raise ValueError("El nombre del cliente es obligatorio.")
+    telefono = normalizar_telefono(cliente_telefono)
     if not lineas:
         raise ValueError("La venta debe tener al menos un producto.")
+    # Todo se valida antes de tocar la sesión: un error a mitad de camino dejaría
+    # una orden a medio crear visible en el panel.
+    valores: list[tuple[LineaVenta, Decimal, Decimal]] = []
+    for linea in lineas:
+        _validar_linea(linea)
+        precio = _dinero(linea.precio_unitario)
+        costo = _dinero(linea.costo_unitario)
+        if precio < CERO or costo < CERO:
+            raise ValueError("Los precios y costos no pueden ser negativos.")
+        valores.append((linea, precio, costo))
 
+    ahora = fecha_venta or ahora_tienda()
+    fecha_local = ahora.astimezone(ZONA_TIENDA).date()
+
+    cliente = _cliente_para_venta(bd, nombre, telefono)
     venta = Venta(
-        id_cliente=id_cliente,
-        fecha_venta=fecha_venta or datetime.now(timezone.utc),
-        total=CERO,
-        saldo_pendiente=CERO,
-        estado=ESTADO_PENDIENTE,
+        numero_orden=_siguiente_numero_orden(bd),
+        id_cliente=cliente.id_cliente,
+        cliente_nombre=nombre[:120],
+        cliente_telefono=telefono,
+        fecha_venta=ahora,
     )
     bd.add(venta)
     bd.flush()
 
-    total = CERO
-    for linea in lineas:
-        producto = bd.get(Producto, linea.id_producto)
-        if producto is None:
-            raise ValueError("Uno de los productos seleccionados no existe.")
-        if linea.cantidad <= 0:
-            raise ValueError("La cantidad de cada producto debe ser mayor que cero.")
-        if producto.stock < linea.cantidad:
-            raise ValueError(
-                f"No hay stock suficiente de {producto.nombre}. Disponible: {producto.stock}."
-            )
-
-        precio = (
-            redondear_dinero(linea.precio_unitario)
-            if linea.precio_unitario is not None
-            else redondear_dinero(producto.precio_venta)
+    subtotal = CERO
+    total_costo = CERO
+    ganancia = CERO
+    vencimientos: list[tuple[date, str]] = []
+    for linea, precio, costo in valores:
+        subtotal_item = redondear_dinero(precio * linea.cantidad)
+        subtotal += subtotal_item
+        total_costo += redondear_dinero(costo * linea.cantidad)
+        ganancia += redondear_dinero((precio - costo) * linea.cantidad)
+        texto_garantia = _texto_garantia(linea.garantia_meses)
+        vencimiento = (
+            fecha_local
+            if linea.garantia_meses <= 0
+            else _sumar_meses(fecha_local, linea.garantia_meses)
         )
-        if precio < CERO:
-            raise ValueError("El precio unitario no puede ser negativo.")
-
-        producto.stock -= linea.cantidad
-        subtotal = redondear_dinero(precio * linea.cantidad)
-        total = redondear_dinero(total + subtotal)
+        vencimientos.append((vencimiento, texto_garantia))
         bd.add(
             VentaDetalle(
                 id_venta=venta.id_venta,
-                id_producto=producto.id_producto,
+                producto_nombre=linea.nombre.strip()[:120],
+                referencia=(linea.referencia or "").strip()[:60] or None,
                 cantidad=linea.cantidad,
+                costo_unitario=costo,
                 precio_unitario=precio,
+                subtotal_item=subtotal_item,
+                garantia_texto=texto_garantia,
             )
         )
 
+    vencimiento_orden, texto_orden = min(vencimientos, key=lambda par: par[0])
+    total = redondear_dinero(subtotal)
+    venta.subtotal = total
     venta.total = total
+    venta.total_costo = redondear_dinero(total_costo)
+    venta.ganancia_neta = redondear_dinero(ganancia)
+    venta.total_abonado = CERO
     venta.saldo_pendiente = total
+    venta.estado_pago = ESTADO_PAGO_PAGADA if total == CERO else ESTADO_PAGO_PENDIENTE
+    venta.garantia_texto = texto_orden
+    venta.garantia_fecha_fin = vencimiento_orden
+
+    if venta.total_costo > CERO:
+        _registrar_movimiento_proveedor(
+            bd,
+            TIPO_COMPRA,
+            venta.total_costo,
+            f"Compra a crédito orden {venta.numero_orden}",
+            venta.id_venta,
+        )
     bd.commit()
     bd.refresh(venta)
     return venta
+
+
+def obtener_venta(bd: Session, id_venta: str) -> Venta | None:
+    """Devuelve una orden por su identificador interno.
+
+    Args:
+        bd: Sesión de base de datos.
+        id_venta: Identificador de la orden.
+
+    Returns:
+        La orden, o `None` si no existe.
+    """
+    return bd.get(Venta, id_venta)
+
+
+def _venta_activa(bd: Session, id_venta: str) -> Venta:
+    """Obtiene una orden que todavía puede recibir abonos.
+
+    Args:
+        bd: Sesión de base de datos.
+        id_venta: Identificador de la orden.
+
+    Returns:
+        La orden activa.
+
+    Raises:
+        ValueError: Si no existe o está anulada.
+    """
+    venta = bd.get(Venta, id_venta)
+    if venta is None:
+        raise ValueError("La venta no existe.")
+    if venta.estado_orden == ESTADO_ANULADA:
+        raise ValueError("La orden está anulada y no admite abonos.")
+    return venta
+
+
+def _recalcular_estado_pago(venta: Venta) -> None:
+    """Actualiza `estado_pago` según el saldo y lo abonado.
+
+    Args:
+        venta: Orden a actualizar; se modifica en sitio.
+    """
+    if venta.saldo_pendiente <= CERO:
+        venta.estado_pago = ESTADO_PAGO_PAGADA
+    elif venta.total_abonado > CERO:
+        venta.estado_pago = ESTADO_PAGO_PARCIAL
+    else:
+        venta.estado_pago = ESTADO_PAGO_PENDIENTE
+
+
+def _validar_metodo(metodo_pago: str) -> str:
+    """Normaliza el medio de pago y verifica que esté permitido.
+
+    Args:
+        metodo_pago: Texto escrito o seleccionado.
+
+    Returns:
+        Medio en mayúsculas.
+
+    Raises:
+        ValueError: Si el medio no es Efectivo ni Transferencia.
+    """
+    metodo = metodo_pago.strip().upper()
+    if metodo not in METODOS_PAGO:
+        raise ValueError("El método de pago debe ser Efectivo o Transferencia.")
+    return metodo
 
 
 def registrar_abono(
@@ -277,125 +543,765 @@ def registrar_abono(
     id_venta: str,
     monto: Decimal | str | int | float,
     metodo_pago: str = "EFECTIVO",
+    fecha_abono: datetime | None = None,
 ) -> Abono:
-    """Aplica un abono a una venta.
+    """Aplica un abono parcial o total a una orden activa.
 
     Args:
         bd: Sesión de base de datos.
-        id_venta: Venta abonada.
-        monto: Dinero entregado; positivo y no mayor al saldo.
-        metodo_pago: Medio de pago.
+        id_venta: Orden abonada.
+        monto: Dinero recibido; positivo y no mayor al saldo.
+        metodo_pago: `EFECTIVO` o `TRANSFERENCIA`.
+        fecha_abono: Fecha y hora del pago; por defecto ahora (RF-06).
 
     Returns:
         El abono persistido.
 
     Raises:
-        ValueError: Si la venta no existe, el monto es inválido o supera el
-            saldo pendiente, o el método no es válido.
+        ValueError: Si la orden no existe o está anulada, el monto no es positivo
+            o supera el saldo, o el medio de pago no es válido.
     """
-    venta = bd.get(Venta, id_venta)
-    if venta is None:
-        raise ValueError("La venta no existe.")
-
-    valor = redondear_dinero(parsear_monto(str(monto)))
+    venta = _venta_activa(bd, id_venta)
+    valor = _dinero(monto)
     if valor <= CERO:
         raise ValueError("El abono debe ser mayor que cero.")
     if valor > venta.saldo_pendiente:
         raise ValueError("El abono no puede superar el saldo pendiente.")
+    metodo = _validar_metodo(metodo_pago)
 
-    metodo = metodo_pago.strip().upper()
-    if metodo not in METODOS_PAGO:
-        raise ValueError("El método de pago no es válido.")
-
-    abono = Abono(id_venta=id_venta, monto=valor, metodo_pago=metodo)
+    abono = Abono(
+        id_venta=id_venta,
+        monto=valor,
+        metodo_pago=metodo,
+        fecha_abono=fecha_abono or ahora_tienda(),
+    )
     bd.add(abono)
-
+    venta.total_abonado = redondear_dinero(venta.total_abonado + valor)
     venta.saldo_pendiente = redondear_dinero(venta.saldo_pendiente - valor)
-    if venta.saldo_pendiente == CERO:
-        venta.estado = ESTADO_PAGADA
-    else:
-        venta.estado = ESTADO_PARCIAL
+    _recalcular_estado_pago(venta)
     bd.commit()
     bd.refresh(abono)
     return abono
 
 
-def listar_ventas(bd: Session) -> list[Venta]:
-    """Lista las ventas de la más reciente a la más antigua.
+def _devuelto(bd: Session, id_venta: str) -> Decimal:
+    """Suma lo ya devuelto al cliente en una orden.
+
+    Args:
+        bd: Sesión de base de datos.
+        id_venta: Orden consultada.
+
+    Returns:
+        Total devuelto, en cero si no hay devoluciones.
+    """
+    devoluciones = bd.scalars(
+        select(DevolucionCliente).where(DevolucionCliente.id_venta == id_venta)
+    ).all()
+    return sum((d.monto for d in devoluciones), start=CERO)
+
+
+def _registrar_devolucion(
+    bd: Session,
+    venta: Venta,
+    monto: Decimal,
+    metodo_pago: str,
+) -> DevolucionCliente:
+    """Agrega una devolución a una orden anulada sin superar lo abonado.
+
+    Args:
+        bd: Sesión de base de datos.
+        venta: Orden anulada.
+        monto: Valor a devolver; positivo.
+        metodo_pago: `EFECTIVO` o `TRANSFERENCIA`.
+
+    Returns:
+        La devolución agregada.
+
+    Raises:
+        ValueError: Si el monto no es positivo o supera lo pendiente de devolver.
+    """
+    if monto <= CERO:
+        raise ValueError("La devolución debe ser mayor que cero.")
+    pendiente = redondear_dinero(venta.total_abonado - _devuelto(bd, venta.id_venta))
+    if monto > pendiente:
+        raise ValueError("La devolución supera el dinero abonado pendiente de devolver.")
+    devolucion = DevolucionCliente(
+        id_venta=venta.id_venta,
+        fecha_devolucion=ahora_tienda(),
+        monto=monto,
+        metodo_pago=_validar_metodo(metodo_pago),
+    )
+    bd.add(devolucion)
+    return devolucion
+
+
+def anular_venta(
+    bd: Session,
+    id_venta: str,
+    motivo: str,
+    monto_devuelto: Decimal | str | int | float = CERO,
+    metodo_devolucion: str = "EFECTIVO",
+) -> Venta:
+    """Anula una orden con motivo y registra la devolución si la hubo.
+
+    La orden deja de contar en cartera, ganancia y rankings. El consecutivo se
+    conserva. La deuda con el proveedor no se revierte (ADR-35). Si el cliente ya
+    había abonado, `monto_devuelto` registra cuánto se le regresó. Lo que quede
+    sin devolver puede registrarse después con `registrar_devolucion`.
+
+    Args:
+        bd: Sesión de base de datos.
+        id_venta: Orden a anular.
+        motivo: Razón de la anulación; obligatoria.
+        monto_devuelto: Dinero devuelto ahora al cliente; por defecto cero.
+        metodo_devolucion: Medio con el que se devuelve.
+
+    Returns:
+        La orden anulada.
+
+    Raises:
+        ValueError: Si la orden no existe, ya está anulada, el motivo está vacío
+            o la devolución supera lo abonado.
+    """
+    venta = bd.get(Venta, id_venta)
+    if venta is None:
+        raise ValueError("La venta no existe.")
+    if venta.estado_orden == ESTADO_ANULADA:
+        raise ValueError("La orden ya está anulada.")
+    motivo_limpio = motivo.strip()
+    if not motivo_limpio:
+        raise ValueError("Escriba el motivo de la anulación.")
+    devolver = _dinero(monto_devuelto)
+    if devolver < CERO:
+        raise ValueError("La devolución no puede ser negativa.")
+    if devolver > venta.total_abonado:
+        raise ValueError("La devolución no puede superar lo abonado por el cliente.")
+
+    venta.estado_orden = ESTADO_ANULADA
+    venta.motivo_anulacion = motivo_limpio[:200]
+    venta.fecha_anulacion = ahora_tienda()
+    venta.saldo_pendiente = CERO
+    venta.ganancia_neta = CERO
+    if devolver > CERO:
+        _registrar_devolucion(bd, venta, devolver, metodo_devolucion)
+    bd.commit()
+    bd.refresh(venta)
+    return venta
+
+
+def registrar_devolucion(
+    bd: Session,
+    id_venta: str,
+    monto: Decimal | str | int | float,
+    metodo_pago: str = "EFECTIVO",
+) -> DevolucionCliente:
+    """Registra una devolución pendiente de una orden ya anulada.
+
+    Args:
+        bd: Sesión de base de datos.
+        id_venta: Orden anulada.
+        monto: Dinero entregado al cliente.
+        metodo_pago: `EFECTIVO` o `TRANSFERENCIA`.
+
+    Returns:
+        La devolución persistida.
+
+    Raises:
+        ValueError: Si la orden no existe, no está anulada, el monto no es válido
+            o supera lo pendiente de devolver.
+    """
+    venta = bd.get(Venta, id_venta)
+    if venta is None:
+        raise ValueError("La venta no existe.")
+    if venta.estado_orden != ESTADO_ANULADA:
+        raise ValueError("Solo se registra devolución en órdenes anuladas.")
+    devolucion = _registrar_devolucion(bd, venta, _dinero(monto), metodo_pago)
+    bd.commit()
+    bd.refresh(devolucion)
+    return devolucion
+
+
+def pendiente_devolver(bd: Session, venta: Venta) -> Decimal:
+    """Calcula el dinero abonado de una orden anulada que aún no se devolvió.
+
+    Args:
+        bd: Sesión de base de datos.
+        venta: Orden consultada.
+
+    Returns:
+        Monto pendiente, nunca negativo.
+    """
+    return redondear_dinero(max(venta.total_abonado - _devuelto(bd, venta.id_venta), CERO))
+
+
+def obtener_abono(bd: Session, id_abono: str) -> Abono | None:
+    """Devuelve un abono por su identificador.
+
+    Args:
+        bd: Sesión de base de datos.
+        id_abono: Identificador del abono.
+
+    Returns:
+        El abono, o `None` si no existe.
+    """
+    return bd.get(Abono, id_abono)
+
+
+def abonos_de_venta(bd: Session, id_venta: str) -> list[Abono]:
+    """Lista los abonos de una orden en el orden en que se recibieron.
+
+    Args:
+        bd: Sesión de base de datos.
+        id_venta: Orden consultada.
+
+    Returns:
+        Abonos ordenados por fecha y hora ascendente.
+    """
+    consulta = (
+        select(Abono).where(Abono.id_venta == id_venta).order_by(Abono.fecha_abono, Abono.id_abono)
+    )
+    return list(bd.scalars(consulta))
+
+
+def buscar_cartera(bd: Session, texto: str = "") -> list[Venta]:
+    """Devuelve la cartera pendiente, opcionalmente filtrada (RF-06).
+
+    El filtro busca en el nombre del cliente, en el celular y en el número de orden.
+
+    Args:
+        bd: Sesión de base de datos.
+        texto: Fragmento a buscar; vacío devuelve toda la cartera.
+
+    Returns:
+        Órdenes activas con saldo, de la más antigua a la más reciente.
+    """
+    pendientes = cartera(bd)
+    buscado = texto.strip().lower()
+    if not buscado:
+        return pendientes
+    return [
+        venta
+        for venta in pendientes
+        if buscado in venta.cliente_nombre.lower()
+        or buscado in (venta.cliente_telefono or "")
+        or buscado in str(venta.numero_orden)
+    ]
+
+
+def registrar_abono_proveedor(
+    bd: Session,
+    monto: Decimal | str | int | float,
+    concepto: str = "Abono al proveedor",
+) -> MovimientoProveedor:
+    """Registra un pago al proveedor que reduce la deuda acumulada.
+
+    Args:
+        bd: Sesión de base de datos.
+        monto: Dinero pagado al proveedor; positivo y no mayor a la deuda.
+        concepto: Descripción del pago.
+
+    Returns:
+        El movimiento persistido.
+
+    Raises:
+        ValueError: Si el monto no es positivo o supera la deuda con el proveedor.
+    """
+    valor = _dinero(monto)
+    if valor <= CERO:
+        raise ValueError("El abono al proveedor debe ser mayor que cero.")
+    if valor > deuda_proveedor(bd):
+        raise ValueError("El abono supera la deuda con el proveedor.")
+    movimiento = _registrar_movimiento_proveedor(bd, TIPO_ABONO_PROVEEDOR, valor, concepto)
+    bd.commit()
+    bd.refresh(movimiento)
+    return movimiento
+
+
+def listar_movimientos_proveedor(bd: Session) -> list[MovimientoProveedor]:
+    """Lista el libro de la cuenta por pagar, del más reciente al más antiguo.
 
     Args:
         bd: Sesión de base de datos.
 
     Returns:
-        Lista de ventas.
+        Movimientos ordenados por fecha descendente.
     """
-    return list(bd.scalars(select(Venta).order_by(Venta.fecha_venta.desc())))
+    consulta = select(MovimientoProveedor).order_by(MovimientoProveedor.fecha.desc())
+    return list(bd.scalars(consulta))
+
+
+def listar_ventas(bd: Session) -> list[Venta]:
+    """Lista las órdenes de la más reciente a la más antigua por consecutivo.
+
+    Args:
+        bd: Sesión de base de datos.
+
+    Returns:
+        Órdenes activas y anuladas.
+    """
+    return list(bd.scalars(select(Venta).order_by(Venta.numero_orden.desc())))
 
 
 def cartera(bd: Session) -> list[Venta]:
-    """Devuelve las ventas con saldo pendiente.
+    """Devuelve las órdenes activas con saldo pendiente.
 
     Args:
         bd: Sesión de base de datos.
 
     Returns:
-        Lista de ventas ordenadas por fecha ascendente (las más viejas primero).
+        Órdenes ordenadas por fecha ascendente (las más viejas primero).
     """
     consulta = (
         select(Venta)
-        .where(Venta.saldo_pendiente > CERO)
+        .where(Venta.saldo_pendiente > CERO, Venta.estado_orden == ESTADO_ACTIVA)
         .order_by(Venta.fecha_venta)
     )
     return list(bd.scalars(consulta))
 
 
-def resumen_comercial(bd: Session) -> dict[str, Decimal | int]:
-    """Calcula los indicadores principales de la tienda.
+def resumen_cartera(bd: Session) -> dict[str, Decimal]:
+    """Consolida cartera, deuda, caja y efectivo libre (RF-09 y RF-10).
+
+    Definiciones:
+    - Cartera: saldo pendiente de las órdenes activas.
+    - Caja recaudada: abonos de clientes − devoluciones − abonos al proveedor.
+    - Balance: cartera − deuda con el proveedor.
+    - Efectivo libre: caja recaudada − deuda con el proveedor.
+
+    Un valor negativo indica déficit y se muestra en rojo en la vista.
 
     Args:
         bd: Sesión de base de datos.
 
     Returns:
-        Diccionario con ventas totales, cartera, productos y stock bajo.
+        Diccionario con los indicadores en `Decimal`.
     """
-    ventas = listar_ventas(bd)
-    productos = listar_productos(bd)
-    return {
-        "ventas_totales": redondear_dinero(sum((v.total for v in ventas), start=CERO)),
-        "cartera": redondear_dinero(
-            sum((v.saldo_pendiente for v in ventas), start=CERO)
+    ventas = list(bd.scalars(select(Venta)))
+    cartera_clientes = sum(
+        (v.saldo_pendiente for v in ventas if v.estado_orden == ESTADO_ACTIVA), start=CERO
+    )
+    abonos_clientes = sum(
+        (abono.monto for abono in bd.scalars(select(Abono))), start=CERO
+    )
+    devoluciones = sum(
+        (d.monto for d in bd.scalars(select(DevolucionCliente))), start=CERO
+    )
+    abonos_proveedor = sum(
+        (
+            m.monto
+            for m in bd.scalars(select(MovimientoProveedor))
+            if m.tipo == TIPO_ABONO_PROVEEDOR
         ),
-        "numero_ventas": len(ventas),
-        "productos": len(productos),
-        "stock_bajo": sum(1 for p in productos if p.stock <= 3),
+        start=CERO,
+    )
+    deuda = deuda_proveedor(bd)
+    caja = abonos_clientes - devoluciones - abonos_proveedor
+    return {
+        "cartera_clientes": redondear_dinero(cartera_clientes),
+        "deuda_proveedor": deuda,
+        "balance": redondear_dinero(cartera_clientes - deuda),
+        "caja_recaudada": redondear_dinero(caja),
+        "efectivo_libre": redondear_dinero(caja - deuda),
     }
 
 
-def enlace_whatsapp_factura(venta: Venta, cliente: Cliente, lineas: list[dict[str, object]]) -> str:
-    """Construye un enlace de WhatsApp con el resumen de la factura.
+def estado_garantia(venta: Venta, hoy: date) -> tuple[str, int]:
+    """Calcula el semáforo de garantía de una orden (RF-05).
 
     Args:
-        venta: Venta facturada.
-        cliente: Cliente destinatario.
-        lineas: Filas con producto, cantidad y subtotal.
+        venta: Orden consultada.
+        hoy: Fecha local de referencia.
 
     Returns:
-        URL de `wa.me` lista para abrir; si el cliente no tiene teléfono se
-        devuelve un enlace genérico de WhatsApp sin destinatario.
+        Tupla con `VERDE` si la garantía sigue vigente o `ROJO` si venció, y los
+        días restantes (negativos si ya venció). Sin fecha de fin, `ROJO` y 0 días.
+    """
+    if venta.garantia_fecha_fin is None:
+        return "ROJO", 0
+    dias = (venta.garantia_fecha_fin - hoy).days
+    return ("VERDE" if dias >= 0 else "ROJO"), dias
+
+
+def clasificar_saldo(valor: Decimal) -> tuple[str, str]:
+    """Da el texto y la clase de color de un saldo del módulo de cartera (RF-10).
+
+    Un déficit se muestra en rojo con signo menos; un superávit, en verde. El signo
+    menos y los colores se usan solo en este módulo: en el resto de la app los
+    montos negativos no llevan signo.
+
+    Args:
+        valor: Saldo a mostrar.
+
+    Returns:
+        Tupla con el texto (por ejemplo `−$20.000`) y la clase CSS (`valor-negativo`,
+        `valor-positivo` o vacía si es cero).
+    """
+    if valor < CERO:
+        return f"−{formatear_pesos(-valor)}", "valor-negativo"
+    if valor == CERO:
+        return formatear_pesos(valor), ""
+    return formatear_pesos(valor), "valor-positivo"
+
+
+def tabla_balance(resumen: dict[str, Decimal]) -> list[dict[str, str]]:
+    """Arma las filas de la tabla de balance de cartera (RF-09 y RF-10).
+
+    Args:
+        resumen: Indicadores de `resumen_cartera`.
+
+    Returns:
+        Filas con etiqueta, texto del valor, clase CSS y explicación breve.
+    """
+    definiciones = [
+        ("Total adeudado por clientes", resumen["cartera_clientes"], "Órdenes activas con saldo.", False),
+        ("Total adeudado al proveedor", resumen["deuda_proveedor"], "Compras a crédito menos abonos.", False),
+        ("Balance de cartera", resumen["balance"], "Cartera de clientes − deuda con el proveedor.", True),
+        ("Caja recaudada", resumen["caja_recaudada"], "Abonos de clientes − devoluciones − pagos al proveedor.", False),
+        ("Efectivo libre real", resumen["efectivo_libre"], "Caja recaudada − deuda con el proveedor.", True),
+    ]
+    filas = []
+    for etiqueta, valor, explicacion, con_signo in definiciones:
+        if con_signo:
+            texto, clase = clasificar_saldo(valor)
+        else:
+            texto, clase = formatear_pesos(valor), ""
+        filas.append({"etiqueta": etiqueta, "texto": texto, "clase": clase, "explicacion": explicacion})
+    return filas
+
+
+def segmentos_dona(cartera_clientes: Decimal, deuda: Decimal) -> list[dict[str, object]]:
+    """Calcula los arcos de la gráfica tipo dona de cartera y deuda (RF-11).
+
+    Los arcos suman 100 unidades sobre una circunferencia de longitud 100 (radio
+    100 / 2π), así que el porcentaje es directamente la longitud del trazo SVG. El
+    balance se muestra en el centro, no como arco, porque restar la deuda de la
+    cartera no es una proporción del total.
+
+    Args:
+        cartera_clientes: Saldo pendiente de clientes.
+        deuda: Deuda con el proveedor.
+
+    Returns:
+        Lista con un diccionario por arco. Vacía si no hay cartera ni deuda.
+    """
+    cartera_positiva = max(cartera_clientes, CERO)
+    deuda_positiva = max(deuda, CERO)
+    total = cartera_positiva + deuda_positiva
+    if total <= CERO:
+        return []
+
+    arcos: list[dict[str, object]] = []
+    avance = 0.0
+    for etiqueta, valor, color in (
+        ("Cartera por cobrar", cartera_positiva, "var(--accent-blue)"),
+        ("Deuda con proveedor", deuda_positiva, "var(--accent-amber)"),
+    ):
+        porcentaje = float(valor / total * 100)
+        arcos.append(
+            {
+                "etiqueta": etiqueta,
+                "valor": formatear_pesos(valor),
+                "porcentaje": round(porcentaje, 1),
+                "longitud": round(porcentaje, 4),
+                "desplazamiento": round(-avance, 4),
+                "color": color,
+            }
+        )
+        avance += porcentaje
+    return arcos
+
+
+ESTADOS_GARANTIA = ("ABIERTA", "EN_TRAMITE", "RESUELTA", "RECHAZADA")
+ESTADOS_FINALES_GARANTIA = ("RESUELTA", "RECHAZADA")
+
+
+def etiqueta_producto(nombre: str, referencia: str | None) -> str:
+    """Forma el nombre con el que un producto aparece en garantías y ranking.
+
+    Args:
+        nombre: Nombre del producto tal como se vendió.
+        referencia: Modelo o referencia opcional.
+
+    Returns:
+        Texto como `Audífonos BT (AB-1)`, o solo el nombre si no hay referencia.
+    """
+    return f"{nombre} ({referencia})" if referencia else nombre
+
+
+def opciones_garantia(bd: Session) -> list[dict[str, str]]:
+    """Lista las líneas de órdenes activas sobre las que se puede reclamar garantía.
+
+    Args:
+        bd: Sesión de base de datos.
+
+    Returns:
+        Opciones con el id de la línea y un texto legible, de la orden más reciente
+        a la más antigua.
+    """
+    consulta = (
+        select(VentaDetalle, Venta)
+        .join(Venta, Venta.id_venta == VentaDetalle.id_venta)
+        .where(Venta.estado_orden == ESTADO_ACTIVA)
+        .order_by(Venta.numero_orden.desc())
+    )
+    return [
+        {
+            "id_detalle": detalle.id_detalle,
+            "texto": (
+                f"No. {venta.numero_orden} · {venta.cliente_nombre} · "
+                f"{etiqueta_producto(detalle.producto_nombre, detalle.referencia)}"
+            ),
+        }
+        for detalle, venta in bd.execute(consulta).all()
+    ]
+
+
+def registrar_garantia(bd: Session, id_detalle: str, observacion: str = "") -> GarantiaProveedor:
+    """Abre un reclamo de garantía sobre una línea vendida (RF-05).
+
+    Args:
+        bd: Sesión de base de datos.
+        id_detalle: Línea con la falla.
+        observacion: Descripción de la falla; opcional.
+
+    Returns:
+        El reclamo persistido en estado `ABIERTA`.
+
+    Raises:
+        ValueError: Si la línea no existe o la orden está anulada.
+    """
+    detalle = bd.get(VentaDetalle, id_detalle)
+    if detalle is None:
+        raise ValueError("La línea de venta no existe.")
+    venta = bd.get(Venta, detalle.id_venta)
+    if venta is None or venta.estado_orden == ESTADO_ANULADA:
+        raise ValueError("La orden está anulada y no admite garantías.")
+
+    garantia = GarantiaProveedor(
+        id_venta=venta.id_venta,
+        id_detalle=detalle.id_detalle,
+        producto_referencia=etiqueta_producto(detalle.producto_nombre, detalle.referencia)[:120],
+        estado_tramite="ABIERTA",
+        fecha_reclamo=ahora_tienda(),
+        observacion=observacion.strip()[:300] or None,
+    )
+    bd.add(garantia)
+    bd.commit()
+    bd.refresh(garantia)
+    return garantia
+
+
+def actualizar_estado_garantia(
+    bd: Session, id_garantia: str, estado: str, observacion: str = ""
+) -> GarantiaProveedor:
+    """Avanza un reclamo por su trámite con el proveedor.
+
+    El flujo es ABIERTA → EN_TRAMITE → RESUELTA o RECHAZADA. Un reclamo cerrado no
+    se reabre: si la falla vuelve, se registra un reclamo nuevo.
+
+    Args:
+        bd: Sesión de base de datos.
+        id_garantia: Reclamo a actualizar.
+        estado: Nuevo estado.
+        observacion: Nota del trámite; si está vacía se conserva la anterior.
+
+    Returns:
+        El reclamo actualizado.
+
+    Raises:
+        ValueError: Si el reclamo no existe, el estado no es válido, el reclamo ya
+            está cerrado o se intenta volver a `ABIERTA`.
+    """
+    garantia = bd.get(GarantiaProveedor, id_garantia)
+    if garantia is None:
+        raise ValueError("El reclamo de garantía no existe.")
+    nuevo = estado.strip().upper()
+    if nuevo not in ESTADOS_GARANTIA:
+        raise ValueError("El estado de la garantía no es válido.")
+    if garantia.estado_tramite in ESTADOS_FINALES_GARANTIA:
+        raise ValueError("Este reclamo ya está cerrado. Si la falla vuelve, registre un reclamo nuevo.")
+    if nuevo == "ABIERTA":
+        raise ValueError("Un reclamo no vuelve a estado abierto.")
+
+    garantia.estado_tramite = nuevo
+    if nuevo in ESTADOS_FINALES_GARANTIA:
+        garantia.fecha_resolucion = ahora_tienda()
+    if observacion.strip():
+        garantia.observacion = observacion.strip()[:300]
+    bd.commit()
+    bd.refresh(garantia)
+    return garantia
+
+
+def listar_garantias(bd: Session) -> list[GarantiaProveedor]:
+    """Lista los reclamos de garantía del más reciente al más antiguo.
+
+    Args:
+        bd: Sesión de base de datos.
+
+    Returns:
+        Reclamos ordenados por fecha de reclamo descendente.
+    """
+    consulta = select(GarantiaProveedor).order_by(GarantiaProveedor.fecha_reclamo.desc())
+    return list(bd.scalars(consulta))
+
+
+def garantia_vigente_al_reclamo(venta: Venta, fecha_reclamo: datetime) -> bool:
+    """Indica si un reclamo se hizo dentro del plazo de garantía de la orden.
+
+    Args:
+        venta: Orden de la línea reclamada.
+        fecha_reclamo: Momento del reclamo.
+
+    Returns:
+        `True` si el día del reclamo no supera la fecha de fin de garantía.
+    """
+    if venta.garantia_fecha_fin is None:
+        return False
+    return fecha_reclamo.date() <= venta.garantia_fecha_fin
+
+
+def ranking_fallas(bd: Session) -> list[dict[str, object]]:
+    """Calcula la tasa de fallas por producto (RF-05).
+
+    Tasa (%) = reclamos / unidades vendidas × 100. Solo cuentan las órdenes activas:
+    una orden anulada no vende ni genera garantías en el indicador. Un producto con
+    fallas y sin unidades activas aparece con tasa `None` (se muestra como «—»).
+
+    Args:
+        bd: Sesión de base de datos.
+
+    Returns:
+        Filas con producto, unidades, fallas y tasa, de la tasa más alta a la más baja.
+    """
+    unidades: dict[str, int] = {}
+    consulta_ventas = (
+        select(VentaDetalle)
+        .join(Venta, Venta.id_venta == VentaDetalle.id_venta)
+        .where(Venta.estado_orden == ESTADO_ACTIVA)
+    )
+    for detalle in bd.scalars(consulta_ventas):
+        etiqueta = etiqueta_producto(detalle.producto_nombre, detalle.referencia)
+        unidades[etiqueta] = unidades.get(etiqueta, 0) + detalle.cantidad
+
+    fallas: dict[str, int] = {}
+    consulta_garantias = (
+        select(GarantiaProveedor)
+        .join(Venta, Venta.id_venta == GarantiaProveedor.id_venta)
+        .where(Venta.estado_orden == ESTADO_ACTIVA)
+    )
+    for garantia in bd.scalars(consulta_garantias):
+        fallas[garantia.producto_referencia] = fallas.get(garantia.producto_referencia, 0) + 1
+
+    filas: list[dict[str, object]] = []
+    for producto in set(unidades) | set(fallas):
+        vendidas = unidades.get(producto, 0)
+        reclamos = fallas.get(producto, 0)
+        tasa = (Decimal(reclamos) / Decimal(vendidas) * 100).quantize(Decimal("0.1")) if vendidas else None
+        filas.append(
+            {"producto": producto, "unidades": vendidas, "fallas": reclamos, "tasa": tasa}
+        )
+    filas.sort(
+        key=lambda fila: (
+            fila["tasa"] is None,
+            -(fila["tasa"] or CERO),
+            -int(fila["fallas"]),
+            str(fila["producto"]),
+        )
+    )
+    return filas
+
+
+def formatear_pesos(valor: Decimal | int | float) -> str:
+    """Formatea un monto en pesos colombianos sin centavos (ADR-23).
+
+    Args:
+        valor: Monto a mostrar.
+
+    Returns:
+        Texto como `$1.250.000`.
+    """
+    return f"${valor:,.0f}".replace(",", ".")
+
+
+def enlace_whatsapp_factura(venta: Venta, lineas: list[dict[str, object]]) -> str:
+    """Construye el enlace de WhatsApp con el resumen de la factura.
+
+    Args:
+        venta: Orden facturada; usa el celular guardado en la orden.
+        lineas: Filas con nombre, cantidad y subtotal.
+
+    Returns:
+        URL de `wa.me`. Sin celular se devuelve un enlace sin destinatario.
     """
     detalle = "\n".join(
-        f"• {fila['nombre']} x{fila['cantidad']} = ${fila['subtotal']:,.0f}".replace(",", ".")
+        f"• {fila['nombre']} x{fila['cantidad']} = {formatear_pesos(fila['subtotal'])}"
         for fila in lineas
     )
     texto = (
-        f"Hola {cliente.nombre}, gracias por tu compra en OLB_BYTE.\n"
-        f"Factura del {venta.fecha_venta:%d/%m/%Y}\n"
+        f"Hola {venta.cliente_nombre}, gracias por tu compra en OLB_BYTE.\n"
+        f"Factura No. {venta.numero_orden} del {venta.fecha_venta:%d/%m/%Y}\n"
         f"{detalle}\n"
-        f"Total: ${venta.total:,.0f}\n"
-        f"Saldo pendiente: ${venta.saldo_pendiente:,.0f}"
-    ).replace(",", ".")
-    telefono = (cliente.telefono_whatsapp or "").replace(" ", "").replace("+", "")
-    if telefono and not telefono.startswith("57"):
-        telefono = "57" + telefono
-    base = f"https://wa.me/{telefono}" if telefono else "https://wa.me/"
+        f"Total: {formatear_pesos(venta.total)}\n"
+        f"Saldo pendiente: {formatear_pesos(venta.saldo_pendiente)}"
+    )
+    return _enlace_wa(venta.cliente_telefono, texto)
+
+
+def enlace_whatsapp_recibo(venta: Venta, abono: Abono) -> str:
+    """Construye el enlace de WhatsApp con el recibo de un abono (RF-07).
+
+    El mensaje reproduce lo que muestra el recibo: monto, medio, fecha y hora, y el
+    saldo que queda, o un aviso de saldo total si la orden quedó pagada.
+
+    Args:
+        venta: Orden abonada.
+        abono: Abono que se comparte.
+
+    Returns:
+        URL de `wa.me` con el mensaje prellenado.
+    """
+    fecha = abono.fecha_abono.strftime("%d/%m/%Y %H:%M")
+    if venta.saldo_pendiente <= CERO:
+        cierre = "¡Saldo total cancelado! Gracias por tu compra."
+    else:
+        cierre = f"Saldo pendiente: {formatear_pesos(venta.saldo_pendiente)}"
+    texto = (
+        f"Recibo de abono OLB_BYTE\n"
+        f"Factura No. {venta.numero_orden} · {venta.cliente_nombre}\n"
+        f"Abono: {formatear_pesos(abono.monto)} ({abono.metodo_pago.capitalize()})\n"
+        f"Fecha: {fecha}\n"
+        f"{cierre}"
+    )
+    return _enlace_wa(venta.cliente_telefono, texto)
+
+
+def enlace_whatsapp_cobro(venta: Venta) -> str:
+    """Construye el enlace de WhatsApp con un recordatorio de cobro (RF-06).
+
+    Args:
+        venta: Orden con saldo pendiente.
+
+    Returns:
+        URL de `wa.me` con el mensaje prellenado.
+    """
+    texto = (
+        f"Hola {venta.cliente_nombre}, te recordamos el saldo pendiente de la "
+        f"factura No. {venta.numero_orden} en OLB_BYTE: "
+        f"{formatear_pesos(venta.saldo_pendiente)}. ¡Gracias!"
+    )
+    return _enlace_wa(venta.cliente_telefono, texto)
+
+
+def _enlace_wa(telefono: str | None, texto: str) -> str:
+    """Arma la URL de `wa.me` anteponiendo el indicativo 57 al celular.
+
+    Args:
+        telefono: Celular de 10 dígitos o `None`.
+        texto: Mensaje a prellenar.
+
+    Returns:
+        URL codificada para abrir WhatsApp.
+    """
+    base = f"https://wa.me/57{telefono}" if telefono else "https://wa.me/"
     return f"{base}?text={quote(texto)}"
