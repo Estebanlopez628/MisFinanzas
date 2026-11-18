@@ -146,6 +146,7 @@ def crear_proyeccion(
     unidad_periodo: Annotated[str, Form()] = "MESES",
     fecha_inicio: Annotated[str, Form()] = "",
     quincena: Annotated[str, Form()] = "1",
+    modo_ambas: Annotated[str, Form()] = ahorro.MODO_DIVIDIR,
 ) -> HTMLResponse | RedirectResponse:
     """Registra una meta de ahorro o un gasto programado.
 
@@ -155,11 +156,12 @@ def crear_proyeccion(
         bd: Sesión de base de datos.
         categoria: Categoría sugerida o libre.
         descripcion: Detalle del objetivo.
-        valor_mensual: Cuota mensual en pesos.
+        valor_mensual: Cuota escrita por el usuario, en pesos.
         tipo_duracion: `FIJO` o `LIMITADO`.
         meses: Cantidad de cuotas si es limitada.
         fecha_inicio: Primer mes de la proyección.
         quincena: `1`, `2` o `3` (ambas quincenas).
+        modo_ambas: `DIVIDIR` o `DUPLICAR` cuando se eligen ambas quincenas.
 
     Returns:
         Redirección al planificador o la vista con el error.
@@ -175,6 +177,7 @@ def crear_proyeccion(
             meses=_meses_del_formulario(meses, unidad_periodo),
             fecha_inicio=_fecha_del_formulario(fecha_inicio),
             quincena=quincena,
+            modo_ambas=modo_ambas,
         )
         auditoria.registrar(
             bd,

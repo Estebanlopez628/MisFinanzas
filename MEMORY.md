@@ -237,6 +237,31 @@ Recálculo en tiempo real (<100 ms) sin recargar página. Se implementa con func
 - **Decisión:** `cumplida` se calcula por fecha (el mes actual supera el último mes del periodo). `extender_proyeccion` suma meses desde el último mes planificado, o desde el mes actual si ya se cumplió. `eliminar_proyeccion` ya no borra: archiva (`activo = false`, `archivada_en`, `estado_final`), quita los gastos futuros no pagados y conserva los pagados. `historial_metas` lista las archivadas con inicio, fin, total recogido y el detalle mes por mes (`_detalle_pagos`: pagado con monto y fecha, o no pagado hasta el mes de archivado) en un desplegable por meta. Las etiquetas del selector son «Meta a largo plazo» y «Meta a corto plazo»; ambas usan el mismo periodo.
 - **Archivos:** `modelos.py` (`archivada_en`, `estado_final`), `core/base_datos.py` (`_migrar_columnas_metas`), `servicios/ahorro.py`, `routers/presupuesto.py` (ruta `extender_proyeccion`), `templates/presupuesto/index.html`, `static/css/estilos.css`, `diccionario_datos.md` §9.1.
 
+### ADR-30 — Rejillas que no desbordan y alturas homologadas (SRS v1.7, bloque A)
+- **Contexto:** en móvil, `input[type="date"]` empujaba su columna y desbordaba la tarjeta; los campos de «Gastos y Presupuesto» tenían alturas distintas.
+- **Decisión:** las rejillas usan `minmax(min(Npx, 100%), 1fr)`; todo hijo de `.campo`, `.fila-campos` y `.formulario` lleva `min-width: 0`; los controles de fecha fijan `width/max-width: 100%`, `box-sizing: border-box` y `appearance: none`; etiquetas con `min-height` común y controles con `min-height: 50px` (texto a 16 px en móvil para evitar el zoom de iOS). No cambia ninguna regla de negocio.
+- **Archivos:** `static/css/estilos.css`, `static/js/sw.js` (`olb-finanzas-v10`).
+
+### ADR-31 — «Ambas quincenas»: dividir o duplicar la cuota (SRS v1.7, bloque B)
+- **Contexto:** con una meta en las dos quincenas, el usuario no podía decidir si la cuota se repartía o se cobraba completa en cada pago.
+- **Decisión:** nueva columna `proyecciones_ahorro.modo_ambas` (`DIVIDIR` | `DUPLICAR`, por defecto `DIVIDIR`). `DIVIDIR` reparte $100.000 en $50.000 + $50.000; `DUPLICAR` cobra $100.000 + $100.000 ($200.000 al mes). El modo solo aplica a `quincena = 3`; en 1 o 2 se normaliza a `DIVIDIR`. `valor_mensual_efectivo` alimenta el total proyectado y la generación de gastos usa `valor_por_pago`.
+- **Archivos:** `modelos.py`, `core/base_datos.py` (`_migrar_columnas_metas`, rebuild de `_migrar_proyeccion_quincena`), `servicios/ahorro.py`, `servicios/pagos_metas.py`, `routers/presupuesto.py`, `templates/presupuesto/index.html`, `static/js/presupuesto.js`, `diccionario_datos.md` §9.1, `tests/test_metas_modo.py`.
+
+### ADR-32 — Desmarcar revierte el pago; la limpieza masiva lo conserva (SRS v1.7, bloque C)
+- **Contexto:** el usuario puede marcar un ✔ por error y necesita corregirlo; además, al iniciar un periodo nuevo quiere ocultar los checks sin perder el histórico de pagos.
+- **Decisión:** dos acciones distintas. `pagos_metas.desmarcar_pagado` (`POST /gastos/{id}/no-pagado`) revierte `pagado`, `pagado_en` y `monto_pagado`, vuelve a contar el gasto en su quincena y recalcula el abono de la meta. `limpiar_checks` solo pone `check_visible = False` y conserva el pago y el abono. El panel pinta el ✔ únicamente cuando `pagado and check_visible`, de modo que la limpieza no deja marcas residuales. La fila del gasto pasa a una macro compartida (`templates/finanzas/_gasto_fijo.html`) con lápiz de edición, «Cancelar» y × circular; «Limpiar checks» usa `boton--advertencia` y pide confirmación con `data-confirmar`.
+- **Archivos:** `servicios/pagos_metas.py`, `routers/gastos.py`, `templates/finanzas/_gasto_fijo.html`, `templates/finanzas/index.html`, `templates/presupuesto/index.html`, `static/css/estilos.css`, `static/js/app.js`, `tests/test_gastos_checks.py`.
+
+### ADR-33 — Atajos de pago con uno o dos días mensuales (SRS v1.7, bloque D)
+- **Contexto:** un servicio puede pagarse una o dos veces al mes, y el usuario necesita ver el día en la tarjeta del atajo.
+- **Decisión:** `chancucos` gana `dia_pago_1` y `dia_pago_2` (`SMALLINT NULL`). Se guarda **solo el número del día** (1–31), sin año ni mes, porque el atajo se repite cada mes; la interfaz muestra «Día 15» o «Día 15 · Día 30». El formulario pregunta «¿Es un único pago mensual?»; con «Sí» el segundo día se ignora aunque llegue en la petición. Un segundo día igual al primero se descarta. Los atajos existentes quedan en `NULL`, se muestran como «Sin día definido» y no se alteran. No se toca Gastos Fijos: los atajos son referencias, no movimientos de dinero.
+- **Archivos:** `modelos.py`, `core/base_datos.py` (`_migrar_columnas_chancucos`), `servicios/chancucos.py`, `routers/chancucos.py`, `templates/chancucos/_dias.html`, `templates/chancucos/index.html`, `templates/finanzas/index.html`, `static/css/estilos.css`, `static/js/app.js`, `diccionario_datos.md` §9, `tests/test_chancucos_dias.py`.
+
+### ADR-34 — Trabajos Extras como contratos recurrentes con pagos propios (SRS v1.7, bloque E)
+- **Contexto:** un trabajo extra podía ser un ingreso suelto o un contrato que se cobra todos los meses; el usuario necesita registrar la frecuencia, el tipo de contrato y marcar cada cobro sin que esos ingresos alteren el sueldo ni las quincenas.
+- **Decisión:** `trabajos_extras` gana `tipo_contrato` (`INDEFINIDO` | `TERMINO_FIJO`), `frecuencia` (`MENSUAL` | `QUINCENAL`), `fecha_fin` y `fecha_pago`. `valor` es el monto **de cada pago**. Los pagos se generan de forma idempotente como filas de `gastos` con `id_trabajo`: reutilizan la macro `fila_gasto` (lápiz, «Cancelar», ×, ✔ y abono manual) pero `gastos.listar_gastos` los excluye, así que no tocan el sueldo, las quincenas ni los totales de gastos. El ✔ registra el cobro y `trabajos.extras_cobrados_mes` lo suma al `disponible` del diagnóstico del mes. La frecuencia quincenal crea dos pagos (día 15 y día 30 ajustado al último día); la mensual, uno en el día de `fecha_pago`. Un contrato indefinido mantiene una ventana móvil de 12 meses desde el mes visible; un término fijo se detiene en `fecha_fin`. La × inhabilita el pago 15 días en lugar de borrarlo, para que la generación idempotente no lo recree. Los trabajos anteriores se migran como término fijo de un solo mes para no inventar ingresos recurrentes.
+- **Archivos:** `modelos.py` (`TrabajoExtra`, `Gasto.id_trabajo`), `core/base_datos.py` (`_migrar_columnas_trabajos`, `id_trabajo` en `_migrar_columnas_gastos`), `servicios/trabajos.py`, `servicios/gastos.py`, `servicios/pagos_metas.py` (`quitar_gasto`), `servicios/ahorro.py` (`diagnostico`), `routers/trabajos.py`, `routers/gastos.py` (`_volver`), `templates/trabajos/index.html`, `templates/finanzas/_gasto_fijo.html`, `templates/presupuesto/index.html`, `static/js/app.js`, `diccionario_datos.md` §7 y §12, `tests/test_trabajos_extras.py`.
+
 ### ADR-27 — Monto pagado, propagación de valor y ventana de generación (SRS v1.6)
 - **Contexto:** el abono de un mes debe reflejar lo realmente pagado, no la cuota; editar una quincena debe valer desde ese mes en adelante; una meta limitada debe generar toda su duración.
 - **Decisión:** nueva columna `gastos.monto_pagado`. El saldo y el abono cuentan `monto_pagado` cuando `pagado = true`. `propagar_valor` copia el valor editado a los meses posteriores de la misma meta y quincena que no estén pagados. Los meses nuevos toman el último valor de esa quincena. Las metas generan todo el periodo escogido por el usuario (ADR-28).
@@ -289,6 +314,34 @@ Recálculo en tiempo real (<100 ms) sin recargar página. Se implementa con func
 ---
 
 ## Bitácora de Cambios
+
+### 2026-11-17 — SRS v1.7, bloques A a D: UI móvil, metas dividir/duplicar, checks corregibles y días de pago
+
+**Cambios realizados**
+1. `static/css/estilos.css` — rejillas con `minmax(min(...), 100%)`, `min-width: 0` en campos, normalización de fechas, alturas de 50 px y texto a 16 px en móvil (ADR-30).
+2. `modelos.py` y `core/base_datos.py` — `ProyeccionAhorro.modo_ambas` con CHECK y migración idempotente; el rebuild de la tabla conserva `COALESCE(modo_ambas, 'DIVIDIR')` (ADR-31).
+3. `servicios/ahorro.py` — `MODO_DIVIDIR`/`MODO_DUPLICAR`, `valor_por_pago(valor, quincena, modo)`, `valor_mensual_efectivo`; total proyectado y planeado usan el valor efectivo.
+4. `servicios/pagos_metas.py` — `desmarcar_pagado` revierte el pago y su abono; la generación de gastos respeta el modo (ADR-32).
+5. `routers/gastos.py` — `POST /gastos/{id}/no-pagado` con auditoría `GASTO_DESMARCADO`.
+6. `templates/finanzas/_gasto_fijo.html` (nuevo) — macro `fila_gasto` y `boton_editar` compartidas; lápiz, «Cancelar», × circular, ✔ solo con `check_visible` y abono manual.
+7. `templates/finanzas/index.html` y `presupuesto/index.html` — usan la macro; «Limpiar checks» con `boton--advertencia` y `data-confirmar`; deducciones fijas con el mismo lápiz y «Cancelar».
+8. `static/js/app.js` — delegación para `data-cancelar-edicion` y `data-confirmar`.
+9. `templates/presupuesto/index.html` y `static/js/presupuesto.js` — selector de modo con explicación de montos.
+10. `static/js/sw.js` — caché `olb-finanzas-v12`.
+11. `modelos.py` y `core/base_datos.py` — `Chancuco.dia_pago_1` y `dia_pago_2` con migración idempotente (ADR-33).
+12. `servicios/chancucos.py`, `routers/chancucos.py` y `templates/chancucos/_dias.html` — pregunta «¿Es un único pago mensual?», validación 1–31 y distintivo «Día 15 · Día 30» en la tabla y en la tarjeta de Mis Finanzas.
+13. `static/js/app.js` — el segundo día se oculta cuando el pago es único.
+14. Pruebas nuevas: `tests/test_metas_modo.py` (10), `tests/test_gastos_checks.py` (9) y `tests/test_chancucos_dias.py` (10).
+15. `MEMORY.md` — ADR-30 a ADR-33; `diccionario_datos.md` §9 con los días de pago.
+
+**Verificación**
+- `pytest -q` → **318 pruebas en verde**.
+- `python -m compileall -q app scripts` sin errores.
+- Migración de `modo_ambas` probada dos veces sobre una copia de `datos/finanzas.db`: columna presente, meta existente en `DIVIDIR`, 0 nulos.
+
+**Pendiente**
+- Revisión visual en navegador (360/390/768/escritorio) de las cuatro primeras entregas.
+- Bloques E a G del SRS v1.7.
 
 ### 2026-11-16 — SRS v1.6: montos sin centavos, metas como gastos con check, incapacidades
 

@@ -91,8 +91,70 @@ def crear_esquema() -> None:
 
     Base.metadata.create_all(motor)
     _migrar_columnas_perfil()
+    _migrar_columnas_trabajos()
     _migrar_columnas_gastos()
     _migrar_columnas_metas()
+    _migrar_columnas_chancucos()
+
+
+def _migrar_columnas_trabajos() -> None:
+    """Agrega las columnas de contrato a `trabajos_extras` (SRS v1.7, bloque E).
+
+    Los trabajos anteriores eran ingresos sueltos: quedan como contrato
+    `INDEFINIDO` de frecuencia `MENSUAL`, con `fecha_pago = fecha`, de modo que
+    siguen visibles sin inventar pagos retroactivos. Es idempotente.
+    """
+    if not _conexion_sqlite:
+        return
+
+    with motor.begin() as conexion:
+        filas = conexion.exec_driver_sql(
+            "PRAGMA table_info(trabajos_extras)"
+        ).fetchall()
+        existentes = {fila[1] for fila in filas}
+        if not existentes:
+            return
+        nuevas = {
+            "tipo_contrato": "VARCHAR(20) NOT NULL DEFAULT 'INDEFINIDO'",
+            "frecuencia": "VARCHAR(12) NOT NULL DEFAULT 'MENSUAL'",
+            "fecha_fin": "DATE",
+            "fecha_pago": "DATE",
+        }
+        for columna, tipo in nuevas.items():
+            if columna not in existentes:
+                conexion.exec_driver_sql(
+                    f"ALTER TABLE trabajos_extras ADD COLUMN {columna} {tipo}"
+                )
+        # Los trabajos heredados eran ingresos sueltos, no contratos: se anclan a
+        # su fecha como un contrato de término fijo de un solo mes. Así no se
+        # inventa un ingreso recurrente de 12 meses al abrir el módulo.
+        conexion.exec_driver_sql(
+            "UPDATE trabajos_extras "
+            "SET fecha_pago = fecha, tipo_contrato = 'TERMINO_FIJO', fecha_fin = fecha "
+            "WHERE fecha_pago IS NULL"
+        )
+
+
+def _migrar_columnas_chancucos() -> None:
+    """Agrega los días de pago mensuales a `chancucos` (SRS v1.7, bloque D).
+
+    Los atajos existentes conservan sus datos y quedan sin día (`NULL`): sus
+    tarjetas se muestran igual que antes, sin distintivo de fecha. Es
+    idempotente: solo añade las columnas que falten.
+    """
+    if not _conexion_sqlite:
+        return
+
+    with motor.begin() as conexion:
+        filas = conexion.exec_driver_sql("PRAGMA table_info(chancucos)").fetchall()
+        existentes = {fila[1] for fila in filas}
+        if not existentes:
+            return
+        for columna in ("dia_pago_1", "dia_pago_2"):
+            if columna not in existentes:
+                conexion.exec_driver_sql(
+                    f"ALTER TABLE chancucos ADD COLUMN {columna} SMALLINT"
+                )
 
 
 def _migrar_columnas_metas() -> None:
@@ -111,7 +173,13 @@ def _migrar_columnas_metas() -> None:
         existentes = {fila[1] for fila in filas}
         if not existentes:
             return
-        nuevas = {"archivada_en": "DATE", "estado_final": "VARCHAR(20)"}
+        nuevas = {
+            "archivada_en": "DATE",
+            "estado_final": "VARCHAR(20)",
+            # SRS v1.7: modo de reparto con «Ambas quincenas». Las metas ya
+            # creadas conservan el comportamiento histórico (dividir).
+            "modo_ambas": "VARCHAR(12) NOT NULL DEFAULT 'DIVIDIR'",
+        }
         for columna, tipo in nuevas.items():
             if columna not in existentes:
                 conexion.exec_driver_sql(
@@ -190,6 +258,8 @@ def _migrar_columnas_gastos() -> None:
         # booleanas llevan default para que SQLite acepte el `NOT NULL`.
         nuevas = {
             "id_proyeccion": "VARCHAR(32) REFERENCES proyecciones_ahorro (id_proyeccion) ON DELETE CASCADE",
+            # SRS v1.7: pagos generados por un trabajo extra.
+            "id_trabajo": "VARCHAR(32) REFERENCES trabajos_extras (id_trabajo) ON DELETE CASCADE",
             "pagado": "BOOLEAN NOT NULL DEFAULT 0",
             "pagado_en": "DATE",
             "monto_pagado": "NUMERIC(14,2)",
@@ -351,10 +421,13 @@ def _migrar_proyeccion_quincena() -> None:
                 meses SMALLINT,
                 fecha_inicio DATE NOT NULL,
                 quincena SMALLINT NOT NULL,
+                modo_ambas VARCHAR(12) NOT NULL DEFAULT 'DIVIDIR',
                 activo BOOLEAN NOT NULL DEFAULT 1,
                 fecha_creacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 CONSTRAINT ck_proyeccion_valor CHECK (valor_mensual >= 0),
                 CONSTRAINT ck_proyeccion_quincena CHECK (quincena IN (1, 2, 3)),
+                CONSTRAINT ck_proyeccion_modo_ambas
+                    CHECK (modo_ambas IN ('DIVIDIR', 'DUPLICAR')),
                 CONSTRAINT ck_proyeccion_duracion
                     CHECK (tipo_duracion IN ('FIJO', 'LIMITADO'))
             )
@@ -382,11 +455,12 @@ def _migrar_proyeccion_quincena() -> None:
             INSERT INTO proyecciones_ahorro_v15 (
                 id_proyeccion, id_usuario, categoria, descripcion,
                 valor_mensual, tipo_duracion, meses, fecha_inicio, quincena,
-                activo, fecha_creacion
+                modo_ambas, activo, fecha_creacion
             )
             SELECT
                 id_proyeccion, id_usuario, categoria, descripcion,
                 valor_mensual, tipo_duracion, meses, fecha_inicio, quincena,
+                COALESCE(modo_ambas, 'DIVIDIR'),
                 COALESCE(activo, 1), COALESCE(fecha_creacion, CURRENT_TIMESTAMP)
             FROM proyecciones_ahorro
             """

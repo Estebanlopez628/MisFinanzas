@@ -258,7 +258,7 @@ def test_presupuesto_muestra_banner_y_alerta(cliente_admin, bd) -> None:
     respuesta = cliente_admin.get("/presupuesto")
     assert respuesta.status_code == 200
     assert "Diagnóstico del mes" in respuesta.text
-    assert "te sobran del sueldo" in respuesta.text
+    assert "te quedan disponibles" in respuesta.text
 
     # Con gastos fijos que se comen el sueldo, el banner crítico aparece.
     gastos.crear_gasto(

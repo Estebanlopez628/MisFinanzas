@@ -1,0 +1,14 @@
+{#
+  Distintivo de los días de pago de un atajo (SRS v1.7, bloque D).
+
+  Se usa en la tarjeta de Mis Finanzas y en la tabla de «Configurar Atajos de
+  Pago» para mostrar exactamente el mismo texto: «Día 15» o «Día 15 · Día 30».
+#}
+
+{% macro dias_pago(item, clase="badge badge--fecha") -%}
+  {%- if item.dia_pago_1 -%}
+    <span class="{{ clase }}" title="Día de pago mensual">
+      Día {{ item.dia_pago_1 }}{% if item.dia_pago_2 %} · Día {{ item.dia_pago_2 }}{% endif %}
+    </span>
+  {%- endif -%}
+{%- endmacro %}

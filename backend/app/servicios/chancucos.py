@@ -5,6 +5,10 @@ Responsabilidad
 Guardar las referencias que el administrador usa para pagar servicios, marcar
 favoritos y eliminarlas. El copiado al portapapeles y el botón *Pagar* son
 mejoras de interfaz; la validación de la URL vive aquí.
+
+SRS v1.7 (bloque D): cada atajo puede declarar uno o dos días de pago mensuales.
+Se guarda solo el número del día (1–31), sin año, porque el atajo se repite todos
+los meses; el distintivo «Día 15» se arma en la plantilla.
 """
 
 from __future__ import annotations
@@ -15,6 +19,54 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.modelos import Chancuco
+
+DIAS_DEL_MES = range(1, 32)
+
+
+def _normalizar_dia(dia: int | str | None, nombre: str) -> int | None:
+    """Valida y convierte un día de pago mensual.
+
+    Args:
+        dia: Número, texto del formulario o `None` si no se informó.
+        nombre: Etiqueta del campo para el mensaje de error.
+
+    Returns:
+        Día entre 1 y 31, o `None` cuando el campo viene vacío.
+
+    Raises:
+        ValueError: Si el valor no es un número entero entre 1 y 31.
+    """
+    if dia is None or (isinstance(dia, str) and not dia.strip()):
+        return None
+    try:
+        numero = int(str(dia).strip())
+    except (TypeError, ValueError) as error:
+        raise ValueError(f"{nombre} debe ser un número entre 1 y 31.") from error
+    if numero < 1 or numero > 31:
+        raise ValueError(f"{nombre} debe estar entre 1 y 31.")
+    return numero
+
+
+def _normalizar_dias(dia_pago_1, dia_pago_2) -> tuple[int | None, int | None]:
+    """Normaliza la pareja de días de pago de un atajo.
+
+    Un segundo día igual al primero se descarta: el atajo es de un único pago.
+
+    Args:
+        dia_pago_1: Primer día del mes, si existe.
+        dia_pago_2: Segundo día del mes, si existe.
+
+    Returns:
+        Tupla `(primer_dia, segundo_dia)`.
+
+    Raises:
+        ValueError: Si alguno de los días no está entre 1 y 31.
+    """
+    primero = _normalizar_dia(dia_pago_1, "El día de pago")
+    segundo = _normalizar_dia(dia_pago_2, "El segundo día de pago")
+    if segundo is not None and segundo == primero:
+        segundo = None
+    return primero, segundo
 
 
 def _validar_url(url: str | None) -> str | None:
@@ -45,6 +97,8 @@ def crear_chancuco(
     numero_referencia: str,
     url_pago: str | None = None,
     favorito: bool = False,
+    dia_pago_1: int | str | None = None,
+    dia_pago_2: int | str | None = None,
 ) -> Chancuco:
     """Registra un atajo de pago.
 
@@ -56,12 +110,15 @@ def crear_chancuco(
         url_pago: Pasarela oficial, si existe; es opcional porque hay recibos
             que solo se pagan en ventanilla.
         favorito: Marca inicial de favorito.
+        dia_pago_1: Día del mes del pago (1–31), si se conoce.
+        dia_pago_2: Segundo día del mes para un pago doble, si aplica.
 
     Returns:
         El atajo persistido.
 
     Raises:
-        ValueError: Si falta la descripción o la referencia, o la URL es inválida.
+        ValueError: Si falta la descripción o la referencia, la URL es inválida
+            o alguno de los días no está entre 1 y 31.
     """
     descripcion_limpia = descripcion.strip()
     referencia_limpia = numero_referencia.strip()
@@ -70,12 +127,16 @@ def crear_chancuco(
     if not referencia_limpia:
         raise ValueError("El número de referencia es obligatorio.")
 
+    primero, segundo = _normalizar_dias(dia_pago_1, dia_pago_2)
+
     chancuco = Chancuco(
         id_usuario=id_usuario,
         descripcion=descripcion_limpia[:120],
         numero_referencia=referencia_limpia[:60],
         url_pago=_validar_url(url_pago),
         favorito=favorito,
+        dia_pago_1=primero,
+        dia_pago_2=segundo,
     )
     bd.add(chancuco)
     bd.commit()

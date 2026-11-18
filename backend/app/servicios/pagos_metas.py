@@ -7,6 +7,8 @@ Responsabilidad
   escogió el usuario, en meses o años.
 - Marcar un gasto como pagado (✔). El pago queda registrado de forma permanente
   y su suma por mes forma el abono de la meta en «Gastos y Presupuesto».
+- Desmarcar un ✔ (SRS v1.7, bloque C). Revierte el pago y su abono para corregir
+  una marca hecha por error.
 - Limpiar los checks de una quincena. Solo oculta el ✔; el pago se conserva.
 - Quitar un pago con × en un gasto de meta: queda inhabilitado 15 días en su
   quincena, no cuenta en el saldo y su abono se retira. La meta nunca se elimina.
@@ -115,8 +117,9 @@ def _gastos_de_meta_en_mes(
 def _quincenas_de_la_meta(proyeccion) -> list[tuple[int, Decimal]]:
     """Calcula en qué quincenas se descuenta la meta y cuánto en cada una.
 
-    SRS v1.5: con «Ambas quincenas» la cuota mensual se reparte en partes
-    iguales; con quincena 1 o 2, el pago elegido asume la cuota completa.
+    SRS v1.7: con «Ambas quincenas» el monto de cada pago depende del modo
+    (`DIVIDIR` reparte la cuota; `DUPLICAR` cobra la cuota completa); con
+    quincena 1 o 2, el pago elegido asume la cuota completa.
 
     Args:
         proyeccion: Meta persistida.
@@ -124,7 +127,9 @@ def _quincenas_de_la_meta(proyeccion) -> list[tuple[int, Decimal]]:
     Returns:
         Lista de tuplas `(quincena, monto)`.
     """
-    monto = ahorro.valor_por_pago(proyeccion.valor_mensual, proyeccion.quincena)
+    monto = ahorro.valor_por_pago(
+        proyeccion.valor_mensual, proyeccion.quincena, proyeccion.modo_ambas
+    )
     if proyeccion.quincena == ahorro.QUINCENA_AMBAS:
         return [(1, monto), (2, monto)]
     return [(proyeccion.quincena, monto)]
@@ -385,6 +390,39 @@ def marcar_pagado(
     return gasto
 
 
+def desmarcar_pagado(
+    bd: Session, id_usuario: str, id_gasto: str
+) -> Gasto | None:
+    """Revierte el ✔ de un gasto fijo y retira su abono (SRS v1.7).
+
+    Sirve para corregir un check marcado por error: el gasto vuelve a contar en
+    el saldo de su quincena y, si es de una meta, el abono del mes se recalcula
+    sin ese pago. El check queda visible para poder volver a marcarlo.
+
+    Args:
+        bd: Sesión de base de datos.
+        id_usuario: Dueño del gasto.
+        id_gasto: Gasto cuyo ✔ se retira.
+
+    Returns:
+        El gasto actualizado, o `None` si no existe o es de otro usuario.
+    """
+    gasto = bd.get(Gasto, id_gasto)
+    if gasto is None or gasto.id_usuario != id_usuario:
+        return None
+
+    gasto.pagado = False
+    gasto.pagado_en = None
+    gasto.monto_pagado = None
+    # El check se muestra vacío: el usuario puede volver a pulsarlo si se
+    # arrepiente, sin perder el estado de «pago conservado».
+    gasto.check_visible = True
+    bd.commit()
+    sincronizar_gasto(bd, gasto)
+    bd.refresh(gasto)
+    return gasto
+
+
 def registrar_abono_manual(
     bd: Session,
     id_usuario: str,
@@ -496,10 +534,11 @@ def inhabilitar_gasto(
 def quitar_gasto(
     bd: Session, id_usuario: str, id_gasto: str, hoy: date
 ) -> str | None:
-    """Gestiona la × de un gasto fijo según sea de meta o no.
+    """Gestiona la × de un gasto fijo según sea de meta, de trabajo o manual.
 
-    Un gasto de meta se inhabilita (la meta sigue viva). Un gasto manual se
-    elimina como antes.
+    Un gasto de meta se inhabilita (la meta sigue viva). Un pago de trabajo extra
+    también se inhabilita 15 días: así la × no lo borra y la generación
+    idempotente no lo vuelve a crear. Un gasto manual se elimina como antes.
 
     Args:
         bd: Sesión de base de datos.
@@ -513,7 +552,7 @@ def quitar_gasto(
     gasto = bd.get(Gasto, id_gasto)
     if gasto is None or gasto.id_usuario != id_usuario:
         return None
-    if gasto.id_proyeccion is not None:
+    if gasto.id_proyeccion is not None or gasto.id_trabajo is not None:
         inhabilitar_gasto(bd, id_usuario, id_gasto, hoy)
         return ACCION_INHABILITADO
     gastos.eliminar_gasto(bd, id_usuario, id_gasto)

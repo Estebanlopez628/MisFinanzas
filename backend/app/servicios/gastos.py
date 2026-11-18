@@ -144,7 +144,12 @@ def listar_gastos(
     Returns:
         Lista ordenada por fecha descendente.
     """
-    consulta = select(Gasto).where(Gasto.id_usuario == id_usuario)
+    consulta = select(Gasto).where(
+        Gasto.id_usuario == id_usuario,
+        # SRS v1.7: los pagos de trabajos extras viven en `gastos` solo para
+        # reutilizar la fila con check; no son gastos ni restan del sueldo.
+        Gasto.id_trabajo.is_(None),
+    )
     if anio is not None and mes is not None:
         inicio = date(anio, mes, 1)
         fin = date(anio + (mes // 12), (mes % 12) + 1, 1)

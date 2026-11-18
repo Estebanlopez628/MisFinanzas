@@ -1,12 +1,13 @@
 {% extends "base.html" %}
+{% from "chancucos/_dias.html" import dias_pago with context %}
 {% block titulo %}Configurar Atajos de Pago{% endblock %}
 
 {% block contenido %}
   <section class="heroe">
     <h1 class="heroe__titulo">Configurar Atajos de Pago</h1>
     <p class="heroe__subtitulo">
-      Tres datos por atajo: descripción, número de referencia y enlace.
-      Copia la referencia con un clic y abre la pasarela oficial con
+      Descripción, número de referencia, enlace y día de pago. Copia la
+      referencia con un clic y abre la pasarela oficial con
       <strong>Pagar</strong>.
     </p>
   </section>
@@ -43,6 +44,34 @@
             aplicación del banco.
           </span>
         </label>
+        {# SRS v1.7: el atajo puede ser un pago mensual o dos pagos al mes. #}
+        <fieldset class="opciones">
+          <legend class="campo__etiqueta">¿Es un único pago mensual?</legend>
+          <label class="opcion">
+            <input type="radio" name="unico_pago" value="1" checked data-pago-unico />
+            <span>Sí, un solo pago al mes</span>
+          </label>
+          <label class="opcion">
+            <input type="radio" name="unico_pago" value="0" data-pago-unico />
+            <span>No, son dos pagos al mes</span>
+          </label>
+        </fieldset>
+        <div class="fila-campos">
+          <label class="campo">
+            <span class="campo__etiqueta">Día de pago</span>
+            <input class="campo__control" type="number" name="dia_pago_1"
+                   min="1" max="31" inputmode="numeric" placeholder="15" required />
+            <span class="ayuda">
+              Solo el día del mes (1–31); el atajo se repite todos los meses.
+            </span>
+          </label>
+          <label class="campo" data-dia-pago="2">
+            <span class="campo__etiqueta">Segundo día de pago</span>
+            <input class="campo__control" type="number" name="dia_pago_2"
+                   min="1" max="31" inputmode="numeric" placeholder="30" />
+            <span class="ayuda">Déjalo vacío si el pago es único.</span>
+          </label>
+        </div>
         <label class="campo campo--casilla">
           <input type="checkbox" name="favorito" value="1" />
           <span>Marcar como favorito</span>
@@ -75,6 +104,7 @@
             <tr>
               <th scope="col">Favorito</th>
               <th scope="col">Descripción</th>
+              <th scope="col">Días de pago</th>
               <th scope="col">Referencia</th>
               <th scope="col">Acciones</th>
             </tr>
@@ -91,6 +121,13 @@
                   </form>
                 </td>
                 <td>{{ item.descripcion }}</td>
+                <td>
+                  {% if item.dia_pago_1 %}
+                    {{ dias_pago(item) }}
+                  {% else %}
+                    <span class="ayuda">Sin día definido</span>
+                  {% endif %}
+                </td>
                 <td class="tabla__numero">
                   <code>{{ item.numero_referencia }}</code>
                   <button class="boton boton--secundario boton--pequeno" type="button"

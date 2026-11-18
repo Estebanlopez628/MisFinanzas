@@ -173,6 +173,7 @@ Gastos fijos y variables que afectan el bolsillo del periodo.
 | `fecha` | `DATE` | No | Sí | Fecha del gasto. |
 | `quincena` | `SMALLINT` | Sí | No | `1` o `2`: quincena a la que se imputa el gasto fijo. `NULL` = gasto del mes completo. `CHECK (quincena IN (1,2) OR quincena IS NULL)`. |
 | `id_proyeccion` | `UUID` (FK → `proyecciones_ahorro`) | Sí | No | SRS v1.6: meta que originó el gasto. `ON DELETE CASCADE`. `NULL` para gastos manuales. |
+| `id_trabajo` | `UUID` (FK → `trabajos_extras`) | Sí | No | SRS v1.7: pago generado por un trabajo extra. `ON DELETE CASCADE`. Los gastos con `id_trabajo` no se listan como gastos ni restan del sueldo o las quincenas: su neto va al diagnóstico del mes. |
 | `pagado` | `BOOLEAN` | No | Sí | SRS v1.6: `DEFAULT false`. Registro permanente del pago (✔). No se revierte con «Limpiar». |
 | `pagado_en` | `DATE` | Sí | No | SRS v1.6: fecha en que se marcó el pago. |
 | `monto_pagado` | `NUMERIC(14,2)` | Sí | No | SRS v1.6: monto realmente pagado. Con ✔ es igual a `valor`; con abono manual es el monto abonado; en abonos heredados es el abono anterior. Es lo que cuenta en el saldo cuando `pagado = true`. |
@@ -247,6 +248,8 @@ fusionan en una sola descripción libre.
 | `descripcion` | `VARCHAR(120)` | No | Sí | Texto libre que identifica el atajo. Ej. `EPM energía`, `Claro internet`, `Tarjeta Bancolombia`. Absorbe los antiguos `entidad` + `tipo_servicio`. |
 | `numero_referencia` | `VARCHAR(60)` | No | Sí | Código que el usuario copia al portapapeles antes de pagar. |
 | `url_pago` | `VARCHAR(300)` | Sí | No | URL oficial para el botón *Pagar*. Validar `http(s)`. Se mantiene opcional: hay recibos que solo se pagan en ventanilla y el atajo sigue sirviendo para copiar la referencia. |
+| `dia_pago_1` | `SMALLINT` | Sí | No | SRS v1.7: día del mes del pago (1–31). Se guarda solo el número, sin año, porque el atajo se repite todos los meses. Los atajos anteriores quedan en `NULL` y se muestran sin distintivo. |
+| `dia_pago_2` | `SMALLINT` | Sí | No | SRS v1.7: segundo día del mes para un pago doble (por ejemplo, 15 y 30). Si coincide con `dia_pago_1`, se descarta y el atajo queda como pago único. |
 | `favorito` | `BOOLEAN` | No | Sí | Default `false`. Ordena los atajos en el panel de lectura. |
 | `fecha_creacion` | `TIMESTAMPTZ` | No | Sí | `now()`. |
 
@@ -254,6 +257,9 @@ fusionan en una sola descripción libre.
 (idempotente, verificado contra `PRAGMA table_info`). La columna `tipo_servicio`
 queda sin uso y se conserva para no romper bases ya desplegadas; ningún flujo la
 lee ni la escribe.
+
+**Migración SRS v1.7:** `_migrar_columnas_chancucos()` agrega `dia_pago_1` y
+`dia_pago_2` como `SMALLINT NULL`. Es idempotente y no toca los atajos existentes.
 
 ---
 
@@ -401,17 +407,26 @@ productos 1 ─── N venta_detalle
 
 ## 12. `trabajos_extras`
 
-Ingresos independientes del salario (módulo `Trabajos Extras`). Se añadió al implementar el bloque B para no dejar el módulo sin respaldo persistente.
+Ingresos independientes del salario (módulo `Trabajos Extras`). Se añadió al implementar el bloque B para no dejar el módulo sin respaldo persistente. **SRS v1.7:** el registro pasa a ser un contrato recurrente con tipo, frecuencia y fechas; sus pagos se guardan en `gastos` con `id_trabajo` (ver §7).
 
 | Campo | Tipo | Nulo | Obligatorio | Descripción / Regla |
 | --- | --- | --- | --- | --- |
 | `id_trabajo` | `UUID` (PK) | No | Sí | Identificador. |
 | `id_usuario` | `UUID` (FK → `usuarios`) | No | Sí | Dueño del registro. |
 | `descripcion` | `VARCHAR(150)` | No | Sí | Trabajo o servicio realizado. |
-| `cliente` | `VARCHAR(100)` | Sí | No | Persona o empresa que pagó. |
-| `valor` | `NUMERIC(14,2)` | No | Sí | `CHECK (valor >= 0)`. |
-| `fecha` | `DATE` | No | Sí | Fecha del ingreso. |
-| `estado` | `VARCHAR(20)` | No | Sí | `PENDIENTE` o `COBRADO`. Default `PENDIENTE`. |
+| `cliente` | `VARCHAR(100)` | Sí | No | Persona o empresa que contrató. |
+| `valor` | `NUMERIC(14,2)` | No | Sí | `CHECK (valor >= 0)`. Es el monto **de cada pago**: en frecuencia quincenal se cobra dos veces al mes. |
+| `fecha` | `DATE` | No | Sí | Inicio del contrato. |
+| `tipo_contrato` | `VARCHAR(20)` | No | Sí | `INDEFINIDO` o `TERMINO_FIJO`. Default `INDEFINIDO`. |
+| `frecuencia` | `VARCHAR(12)` | No | Sí | `MENSUAL` (un pago al mes) o `QUINCENAL` (dos pagos: día 15 y día 30 ajustado). Default `MENSUAL`. |
+| `fecha_fin` | `DATE` | Sí | Solo término fijo | Final del contrato. La generación de pagos se detiene en este mes. |
+| `fecha_pago` | `DATE` | Sí | Sí en registros nuevos | Fecha del primer pago; ancla el día mensual y el inicio de la ventana. |
+| `estado` | `VARCHAR(20)` | No | Sí | `PENDIENTE` o `COBRADO`. Default `PENDIENTE`. Se conserva por compatibilidad; el cobro real se marca pago a pago. |
+
+**Migración SRS v1.7:** `_migrar_columnas_trabajos()` agrega `tipo_contrato`,
+`frecuencia`, `fecha_fin` y `fecha_pago`. Los registros anteriores se convierten
+en término fijo de un solo mes (`fecha_fin = fecha_pago = fecha`) para no
+inventar ingresos recurrentes.
 
 ---
 

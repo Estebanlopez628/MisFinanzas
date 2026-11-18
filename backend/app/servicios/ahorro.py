@@ -34,6 +34,7 @@ from app.core.numeros import redondear_dinero
 from app.core.texto import parsear_monto
 from app.modelos import AbonoProyeccion, Gasto, PerfilFinanciero, ProyeccionAhorro
 from app.servicios import quincenas as servicio_quincenas
+from app.servicios import trabajos as servicio_trabajos
 from app.servicios.gastos import valor_computable
 
 CERO = Decimal("0")
@@ -47,6 +48,12 @@ MESES_MAXIMOS = 600
 # dos pagos en lugar de imputarse a uno solo.
 QUINCENA_AMBAS = 3
 QUINCENAS_VALIDAS = (1, 2, QUINCENA_AMBAS)
+# SRS v1.7: comportamiento del monto cuando la meta se descuenta en las dos
+# quincenas. `DIVIDIR` reparte la cuota (100.000 → 50.000 + 50.000) y
+# `DUPLICAR` cobra la cuota completa en cada pago (100.000 + 100.000).
+MODO_DIVIDIR = "DIVIDIR"
+MODO_DUPLICAR = "DUPLICAR"
+MODOS_AMBAS = (MODO_DIVIDIR, MODO_DUPLICAR)
 # Ventana de comparación para los gastos fijos indefinidos, que no tienen final.
 MESES_VENTANA_FIJA = 12
 UMBRAL_ALERTA = Decimal("300000")
@@ -142,12 +149,17 @@ class MetaResumen:
     def valor_por_pago(self) -> Decimal:
         """Monto que la meta asigna a cada pago.
 
-        SRS v1.5: con «Ambas quincenas» es la mitad de la cuota mensual.
+        SRS v1.7: con «Ambas quincenas» respeta el modo escogido: la mitad de la
+        cuota (`DIVIDIR`) o la cuota completa en cada pago (`DUPLICAR`).
 
         Returns:
             Cuota por pago, redondeada a centavos.
         """
-        return valor_por_pago(self.proyeccion.valor_mensual, self.proyeccion.quincena)
+        return valor_por_pago(
+            self.proyeccion.valor_mensual,
+            self.proyeccion.quincena,
+            self.proyeccion.modo_ambas,
+        )
 
 
 def etiqueta_quincena(quincena: int) -> str:
@@ -166,24 +178,70 @@ def etiqueta_quincena(quincena: int) -> str:
 
 
 def valor_por_pago(
-    valor_mensual: Decimal | int | str, quincena: int
+    valor_mensual: Decimal | int | str,
+    quincena: int,
+    modo_ambas: str = MODO_DIVIDIR,
 ) -> Decimal:
-    """Calcula cuánto aporta la cuota mensual a cada pago.
+    """Calcula cuánto aporta la cuota ingresada a cada pago.
 
-    SRS v1.5: con «Ambas quincenas» el monto se reparte en partes iguales entre
-    los dos pagos; con quincena 1 o 2, el pago elegido asume la cuota completa.
+    SRS v1.7: con «Ambas quincenas» el usuario elige entre repartir la cuota
+    (`DIVIDIR`) o cobrarla completa en cada pago (`DUPLICAR`); con quincena 1 o
+    2, el pago elegido asume la cuota completa.
 
     Args:
-        valor_mensual: Cuota mensual de la meta.
+        valor_mensual: Cuota escrita por el usuario.
         quincena: `1`, `2` o `3` (ambas).
+        modo_ambas: `DIVIDIR` o `DUPLICAR`; solo aplica a la quincena 3.
 
     Returns:
         Monto que corresponde a cada pago, redondeado a centavos.
     """
     monto = redondear_dinero(parsear_monto(str(valor_mensual)))
     if quincena == QUINCENA_AMBAS:
+        if _normalizar_modo_ambas(modo_ambas) == MODO_DUPLICAR:
+            return monto
         return redondear_dinero(monto / Decimal("2"))
     return monto
+
+
+def _normalizar_modo_ambas(modo_ambas: str | None) -> str:
+    """Normaliza y valida el modo de reparto de «Ambas quincenas».
+
+    Args:
+        modo_ambas: Texto recibido del formulario o de la base de datos.
+
+    Returns:
+        `DIVIDIR` o `DUPLICAR`.
+
+    Raises:
+        ValueError: Si el modo no es uno de los dos admitidos.
+    """
+    modo = (modo_ambas or MODO_DIVIDIR).strip().upper()
+    if modo not in MODOS_AMBAS:
+        raise ValueError("El modo de ambas quincenas debe ser DIVIDIR o DUPLICAR.")
+    return modo
+
+
+def valor_mensual_efectivo(proyeccion: ProyeccionAhorro) -> Decimal:
+    """Calcula el total que la meta descuenta en el mes.
+
+    Es la suma real de sus pagos: la cuota completa en quincena 1 o 2; la cuota
+    repartida o duplicada cuando se descuenta en ambas (SRS v1.7).
+
+    Args:
+        proyeccion: Meta persistida.
+
+    Returns:
+        Total mensual efectivo, redondeado a centavos.
+    """
+    return redondear_dinero(
+        valor_por_pago(
+            proyeccion.valor_mensual,
+            proyeccion.quincena,
+            proyeccion.modo_ambas,
+        )
+        * (Decimal("2") if proyeccion.quincena == QUINCENA_AMBAS else Decimal("1"))
+    )
 
 
 def _mover_mes(anio: int, mes: int, avance: int) -> tuple[int, int]:
@@ -251,6 +309,7 @@ def crear_proyeccion(
     meses: int | str | None = None,
     fecha_inicio: date | None = None,
     quincena: int | str = 1,
+    modo_ambas: str = MODO_DIVIDIR,
 ) -> ProyeccionAhorro:
     """Registra una meta de ahorro o un gasto programado.
 
@@ -259,18 +318,20 @@ def crear_proyeccion(
         id_usuario: Dueño de la meta.
         categoria: Categoría sugerida o texto libre.
         descripcion: Detalle del objetivo.
-        valor_mensual: Cuota mensual; no puede ser negativa.
+        valor_mensual: Cuota escrita por el usuario; no puede ser negativa.
         tipo_duracion: `FIJO` (indefinido) o `LIMITADO`.
         meses: Cantidad de cuotas cuando la duración es limitada.
         fecha_inicio: Primer mes de la proyección; por defecto el mes en curso.
-        quincena: `1` o `2`, pago del que se descuenta la cuota.
+        quincena: `1`, `2` o `3` (ambas quincenas).
+        modo_ambas: `DIVIDIR` o `DUPLICAR`; solo aplica a la quincena 3.
 
     Returns:
         La meta persistida.
 
     Raises:
         ValueError: Si falta la categoría o la descripción, el monto es negativo
-            o inválido, la duración no es coherente o la quincena no es 1 ni 2.
+            o inválido, la duración no es coherente, la quincena no es 1, 2 o 3,
+            o el modo de ambas quincenas no es válido.
     """
     categoria_limpia = categoria.strip()
     descripcion_limpia = descripcion.strip()
@@ -296,6 +357,14 @@ def crear_proyeccion(
             "La quincena de descuento debe ser 1, 2 o 3 (ambas quincenas)."
         )
 
+    # El modo solo tiene sentido con «Ambas quincenas»; en un pago único se
+    # guarda DIVIDIR para que la columna nunca quede ambigua.
+    modo = (
+        _normalizar_modo_ambas(modo_ambas)
+        if numero_quincena == QUINCENA_AMBAS
+        else MODO_DIVIDIR
+    )
+
     inicio = fecha_inicio or date.today()
 
     proyeccion = ProyeccionAhorro(
@@ -307,6 +376,7 @@ def crear_proyeccion(
         meses=cantidad,
         fecha_inicio=inicio,
         quincena=numero_quincena,
+        modo_ambas=modo,
         activo=True,
     )
     bd.add(proyeccion)
@@ -646,7 +716,7 @@ def resumen_metas(bd: Session, id_usuario: str) -> list[MetaResumen]:
                 anio=anio,
                 mes=mes,
                 etiqueta=_etiqueta_mes(anio, mes),
-                planeado=proyeccion.valor_mensual,
+                planeado=valor_mensual_efectivo(proyeccion),
                 abono=por_mes.get((proyeccion.id_proyeccion, anio, mes)),
                 estado=_estado_mes(
                     proyeccion.id_proyeccion,
@@ -673,7 +743,7 @@ def resumen_metas(bd: Session, id_usuario: str) -> list[MetaResumen]:
 
         if proyeccion.meses:
             total: Decimal | None = redondear_dinero(
-                proyeccion.valor_mensual * proyeccion.meses
+                valor_mensual_efectivo(proyeccion) * proyeccion.meses
             )
         else:
             total = None
@@ -742,12 +812,17 @@ def diagnostico(
         mes: Mes del periodo (1–12).
 
     Returns:
-        Diccionario con `saldo_libre` (Decimal), `alerta` (bool), `umbral`
-        (Decimal) y `metas_mes` (Decimal). `alerta` indica que el saldo quedó
-        por debajo de $300.000. `metas_mes` es informativo: ya está restado en
-        el saldo porque cada meta vive como gasto fijo (SRS v1.6).
+        Diccionario con `saldo_libre` (Decimal), `extras_mes` (Decimal),
+        `disponible` (Decimal), `alerta` (bool), `umbral` (Decimal) y
+        `metas_mes` (Decimal). `extras_mes` es el neto cobrado de trabajos
+        extras del mes (SRS v1.7) y `disponible` es el saldo libre más ese neto.
+        `alerta` indica que el disponible quedó por debajo de $300.000.
+        `metas_mes` es informativo: ya está restado en el saldo porque cada meta
+        vive como gasto fijo (SRS v1.6).
     """
     saldo = saldo_libre_total(bd, id_usuario, perfil, anio, mes)
+    extras = servicio_trabajos.extras_cobrados_mes(bd, id_usuario, anio, mes)
+    disponible = redondear_dinero(saldo + extras)
     inicio = date(anio, mes, 1)
     fin = date(anio + (mes // 12), (mes % 12) + 1, 1)
     gastos_meta = bd.scalars(
@@ -763,7 +838,9 @@ def diagnostico(
     )
     return {
         "saldo_libre": saldo,
-        "alerta": saldo < UMBRAL_ALERTA,
+        "extras_mes": extras,
+        "disponible": disponible,
+        "alerta": disponible < UMBRAL_ALERTA,
         "umbral": UMBRAL_ALERTA,
         "metas_mes": metas_mes,
     }

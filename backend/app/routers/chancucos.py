@@ -69,13 +69,17 @@ def crear_chancuco(
     numero_referencia: Annotated[str, Form()] = "",
     url_pago: Annotated[str, Form()] = "",
     favorito: Annotated[str, Form()] = "",
+    unico_pago: Annotated[str, Form()] = "1",
+    dia_pago_1: Annotated[str, Form()] = "",
+    dia_pago_2: Annotated[str, Form()] = "",
     origen: Annotated[str, Form()] = "",
 ) -> RedirectResponse:
     """Registra un atajo de pago.
 
     La SRS v1.3 redujo el formulario a tres datos: descripción, número de
     referencia y enlace de pago. Los antiguos ``entidad`` y ``tipo_servicio``
-    se fusionaron en ``descripcion``.
+    se fusionaron en ``descripcion``. SRS v1.7 agrega uno o dos días de pago
+    mensuales: con ``unico_pago = 1`` solo se guarda el primero.
 
     Args:
         request: Petición HTTP.
@@ -85,6 +89,9 @@ def crear_chancuco(
         numero_referencia: Número a copiar.
         url_pago: Pasarela oficial; opcional.
         favorito: ``1`` para marcarlo como favorito.
+        unico_pago: ``1`` si el servicio se paga una sola vez al mes.
+        dia_pago_1: Día del mes del primer pago (1–31).
+        dia_pago_2: Día del mes del segundo pago (1–31); solo si no es único.
         origen: ``finanzas`` cuando el formulario está embebido en Mis Finanzas.
 
     Returns:
@@ -108,6 +115,8 @@ def crear_chancuco(
             numero_referencia,
             url_pago or None,
             favorito == "1",
+            dia_pago_1=dia_pago_1,
+            dia_pago_2=None if unico_pago == "1" else dia_pago_2,
         )
         auditoria.registrar(
             bd, usuario.id_usuario, "CHANCUCO_CREADO", "chancucos", chancuco.descripcion

@@ -5,6 +5,10 @@
  * ---------------
  * - Copiar referencias al portapapeles (Chancucos) con confirmación visual.
  * - Añadir filas a la venta multipartida de OLB_BYTE sin JavaScript de cálculo.
+ * - Cerrar las ediciones en línea con «Cancelar» y confirmar las acciones
+ *   masivas marcadas con `data-confirmar` (SRS v1.7).
+ * - Mostrar el segundo día de pago solo cuando el atajo no es un pago único.
+ * - Mostrar la fecha final solo en contratos a término fijo (Trabajos Extras).
  * - Registrar el service worker para que la PWA sea instalable y funcione sin red
  *   en las pantallas ya visitadas.
  *
@@ -66,6 +70,56 @@
     });
   }
 
+  // ------------------- Ediciones en línea y confirmaciones ----------------
+
+  // SRS v1.7: «Cancelar» cierra el desplegable de edición y descarta lo escrito.
+  document.addEventListener("click", function (evento) {
+    var objetivo = evento.target;
+    if (!(objetivo instanceof Element)) {
+      return;
+    }
+    var cancelar = objetivo.closest("[data-cancelar-edicion]");
+    if (!cancelar) {
+      return;
+    }
+    evento.preventDefault();
+    var formulario = cancelar.closest("form");
+    var detalles = cancelar.closest("details");
+    if (formulario) {
+      formulario.reset();
+    }
+    if (detalles) {
+      detalles.open = false;
+    }
+  });
+
+  // SRS v1.7: las acciones destructivas o masivas piden confirmación con un
+  // atributo, sin depender de manejadores incrustados en el HTML.
+  document.addEventListener("submit", function (evento) {
+    var formulario = evento.target;
+    if (!(formulario instanceof HTMLFormElement)) {
+      return;
+    }
+    var mensaje = formulario.getAttribute("data-confirmar");
+    if (mensaje && !window.confirm(mensaje)) {
+      evento.preventDefault();
+    }
+  });
+
+  // ------------------ Tipo de contrato de Trabajos Extras ------------------
+
+  // SRS v1.7: la fecha final solo aplica al contrato a término fijo. Sin
+  // JavaScript el campo queda visible y el servidor ignora el valor si no aplica.
+  var selectorContrato = document.querySelector("[data-contrato-tipo]");
+  var campoFin = document.querySelector("[data-contrato-fin]");
+  if (selectorContrato && campoFin) {
+    var sincronizarContrato = function () {
+      campoFin.hidden = selectorContrato.value !== "TERMINO_FIJO";
+    };
+    selectorContrato.addEventListener("change", sincronizarContrato);
+    sincronizarContrato();
+  }
+
   // ------------------- Filas dinámicas de la venta -------------------------
 
   var botonAgregar = document.querySelector("[data-agregar-linea]");
@@ -87,6 +141,26 @@
       }
       cuerpoLineas.appendChild(nueva);
     });
+  }
+
+  // --------------------- Días de pago de los atajos -----------------------
+
+  // SRS v1.7: con «único pago mensual» el segundo día no aplica. Sin JavaScript
+  // el campo sigue visible y el servidor ignora el segundo día si no se usa.
+  var radiosPago = document.querySelectorAll("[data-pago-unico]");
+  var bloquesDia = document.querySelectorAll("[data-dia-pago]");
+  if (radiosPago.length && bloquesDia.length) {
+    var sincronizarDias = function () {
+      var unico = document.querySelector('[data-pago-unico][value="1"]');
+      var esUnico = !unico || unico.checked;
+      for (var d = 0; d < bloquesDia.length; d += 1) {
+        bloquesDia[d].hidden = esUnico;
+      }
+    };
+    for (var r = 0; r < radiosPago.length; r += 1) {
+      radiosPago[r].addEventListener("change", sincronizarDias);
+    }
+    sincronizarDias();
   }
 
   // ------------------------- Service worker (PWA) -------------------------

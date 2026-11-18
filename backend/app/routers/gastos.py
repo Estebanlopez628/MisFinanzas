@@ -206,6 +206,11 @@ def editar_gasto(
                 url=f"/finanzas?error_gasto={quote(str(error))}#quincenas",
                 status_code=status.HTTP_303_SEE_OTHER,
             )
+        if origen == "trabajos":
+            return RedirectResponse(
+                url=f"/trabajos-extras?error={quote(str(error))}",
+                status_code=status.HTTP_303_SEE_OTHER,
+            )
         hoy = date.today()
         contexto = contexto_base(usuario)
         contexto.update(
@@ -246,6 +251,10 @@ def editar_gasto(
             url="/finanzas?guardado_gasto=1#quincenas",
             status_code=status.HTTP_303_SEE_OTHER,
         )
+    if origen == "trabajos":
+        return RedirectResponse(
+            url="/trabajos-extras?guardado=1", status_code=status.HTTP_303_SEE_OTHER
+        )
     return RedirectResponse(url="/gastos?guardado=1", status_code=status.HTTP_303_SEE_OTHER)
 
 
@@ -253,14 +262,19 @@ def _volver(origen: str) -> RedirectResponse:
     """Redirige al panel de origen tras una acción sobre pagos.
 
     Args:
-        origen: ``finanzas`` para volver a Mis Finanzas; cualquier otro valor
-            vuelve al listado de gastos.
+        origen: ``finanzas`` para volver a Mis Finanzas, ``trabajos`` para
+            volver a Trabajos Extras; cualquier otro valor vuelve al listado de
+            gastos.
 
     Returns:
         Redirección 303 al destino.
     """
     if origen == "finanzas":
         return RedirectResponse(url="/finanzas#quincenas", status_code=status.HTTP_303_SEE_OTHER)
+    if origen == "trabajos":
+        return RedirectResponse(
+            url="/trabajos-extras", status_code=status.HTTP_303_SEE_OTHER
+        )
     return RedirectResponse(url="/gastos", status_code=status.HTTP_303_SEE_OTHER)
 
 
@@ -319,6 +333,36 @@ def marcar_pagado_gasto(
         return _volver(origen)
     if gasto is not None:
         auditoria.registrar(bd, usuario.id_usuario, "GASTO_PAGADO", "gastos", id_gasto)
+    return _volver(origen)
+
+
+@router.post("/gastos/{id_gasto}/no-pagado", name="desmarcar_pagado_gasto")
+def desmarcar_pagado_gasto(
+    id_gasto: str,
+    usuario: UsuarioSesion = Depends(obtener_usuario_actual),
+    bd: Session = Depends(obtener_bd),
+    origen: Annotated[str, Form()] = "",
+) -> RedirectResponse:
+    """Quita el ✔ de un gasto fijo y revierte su pago (SRS v1.7).
+
+    El gasto vuelve a restar en su quincena y su abono de meta se recalcula. Es
+    la corrección de un check marcado por error, distinta del borrado masivo,
+    que conserva los pagos.
+
+    Args:
+        id_gasto: Gasto marcado por error.
+        usuario: Usuario autenticado.
+        bd: Sesión de base de datos.
+        origen: ``finanzas`` para volver al panel de quincenas.
+
+    Returns:
+        Redirección al panel de origen.
+    """
+    gasto = pagos_metas.desmarcar_pagado(bd, usuario.id_usuario, id_gasto)
+    if gasto is not None:
+        auditoria.registrar(
+            bd, usuario.id_usuario, "GASTO_DESMARCADO", "gastos", id_gasto
+        )
     return _volver(origen)
 
 

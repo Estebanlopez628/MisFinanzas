@@ -236,7 +236,9 @@ body {
 
 .rejilla-tarjetas {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  /* SRS v1.7: `min(…, 100%)` impide que la pista mínima desborde el panel en
+     teléfonos de 320 px, donde 230 px + relleno ya no caben. */
+  grid-template-columns: repeat(auto-fit, minmax(min(230px, 100%), 1fr));
   gap: 18px;
 }
 
@@ -324,7 +326,8 @@ a.tarjeta:focus-visible {
 
 .rejilla-paneles {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  /* SRS v1.7: la pista mínima nunca supera el ancho disponible del panel. */
+  grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
   gap: 18px;
 }
 
@@ -788,6 +791,29 @@ a.tarjeta:focus-visible {
   white-space: nowrap;
 }
 
+/* SRS v1.7: la descripción y el distintivo del día comparten columna; el
+   distintivo nunca se recorta y la descripción se acorta con puntos suspensivos. */
+.lista-atajos__texto {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.lista-atajos__texto .badge--fecha {
+  flex: 0 0 auto;
+}
+
+/* Distintivo de los días de pago de un atajo. */
+.badge--fecha {
+  color: #bae6fd;
+  background: rgba(2, 132, 199, 0.18);
+  border-color: rgba(2, 132, 199, 0.5);
+  text-transform: none;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
 .lista-atajos__referencia {
   display: flex;
   align-items: center;
@@ -1048,6 +1074,26 @@ a.tarjeta:focus-visible {
   font-weight: 700;
 }
 
+/* SRS v1.7: el lápiz de edición ocupa el mismo círculo que el ✔ y la ×. */
+.boton-circular--editar {
+  border: 2px solid rgba(56, 189, 248, 0.55);
+  background: transparent;
+  color: #7dd3fc;
+  cursor: pointer;
+}
+
+.boton-circular--editar:hover,
+.boton-circular--editar:focus-visible {
+  background: rgba(56, 189, 248, 0.18);
+  outline: none;
+}
+
+.boton-circular--editar svg {
+  width: 0.95rem;
+  height: 0.95rem;
+  pointer-events: none;
+}
+
 .lista-gastos__item--pagado {
   border-color: rgba(16, 185, 129, 0.55);
 }
@@ -1135,7 +1181,8 @@ a.tarjeta:focus-visible {
 
 .grupo-quincenal[hidden],
 .subgrupo-quincenal[hidden],
-.aviso-modalidad[hidden] {
+.aviso-modalidad[hidden],
+.campo[hidden] {
   display: none;
 }
 
@@ -1256,6 +1303,65 @@ a.tarjeta:focus-visible {
 .campo__control:disabled {
   opacity: 0.65;
   cursor: not-allowed;
+}
+
+/* ------------- Blindaje de fechas y alineación de formularios ------------- */
+/* SRS v1.7: los selectores de fecha de Chromium y Safari traen un ancho
+   intrínseco y un icono de calendario que sobresalían de la tarjeta en móvil.
+   Se fuerza el ancho del contenedor y se controla el indicador nativo. */
+input[type="date"],
+input[type="datetime-local"],
+input[type="month"],
+input[type="week"],
+input[type="time"] {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+input[type="date"]::-webkit-date-and-time-value,
+input[type="datetime-local"]::-webkit-date-and-time-value,
+input[type="month"]::-webkit-date-and-time-value {
+  min-width: 0;
+  text-align: left;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+input[type="month"]::-webkit-calendar-picker-indicator {
+  flex: 0 0 auto;
+  margin-left: 4px;
+  padding: 0;
+  cursor: pointer;
+}
+
+/* Homologación de altura: texto, selector, fecha y hora miden lo mismo para
+   que las etiquetas de una misma fila compartan eje en «Gastos y Presupuesto».
+   Los controles compactos (filas de gastos y abonos) conservan su tamaño. */
+.campo__control:not(.campo__control--compacto) {
+  min-height: 50px;
+}
+
+select.campo__control:not(.campo__control--compacto) {
+  height: 50px;
+  padding-block: 0;
+}
+
+textarea.campo__control {
+  min-height: 96px;
+  resize: vertical;
+}
+
+/* Las etiquetas de una misma fila reservan dos líneas para que sus controles
+   arranquen exactamente a la misma altura aunque el texto sea más largo. */
+.fila-campos .campo__etiqueta {
+  display: flex;
+  align-items: flex-end;
+  min-height: 2.3em;
+  line-height: 1.2;
 }
 
 /* -------------------------------- Botones ------------------------------- */
@@ -1637,8 +1743,17 @@ a.tarjeta:focus-visible {
 
 .fila-campos {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(140px, 100%), 1fr));
   gap: 12px;
+  align-items: start;
+}
+
+/* SRS v1.7: cada celda de la rejilla puede encogerse por debajo de su ancho
+   intrínseco; sin esto, un `input[type="date"]` empuja la columna. */
+.fila-campos > *,
+.formulario > *,
+.campo {
+  min-width: 0;
 }
 
 .acciones-formulario {
@@ -1697,6 +1812,42 @@ a.tarjeta:focus-visible {
 
 .boton--peligro:hover:not(:disabled) {
   background: rgba(239, 68, 68, 0.24);
+}
+
+/* SRS v1.7: «Cancelar» junto a «Actualizar»; mismo tamaño y rojo sutil para
+   distinguirlo sin competir con el botón principal. */
+.boton--cancelar {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.38);
+  color: #fca5a5;
+}
+
+.boton--cancelar:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+/* SRS v1.7: la limpieza masiva de checks exige más contraste que un botón
+   secundario: fondo ámbar pleno y texto oscuro. */
+.boton--advertencia {
+  background: var(--accent-amber);
+  border-color: var(--accent-amber);
+  color: #0f172a;
+}
+
+.boton--advertencia:hover:not(:disabled) {
+  background: #fbbf24;
+  border-color: #fbbf24;
+}
+
+.acciones-formulario--edicion {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.acciones-formulario--edicion .boton {
+  width: 100%;
 }
 
 .alerta--aviso {
@@ -1836,6 +1987,12 @@ a.tarjeta:focus-visible {
      Presupuesto queden alineados de borde a borde. */
   .fila-campos {
     grid-template-columns: 1fr;
+  }
+
+  /* SRS v1.7: 16 px evita el zoom automático de iOS al enfocar un campo y
+     mantiene legibles las fechas sin desbordar. */
+  .campo__control {
+    font-size: 16px;
   }
 
   .acciones-formulario .boton {

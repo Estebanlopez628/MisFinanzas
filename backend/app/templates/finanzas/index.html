@@ -1,4 +1,7 @@
-{% extends "base.html" %} {% block titulo %}Mis Finanzas{% endblock %} {% block
+{% extends "base.html" %}
+{% from "finanzas/_gasto_fijo.html" import fila_gasto with context %}
+{% from "chancucos/_dias.html" import dias_pago with context %}
+{% block titulo %}Mis Finanzas{% endblock %} {% block
 contenido %}
 <section class="heroe">
   <h1 class="heroe__titulo">Mis Finanzas</h1>
@@ -94,83 +97,21 @@ contenido %}
         <h4 class="bloque-gastos__subtitulo">Gastos fijos asignados</h4>
         {% if quincena.gastos_detalle %}
         <ul class="lista-gastos">
-          {% for gasto in quincena.gastos_detalle %} {# MODIFICACIÓN: Cambiamos
-          a un contenedor flexible en fila única #}
-          {% set inhabilitado = gasto.inhabilitado_hasta is not none and gasto.inhabilitado_hasta > hoy %}
-          <li class="lista-gastos__item{% if inhabilitado %} lista-gastos__item--inhabilitado{% elif gasto.pagado %} lista-gastos__item--pagado{% endif %}">
-            <span class="lista-gastos__nombre">
-              {{ gasto.descripcion }} - {{ gasto.categoria }}{% if gasto.quincena is none %} · todo el mes{% endif %}
-              {% if inhabilitado %}
-              <small class="lista-gastos__estado">Inhabilitado hasta {{ gasto.inhabilitado_hasta.strftime('%d/%m') }}</small>
-              {% endif %}
-            </span>
-            <span class="lista-gastos__valor">{{ gasto.valor | cop }}</span>
-            <div class="lista-gastos__acciones">
-              <details class="edicion-gasto">
-                <summary class="boton boton--secundario lista-gastos__boton">Editar</summary>
-                <form class="formulario formulario--compacto edicion-gasto__formulario"
-                      method="post"
-                      action="{{ url_for('editar_gasto', id_gasto=gasto.id_gasto) }}"
-                      data-proteccion>
-                  <input type="hidden" name="origen" value="finanzas" />
-                  <input type="hidden" name="quincena" value="{{ gasto.quincena or '' }}" />
-                  <label class="campo">
-                    <span class="campo__etiqueta">Descripción</span>
-                    <input class="campo__control" type="text" name="descripcion"
-                           value="{{ gasto.descripcion }}" required />
-                  </label>
-                  <label class="campo">
-                    <span class="campo__etiqueta">Valor (COP)</span>
-                    <input class="campo__control" type="text" name="valor"
-                           inputmode="decimal" value="{{ gasto.valor }}" required />
-                  </label>
-                  <button class="boton boton--primario boton--pequeno" type="submit">Actualizar</button>
-                </form>
-              </details>
-              <form method="post"
-                    action="{{ url_for('eliminar_gasto', id_gasto=gasto.id_gasto) }}"
-                    data-proteccion>
-                <input type="hidden" name="origen" value="finanzas" />
-                <button class="boton boton--peligro boton-circular" type="submit"
-                        aria-label="{{ 'Saltar pago de' if gasto.id_proyeccion else 'Eliminar' }} {{ gasto.descripcion }}"
-                        title="{{ 'Saltar este pago 8 días' if gasto.id_proyeccion else 'Eliminar gasto' }}">×</button>
-              </form>
-              {% if inhabilitado %}
-              {# Pago saltado: no admite ✔; solo un abono manual por si quedó dinero. #}
-              <form class="formulario-abono-manual" method="post"
-                    action="{{ url_for('registrar_abono_gasto', id_gasto=gasto.id_gasto) }}"
-                    data-proteccion>
-                <input type="hidden" name="origen" value="finanzas" />
-                <input class="campo__control campo__control--compacto" type="text"
-                       name="valor" inputmode="decimal" placeholder="Abonar"
-                       aria-label="Monto a abonar en {{ gasto.descripcion }}" required />
-                <button class="boton boton--secundario boton--pequeno" type="submit">Abonar</button>
-              </form>
-              {% elif gasto.pagado %}
-              <span class="boton-circular boton-circular--marcado" aria-label="Pagado"
-                    title="Pagado{% if gasto.pagado_en %} el {{ gasto.pagado_en.strftime('%d/%m') }}{% endif %}">✔</span>
-              {% else %}
-              <form method="post"
-                    action="{{ url_for('marcar_pagado_gasto', id_gasto=gasto.id_gasto) }}"
-                    data-proteccion>
-                <input type="hidden" name="origen" value="finanzas" />
-                <button class="boton-circular boton-circular--check" type="submit"
-                        aria-label="Marcar {{ gasto.descripcion }} como pagado"
-                        title="Marcar como pagado">✔</button>
-              </form>
-              {% endif %}
-            </div>
-          </li>
+          {% for gasto in quincena.gastos_detalle %}
+          {# SRS v1.7: misma fila que usa Trabajos Extras (componente DRY). #}
+          {{ fila_gasto(gasto, hoy, 'finanzas') }}
           {% endfor %}
         </ul>
         {% if quincena.gastos_detalle | selectattr('pagado') | selectattr('check_visible') | list %}
+        {# SRS v1.7: acción masiva visible, con confirmación, y los pagos se conservan. #}
         <form class="acciones-formulario" method="post"
-              action="{{ url_for('limpiar_pagos_gastos') }}" data-proteccion>
+              action="{{ url_for('limpiar_pagos_gastos') }}" data-proteccion
+              data-confirmar="Se ocultarán los ✔ de esta quincena. Los pagos ya registrados se conservan. ¿Continuar?">
           <input type="hidden" name="origen" value="finanzas" />
           <input type="hidden" name="anio" value="{{ entrada.anio }}" />
           <input type="hidden" name="mes" value="{{ entrada.mes }}" />
           <input type="hidden" name="quincena" value="{{ quincena.numero }}" />
-          <button class="boton boton--secundario boton--pequeno" type="submit">
+          <button class="boton boton--advertencia boton--pequeno" type="submit">
             {{ 'Limpiar checks' if quincena.numero == 0 else 'Limpiar checks de esta quincena' }}
           </button>
         </form>
@@ -256,7 +197,11 @@ contenido %}
       <ul class="lista-atajos">
         {% for item in chancucos %}
         <li class="lista-atajos__item">
-          <span class="lista-atajos__descripcion">{{ item.descripcion }}</span>
+          <span class="lista-atajos__texto">
+            <span class="lista-atajos__descripcion">{{ item.descripcion }}</span>
+            {# SRS v1.7: el día de pago se muestra como distintivo de la tarjeta. #}
+            {{ dias_pago(item) }}
+          </span>
           <span class="lista-atajos__referencia">
             <code>{{ item.numero_referencia }}</code>
             <button

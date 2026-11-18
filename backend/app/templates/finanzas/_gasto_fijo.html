@@ -1,0 +1,185 @@
+{#
+  Componente compartido de una fila de gasto fijo con su check de pago
+  (SRS v1.7, bloques C y E).
+
+  Se usa desde «Mis Finanzas» y desde «Trabajos Extras» para que ambas vistas
+  compartan exactamente la misma fila: lápiz de edición, «Cancelar», × de
+  eliminación o salto, ✔ de pago y abono manual. La macro no aplica reglas de
+  negocio: solo pinta el estado que ya calculó el servidor.
+#}
+
+{% macro boton_editar(etiqueta) -%}
+  {# SRS v1.7: «Editar» pasa a un lápiz del mismo tamaño que el check. #}
+  <summary
+    class="boton-circular boton-circular--editar"
+    title="Editar {{ etiqueta }}"
+    aria-label="Editar {{ etiqueta }}"
+  >
+    <svg
+      viewBox="0 0 24 24"
+      width="16"
+      height="16"
+      aria-hidden="true"
+      focusable="false"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+      <path d="M12 20h9" />
+      <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+    </svg>
+  </summary>
+{%- endmacro %}
+
+{% macro fila_gasto(gasto, hoy, origen, id_trabajo=None) -%}
+  {% set inhabilitado = gasto.inhabilitado_hasta is not none and gasto.inhabilitado_hasta > hoy %}
+  {# Un pago de meta o de trabajo se salta; un gasto manual se elimina. #}
+  {% set es_pago_recurrente = gasto.id_proyeccion or gasto.id_trabajo %}
+  <li
+    class="lista-gastos__item{% if inhabilitado %} lista-gastos__item--inhabilitado{% elif gasto.pagado and gasto.check_visible %} lista-gastos__item--pagado{% endif %}"
+  >
+    <span class="lista-gastos__nombre">
+      {{ gasto.descripcion }} - {{ gasto.categoria }}{% if gasto.quincena is none %} · todo el mes{% endif %}
+      {% if inhabilitado %}
+        <small class="lista-gastos__estado">Inhabilitado hasta {{ gasto.inhabilitado_hasta.strftime('%d/%m') }}</small>
+      {% endif %}
+    </span>
+    <span class="lista-gastos__valor">{{ gasto.valor | cop }}</span>
+    <div class="lista-gastos__acciones">
+      <details class="edicion-gasto">
+        {{ boton_editar(gasto.descripcion) }}
+        <form
+          class="formulario formulario--compacto edicion-gasto__formulario"
+          method="post"
+          action="{{ url_for('editar_gasto', id_gasto=gasto.id_gasto) }}"
+          data-proteccion
+        >
+          <input type="hidden" name="origen" value="{{ origen }}" />
+          {% if id_trabajo %}
+            <input type="hidden" name="id_trabajo" value="{{ id_trabajo }}" />
+          {% endif %}
+          <input type="hidden" name="quincena" value="{{ gasto.quincena or '' }}" />
+          <label class="campo">
+            <span class="campo__etiqueta">Descripción</span>
+            <input
+              class="campo__control"
+              type="text"
+              name="descripcion"
+              value="{{ gasto.descripcion }}"
+              required
+            />
+          </label>
+          <label class="campo">
+            <span class="campo__etiqueta">Valor (COP)</span>
+            <input
+              class="campo__control"
+              type="text"
+              name="valor"
+              inputmode="decimal"
+              value="{{ gasto.valor | cop(false) }}"
+              required
+            />
+          </label>
+          {# SRS v1.7: «Cancelar» cierra la edición sin guardar; mismo tamaño #}
+          {# que «Actualizar» y color rojo sutil. #}
+          <div class="acciones-formulario acciones-formulario--edicion">
+            <button class="boton boton--primario boton--pequeno" type="submit">Actualizar</button>
+            <button
+              class="boton boton--cancelar boton--pequeno"
+              type="button"
+              data-cancelar-edicion
+            >
+              Cancelar
+            </button>
+          </div>
+        </form>
+      </details>
+      <form
+        method="post"
+        action="{{ url_for('eliminar_gasto', id_gasto=gasto.id_gasto) }}"
+        data-proteccion
+      >
+        <input type="hidden" name="origen" value="{{ origen }}" />
+        {% if id_trabajo %}
+          <input type="hidden" name="id_trabajo" value="{{ id_trabajo }}" />
+        {% endif %}
+        <button
+          class="boton boton--peligro boton-circular"
+          type="submit"
+          aria-label="{{ 'Saltar pago de' if es_pago_recurrente else 'Eliminar' }} {{ gasto.descripcion }}"
+          title="{{ 'Saltar este pago 15 días' if es_pago_recurrente else 'Eliminar gasto' }}"
+        >
+          ×
+        </button>
+      </form>
+      {% if inhabilitado %}
+        {# Pago saltado: no admite ✔; solo un abono manual por si quedó dinero. #}
+        <form
+          class="formulario-abono-manual"
+          method="post"
+          action="{{ url_for('registrar_abono_gasto', id_gasto=gasto.id_gasto) }}"
+          data-proteccion
+        >
+          <input type="hidden" name="origen" value="{{ origen }}" />
+          {% if id_trabajo %}
+            <input type="hidden" name="id_trabajo" value="{{ id_trabajo }}" />
+          {% endif %}
+          <input
+            class="campo__control campo__control--compacto"
+            type="text"
+            name="valor"
+            inputmode="decimal"
+            placeholder="Abonar"
+            aria-label="Monto a abonar en {{ gasto.descripcion }}"
+            required
+          />
+          <button class="boton boton--secundario boton--pequeno" type="submit">Abonar</button>
+        </form>
+      {% elif gasto.pagado and gasto.check_visible %}
+        {# SRS v1.7: el ✔ solo se pinta si el check está visible. Al desmarcarlo #}
+        {# se revierte el pago y su abono, para corregir una marca por error. #}
+        <form
+          method="post"
+          action="{{ url_for('desmarcar_pagado_gasto', id_gasto=gasto.id_gasto) }}"
+          data-proteccion
+        >
+          <input type="hidden" name="origen" value="{{ origen }}" />
+          {% if id_trabajo %}
+            <input type="hidden" name="id_trabajo" value="{{ id_trabajo }}" />
+          {% endif %}
+          <button
+            class="boton-circular boton-circular--marcado"
+            type="submit"
+            aria-label="Desmarcar el pago de {{ gasto.descripcion }}"
+            title="Pagado{% if gasto.pagado_en %} el {{ gasto.pagado_en.strftime('%d/%m') }}{% endif %} · pulsa para desmarcar"
+          >
+            ✔
+          </button>
+        </form>
+      {% else %}
+        {# Sin marca visible: el pago puede estar pendiente o conservado tras #}
+        {# «Limpiar checks». Pulsar vuelve a mostrar y registrar el ✔. #}
+        <form
+          method="post"
+          action="{{ url_for('marcar_pagado_gasto', id_gasto=gasto.id_gasto) }}"
+          data-proteccion
+        >
+          <input type="hidden" name="origen" value="{{ origen }}" />
+          {% if id_trabajo %}
+            <input type="hidden" name="id_trabajo" value="{{ id_trabajo }}" />
+          {% endif %}
+          <button
+            class="boton-circular boton-circular--check"
+            type="submit"
+            aria-label="Marcar {{ gasto.descripcion }} como pagado"
+            title="Marcar como pagado"
+          >
+            ✔
+          </button>
+        </form>
+      {% endif %}
+    </div>
+  </li>
+{%- endmacro %}

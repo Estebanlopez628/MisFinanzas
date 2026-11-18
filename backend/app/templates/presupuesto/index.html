@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "finanzas/_gasto_fijo.html" import boton_editar with context %}
 {% block titulo %}Gastos y Presupuesto{% endblock %}
 
 {% block contenido %}
@@ -23,17 +24,25 @@
   <section class="panel panel--diagnostico" aria-live="polite">
     <h2 class="panel__titulo">Diagnóstico del mes</h2>
 
-    {% if diagnostico.saldo_libre >= 0 %}
+    {% if diagnostico.disponible >= 0 %}
       <p class="diagnostico__mensaje">
-        {{ usuario.alias }}, te sobran del sueldo
-        <strong class="diagnostico__monto">{{ diagnostico.saldo_libre | cop }}</strong>
-        de los cuales podemos ahorrar o proyectar metas.
+        {{ usuario.alias }}, te quedan disponibles
+        <strong class="diagnostico__monto">{{ diagnostico.disponible | cop }}</strong>
+        entre el sueldo y los trabajos extras cobrados; con eso podemos ahorrar
+        o proyectar metas.
       </p>
     {% else %}
       <p class="diagnostico__mensaje">
-        {{ usuario.alias }}, tu saldo libre del mes está en
-        <strong class="diagnostico__monto valor-negativo">{{ diagnostico.saldo_libre | cop }}</strong>.
+        {{ usuario.alias }}, tu disponible del mes está en
+        <strong class="diagnostico__monto valor-negativo">{{ diagnostico.disponible | cop }}</strong>.
         Antes de proyectar una meta conviene revisar deudas y gastos fijos.
+      </p>
+    {% endif %}
+
+    {% if diagnostico.extras_mes > 0 %}
+      <p class="ayuda">
+        Incluye {{ diagnostico.extras_mes | cop }} de trabajos extras cobrados.
+        Saldo del sueldo: {{ diagnostico.saldo_libre | cop }}.
       </p>
     {% endif %}
 
@@ -51,8 +60,9 @@
     {% endif %}
 
     <p class="ayuda">
-      El saldo libre se calcula sumando lo que queda después de cada quincena,
-      una vez restados gastos fijos y deducciones de ley.
+      El disponible se calcula sumando lo que queda después de cada quincena,
+      una vez restados gastos fijos y deducciones de ley, más el neto cobrado de
+      trabajos extras. Esos ingresos no alteran el sueldo ni las quincenas.
     </p>
   </section>
 
@@ -111,12 +121,24 @@
         </label>
         <label class="campo">
           <span class="campo__etiqueta">Quincena de descuento</span>
-          <select class="campo__control" name="quincena">
+          <select class="campo__control" name="quincena" data-quincena>
             <option value="1">Quincena 1 · día 15</option>
             <option value="2">Quincena 2 · día 30</option>
-            {# SRS v1.5: la cuota mensual se reparte entre los dos pagos. #}
-            <option value="3">Ambas quincenas · se reparte entre los dos pagos</option>
+            <option value="3">Ambas quincenas</option>
           </select>
+        </label>
+        {# SRS v1.7: con «Ambas quincenas» el usuario decide si la cuota se
+           reparte entre los dos pagos o se cobra completa en cada uno. #}
+        <label class="campo" data-modo-ambas hidden>
+          <span class="campo__etiqueta">¿Cómo aplicar el monto en cada quincena?</span>
+          <select class="campo__control" name="modo_ambas" data-modo>
+            <option value="DIVIDIR">Dividir la cuota entre los dos pagos</option>
+            <option value="DUPLICAR">Cobrar el valor completo en cada pago</option>
+          </select>
+          <span class="ayuda">
+            Dividir: $100.000 → $50.000 + $50.000 ($100.000 al mes). Cobrar
+            completo: $100.000 + $100.000 ($200.000 al mes).
+          </span>
         </label>
       </div>
 
@@ -174,7 +196,7 @@
             <span class="lista-gastos__valor">Valor: {{ deduccion.valor | cop }}</span>
             <div class="lista-gastos__acciones">
               <details class="edicion-gasto">
-                <summary class="boton boton--secundario lista-gastos__boton">Editar</summary>
+                {{ boton_editar(deduccion.descripcion) }}
                 <form class="formulario formulario--compacto edicion-gasto__formulario" method="post"
                       action="{{ url_for('editar_deduccion_fija', id_deduccion=deduccion.id_deduccion) }}"
                       data-proteccion>
@@ -195,14 +217,19 @@
                       <option value="2" {% if deduccion.quincena == 2 %}selected{% endif %}>Quincena 2</option>
                     </select>
                   </label>
-                  <button class="boton boton--primario boton--pequeno" type="submit">Actualizar</button>
+                  <div class="acciones-formulario acciones-formulario--edicion">
+                    <button class="boton boton--primario boton--pequeno" type="submit">Actualizar</button>
+                    <button class="boton boton--cancelar boton--pequeno" type="button"
+                            data-cancelar-edicion>Cancelar</button>
+                  </div>
                 </form>
               </details>
               <form method="post"
                     action="{{ url_for('eliminar_deduccion_fija', id_deduccion=deduccion.id_deduccion) }}"
-                    onsubmit="return confirm('¿Eliminar esta deducción fija?');">
-                <button class="boton boton--peligro lista-gastos__boton" type="submit"
-                        aria-label="Eliminar {{ deduccion.descripcion }}">×</button>
+                    data-confirmar="¿Eliminar esta deducción fija?">
+                <button class="boton boton--peligro boton-circular" type="submit"
+                        aria-label="Eliminar {{ deduccion.descripcion }}"
+                        title="Eliminar deducción fija">×</button>
               </form>
             </div>
           </li>
@@ -225,10 +252,15 @@
               <div>
                 <h3 class="meta__titulo">{{ meta.proyeccion.descripcion }}</h3>
                 <p class="meta__detalle">
-                  {{ meta.proyeccion.categoria }} · {{ meta.proyeccion.valor_mensual | cop }} ·
-                  {{ meta.etiqueta_quincena }}
+                  {{ meta.proyeccion.categoria }} · {{ meta.proyeccion.valor_mensual | cop }}
                   {% if meta.proyeccion.quincena == 3 -%}
-                    ({{ meta.valor_por_pago | cop }} por pago)
+                    {% if meta.proyeccion.modo_ambas == 'DUPLICAR' -%}
+                      en cada pago · {{ (meta.valor_por_pago * 2) | cop }} al mes
+                    {%- else -%}
+                      al mes · {{ meta.valor_por_pago | cop }} por pago
+                    {%- endif %}
+                  {%- else -%}
+                    · {{ meta.etiqueta_quincena }}
                   {%- endif %}
                 </p>
               </div>

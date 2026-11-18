@@ -221,6 +221,10 @@ class Gasto(Base):
     es el registro permanente del abono; `check_visible` solo oculta el ✔ tras
     «Limpiar checks». `inhabilitado_hasta` marca un pago saltado con ×: el gasto
     no cuenta en su quincena hasta esa fecha y no admite ✔.
+
+    SRS v1.7: `id_trabajo` enlaza un pago generado por un trabajo extra. Esos
+    pagos se excluyen de los totales de gastos y de las quincenas; su neto va al
+    diagnóstico del mes.
     """
 
     __tablename__ = "gastos"
@@ -246,6 +250,14 @@ class Gasto(Base):
     quincena: Mapped[int | None] = mapped_column(SmallInteger, nullable=True)
     id_proyeccion: Mapped[str | None] = mapped_column(
         ForeignKey("proyecciones_ahorro.id_proyeccion", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
+    )
+    # SRS v1.7: pago de un trabajo extra. Se guarda en `gastos` para reutilizar
+    # la fila con check de los gastos fijos, pero `gastos.listar_gastos` los
+    # excluye: no restan del sueldo ni de las quincenas.
+    id_trabajo: Mapped[str | None] = mapped_column(
+        ForeignKey("trabajos_extras.id_trabajo", ondelete="CASCADE"),
         nullable=True,
         index=True,
     )
@@ -327,7 +339,8 @@ class Chancuco(Base):
     La SRS v1.3 reduce el registro a tres datos visibles: descripción, número de
     referencia y enlace de pago. Los antiguos `entidad` y `tipo_servicio` se
     fusionaron en `descripcion`; la migración de `core/base_datos.py` reconstruye
-    la tabla y elimina la columna `tipo_servicio`.
+    la tabla y elimina la columna `tipo_servicio`. SRS v1.7 agrega uno o dos días
+    de pago mensuales (`dia_pago_1`, `dia_pago_2`), sin año.
     """
 
     __tablename__ = "chancucos"
@@ -339,6 +352,11 @@ class Chancuco(Base):
     descripcion: Mapped[str] = mapped_column(String(120), nullable=False)
     numero_referencia: Mapped[str] = mapped_column(String(60), nullable=False)
     url_pago: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    # SRS v1.7: día del mes en que se paga el servicio. Se guarda solo el número
+    # (1–31), sin año: el atajo es una referencia mensual. `dia_pago_2` distingue
+    # un pago doble (por ejemplo, dos cuotas el 15 y el 30).
+    dia_pago_1: Mapped[int | None] = mapped_column(SmallInteger, nullable=True)
+    dia_pago_2: Mapped[int | None] = mapped_column(SmallInteger, nullable=True)
     favorito: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     fecha_creacion: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
@@ -360,6 +378,9 @@ class ProyeccionAhorro(Base):
         CheckConstraint("valor_mensual >= 0", name="ck_proyeccion_valor"),
         CheckConstraint("quincena IN (1, 2, 3)", name="ck_proyeccion_quincena"),
         CheckConstraint(
+            "modo_ambas IN ('DIVIDIR', 'DUPLICAR')", name="ck_proyeccion_modo_ambas"
+        ),
+        CheckConstraint(
             "tipo_duracion IN ('FIJO', 'LIMITADO')", name="ck_proyeccion_duracion"
         ),
     )
@@ -377,6 +398,12 @@ class ProyeccionAhorro(Base):
     meses: Mapped[int | None] = mapped_column(SmallInteger, nullable=True)
     fecha_inicio: Mapped[date] = mapped_column(Date, nullable=False)
     quincena: Mapped[int] = mapped_column(SmallInteger, nullable=False)
+    # SRS v1.7: con «Ambas quincenas» el usuario decide si la cuota se divide
+    # entre los dos pagos (`DIVIDIR`) o se cobra completa en cada uno
+    # (`DUPLICAR`). En quincena 1 o 2 el modo no tiene efecto.
+    modo_ambas: Mapped[str] = mapped_column(
+        String(12), nullable=False, default="DIVIDIR", server_default="DIVIDIR"
+    )
     activo: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     # SRS v1.6: una meta archivada conserva su historial; `estado_final` dice si
     # se cumplió o se eliminó antes de terminar.
@@ -524,10 +551,28 @@ class Abono(Base):
 
 
 class TrabajoExtra(Base):
-    """Ingreso independiente registrado por el usuario (§12)."""
+    """Ingreso independiente registrado por el usuario (§12).
+
+    SRS v1.7 (bloque E): el trabajo es un contrato que se repite. `fecha` es el
+    inicio del contrato, `fecha_pago` la fecha del primer pago y `fecha_fin` el
+    final (solo para término fijo). `valor` es el monto **de cada pago**: con
+    frecuencia mensual hay un pago al mes y con frecuencia quincenal hay dos.
+    Los pagos generados viven en `gastos` con `id_trabajo` para reutilizar el
+    mismo check de los gastos fijos, pero quedan fuera de los totales de gastos,
+    del sueldo y de las quincenas.
+    """
 
     __tablename__ = "trabajos_extras"
-    __table_args__ = (CheckConstraint("valor >= 0", name="ck_trabajo_valor"),)
+    __table_args__ = (
+        CheckConstraint("valor >= 0", name="ck_trabajo_valor"),
+        CheckConstraint(
+            "tipo_contrato IN ('INDEFINIDO', 'TERMINO_FIJO')",
+            name="ck_trabajo_contrato",
+        ),
+        CheckConstraint(
+            "frecuencia IN ('MENSUAL', 'QUINCENAL')", name="ck_trabajo_frecuencia"
+        ),
+    )
 
     id_trabajo: Mapped[str] = mapped_column(String(32), primary_key=True, default=nuevo_id)
     id_usuario: Mapped[str] = mapped_column(
@@ -537,6 +582,16 @@ class TrabajoExtra(Base):
     cliente: Mapped[str | None] = mapped_column(String(100), nullable=True)
     valor: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False)
     fecha: Mapped[date] = mapped_column(Date, nullable=False)
+    # Columnas de contrato (SRS v1.7). Los registros anteriores quedan como
+    # INDEFINIDO/MENSUAL con `fecha_pago = fecha`, así que siguen funcionando.
+    tipo_contrato: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="INDEFINIDO", server_default="INDEFINIDO"
+    )
+    frecuencia: Mapped[str] = mapped_column(
+        String(12), nullable=False, default="MENSUAL", server_default="MENSUAL"
+    )
+    fecha_fin: Mapped[date | None] = mapped_column(Date, nullable=True)
+    fecha_pago: Mapped[date | None] = mapped_column(Date, nullable=True)
     estado: Mapped[str] = mapped_column(String(20), nullable=False, default="PENDIENTE")
 
 

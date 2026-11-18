@@ -6,8 +6,10 @@ from datetime import date
 from decimal import Decimal
 
 from fastapi.testclient import TestClient
+from sqlalchemy import select
 
-from app.servicios import chancucos, trabajos, usuarios
+from app.modelos import Gasto
+from app.servicios import chancucos, pagos_metas, trabajos, usuarios
 
 
 def _id_admin(bd) -> str:
@@ -38,13 +40,16 @@ def test_trabajo_extra_cambia_de_estado(bd) -> None:
 
 
 def test_resumen_trabajos_separa_cobrado_y_pendiente(bd) -> None:
-    """Los totales se agrupan por estado."""
+    """Los totales del mes se agrupan por pagos cobrados y pendientes."""
     id_usuario = _id_admin(bd)
     primero = trabajos.crear_trabajo(bd, id_usuario, "Uno", "100000", date(2026, 11, 1))
     trabajos.crear_trabajo(bd, id_usuario, "Dos", "250000", date(2026, 11, 2))
-    trabajos.cambiar_estado(bd, id_usuario, primero.id_trabajo, "COBRADO")
+    trabajos.asegurar_pagos_trabajos(bd, id_usuario, 2026, 11)
+    pago = bd.scalar(select(Gasto).where(Gasto.id_trabajo == primero.id_trabajo))
+    assert pago is not None
+    pagos_metas.marcar_pagado(bd, id_usuario, pago.id_gasto, date(2026, 11, 15))
 
-    resumen = trabajos.resumen_trabajos(bd, id_usuario)
+    resumen = trabajos.resumen_trabajos(bd, id_usuario, 2026, 11)
     assert resumen["cobrado"] == Decimal("100000.00")
     assert resumen["pendiente"] == Decimal("250000.00")
     assert resumen["cobrados"] == 1
