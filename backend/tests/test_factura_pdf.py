@@ -32,7 +32,7 @@ def _venta(bd, lineas: int = 2, nombre: str = "Ana Pérez"):
     productos = [
         comercial.LineaVenta(
             nombre=f"Producto {indice}",
-            referencia=f"REF-{indice}",
+            categoria=f"CAT-{indice}",
             cantidad=1,
             precio_unitario="50000",
             costo_unitario="30000",

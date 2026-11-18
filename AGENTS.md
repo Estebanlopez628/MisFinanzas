@@ -304,5 +304,7 @@ La configuración vive en `.vscode/launch.json`. También existe **Pruebas (pyte
 - [ ] **OLB_BYTE Fase 3 — revisión visual pendiente:** recibo en celular y su impresión (`no-imprimir`), y el orden de los campos de abono en la vista de pendientes.
 - [ ] **OLB_BYTE Fase 2 — revisión visual pendiente:** mini-tabla en móvil, Contact Picker en un celular con HTTPS, y comportamiento de Cancelar en filas nuevas y guardadas; verificar en navegador.
 - [ ] **Deuda previa de documentación:** `Guia.md` no tiene ficha para `templates/chancucos/_dias.html` ni `templates/finanzas/_gasto_fijo.html` (`generar_guia.py --verificar` falla por ello desde SRS v1.7).
-- [ ] **Facturación PDF OLB_BYTE:** pendiente de implementar con Playwright (ADR-36); requiere `playwright install chromium` en el servidor.
+- [x] **SRS OLB_BYTE v1.0 — Fase 7 (factura PDF, RF-18 y RF-19):** PDF Carta de una página con Playwright y Chromium (ADR-36 y ADR-41), logos de `assets/`, medios de pago, vista previa, descarga y compartir. Límite de diez productos por factura. Instalación del navegador en `DESPLIEGUE.md` §13.
+- [x] Verificación Fase 7: `pytest` en verde (**425 pruebas**, incluidas 14 en `tests/test_factura_pdf.py`); revisión visual de la factura de muestra.
+- [ ] **OLB_BYTE Fase 7 — revisión visual pendiente:** vista previa dentro del diálogo y el botón Compartir en un celular.
 - [ ] **Fase 3 (opcional)** — Migración a PostgreSQL con Alembic y despliegue multi-instancia (ver `DESPLIEGUE.md` §11).

@@ -1,0 +1,29 @@
+{# Subnavegación de OLB_BYTE con el mismo componente que Mis Finanzas (subnav-finanzas).
+   `seccion` indica la pestaña activa: ventas, pendientes, cartera, garantias o analitica. #}
+<nav class="subnav-finanzas" aria-label="Secciones de OLB_BYTE">
+  <a class="subnav-finanzas__enlace {% if seccion|default('') == 'ventas' %}subnav-finanzas__enlace--activo{% endif %}"
+     href="{{ url_for('ver_olb_byte') }}"
+     {% if seccion|default('') == 'ventas' %}aria-current="page"{% endif %}>
+    Ventas
+  </a>
+  <a class="subnav-finanzas__enlace {% if seccion|default('') == 'pendientes' %}subnav-finanzas__enlace--activo{% endif %}"
+     href="{{ url_for('ver_pendientes') }}"
+     {% if seccion|default('') == 'pendientes' %}aria-current="page"{% endif %}>
+    Pendientes de pago
+  </a>
+  <a class="subnav-finanzas__enlace {% if seccion|default('') == 'cartera' %}subnav-finanzas__enlace--activo{% endif %}"
+     href="{{ url_for('ver_cartera') }}"
+     {% if seccion|default('') == 'cartera' %}aria-current="page"{% endif %}>
+    Cartera y liquidez
+  </a>
+  <a class="subnav-finanzas__enlace {% if seccion|default('') == 'garantias' %}subnav-finanzas__enlace--activo{% endif %}"
+     href="{{ url_for('ver_garantias') }}"
+     {% if seccion|default('') == 'garantias' %}aria-current="page"{% endif %}>
+    Garantías
+  </a>
+  <a class="subnav-finanzas__enlace {% if seccion|default('') == 'analitica' %}subnav-finanzas__enlace--activo{% endif %}"
+     href="{{ url_for('ver_analitica') }}"
+     {% if seccion|default('') == 'analitica' %}aria-current="page"{% endif %}>
+    Analítica
+  </a>
+</nav>

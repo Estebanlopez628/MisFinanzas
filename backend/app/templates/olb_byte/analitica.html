@@ -2,16 +2,13 @@
 {% block titulo %}Analítica{% endblock %}
 
 {% block contenido %}
-  <section class="heroe">
+  <section class="heroe heroe--compacto">
     <h1 class="heroe__titulo">📈 Analítica</h1>
-    <p class="heroe__subtitulo">
-      Ventas, costos y ganancia por mes y por año, los clientes que más compran y los
-      productos cuyo costo subió con el proveedor. Las órdenes anuladas no cuentan.
-    </p>
-    <div class="acciones-formulario">
-      <a class="boton boton--secundario boton--pequeno" href="{{ url_for('ver_olb_byte') }}">Volver al panel</a>
-    </div>
+    <p class="heroe__subtitulo">Reportes, clientes VIP y alertas de costo.</p>
   </section>
+
+  {% set seccion = 'analitica' %}
+  {% include "olb_byte/_subnav.html" with context %}
 
   <section class="panel">
     <form class="formulario formulario--compacto" method="get" action="{{ url_for('ver_analitica') }}">

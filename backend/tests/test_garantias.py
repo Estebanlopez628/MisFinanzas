@@ -30,7 +30,7 @@ def _venta(bd, nombre: str = "Ana Pérez", lineas=None, fecha: datetime | None =
     """
     lineas = lineas or [
         comercial.LineaVenta(
-            nombre="Audífonos BT", referencia="AB-1", cantidad=2, precio_unitario="50000", costo_unitario="30000"
+            nombre="Audífonos BT", categoria="Audio", cantidad=2, precio_unitario="50000", costo_unitario="30000"
         ),
         comercial.LineaVenta(nombre="Cargador 20W", cantidad=1, precio_unitario="25000", costo_unitario="15000"),
     ]
@@ -61,7 +61,7 @@ def test_reclamo_nace_abierto_con_producto_y_referencia(bd) -> None:
     garantia = comercial.registrar_garantia(bd, linea.id_detalle, "No enciende")
 
     assert garantia.estado_tramite == "ABIERTA"
-    assert garantia.producto_referencia == "Audífonos BT (AB-1)"
+    assert garantia.producto_referencia == "Audífonos BT (Audio)"
     assert garantia.observacion == "No enciende"
     assert garantia.fecha_resolucion is None
 
@@ -133,11 +133,11 @@ def test_ranking_calcula_tasa_sobre_unidades_vendidas(bd) -> None:
 
     ranking = {fila["producto"]: fila for fila in comercial.ranking_fallas(bd)}
 
-    assert ranking["Audífonos BT (AB-1)"]["unidades"] == 2
-    assert ranking["Audífonos BT (AB-1)"]["fallas"] == 1
-    assert ranking["Audífonos BT (AB-1)"]["tasa"] == Decimal("50.0")
+    assert ranking["Audífonos BT (Audio)"]["unidades"] == 2
+    assert ranking["Audífonos BT (Audio)"]["fallas"] == 1
+    assert ranking["Audífonos BT (Audio)"]["tasa"] == Decimal("50.0")
     assert ranking["Cargador 20W"]["tasa"] == Decimal("0.0")
-    assert comercial.ranking_fallas(bd)[0]["producto"] == "Audífonos BT (AB-1)"
+    assert comercial.ranking_fallas(bd)[0]["producto"] == "Audífonos BT (Audio)"
 
 
 def test_ranking_excluye_ordenes_anuladas(bd) -> None:

@@ -257,7 +257,7 @@ def alertas_costos(bd: Session) -> dict[str, list[dict[str, object]]]:
     )
     historial: dict[str, list[tuple[datetime, VentaDetalle]]] = {}
     for detalle, venta in bd.execute(consulta).all():
-        etiqueta = etiqueta_producto(detalle.producto_nombre, detalle.referencia)
+        etiqueta = etiqueta_producto(detalle.producto_nombre, detalle.categoria)
         historial.setdefault(etiqueta, []).append((venta.fecha_venta, detalle))
 
     subidas: list[dict[str, object]] = []

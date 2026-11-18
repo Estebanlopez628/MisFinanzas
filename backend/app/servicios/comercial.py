@@ -3,7 +3,7 @@
 Responsabilidad
 ---------------
 - Registrar órdenes de venta con varias líneas, sin inventario (ADR-35): cada
-  línea guarda una copia de nombre, referencia, costo y precio.
+  línea guarda una copia de nombre, categoría, costo y precio.
 - Asignar el consecutivo `numero_orden`, que nunca se reutiliza.
 - Registrar la compra a crédito al proveedor y sus abonos en un libro de movimientos.
 - Aplicar abonos de clientes y actualizar el saldo de cada orden.
@@ -67,7 +67,7 @@ class LineaVenta:
         cantidad: Unidades; debe ser mayor que cero.
         precio_unitario: Valor de venta al cliente.
         costo_unitario: Precio que cobra el proveedor.
-        referencia: Modelo o referencia opcional.
+        categoria: Categoría opcional del producto.
         garantia_meses: Meses de garantía; `0` significa sin garantía.
     """
 
@@ -75,7 +75,7 @@ class LineaVenta:
     cantidad: int
     precio_unitario: Decimal | str | int | float
     costo_unitario: Decimal | str | int | float = CERO
-    referencia: str | None = None
+    categoria: str | None = None
     garantia_meses: int = GARANTIA_MESES_DEFECTO
 
 
@@ -438,7 +438,7 @@ def registrar_venta(
             VentaDetalle(
                 id_venta=venta.id_venta,
                 producto_nombre=linea.nombre.strip()[:120],
-                referencia=(linea.referencia or "").strip()[:60] or None,
+                categoria=(linea.categoria or "").strip()[:60] or None,
                 cantidad=linea.cantidad,
                 costo_unitario=costo,
                 precio_unitario=precio,
@@ -1015,17 +1015,17 @@ ESTADOS_GARANTIA = ("ABIERTA", "EN_TRAMITE", "RESUELTA", "RECHAZADA")
 ESTADOS_FINALES_GARANTIA = ("RESUELTA", "RECHAZADA")
 
 
-def etiqueta_producto(nombre: str, referencia: str | None) -> str:
+def etiqueta_producto(nombre: str, categoria: str | None) -> str:
     """Forma el nombre con el que un producto aparece en garantías y ranking.
 
     Args:
         nombre: Nombre del producto tal como se vendió.
-        referencia: Modelo o referencia opcional.
+        categoria: Categoría opcional del producto.
 
     Returns:
-        Texto como `Audífonos BT (AB-1)`, o solo el nombre si no hay referencia.
+        Texto como `Audífonos BT (Audio)`, o solo el nombre si no hay categoría.
     """
-    return f"{nombre} ({referencia})" if referencia else nombre
+    return f"{nombre} ({categoria})" if categoria else nombre
 
 
 def opciones_garantia(bd: Session) -> list[dict[str, str]]:
@@ -1049,7 +1049,7 @@ def opciones_garantia(bd: Session) -> list[dict[str, str]]:
             "id_detalle": detalle.id_detalle,
             "texto": (
                 f"No. {venta.numero_orden} · {venta.cliente_nombre} · "
-                f"{etiqueta_producto(detalle.producto_nombre, detalle.referencia)}"
+                f"{etiqueta_producto(detalle.producto_nombre, detalle.categoria)}"
             ),
         }
         for detalle, venta in bd.execute(consulta).all()
@@ -1080,7 +1080,7 @@ def registrar_garantia(bd: Session, id_detalle: str, observacion: str = "") -> G
     garantia = GarantiaProveedor(
         id_venta=venta.id_venta,
         id_detalle=detalle.id_detalle,
-        producto_referencia=etiqueta_producto(detalle.producto_nombre, detalle.referencia)[:120],
+        producto_referencia=etiqueta_producto(detalle.producto_nombre, detalle.categoria)[:120],
         estado_tramite="ABIERTA",
         fecha_reclamo=ahora_tienda(),
         observacion=observacion.strip()[:300] or None,
@@ -1181,7 +1181,7 @@ def ranking_fallas(bd: Session) -> list[dict[str, object]]:
         .where(Venta.estado_orden == ESTADO_ACTIVA)
     )
     for detalle in bd.scalars(consulta_ventas):
-        etiqueta = etiqueta_producto(detalle.producto_nombre, detalle.referencia)
+        etiqueta = etiqueta_producto(detalle.producto_nombre, detalle.categoria)
         unidades[etiqueta] = unidades.get(etiqueta, 0) + detalle.cantidad
 
     fallas: dict[str, int] = {}

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
@@ -87,7 +87,7 @@
     table.productos .centro { text-align: center; }
     .inferior {
       display: grid;
-      grid-template-columns: 1.25fr 1fr;
+      grid-template-columns: 1.6fr 1fr;
       gap: 18px;
       margin-top: 0.22in;
     }
@@ -107,19 +107,20 @@
     .medios__fila {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 8px;
       flex-wrap: wrap;
     }
     .medios__item {
       border: 1px solid #c9d8ea;
       border-radius: 6px;
-      padding: 6px 8px;
+      padding: 5px 7px;
       display: flex;
       align-items: center;
-      gap: 6px;
-      font-size: 9pt;
+      gap: 5px;
+      font-size: 8.5pt;
+      white-space: nowrap;
     }
-    .medios__item img { height: 0.34in; }
+    .medios__item img { height: 0.28in; }
     .totales {
       border: 1px solid #041e42;
       border-radius: 8px;
@@ -204,7 +205,7 @@
       <thead>
         <tr>
           <th>Producto</th>
-          <th>Referencia</th>
+          <th>Categoría</th>
           <th class="centro">Cant.</th>
           <th class="numero">Precio unit.</th>
           <th class="numero">Subtotal</th>
@@ -215,7 +216,7 @@
         {% for linea in lineas %}
           <tr>
             <td>{{ linea.nombre }}</td>
-            <td>{{ linea.referencia }}</td>
+            <td>{{ linea.categoria }}</td>
             <td class="centro">{{ linea.cantidad }}</td>
             <td class="numero">{{ linea.precio | cop }}</td>
             <td class="numero">{{ linea.subtotal | cop }}</td>

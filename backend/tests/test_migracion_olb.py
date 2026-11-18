@@ -61,11 +61,28 @@ for tabla in ("productos", "ventas", "venta_detalle", "abonos"):
 """
 
 
-def _correr_migracion(ruta_bd: Path) -> subprocess.CompletedProcess[str]:
-    """Ejecuta la reconstrucción en un proceso aislado sobre la base indicada.
+SCRIPT_RENOMBRE = """
+import sqlite3, sys
+from app.core.base_datos import crear_esquema
+
+crear_esquema()
+conexion = sqlite3.connect(sys.argv[1])
+conexion.execute("ALTER TABLE venta_detalle RENAME COLUMN categoria TO referencia")
+conexion.commit()
+conexion.close()
+
+crear_esquema()
+conexion = sqlite3.connect(sys.argv[1])
+print(",".join(fila[1] for fila in conexion.execute("PRAGMA table_info(venta_detalle)")))
+"""
+
+
+def _correr_migracion(ruta_bd: Path, script: str = SCRIPT_RECONSTRUCCION) -> subprocess.CompletedProcess[str]:
+    """Ejecuta una migración en un proceso aislado sobre la base indicada.
 
     Args:
         ruta_bd: Archivo SQLite con el esquema de prueba.
+        script: Código Python a ejecutar en el proceso.
 
     Returns:
         Resultado del proceso con la salida estándar y de error.
@@ -75,7 +92,7 @@ def _correr_migracion(ruta_bd: Path) -> subprocess.CompletedProcess[str]:
     entorno["ENTORNO"] = "pruebas"
     entorno["CLAVE_SECRETA"] = "clave-secreta-solo-para-pruebas-0123456789"
     return subprocess.run(
-        [sys.executable, "-c", SCRIPT_RECONSTRUCCION, str(ruta_bd)],
+        [sys.executable, "-c", script, str(ruta_bd)],
         cwd=RAIZ_BACKEND,
         env=entorno,
         capture_output=True,
@@ -130,6 +147,17 @@ def test_no_reconstruye_si_hay_ventas_registradas(tmp_path: Path) -> None:
     filas = conexion.execute("SELECT COUNT(*) FROM ventas").fetchone()[0]
     conexion.close()
     assert filas == 1
+
+
+def test_referencia_se_renombra_a_categoria_sin_perder_datos(tmp_path: Path) -> None:
+    """Una base con `referencia` en las líneas de venta pasa a tener `categoria`."""
+    ruta = tmp_path / "referencia.db"
+
+    resultado = _correr_migracion(ruta, SCRIPT_RENOMBRE)
+
+    assert resultado.returncode == 0, resultado.stderr
+    assert "categoria" in resultado.stdout.strip().split(",")
+    assert "referencia" not in resultado.stdout.strip().split(",")
 
 
 def test_base_nueva_no_requiere_reconstruccion(tmp_path: Path) -> None:

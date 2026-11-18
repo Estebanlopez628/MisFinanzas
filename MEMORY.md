@@ -262,6 +262,17 @@ Recálculo en tiempo real (<100 ms) sin recargar página. Se implementa con func
 - **Decisión:** `trabajos_extras` gana `tipo_contrato` (`INDEFINIDO` | `TERMINO_FIJO`), `frecuencia` (`MENSUAL` | `QUINCENAL`), `fecha_fin` y `fecha_pago`. `valor` es el monto **de cada pago**. Los pagos se generan de forma idempotente como filas de `gastos` con `id_trabajo`: reutilizan la macro `fila_gasto` (lápiz, «Cancelar», ×, ✔ y abono manual) pero `gastos.listar_gastos` los excluye, así que no tocan el sueldo, las quincenas ni los totales de gastos. El ✔ registra el cobro y `trabajos.extras_cobrados_mes` lo suma al `disponible` del diagnóstico del mes. La frecuencia quincenal crea dos pagos (día 15 y día 30 ajustado al último día); la mensual, uno en el día de `fecha_pago`. Un contrato indefinido mantiene una ventana móvil de 12 meses desde el mes visible; un término fijo se detiene en `fecha_fin`. La × inhabilita el pago 15 días en lugar de borrarlo, para que la generación idempotente no lo recree. Los trabajos anteriores se migran como término fijo de un solo mes para no inventar ingresos recurrentes.
 - **Archivos:** `modelos.py` (`TrabajoExtra`, `Gasto.id_trabajo`), `core/base_datos.py` (`_migrar_columnas_trabajos`, `id_trabajo` en `_migrar_columnas_gastos`), `servicios/trabajos.py`, `servicios/gastos.py`, `servicios/pagos_metas.py` (`quitar_gasto`), `servicios/ahorro.py` (`diagnostico`), `routers/trabajos.py`, `routers/gastos.py` (`_volver`), `templates/trabajos/index.html`, `templates/finanzas/_gasto_fijo.html`, `templates/presupuesto/index.html`, `static/js/app.js`, `diccionario_datos.md` §7 y §12, `tests/test_trabajos_extras.py`.
 
+### ADR-41 — Factura PDF: arquitectura de render y límites (SRS OLB_BYTE v1.0, Fase 7)
+- **Contexto:** ADR-36 eligió Playwright. La factura debe salir en una sola página Carta con la paleta del SRS, logos de `assets/` y medios de pago.
+- **Decisión:**
+  - La plantilla `olb_byte/factura_pdf.html` es un HTML independiente (sin el layout de la app). El router la renderiza con Jinja y la pasa a `servicios/factura_pdf.generar_pdf`, que abre Chromium headless por petición, carga el HTML con `set_content` y genera el PDF con `printBackground=True`, formato Carta y márgenes en cero.
+  - Los logos se embeben como data URI para que el PDF no dependa de rutas ni de red. Se localizan con globs porque los nombres de `assets/` tienen tildes.
+  - La tabla tiene diez filas fijas: las vacías se rellenan para mantener el efecto cebra. Con más de diez productos la factura no cabe en una página; el sistema lo rechaza (HTTP 422) con el motivo, en lugar de partir la factura.
+  - Sin Chromium instalado la respuesta es HTTP 503 con el comando `python -m playwright install chromium`. La vista HTML sigue funcionando.
+  - La vista previa y la descarga usan la misma ruta con `?descargar=0|1`. Compartir usa la Web Share API con el archivo; si el navegador no lo permite, abre WhatsApp.
+- **Verificación visual:** se generó una factura de cuatro productos con abono y se revisó la imagen resultante; los medios de pago quedaron en una fila tras ajustar el ancho de la columna.
+- **Archivos:** `servicios/factura_pdf.py`, `routers/olb_byte.py` (`ver_factura_pdf`), `templates/olb_byte/factura_pdf.html`, `templates/olb_byte/factura.html`, `static/js/factura.js`, `static/js/sw.js` (v15), `static/css/estilos.css`, `requirements.txt`, `DESPLIEGUE.md` §13, `tests/test_factura_pdf.py`.
+
 ### ADR-40 — Analítica: reglas de cálculo y umbral de margen (SRS OLB_BYTE v1.0, Fase 6)
 - **Contexto:** RF-12 a RF-14 piden reportes mensuales y anuales, rentabilidad, ranking de clientes VIP y alertas de subida de costo.
 - **Decisión:**
@@ -366,6 +377,19 @@ Recálculo en tiempo real (<100 ms) sin recargar página. Se implementa con func
 ---
 
 ## Bitácora de Cambios
+
+### 2026-11-18 — SRS OLB_BYTE v1.0, Fase 7: factura PDF con Playwright
+
+**Cambios realizados**
+1. `servicios/factura_pdf.py` (nuevo) — datos de la factura, logos como data URI, nombre de archivo y `generar_pdf` con Chromium (ADR-41).
+2. `templates/olb_byte/factura_pdf.html` (nuevo) — documento de una página Carta con la paleta del SRS, tabla cebra de diez filas, medios de pago y pie institucional.
+3. `routers/olb_byte.py` — `ver_factura_pdf` (GET `/olb-byte/factura/{id}/pdf?descargar=0|1`) con respuestas 404, 422 (más de diez productos) y 503 (sin Chromium).
+4. `templates/olb_byte/factura.html` y `static/js/factura.js` — vista previa en diálogo, descarga, compartir con Web Share API y respaldo a WhatsApp.
+5. `requirements.txt` — `playwright>=1.45`; `DESPLIEGUE.md` §13 con la instalación de Chromium.
+6. `static/js/sw.js` — `olb-finanzas-v15` con `factura.js`.
+7. `tests/test_factura_pdf.py` (nuevo, 14 pruebas, dos con Chromium real).
+
+**Verificación:** `pytest` en verde (425 pruebas). Se generó una factura de muestra y se revisó la imagen: una página, medios de pago en una fila tras ajustar la columna.
 
 ### 2026-11-17 — SRS OLB_BYTE v1.0, Fase 6: analítica, clientes VIP y alertas de costo
 

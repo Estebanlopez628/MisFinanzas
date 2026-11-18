@@ -33,7 +33,7 @@ router = APIRouter(tags=["OLB_BYTE"])
 
 CAMPOS_LINEA = (
     "producto_nombre",
-    "referencia",
+    "categoria",
     "cantidad",
     "costo_unitario",
     "precio_unitario",
@@ -47,7 +47,7 @@ class DetalleVenta:
 
     Attributes:
         nombre: Nombre del producto tal como se vendió.
-        referencia: Modelo o referencia.
+        categoria: Categoría del producto.
         cantidad: Unidades vendidas.
         precio_unitario: Precio aplicado.
         subtotal: Precio por cantidad.
@@ -55,7 +55,7 @@ class DetalleVenta:
     """
 
     nombre: str
-    referencia: str | None
+    categoria: str | None
     cantidad: int
     precio_unitario: object
     subtotal: object
@@ -76,7 +76,7 @@ def _detalle_de_venta(bd: Session, id_venta: str) -> list[DetalleVenta]:
     return [
         DetalleVenta(
             nombre=detalle.producto_nombre,
-            referencia=detalle.referencia,
+            categoria=detalle.categoria,
             cantidad=detalle.cantidad,
             precio_unitario=detalle.precio_unitario,
             subtotal=detalle.subtotal_item,
@@ -89,7 +89,7 @@ def _detalle_de_venta(bd: Session, id_venta: str) -> list[DetalleVenta]:
 def _filas_del_formulario(formulario) -> list[dict[str, str]]:
     """Lee las filas de producto tal como se escribieron en el formulario.
 
-    Una fila en la que el usuario no escribió producto, referencia, costo ni precio
+    Una fila en la que el usuario no escribió producto, categoría, costo ni precio
     se ignora: la cantidad y la garantía siempre traen un valor por defecto y no
     cuentan como datos.
 
@@ -106,7 +106,7 @@ def _filas_del_formulario(formulario) -> list[dict[str, str]]:
             campo: str(columnas[campo][indice]).strip() if indice < len(columnas[campo]) else ""
             for campo in CAMPOS_LINEA
         }
-        if any(fila[campo] for campo in ("producto_nombre", "referencia", "costo_unitario", "precio_unitario")):
+        if any(fila[campo] for campo in ("producto_nombre", "categoria", "costo_unitario", "precio_unitario")):
             filas.append(fila)
     return filas
 
@@ -147,7 +147,7 @@ def _lineas_desde_filas(filas: list[dict[str, str]]) -> list[comercial.LineaVent
                 cantidad=cantidad,
                 precio_unitario=fila["precio_unitario"],
                 costo_unitario=fila["costo_unitario"] or "0",
-                referencia=fila["referencia"] or None,
+                categoria=fila["categoria"] or None,
                 garantia_meses=meses,
             )
         )

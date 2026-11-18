@@ -566,7 +566,7 @@ class VentaDetalle(Base):
         ForeignKey("productos.id_producto", ondelete="RESTRICT"), nullable=True
     )
     producto_nombre: Mapped[str] = mapped_column(String(120), nullable=False)
-    referencia: Mapped[str | None] = mapped_column(String(60), nullable=True)
+    categoria: Mapped[str | None] = mapped_column(String(60), nullable=True)
     cantidad: Mapped[int] = mapped_column(Integer, nullable=False)
     costo_unitario: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False)
     precio_unitario: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False)

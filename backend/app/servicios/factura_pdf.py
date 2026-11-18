@@ -104,7 +104,7 @@ def datos_factura(bd: Session, venta: Venta) -> dict[str, object]:
     lineas = [
         {
             "nombre": detalle.producto_nombre,
-            "referencia": detalle.referencia or "—",
+            "categoria": detalle.categoria or "—",
             "cantidad": detalle.cantidad,
             "precio": detalle.precio_unitario,
             "subtotal": detalle.subtotal_item,

@@ -61,7 +61,7 @@
           <thead>
             <tr>
               <th scope="col">Producto</th>
-              <th scope="col">Referencia</th>
+              <th scope="col">Categoría</th>
               <th scope="col">Cantidad</th>
               <th scope="col">Precio unitario</th>
               <th scope="col">Subtotal</th>
@@ -72,7 +72,7 @@
             {% for linea in lineas %}
               <tr>
                 <td>{{ linea.nombre }}</td>
-                <td>{{ linea.referencia or '—' }}</td>
+                <td>{{ linea.categoria or '—' }}</td>
                 <td class="tabla__numero">{{ linea.cantidad }}</td>
                 <td class="tabla__numero">{{ linea.precio_unitario | cop }}</td>
                 <td class="tabla__numero">{{ linea.subtotal | cop }}</td>

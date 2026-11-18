@@ -2,15 +2,13 @@
 {% block titulo %}Pendientes de pago{% endblock %}
 
 {% block contenido %}
-  <section class="heroe">
+  <section class="heroe heroe--compacto">
     <h1 class="heroe__titulo">⏳ Pendientes de pago</h1>
-    <p class="heroe__subtitulo">
-      Clientes con saldo por cobrar. Cada abono genera un recibo listo para compartir.
-    </p>
-    <div class="acciones-formulario">
-      <a class="boton boton--secundario boton--pequeno" href="{{ url_for('ver_olb_byte') }}">Volver al panel</a>
-    </div>
+    <p class="heroe__subtitulo">Saldos por cobrar y recibos de abono.</p>
   </section>
+
+  {% set seccion = 'pendientes' %}
+  {% include "olb_byte/_subnav.html" with context %}
 
   {% if error %}
     <div class="alerta alerta--error" role="alert">{{ error }}</div>

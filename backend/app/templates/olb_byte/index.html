@@ -1,70 +1,38 @@
 ﻿{% extends "base.html" %}
 {% block titulo %}OLB_BYTE{% endblock %}
 
-{% macro icono_lapiz() -%}
-  <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false"
-       fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M12 20h9" />
-    <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
-  </svg>
-{%- endmacro %}
-
-{% macro campos_linea(fila) -%}
-  <td>
-    <span class="linea-venta__vista" data-vista="producto_nombre">{{ fila.producto_nombre }}</span>
-    <input class="campo__control campo__control--compacto linea-venta__edicion" type="text"
-           name="producto_nombre" value="{{ fila.producto_nombre }}" placeholder="Nombre del producto"
-           aria-label="Nombre del producto" data-campo="producto_nombre" required />
-  </td>
-  <td>
-    <span class="linea-venta__vista" data-vista="referencia">{{ fila.referencia }}</span>
-    <input class="campo__control campo__control--compacto linea-venta__edicion" type="text"
-           name="referencia" value="{{ fila.referencia }}" placeholder="Modelo"
-           aria-label="Referencia" data-campo="referencia" />
-  </td>
-  <td class="tabla__numero">
-    <span class="linea-venta__vista" data-vista="cantidad">{{ fila.cantidad or 1 }}</span>
-    <input class="campo__control campo__control--compacto linea-venta__edicion" type="number"
-           name="cantidad" min="1" value="{{ fila.cantidad or 1 }}" aria-label="Cantidad"
-           data-campo="cantidad" required />
-  </td>
-  <td class="tabla__numero">
-    <span class="linea-venta__vista" data-vista="costo_unitario">{{ fila.costo_unitario }}</span>
-    <input class="campo__control campo__control--compacto linea-venta__edicion" type="text"
-           name="costo_unitario" value="{{ fila.costo_unitario }}" inputmode="decimal"
-           placeholder="0" aria-label="Costo unitario (proveedor)" data-campo="costo_unitario" />
-  </td>
-  <td class="tabla__numero">
-    <span class="linea-venta__vista" data-vista="precio_unitario">{{ fila.precio_unitario }}</span>
-    <input class="campo__control campo__control--compacto linea-venta__edicion" type="text"
-           name="precio_unitario" value="{{ fila.precio_unitario }}" inputmode="decimal"
-           placeholder="Precio" aria-label="Precio de venta" data-campo="precio_unitario" required />
-  </td>
-  <td>
-    <span class="linea-venta__vista" data-vista="garantia_meses">{{ fila.garantia_meses if fila.garantia_meses is not none else meses_defecto }}</span>
-    <input class="campo__control campo__control--compacto linea-venta__edicion" type="number"
-           name="garantia_meses" min="0" value="{{ fila.garantia_meses if fila.garantia_meses is not none else meses_defecto }}"
-           aria-label="Garantía en meses" data-campo="garantia_meses" />
-  </td>
-  <td class="tabla__numero" data-subtotal>$0</td>
-  <td class="tabla__acciones">
-    <button class="boton-circular boton-circular--editar" type="button" data-editar-linea
-            aria-label="Editar producto" title="Editar producto">{{ icono_lapiz() }}</button>
-    <button class="boton boton--primario boton--pequeno linea-venta__edicion" type="button" data-actualizar-linea>Actualizar</button>
-    <button class="boton boton--cancelar boton--pequeno linea-venta__edicion" type="button" data-cancelar-linea>Cancelar</button>
-    <button class="boton-circular boton--peligro" type="button" data-eliminar-linea
-            aria-label="Eliminar producto" title="Eliminar producto">×</button>
-  </td>
+{% macro fila_producto(fila) -%}
+  <tr class="fila-producto" data-fila-producto>
+    <td data-etiqueta="Producto">
+      <span data-vista="producto_nombre">{{ fila.producto_nombre }}</span>
+      <small class="ayuda" data-vista="categoria">{{ fila.categoria }}</small>
+      <input type="hidden" name="producto_nombre" value="{{ fila.producto_nombre }}" />
+      <input type="hidden" name="categoria" value="{{ fila.categoria }}" />
+      <input type="hidden" name="costo_unitario" value="{{ fila.costo_unitario }}" />
+      <input type="hidden" name="precio_unitario" value="{{ fila.precio_unitario }}" />
+      <input type="hidden" name="cantidad" value="{{ fila.cantidad }}" />
+      <input type="hidden" name="garantia_meses" value="{{ fila.garantia_meses }}" />
+    </td>
+    <td class="tabla__numero" data-etiqueta="Cant." data-vista="cantidad">{{ fila.cantidad }}</td>
+    <td class="tabla__numero" data-etiqueta="Precio" data-vista="precio_unitario">{{ fila.precio_unitario }}</td>
+    <td data-etiqueta="Garantía" data-vista="garantia_meses">{{ fila.garantia_meses }} mes(es)</td>
+    <td class="celda-acciones" data-etiqueta="">
+      <div class="fila-acciones">
+        <button class="boton boton--secundario boton--pequeno" type="button" data-editar-fila>Actualizar</button>
+        <button class="boton boton--peligro boton--pequeno" type="button" data-eliminar-fila>Eliminar</button>
+      </div>
+    </td>
+  </tr>
 {%- endmacro %}
 
 {% block contenido %}
-  <section class="heroe">
+  <section class="heroe heroe--compacto">
     <h1 class="heroe__titulo">🛠️ OLB_BYTE</h1>
-    <p class="heroe__subtitulo">
-      Ventas a crédito con compra al proveedor, cobros, cartera y garantías. La
-      tienda no maneja inventario: cada venta se registra al momento de comprar.
-    </p>
+    <p class="heroe__subtitulo">Ventas, cobros y garantías de la tienda.</p>
   </section>
+
+  {% set seccion = 'ventas' %}
+  {% include "olb_byte/_subnav.html" with context %}
 
   {% if guardado %}
     <div class="alerta alerta--exito" role="status">Operación guardada correctamente.</div>
@@ -91,13 +59,9 @@
     </article>
   </div>
 
-  {# --------------------------- Venta multi-producto ------------------------ #}
+  {# ------------------------------ Registrar venta ------------------------------ #}
   <section class="panel">
     <h2 class="panel__titulo">Registrar venta</h2>
-    <p class="panel__descripcion">
-      Escribe cada producto en una fila. Los totales se actualizan mientras escribes;
-      la garantía empieza el día de la venta.
-    </p>
 
     <form class="formulario" method="post" action="{{ url_for('registrar_venta') }}" data-venta-form>
       <div class="fila-campos">
@@ -106,7 +70,7 @@
           <input class="campo__control" type="text" name="cliente_nombre" required
                  list="clientes-lista" autocomplete="off" value="{{ borrador.cliente_nombre if borrador else '' }}"
                  data-cliente-nombre />
-          <span class="ayuda">Si el cliente ya existe, se completa el celular al elegirlo.</span>
+          <span class="ayuda">Si el cliente ya existe, se completa su celular.</span>
         </label>
         <label class="campo">
           <span class="campo__etiqueta">Celular (WhatsApp)</span>
@@ -114,9 +78,11 @@
             <input class="campo__control" type="tel" name="cliente_telefono" inputmode="numeric"
                    placeholder="3001234567" value="{{ borrador.cliente_telefono if borrador else '' }}"
                    data-cliente-telefono />
-            <button class="boton boton--secundario" type="button" data-contactos hidden>Buscar en Contactos</button>
+            <button class="boton boton--secundario boton--pequeno" type="button" data-contactos hidden>Buscar en Contactos</button>
           </span>
-          <span class="ayuda">10 dígitos, sin el indicativo 57.</span>
+          <span class="ayuda" data-nota-contactos hidden>
+            Importar desde Contactos funciona en Android con Chrome, con la página abierta en HTTPS.
+          </span>
         </label>
       </div>
 
@@ -126,59 +92,123 @@
         {% endfor %}
       </datalist>
 
+      <fieldset class="bloque-producto">
+        <legend class="bloque-producto__titulo">Producto</legend>
+        <div class="fila-campos">
+          <label class="campo">
+            <span class="campo__etiqueta">Nombre del producto</span>
+            <input class="campo__control" type="text" placeholder="Audífonos Bluetooth"
+                   data-campo-panel="producto_nombre" />
+          </label>
+          <label class="campo">
+            <span class="campo__etiqueta">Categoría</span>
+            <input class="campo__control" type="text" placeholder="Audio" data-campo-panel="categoria" />
+          </label>
+        </div>
+        <div class="fila-campos">
+          <label class="campo">
+            <span class="campo__etiqueta">Cantidad</span>
+            <input class="campo__control" type="number" min="1" value="1" data-campo-panel="cantidad" />
+          </label>
+          <label class="campo">
+            <span class="campo__etiqueta">Costo (proveedor)</span>
+            <input class="campo__control" type="text" inputmode="decimal" placeholder="0" data-campo-panel="costo_unitario" />
+          </label>
+          <label class="campo">
+            <span class="campo__etiqueta">Precio de venta</span>
+            <input class="campo__control" type="text" inputmode="decimal" placeholder="50.000" data-campo-panel="precio_unitario" />
+          </label>
+          <label class="campo">
+            <span class="campo__etiqueta">Garantía (meses)</span>
+            <input class="campo__control" type="number" min="0" value="{{ meses_defecto }}" data-campo-panel="garantia_meses" />
+          </label>
+        </div>
+        <div class="subtotal-linea">
+          <span>Subtotal del producto</span>
+          <strong data-subtotal-panel>$0</strong>
+        </div>
+        <p class="alerta alerta--error" role="alert" data-error-panel hidden></p>
+        <div class="acciones-formulario">
+          <button class="boton boton--secundario" type="button" data-agregar-producto>+ Agregar otro producto</button>
+        </div>
+      </fieldset>
+
+      <h3 class="subtitulo-seccion">Productos de esta venta</h3>
       <div class="tabla-contenedor">
-        <table class="tabla tabla--editable linea-venta-tabla">
+        <table class="tabla tabla--tarjetas tabla--productos">
           <thead>
             <tr>
               <th scope="col">Producto</th>
-              <th scope="col">Referencia</th>
               <th scope="col">Cant.</th>
-              <th scope="col">Costo</th>
               <th scope="col">Precio</th>
-              <th scope="col">Garantía (meses)</th>
-              <th scope="col">Subtotal</th>
+              <th scope="col">Garantía</th>
               <th scope="col">Acciones</th>
             </tr>
           </thead>
-          <tbody data-lineas>
-            {% set filas_iniciales = borrador.filas if borrador and borrador.filas else [{'producto_nombre': '', 'referencia': '', 'cantidad': 1, 'costo_unitario': '', 'precio_unitario': '', 'garantia_meses': None}] %}
-            {% for fila in filas_iniciales %}
-              <tr class="linea-venta" data-linea data-nueva="1">
-                {{ campos_linea(fila) }}
-              </tr>
-            {% endfor %}
+          <tbody data-lista-productos>
+            {% if borrador and borrador.filas %}
+              {% for fila in borrador.filas %}
+                {{ fila_producto(fila) }}
+              {% endfor %}
+            {% endif %}
           </tbody>
-          <tfoot>
-            <tr>
-              <th colspan="6" scope="row">Total de la orden</th>
-              <td class="tabla__numero" data-total>$0</td>
-              <td></td>
-            </tr>
-            <tr>
-              <th colspan="6" scope="row">Costo al proveedor (deuda a crédito)</th>
-              <td class="tabla__numero" data-total-costo>$0</td>
-              <td></td>
-            </tr>
-            <tr>
-              <th colspan="6" scope="row">Ganancia neta estimada</th>
-              <td class="tabla__numero" data-ganancia>$0</td>
-              <td></td>
-            </tr>
-          </tfoot>
         </table>
+        <p class="tabla__vacia" data-lista-vacia {% if borrador and borrador.filas %}hidden{% endif %}>
+          Aún no agregas productos. Escríbelos arriba y pulsa «+ Agregar otro producto».
+        </p>
+      </div>
+
+      <div class="resumen-venta">
+        <div><span>Total de la orden</span><strong data-total>$0</strong></div>
+        <div><span>Costo al proveedor (deuda a crédito)</span><strong data-total-costo>$0</strong></div>
+        <div><span>Ganancia neta estimada</span><strong data-ganancia>$0</strong></div>
       </div>
 
       <div class="acciones-formulario">
-        <button class="boton boton--secundario" type="button" data-agregar-linea>+ Agregar otro producto</button>
-        <button class="boton boton--primario" type="submit">Registrar venta</button>
+        <button class="boton boton--primario" type="submit" data-registrar>Registrar venta</button>
       </div>
     </form>
 
-    <template data-plantilla-linea>
-      <tr class="linea-venta" data-linea data-nueva="1">
-        {{ campos_linea({'producto_nombre': '', 'referencia': '', 'cantidad': 1, 'costo_unitario': '', 'precio_unitario': '', 'garantia_meses': None}) }}
-      </tr>
+    <template data-plantilla-fila>
+      {{ fila_producto({'producto_nombre': '', 'categoria': '', 'costo_unitario': '', 'precio_unitario': '', 'cantidad': 1, 'garantia_meses': meses_defecto}) }}
     </template>
+
+    <dialog class="dialogo-edicion" data-dialogo-edicion aria-labelledby="titulo-edicion">
+      <h2 class="panel__titulo" id="titulo-edicion">Actualizar producto</h2>
+      <div class="fila-campos">
+        <label class="campo">
+          <span class="campo__etiqueta">Nombre del producto</span>
+          <input class="campo__control" type="text" data-campo-edicion="producto_nombre" />
+        </label>
+        <label class="campo">
+          <span class="campo__etiqueta">Categoría</span>
+          <input class="campo__control" type="text" data-campo-edicion="categoria" />
+        </label>
+      </div>
+      <div class="fila-campos">
+        <label class="campo">
+          <span class="campo__etiqueta">Cantidad</span>
+          <input class="campo__control" type="number" min="1" data-campo-edicion="cantidad" />
+        </label>
+        <label class="campo">
+          <span class="campo__etiqueta">Costo (proveedor)</span>
+          <input class="campo__control" type="text" inputmode="decimal" data-campo-edicion="costo_unitario" />
+        </label>
+        <label class="campo">
+          <span class="campo__etiqueta">Precio de venta</span>
+          <input class="campo__control" type="text" inputmode="decimal" data-campo-edicion="precio_unitario" />
+        </label>
+        <label class="campo">
+          <span class="campo__etiqueta">Garantía (meses)</span>
+          <input class="campo__control" type="number" min="0" data-campo-edicion="garantia_meses" />
+        </label>
+      </div>
+      <p class="alerta alerta--error" role="alert" data-error-edicion hidden></p>
+      <div class="fila-acciones-dialogo">
+        <button class="boton boton--primario boton--pequeno" type="button" data-guardar-edicion>Actualizar</button>
+        <button class="boton boton--cancelar boton--pequeno" type="button" data-cancelar-edicion>Cancelar</button>
+      </div>
+    </dialog>
   </section>
 
   <div class="rejilla-paneles">
@@ -203,12 +233,6 @@
   {# ------------------------------ Órdenes ---------------------------------- #}
   <section class="panel panel--tabla">
     <h2 class="panel__titulo">Órdenes registradas</h2>
-    <p class="panel__descripcion">
-      <a class="boton boton--secundario boton--pequeno" href="{{ url_for('ver_pendientes') }}">Ver pendientes de pago ({{ pendientes_total }})</a>
-      <a class="boton boton--secundario boton--pequeno" href="{{ url_for('ver_cartera') }}">Cartera y liquidez</a>
-      <a class="boton boton--secundario boton--pequeno" href="{{ url_for('ver_garantias') }}">Garantías y fallas</a>
-      <a class="boton boton--secundario boton--pequeno" href="{{ url_for('ver_analitica') }}">Analítica</a>
-    </p>
     {% if ventas %}
       <div class="tabla-contenedor">
         <table class="tabla">
@@ -236,7 +260,7 @@
                 <td>{{ venta.fecha_venta | fecha_larga }}</td>
                 <td>
                   {% for linea in fila.lineas %}
-                    {{ linea.nombre }}{% if linea.referencia %} ({{ linea.referencia }}){% endif %} × {{ linea.cantidad }}{% if not loop.last %}, {% endif %}
+                    {{ linea.nombre }}{% if linea.categoria %} ({{ linea.categoria }}){% endif %} × {{ linea.cantidad }}{% if not loop.last %}, {% endif %}
                   {% endfor %}
                 </td>
                 <td class="tabla__numero">{{ venta.total | cop }}</td>

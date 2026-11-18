@@ -1,4 +1,4 @@
-# Despliegue — Finanzas y OLB_BYTE
+﻿# Despliegue — Finanzas y OLB_BYTE
 
 > Guía operativa para llevar la plataforma de desarrollo a producción.
 > Stack: **Python + FastAPI + Jinja2 + SQLite (SQLAlchemy 2.x)**.
@@ -288,3 +288,16 @@ portables. Para migrar:
 
 Los respaldos diarios permiten además recuperar datos concretos sin revertir el
 código: abre la copia con `sqlite3` y exporta las filas necesarias.
+
+## 13. Factura PDF de OLB_BYTE (Chromium con Playwright, ADR-36)
+
+La factura PDF usa Chromium headless. Tras instalar las dependencias del proyecto, ejecutar **una vez** en el servidor (con el mismo entorno virtual):
+
+`ash
+cd backend
+python -m playwright install chromium
+`
+
+En Linux puede hacer falta además python -m playwright install-deps chromium para las librerías del sistema. Si el navegador no está instalado, la vista de factura sigue funcionando; solo la descarga y la vista previa PDF muestran el aviso con este comando (HTTP 503).
+
+Los logos se leen de la carpeta ssets/ de la raíz del proyecto: debe desplegarse junto con ackend/.

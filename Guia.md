@@ -287,7 +287,7 @@ Principios que explican el resto del código:
 - **`analitica.html`** · 211 líneas — Plantilla: Analítica
 - **`cartera.html`** · 135 líneas — Plantilla: Cartera y liquidez
 - **`factura.html`** · 105 líneas — Plantilla: Factura No.
-- **`factura_pdf.html`** · 267 líneas — Plantilla Jinja2
+- **`factura_pdf.html`** · 268 líneas — Plantilla Jinja2
 - **`garantias.html`** · 147 líneas — Plantilla: Garantías
 - **`index.html`** · 338 líneas — Plantilla: OLB_BYTE
 - **`pendientes.html`** · 107 líneas — Plantilla: Pendientes de pago
@@ -732,6 +732,28 @@ modalidad y `conocePorcentajes` alterna entre el caso A (porcentajes) y el caso 
 Vista filtrada de clientes con saldo (RF-06). Muestra total, abonado y saldo por
 orden, el formulario de abono con fecha y hora, el enlace de cobro por WhatsApp y el
 acceso al último recibo. El filtro `q` busca por cliente, celular o número de orden.
+
+### `backend/app/servicios/factura_pdf.py`
+
+Factura PDF de OLB_BYTE (RF-18, ADR-36). `datos_factura` reúne líneas, filas vacías para
+completar diez, totales, garantía, medios de pago y el nombre del archivo; rechaza
+órdenes con más de diez productos. `logo_como_data_uri` embebe los logos de `assets/`.
+`nombre_archivo` arma `Factura_OLB_BYTE_No_{numero}_{cliente}.pdf` sin tildes. `generar_pdf`
+convierte el HTML en PDF Carta con Chromium (Playwright) y lanza `ChromiumNoDisponible`
+si el navegador no está instalado.
+
+### `backend/app/templates/olb_byte/factura_pdf.html`
+
+Documento HTML independiente de la factura impresa: cabecera con logo, tarjetas de
+cliente, pago y garantía, tabla cebra de diez filas, totales, nota del vendedor, medios
+de pago y pie institucional. Una sola página Carta; la marca «ANULADA» aparece en
+órdenes anuladas.
+
+### `backend/app/static/js/factura.js`
+
+Acciones de la factura: vista previa del PDF en un diálogo nativo y compartir con la Web
+Share API (archivo PDF). Si el navegador no puede compartir archivos, abre el enlace de
+WhatsApp.
 
 ### `backend/app/servicios/analitica.py`
 

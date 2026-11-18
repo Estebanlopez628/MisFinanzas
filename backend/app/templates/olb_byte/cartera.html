@@ -2,17 +2,13 @@
 {% block titulo %}Cartera y liquidez{% endblock %}
 
 {% block contenido %}
-  <section class="heroe">
+  <section class="heroe heroe--compacto">
     <h1 class="heroe__titulo">📊 Cartera y liquidez</h1>
-    <p class="heroe__subtitulo">
-      Lo que te deben, lo que debes al proveedor y el efectivo que queda libre. Un
-      déficit se muestra en rojo con signo menos; un superávit, en verde.
-    </p>
-    <div class="acciones-formulario">
-      <a class="boton boton--secundario boton--pequeno" href="{{ url_for('ver_olb_byte') }}">Volver al panel</a>
-      <a class="boton boton--secundario boton--pequeno" href="{{ url_for('ver_pendientes') }}">Pendientes de pago</a>
-    </div>
+    <p class="heroe__subtitulo">Cuánto te deben, cuánto debes y el efectivo libre.</p>
   </section>
+
+  {% set seccion = 'cartera' %}
+  {% include "olb_byte/_subnav.html" with context %}
 
   {% if guardado %}
     <div class="alerta alerta--exito" role="status">Pago al proveedor registrado.</div>

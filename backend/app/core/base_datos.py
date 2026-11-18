@@ -91,11 +91,33 @@ def crear_esquema() -> None:
 
     _reconstruir_comercial_sin_stock()
     Base.metadata.create_all(motor)
+    _renombrar_referencia_a_categoria()
     _migrar_columnas_perfil()
     _migrar_columnas_trabajos()
     _migrar_columnas_gastos()
     _migrar_columnas_metas()
     _migrar_columnas_chancucos()
+
+
+def _renombrar_referencia_a_categoria() -> None:
+    """Renombra `venta_detalle.referencia` a `categoria` en bases ya creadas.
+
+    La columna pasó a llamarse categoría porque así se captura el producto en el
+    formulario de venta. `RENAME COLUMN` conserva los datos. Es idempotente: si la
+    columna ya se llama `categoria`, o la tabla todavía no existe, no hace nada.
+    """
+    if not _conexion_sqlite:
+        return
+
+    with motor.begin() as conexion:
+        existentes = {
+            fila[1]
+            for fila in conexion.exec_driver_sql("PRAGMA table_info(venta_detalle)").fetchall()
+        }
+        if "referencia" in existentes and "categoria" not in existentes:
+            conexion.exec_driver_sql(
+                "ALTER TABLE venta_detalle RENAME COLUMN referencia TO categoria"
+            )
 
 
 def _reconstruir_comercial_sin_stock() -> None:

@@ -1,0 +1,133 @@
+"""Pruebas de la estructura de la interfaz de OLB_BYTE (formulario de venta v2).
+
+Comprueban lo que el servidor entrega al navegador: el submenú superior, el botón de
+contactos oculto cuando no hay API, y que los campos del panel de producto no se
+envían sin pasar por la tabla de detalle. El comportamiento en vivo se valida en el
+navegador; estas pruebas fijan la estructura que el JavaScript necesita.
+"""
+
+from __future__ import annotations
+
+import re
+from pathlib import Path
+
+from fastapi.testclient import TestClient
+
+RAIZ_ESTATICOS = Path(__file__).resolve().parent.parent / "app" / "static"
+
+
+def _etiquetas_con(html: str, atributo: str) -> list[str]:
+    """Devuelve las etiquetas <input> que contienen un atributo dado.
+
+    Args:
+        html: Documento HTML.
+        atributo: Nombre del atributo buscado, por ejemplo `data-campo-panel`.
+
+    Returns:
+        Lista con el texto completo de cada etiqueta.
+    """
+    return [
+        etiqueta
+        for etiqueta in re.findall(r"<input[^>]*>", html)
+        if f" {atributo}=" in etiqueta
+    ]
+
+
+def test_submenu_de_olb_byte_queda_arriba(cliente_admin: TestClient) -> None:
+    """El submenú con Ventas, Pendientes, Cartera, Garantías y Analítica va bajo el encabezado."""
+    texto = cliente_admin.get("/olb-byte").text
+
+    assert "subnav-finanzas" in texto
+    for ruta in ("/olb-byte/pendientes", "/olb-byte/cartera", "/olb-byte/garantias", "/olb-byte/analitica"):
+        assert re.search(rf'href="[^"]*{re.escape(ruta)}"', texto)
+    assert "Ver pendientes de pago (" not in texto
+    assert texto.index("subnav-finanzas") < texto.index("Registrar venta")
+
+
+def _pestana_activa(html: str) -> str:
+    """Devuelve el texto de la pestaña marcada como página actual del submenú.
+
+    Args:
+        html: Documento HTML de la vista.
+
+    Returns:
+        Texto del enlace con `aria-current="page"`, o cadena vacía si no hay ninguno.
+    """
+    coincidencia = re.search(
+        r'<a[^>]*aria-current="page"[^>]*>\s*(.*?)\s*</a>', html, flags=re.S
+    )
+    return coincidencia.group(1) if coincidencia else ""
+
+
+def test_submenu_marca_la_seccion_activa_en_cada_vista(cliente_admin: TestClient) -> None:
+    """Cada vista resalta su propia pestaña del submenú."""
+    assert _pestana_activa(cliente_admin.get("/olb-byte/pendientes").text) == "Pendientes de pago"
+    assert _pestana_activa(cliente_admin.get("/olb-byte/analitica").text) == "Analítica"
+    assert _pestana_activa(cliente_admin.get("/olb-byte").text) == "Ventas"
+
+
+def test_boton_de_contactos_empieza_oculto(cliente_admin: TestClient) -> None:
+    """El botón «Buscar en Contactos» no aparece hasta que el navegador confirma la API.
+
+    Un botón visible que no hace nada fue el defecto reportado: el atributo `hidden`
+    debe ganar al estilo del botón (ver la regla global `[hidden]` en el CSS).
+    """
+    texto = cliente_admin.get("/olb-byte").text
+
+    assert re.search(r"<button[^>]*data-contactos[^>]*hidden", texto)
+    assert re.search(r"<span[^>]*data-nota-contactos[^>]*hidden", texto)
+
+
+def test_regla_global_de_hidden_esta_en_el_css() -> None:
+    """El CSS oculta siempre los elementos con `hidden`, aunque tengan otra clase de display."""
+    css = (RAIZ_ESTATICOS / "css" / "estilos.css").read_text(encoding="utf-8")
+
+    assert "[hidden] {\n  display: none !important;" in css
+
+
+def test_campos_del_panel_no_se_envian_sin_pasar_por_la_tabla(cliente_admin: TestClient) -> None:
+    """Los campos del panel de producto no tienen `name`: solo viajan las filas de la tabla."""
+    texto = cliente_admin.get("/olb-byte").text
+    campos_panel = _etiquetas_con(texto, "data-campo-panel")
+
+    assert len(campos_panel) == 6
+    assert all(" name=" not in etiqueta for etiqueta in campos_panel)
+
+
+def test_el_detalle_viaja_en_campos_ocultos_por_fila(cliente_admin: TestClient, bd) -> None:
+    """Tras un error, cada producto vuelve a la tabla como fila con campos ocultos."""
+    datos = {
+        "cliente_nombre": "Ana",
+        "cliente_telefono": "",
+        "producto_nombre": ["Audífonos BT", ""],
+        "categoria": ["Audio", ""],
+        "cantidad": ["2", "1"],
+        "costo_unitario": ["30000", ""],
+        "precio_unitario": ["", ""],
+        "garantia_meses": ["3", ""],
+    }
+
+    respuesta = cliente_admin.post("/olb-byte/ventas", data=datos)
+
+    assert respuesta.status_code == 400
+    assert 'data-fila-producto' in respuesta.text
+    assert re.search(r'type="hidden" name="producto_nombre" value="Audífonos BT"', respuesta.text)
+    assert re.search(r'type="hidden" name="categoria" value="Audio"', respuesta.text)
+
+
+def test_cuadro_de_edicion_tiene_actualizar_y_cancelar(cliente_admin: TestClient) -> None:
+    """El cuadro «Actualizar producto» trae sus dos botones en la misma fila."""
+    texto = cliente_admin.get("/olb-byte").text
+
+    assert "dialogo-edicion" in texto
+    assert "fila-acciones-dialogo" in texto
+    assert "data-guardar-edicion" in texto
+    assert "data-cancelar-edicion" in texto
+
+
+def test_pendientes_y_cartera_usan_el_submenu(cliente_admin: TestClient) -> None:
+    """Las vistas de cobro y cartera ya no traen botones de «Volver al panel»."""
+    for ruta in ("/olb-byte/pendientes", "/olb-byte/cartera", "/olb-byte/garantias", "/olb-byte/analitica"):
+        texto = cliente_admin.get(ruta).text
+        assert "subnav-finanzas" in texto
+        assert "Volver al panel" not in texto

@@ -28,7 +28,7 @@ def _datos_venta(**extra: object) -> dict[str, object]:
         "cliente_nombre": "Ana Pérez",
         "cliente_telefono": "300 123 4567",
         "producto_nombre": ["Audífonos BT", "Cargador 20W"],
-        "referencia": ["AB-1", ""],
+        "categoria": ["Audio", ""],
         "cantidad": ["2", "1"],
         "costo_unitario": ["30000", "15000"],
         "precio_unitario": ["50.000", "25000"],
@@ -68,7 +68,7 @@ def test_venta_ignora_filas_vacias_del_formulario(cliente_admin: TestClient, bd)
     """Una fila en blanco que dejó el usuario no se convierte en producto."""
     datos = _datos_venta(
         producto_nombre=["Audífonos BT", ""],
-        referencia=["", ""],
+        categoria=["", ""],
         cantidad=["1", "1"],
         costo_unitario=["30000", ""],
         precio_unitario=["50000", ""],
