@@ -31,7 +31,7 @@ RUTA_ENV = RUTA_BACKEND / ".env"
 def _cargar_archivo_entorno() -> None:
     """Carga `backend/.env` en el entorno sin sobrescribir variables ya definidas.
 
-    Así Render o Koyeb, o las pruebas, mandan siempre sobre el archivo local. El
+    Así Render o las pruebas mandan siempre sobre el archivo local. El
     archivo no se versiona (`.gitignore`). No requiere dependencias externas.
     """
     if not RUTA_ENV.exists():
@@ -50,7 +50,7 @@ _cargar_archivo_entorno()
 def _url_con_driver(url: str) -> str:
     """Indica a SQLAlchemy el driver `psycopg` (v3) para las URL `postgresql://`.
 
-    Neon y Koyeb entregan la cadena sin driver; sin este cambio SQLAlchemy buscaría
+    Neon entrega la cadena sin driver; sin este cambio SQLAlchemy buscaría
     `psycopg2`, que el proyecto no usa.
 
     Args:

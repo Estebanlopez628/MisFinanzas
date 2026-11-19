@@ -265,32 +265,32 @@ python -m pytest -q
 
 ---
 
-## 11. PostgreSQL en Neon y despliegue en Koyeb (ADR-52)
+## 11. PostgreSQL en Neon y despliegue en Render (ADR-52)
 
 La base de producción es PostgreSQL en Neon. La aplicación usa `psycopg` 3; la
 cadena `postgresql://` de Neon se convierte sola a `postgresql+psycopg://` en
 `backend/app/core/base_datos.py`, así que no hace falta cambiarla.
 
-### 11.1 Variables en Koyeb
+### 11.1 Variables en Render
 
 | Variable | Valor |
 | --- | --- |
 | `DATABASE_URL` | Cadena de conexión de Neon (con `sslmode=require`). Nunca se escribe en el código. |
 | `ENTORNO` | `produccion` (desactiva las cuentas demo y cierra `/docs`). |
 | `CLAVE_SECRETA` | Al menos 32 caracteres. |
-| `APP_URL` | URL pública del servicio en Koyeb. |
+| `APP_URL` | URL pública del servicio en Render (`https://misfinanzas-odbc.onrender.com`). |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Credenciales de Google. |
 | `GOOGLE_REDIRECT_URI` | `https://<tu-servicio>/login/google/callback` |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` | Correo de recuperación. |
 
-### 11.2 Servicio en Koyeb
+### 11.2 Servicio web en Render
 
-- Origen: repositorio de GitHub, rama `main`.
-- Directorio de trabajo: `backend`.
-- Build: `pip install -r requirements.txt`.
-- Comando de inicio: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`.
-- Comprobación de salud: `GET /salud`. Responde `200` si la base de Neon contesta y
-  `503` si no.
+- Origen: repositorio de GitHub, rama `main` (el auto-deploy se activa con cada `push`).
+- **Root Directory:** `backend`.
+- **Build Command:** `pip install -r requirements.txt`. Quita cualquier `playwright install`:
+  la factura ya no usa Chromium en el servidor (ADR-50).
+- **Start Command:** `uvicorn app.main:app --host 0.0.0.0 --port $PORT`.
+- **Health Check Path:** `/salud`. Responde `200` si la base de Neon contesta y `503` si no.
 
 ### 11.3 Carga inicial de datos
 
@@ -309,7 +309,7 @@ cadena `postgresql://` de Neon se convierte sola a `postgresql+psycopg://` en
   renueva las conexiones cada 300 segundos.
 - Si más adelante se necesitan migraciones versionadas, añadir Alembic (nuevo ADR).
 - Antes del despliegue se debe rotar la contraseña de Neon si se compartió fuera de
-  Neon (chat, capturas). Luego se actualiza `DATABASE_URL` en Koyeb y `backend/.env`.
+  Neon (chat, capturas). Luego se actualiza `DATABASE_URL` en Render y `backend/.env`.
 
 ---
 

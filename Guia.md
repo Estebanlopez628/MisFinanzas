@@ -402,7 +402,7 @@ Paquete del núcleo. Agrupa configuración y utilidades sin dependencias de domi
 ### `backend/app/core/base_datos.py`
 
 Base de datos dual (ADR-52). `_cargar_archivo_entorno` lee `backend/.env` sin sobrescribir
-variables ya definidas (Koyeb, Render o las pruebas mandan). `_url_con_driver` convierte
+variables ya definidas (Render o las pruebas mandan). `_url_con_driver` convierte
 `postgresql://` (Neon) a `postgresql+psycopg://`. Con PostgreSQL el motor usa
 `pool_pre_ping`, `pool_recycle=300` y `prepare_threshold=None` (pooler de Neon). Las
 funciones `_migrar_*` solo corren con SQLite.
@@ -488,7 +488,7 @@ Paquete de routers; no registra nada por sí mismo (lo hace `main.crear_aplicaci
 ### `backend/app/routers/vistas.py`
 
 `/salud` ejecuta `SELECT 1` contra la base y responde 200 (`base_datos: ok`) o 503 si no
-contesta, para que Koyeb no envíe tráfico a una instancia sin base (SRS v1.8, ADR-52).
+contesta, para que Render no envíe tráfico a una instancia sin base (SRS v1.8, ADR-52).
 
 `iniciales_alias` obtiene las dos iniciales del alias para el círculo de respaldo y se
 registra como filtro `iniciales` de Jinja (SRS v1.8).

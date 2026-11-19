@@ -450,9 +450,9 @@ Recálculo en tiempo real (<100 ms) sin recargar página. Se implementa con func
 
 **Verificación:** `pytest` en verde (509). En Chromium a 390 px: la tabla queda oculta, la lista aparece, el detalle se abre y se cierra.
 
-### 2026-11-19 — PostgreSQL en Neon y despliegue en Koyeb (ADR-52)
+### 2026-11-19 — PostgreSQL en Neon y despliegue en Render (ADR-52)
 
-**Decisión:** la base de producción es PostgreSQL en Neon, con `psycopg` 3 (`psycopg[binary]`, nueva dependencia justificada aquí). SQLite queda para desarrollo y pruebas. Koyeb es el destino de despliegue. No se añade Alembic todavía: el esquema lo crea `create_all` y las migraciones `_migrar_*` siguen siendo solo para SQLite.
+**Decisión:** la base de producción es PostgreSQL en Neon, con `psycopg` 3 (`psycopg[binary]`, nueva dependencia justificada aquí). SQLite queda para desarrollo y pruebas. El destino de despliegue sigue siendo Render (`misfinanzas-odbc.onrender.com`); se evaluó Koyeb y se descartó porque el proyecto ya está en Render. No se añade Alembic todavía: el esquema lo crea `create_all` y las migraciones `_migrar_*` siguen siendo solo para SQLite.
 
 **Cambios realizados**
 1. `requirements.txt`: `psycopg[binary]>=3.2,<4.0`.
@@ -462,7 +462,7 @@ Recálculo en tiempo real (<100 ms) sin recargar página. Se implementa con func
 5. `usuarios.sembrar_demostracion`: no siembra cuentas demo con `ENTORNO=produccion`. Antes, una base vacía en producción recibía cuentas con contraseñas conocidas.
 6. `/salud`: consulta la base (`SELECT 1`) y responde 200 o 503.
 7. `tests/test_base_datos_postgres.py` (4 pruebas): driver, pruebas aisladas en SQLite, `/salud` 200 y 503.
-8. `DESPLIEGUE.md` §11: variables y configuración del servicio en Koyeb.
+8. `DESPLIEGUE.md` §11: variables y configuración del servicio en Render (Root Directory `backend`, Start Command con `$PORT`, Health Check `/salud`).
 
 **Verificación**
 - `migrar_a_neon.py` ejecutado: copió 24 tablas. Conteos locales y de Neon coinciden (usuarios 2, gastos 26, ventas 2, auditoría 103, clientes 1, abonos 2, venta_detalle 2).
@@ -470,7 +470,7 @@ Recálculo en tiempo real (<100 ms) sin recargar página. Se implementa con func
 - `/salud` contra Neon: 200, `base_datos: ok`; PostgreSQL 18.
 - `pytest` en verde con base temporal de SQLite (541 pruebas).
 
-**Pendiente:** rotar la contraseña de Neon, porque se compartió en el chat. Luego actualizar `DATABASE_URL` en Koyeb y en `backend/.env`.
+**Pendiente:** rotar la contraseña de Neon, porque se compartió en el chat. Luego actualizar `DATABASE_URL` en Render y en `backend/.env`.
 
 ### 2026-11-19 — Avatar híbrido: foto de Google o iniciales (SRS v1.8)
 
