@@ -1,3 +1,4 @@
+{% from "componentes/avatar.html" import avatar -%}
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -23,6 +24,7 @@
 
       {% if usuario %}
         <div class="usuario">
+          {{ avatar(usuario, "compacto") }}
           <span class="usuario__alias">Hola, {{ usuario.alias }}</span>
           <span class="badge badge--{{ 'admin' if usuario.es_administrador else 'publico' }}">
             {{ usuario.rol }}
@@ -74,7 +76,35 @@
       <span>Entorno: {{ configuracion.entorno }}</span>
       <span class="pie__separador">|</span>
       <span>© {{ anio_actual }}</span>
+      {% if usuario and not usuario.es_administrador %}
+        <button class="cafe-disparador" type="button" data-abrir-dialogo="dialogo-cafe">
+          ☕ Si te gusta mi trabajo, invítame un café ({{ cafe.monto }})
+        </button>
+      {% endif %}
     </footer>
+
+    {# Apoyo voluntario (solo Colombia): modal ligero con <dialog>, sin librerías. #}
+    {% if usuario and not usuario.es_administrador %}
+      <dialog class="cafe-dialogo" id="dialogo-cafe" aria-labelledby="titulo-cafe">
+        <div class="cafe-dialogo__cabecera">
+          <h2 class="cafe-dialogo__titulo" id="titulo-cafe">☕ Invítame un café</h2>
+          <button class="cafe-dialogo__cerrar" type="button" data-cerrar-dialogo aria-label="Cerrar">×</button>
+        </div>
+        <p class="cafe-dialogo__texto">
+          Gracias por apoyar el desarrollo de esta herramienta. Tu aporte ayuda a mantenerla
+          y a seguir mejorándola.
+        </p>
+        <p class="cafe-dialogo__monto">
+          Monto sugerido: <strong>{{ cafe.monto }}</strong>. Si prefieres, aporta lo que quieras.
+        </p>
+        <div class="cafe-dialogo__tarjetas">
+          <article class="cafe-tarjeta">
+            {% if cafe.qr_bre_b %}<img class="cafe-tarjeta__qr" src="{{ cafe.qr_bre_b }}" alt="Código QR de Bre-B" />{% endif %}
+            <p class="cafe-tarjeta__dato">Escanea el código QR con tu app Bre-B.</p>
+          </article>
+        </div>
+      </dialog>
+    {% endif %}
   </div>
   <script src="{{ url_for('estaticos', path='js/app.js') }}" defer></script>
   {% block scripts %}{% endblock %}

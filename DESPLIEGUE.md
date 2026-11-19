@@ -265,17 +265,51 @@ python -m pytest -q
 
 ---
 
-## 11. Migración futura a PostgreSQL
+## 11. PostgreSQL en Neon y despliegue en Koyeb (ADR-52)
 
-La aplicación ya usa SQLAlchemy 2.x y los identificadores/`Numeric` son
-portables. Para migrar:
+La base de producción es PostgreSQL en Neon. La aplicación usa `psycopg` 3; la
+cadena `postgresql://` de Neon se convierte sola a `postgresql+psycopg://` en
+`backend/app/core/base_datos.py`, así que no hace falta cambiarla.
 
-1. Añadir `alembic` y `psycopg` a `requirements.txt` (nuevo ADR en `MEMORY.md`).
-2. Generar la migración inicial desde los modelos actuales (`alembic revision --autogenerate`).
-3. Definir `DATABASE_URL=postgresql+psycopg://usuario:clave@host/olb`.
-4. Migrar los datos con un script de exportación/importación validado contra
-   `diccionario_datos.md`.
-5. Solo entonces se podrá subir `--workers` por encima de 1.
+### 11.1 Variables en Koyeb
+
+| Variable | Valor |
+| --- | --- |
+| `DATABASE_URL` | Cadena de conexión de Neon (con `sslmode=require`). Nunca se escribe en el código. |
+| `ENTORNO` | `produccion` (desactiva las cuentas demo y cierra `/docs`). |
+| `CLAVE_SECRETA` | Al menos 32 caracteres. |
+| `APP_URL` | URL pública del servicio en Koyeb. |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Credenciales de Google. |
+| `GOOGLE_REDIRECT_URI` | `https://<tu-servicio>/login/google/callback` |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` | Correo de recuperación. |
+
+### 11.2 Servicio en Koyeb
+
+- Origen: repositorio de GitHub, rama `main`.
+- Directorio de trabajo: `backend`.
+- Build: `pip install -r requirements.txt`.
+- Comando de inicio: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`.
+- Comprobación de salud: `GET /salud`. Responde `200` si la base de Neon contesta y
+  `503` si no.
+
+### 11.3 Carga inicial de datos
+
+1. `backend/.env` (local, no versionado) contiene `DATABASE_URL` de Neon.
+2. `python scripts\migrar_a_neon.py` crea el esquema en Neon y copia
+   `backend\datos\finanzas.db` sin duplicar registros. Puede ejecutarse varias veces.
+3. Las cuentas demo copiadas reciben una contraseña aleatoria: quedan sin acceso.
+4. Las tablas nuevas las crea la aplicación al arrancar (`create_all`).
+
+### 11.4 Notas operativas
+
+- Las cuentas demo solo se crean fuera de producción (`ENTORNO` distinto de `produccion`).
+- `scripts/respaldo.py` solo respalda SQLite. En Neon usa su copia de seguridad o `pg_dump`.
+- Las migraciones `_migrar_*` de SQLite no se ejecutan en PostgreSQL.
+- Neon usa un pooler (PgBouncer): el código desactiva las sentencias preparadas y
+  renueva las conexiones cada 300 segundos.
+- Si más adelante se necesitan migraciones versionadas, añadir Alembic (nuevo ADR).
+- Antes del despliegue se debe rotar la contraseña de Neon si se compartió fuera de
+  Neon (chat, capturas). Luego se actualiza `DATABASE_URL` en Koyeb y `backend/.env`.
 
 ---
 

@@ -169,6 +169,12 @@ class ConfiguracionApp:
             _lista_desde_entorno("CORREOS_ADMIN_OLB", CORREOS_OLB_BYTE_PREDETERMINADOS)
         )
     )
+    smtp_host: str = field(default_factory=lambda: os.getenv("SMTP_HOST", "").strip())
+    smtp_port: int = field(default_factory=lambda: int(os.getenv("SMTP_PORT", "587") or "587"))
+    smtp_user: str = field(default_factory=lambda: os.getenv("SMTP_USER", "").strip())
+    smtp_pass: str = field(default_factory=lambda: os.getenv("SMTP_PASS", ""))
+    smtp_from: str = field(default_factory=lambda: os.getenv("SMTP_FROM", "").strip())
+    app_url: str = field(default_factory=lambda: os.getenv("APP_URL", "").strip())
     google_client_id: str = field(default_factory=lambda: os.getenv("GOOGLE_CLIENT_ID", "").strip())
     google_client_secret: str = field(
         default_factory=lambda: os.getenv("GOOGLE_CLIENT_SECRET", "").strip()

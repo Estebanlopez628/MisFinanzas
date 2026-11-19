@@ -427,6 +427,104 @@ Recálculo en tiempo real (<100 ms) sin recargar página. Se implementa con func
 
 ## Bitácora de Cambios
 
+### 2026-11-19 — Buscador y orden de «Órdenes registradas» (SRS v1.8, bloque 6)
+
+**Cambios realizados**
+1. `servicios/comercial.py`: `filtrar_ventas(ventas, consulta)` busca por No. de orden, cliente o fecha (dd-mm-aaaa, dd/mm/aaaa o aaaa-mm-dd), sin tildes ni mayúsculas.
+2. `routers/olb_byte.py`: `GET /olb-byte?q=` filtra la lista; los totales del panel no cambian.
+3. `templates/olb_byte/index.html`: cuadro de búsqueda con «Buscar» y «Ver todas»; mensaje cuando no hay coincidencias. Sirve igual en móvil y escritorio.
+4. Orden: se mantiene el de número de orden descendente, que coincide con el orden de registro (la última orden registrada aparece primero).
+5. Pruebas nuevas en `tests/test_buscador_ordenes.py` (6).
+
+**Verificación:** `pytest` en verde (515). En Chromium a 390 px, la búsqueda «ana» muestra solo la orden de Ana Pérez.
+
+### 2026-11-19 — Login con ondas, órdenes y pendientes en lista móvil con detalle (SRS v1.8, bloques 4, 5 y 7)
+
+**Cambios realizados**
+1. `templates/login.html` rediseñado: tarjeta con ondas SVG en la parte superior e inferior con los colores oficiales; orden de campos correo, contraseña, recuperación, ingresar, registrarse; ojo para mostrar la contraseña; botón de Google circular con el ícono oficial y la misma ruta OAuth.
+2. `templates/olvide_contrasena.html` y ruta `/olvide-contrasena`: el enlace de recuperación ya no lleva a una página inexistente.
+3. `templates/olb_byte/index.html` y `pendientes.html`: en móvil (≤ 640 px) la tabla se sustituye por filas compactas; cada fila abre un `<dialog>` centrado con el detalle y el botón «Volver». Las acciones de la orden se extrajeron a la macro `acciones_orden`, usada por la tabla y el detalle.
+4. `static/js/app.js`: mostrar u ocultar contraseña y abrir o cerrar diálogos (`data-abrir-dialogo`, `data-cerrar-dialogo`).
+5. Se corrigió la lista de cuentas demo, que mostraba puntos porque las cuentas son tuplas.
+6. `sw.js` en `olb-finanzas-v27`. Pruebas nuevas en `tests/test_ui_login_movil.py` (4).
+
+**Verificación:** `pytest` en verde (509). En Chromium a 390 px: la tabla queda oculta, la lista aparece, el detalle se abre y se cierra.
+
+### 2026-11-19 — PostgreSQL en Neon y despliegue en Koyeb (ADR-52)
+
+**Decisión:** la base de producción es PostgreSQL en Neon, con `psycopg` 3 (`psycopg[binary]`, nueva dependencia justificada aquí). SQLite queda para desarrollo y pruebas. Koyeb es el destino de despliegue. No se añade Alembic todavía: el esquema lo crea `create_all` y las migraciones `_migrar_*` siguen siendo solo para SQLite.
+
+**Cambios realizados**
+1. `requirements.txt`: `psycopg[binary]>=3.2,<4.0`.
+2. `backend/.env` (local, ignorado por Git): `DATABASE_URL` de Neon. `base_datos.py` lo carga con `setdefault`, así que las variables del entorno y las pruebas mandan.
+3. `base_datos.py`: `_url_con_driver` convierte `postgresql://` a `postgresql+psycopg://`; con PostgreSQL `pool_pre_ping=True`, `pool_recycle=300` y `prepare_threshold=None` (el pooler de Neon no admite sentencias preparadas del servidor). Las funciones `PRAGMA` siguen protegidas por `_conexion_sqlite`.
+4. `scripts/migrar_a_neon.py`: crea el esquema en Neon y copia `datos/finanzas.db` tabla por tabla en orden de claves foráneas, con `ON CONFLICT DO NOTHING`. Neutraliza las cuentas demo copiadas (contraseña aleatoria). Todo en una transacción.
+5. `usuarios.sembrar_demostracion`: no siembra cuentas demo con `ENTORNO=produccion`. Antes, una base vacía en producción recibía cuentas con contraseñas conocidas.
+6. `/salud`: consulta la base (`SELECT 1`) y responde 200 o 503.
+7. `tests/test_base_datos_postgres.py` (4 pruebas): driver, pruebas aisladas en SQLite, `/salud` 200 y 503.
+8. `DESPLIEGUE.md` §11: variables y configuración del servicio en Koyeb.
+
+**Verificación**
+- `migrar_a_neon.py` ejecutado: copió 24 tablas. Conteos locales y de Neon coinciden (usuarios 2, gastos 26, ventas 2, auditoría 103, clientes 1, abonos 2, venta_detalle 2).
+- Segunda ejecución: 0 filas nuevas (idempotente).
+- `/salud` contra Neon: 200, `base_datos: ok`; PostgreSQL 18.
+- `pytest` en verde con base temporal de SQLite (541 pruebas).
+
+**Pendiente:** rotar la contraseña de Neon, porque se compartió en el chat. Luego actualizar `DATABASE_URL` en Koyeb y en `backend/.env`.
+
+### 2026-11-19 — Avatar híbrido: foto de Google o iniciales (SRS v1.8)
+
+**Decisión:** el avatar guarda solo la URL de la foto de Google en `usuarios.avatar_url`; nunca se almacenan archivos. Sin foto (registro con contraseña o foto inválida) se dibuja un círculo con las dos iniciales del alias y el degradado de la paleta. La URL se valida: HTTPS y `*.googleusercontent.com`, hasta 500 caracteres.
+
+**Cambios realizados**
+1. `modelos.py` y `diccionario_datos.md` §1: columna `avatar_url VARCHAR(500)` nula.
+2. `core/base_datos.py`: `_migrar_columnas_usuarios`, idempotente, llamada desde `inicializar_base_datos`.
+3. `dependencias.py`: `UsuarioSesion.avatar_url`, leído de la base en cada petición.
+4. `servicios/usuarios.py`: `url_avatar_valida` y `actualizar_avatar`.
+5. `routers/auth.py`: el callback de Google guarda `picture` en cada inicio de sesión.
+6. `core/middleware.py`: `img-src 'self' data: https://*.googleusercontent.com`.
+7. `templates/componentes/avatar.html` (macro nueva) usada en `base.html` (compacto) y `perfil/index.html` (destacado). Si la foto falla, `onerror` oculta la imagen y muestra las iniciales. `routers/vistas.py`: `iniciales_alias` como filtro.
+8. `static/css/estilos.css`: clases `.avatar*`. `sw.js` en `olb-finanzas-v30`.
+9. `tests/test_avatar.py` (9 pruebas): iniciales, validación de URL, captura desde Google, respaldo, CSP y migración idempotente.
+
+**Verificación:** `pytest` en verde (537). Migración ejecutada dos veces sobre una copia de `backend/datos/finanzas.db`: agrega la columna y conserva las 2 cuentas. `generar_guia.py --verificar` sin problemas (99 archivos).
+
+**Pendiente:** revisión visual en navegador con una cuenta real de Google (la foto depende de Google y no se puede simular en pruebas).
+
+### 2026-11-19 — Apoyo voluntario «invítame un café» (solo Colombia)
+
+**Decisión:** un botón discreto en el pie y un modal `<dialog>` para `USER_FINANZAS`, con Nequi y Bre-B y monto sugerido de $6.000 COP. Sin librerías ni JavaScript nuevo: lo manejan `data-abrir-dialogo`, `data-cerrar-dialogo` y `data-copiar` de `app.js`. Respeta la CSP (`script-src 'self'`, logos en `img-src data:`).
+
+**Cambios realizados**
+1. `core/config.py`: sin datos de pago. Se eliminaron `NEQUI_CAFE` y `LLAVE_BRE_B_CAFE`: el teléfono no debe quedar expuesto.
+2. `routers/vistas.py`: `contexto_base` entrega `cafe` con monto y QR de Bre-B en data URI.
+3. `servicios/factura_pdf.py`: nueva clave `bre_b_qr` apuntando a `assets/Logo De Bre-B.png` (el logo de Bre-B de la factura no cambia).
+4. `templates/base.html`: disparador en el pie y `<dialog id="dialogo-cafe">` con solo el QR de Bre-B.
+5. `static/css/estilos.css`: clases `cafe-*` con la paleta oficial; logos y QR sobre fondo blanco.
+6. `static/js/sw.js` en `olb-finanzas-v29`.
+7. `tests/test_cafe.py` (3 pruebas): visibilidad por rol, QR incrustado y ausencia del teléfono y de botones de copiado en el modal.
+8. Nota: la factura sigue mostrando el número de Nequi en sus medios de pago; no se cambió porque es un documento de cobro.
+
+**Verificación:** `pytest` en verde y `generar_guia.py --verificar` sin problemas. Pendiente: revisión visual en celular y escritorio.
+
+### 2026-11-19 — Recuperación de contraseña por correo (SRS v1.8, bloque 8, ADR-51)
+
+**Decisión:** la recuperación usa solo correo (SMTP estándar con `smtplib`) y tokens firmados de 15 minutos con propósito `recuperacion` y una huella de la contraseña vigente. Sin tabla nueva. Así un enlace no abre sesión y no se reutiliza tras cambiar la contraseña. La respuesta de `POST /olvide-contrasena` es siempre la misma para no revelar cuentas.
+
+**Cambios realizados**
+1. `core/seguridad.py`: `decodificar_token` rechaza claim `proposito`; nuevas `crear_token_recuperacion` y `decodificar_token_recuperacion`.
+2. `core/config.py`: `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` y `APP_URL`.
+3. `servicios/correo.py` (nuevo): `enviar_correo`. Sin SMTP en desarrollo escribe el contenido en el log; en producción solo registra el fallo.
+4. `servicios/usuarios.py`: `huella_contrasena` y `restablecer_contrasena`.
+5. `routers/auth.py`: `GET/POST /olvide-contrasena` y `GET/POST /restablecer-contrasena`; auditoría `RECUPERACION_SOLICITADA` y `CONTRASENA_RESTABLECIDA`; `/login?restablecida=1` muestra el aviso.
+6. Plantillas `olvide_contrasena.html` y `restablecer_contrasena.html`; aviso de éxito en `login.html`.
+7. `scripts/generar_guia.py` lee con `utf-8-sig` (tolera el BOM de Windows). `Guia.md` actualizada: tabla de roles, fichas nuevas y fichas de archivos eliminados retiradas. `--verificar` sin problemas (98 archivos).
+8. `sw.js` ya en `olb-finanzas-v27`, que cubre el CSS y JS cambiados desde el último commit.
+
+**Pendiente de configuración en Render:** `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` y `APP_URL`. Sin ellas, en producción el correo no sale.
+
+**Verificación:** `pytest` en verde (525, incluidas 10 en `tests/test_recuperacion.py`).
+
 ### 2026-11-19 — Factura y recibo como PNG en el navegador; sin Playwright en el servidor (ADR-50)
 
 **Decisión:** la imagen de la factura y del recibo se genera en el navegador con `html-to-image` (local, en `static/js/vendor/`). Se elimina Playwright y Chromium del servidor, que consumían mucha RAM en Render gratuito. ADR-50 reemplaza a ADR-36 y ADR-41 en lo relativo al PDF.
@@ -443,7 +541,7 @@ Recálculo en tiempo real (<100 ms) sin recargar página. Se implementa con func
 
 **Verificación:** `pytest` en verde (505). En Chromium con base temporal: la factura se descarga como PNG de 1700 × 2630 px, y el recibo como PNG de 936 × 1040 px, ambos legibles.
 
-**Pendiente:** `Guia.md` aún tiene fichas de los archivos eliminados; el verificador sigue bloqueado por el BOM de OLB_BYTE.
+**Pendiente:** resuelto en la tarea de recuperación de contraseña (la guía ya no tiene fichas de archivos eliminados).
 
 ### 2026-11-19 — Administrador OLB_BYTE para los correos del propietario (ADR-49)
 

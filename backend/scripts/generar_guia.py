@@ -273,7 +273,7 @@ def inventariar() -> list[Archivo]:
     """
     archivos: list[Archivo] = []
     for ruta in _iterar_archivos():
-        contenido = ruta.read_text(encoding="utf-8")
+        contenido = ruta.read_text(encoding="utf-8-sig")
         archivo = Archivo(
             ruta=ruta,
             relativa=ruta.relative_to(RAIZ_REPO).as_posix(),

@@ -23,10 +23,17 @@ from sqlalchemy.orm import Session
 from app.core.base_datos import obtener_bd
 from app.core.config import obtener_configuracion
 from app.core.limitador import limitador_login
-from app.core.seguridad import DURACION_SESION_MINUTOS, crear_token
+from app.core.seguridad import (
+    DURACION_SESION_MINUTOS,
+    TokenInvalido,
+    crear_token,
+    crear_token_recuperacion,
+    decodificar_token_recuperacion,
+)
 from app.dependencias import NOMBRE_COOKIE, UsuarioSesion, usuario_opcional
 from app.routers.vistas import contexto_base, plantillas
 from app.servicios import acceso_google, auditoria, usuarios
+from app.servicios import correo as servicio_correo
 
 router = APIRouter(tags=["Autenticación"])
 
@@ -77,6 +84,7 @@ def ver_login(
     request: Request,
     usuario: UsuarioSesion | None = Depends(usuario_opcional),
     registrado: int = 0,
+    restablecida: int = 0,
 ) -> HTMLResponse | RedirectResponse:
     """Muestra el formulario de inicio de sesión.
 
@@ -98,6 +106,7 @@ def ver_login(
             "error": None,
             "registrado": bool(registrado),
             "cuentas_demo": CUENTAS_DEMO,
+            "exito": "Tu contraseña se actualizó. Ya puedes iniciar sesión." if restablecida else None,
         }
     )
     return plantillas.TemplateResponse(request, "login.html", contexto)
@@ -269,6 +278,21 @@ def procesar_registro(
 NOMBRE_COOKIE_ESTADO = "estado_google"
 
 
+@router.get("/olvide-contrasena", response_class=HTMLResponse, name="ver_olvide_contrasena", response_model=None)
+def ver_olvide_contrasena(request: Request) -> HTMLResponse:
+    """Muestra cómo recuperar la contraseña (la gestiona el administrador).
+
+    Args:
+        request: Petición HTTP.
+
+    Returns:
+        Página con las instrucciones de recuperación.
+    """
+    contexto = contexto_base(None)
+    contexto["titulo_pagina"] = "Recuperar contraseña"
+    return plantillas.TemplateResponse(request, "olvide_contrasena.html", contexto)
+
+
 def _login_con_error(request: Request, mensaje: str) -> HTMLResponse:
     """Muestra la pantalla de acceso con un mensaje de error de Google.
 
@@ -365,9 +389,185 @@ def callback_google(
         usuarios.cambiar_rol(bd, cuenta.id_usuario, usuarios.ROL_ADMIN)
         cuenta = usuarios.obtener_por_id(bd, cuenta.id_usuario) or cuenta
 
+    # SRS v1.8: la foto de Google se guarda como enlace y se refresca en cada inicio
+    # de sesión; si Google ya no envía una válida, se quita y aparecen las iniciales.
+    usuarios.actualizar_avatar(bd, cuenta.id_usuario, str(perfil.get("picture") or "") or None)
     auditoria.registrar(bd, cuenta.id_usuario, "LOGIN_GOOGLE", "usuarios", "Sesión iniciada con Google")
     token = crear_token(cuenta.id_usuario, cuenta.rol, cuenta.alias)
     respuesta = RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
     _establecer_cookie(respuesta, token)
     respuesta.delete_cookie(NOMBRE_COOKIE_ESTADO, path="/")
     return respuesta
+
+
+MENSAJE_RECUPERACION = (
+    "Si el correo está registrado, te enviamos un enlace para crear una nueva contraseña. "
+    "El enlace vence en 15 minutos."
+)
+
+
+def _base_publica(request: Request) -> str:
+    """Dirección pública de la app para construir los enlaces del correo.
+
+    Args:
+        request: Petición HTTP.
+
+    Returns:
+        `APP_URL` si está configurada; si no, la base de la petición.
+    """
+    configurada = obtener_configuracion().app_url.rstrip("/")
+    return configurada or str(request.base_url).rstrip("/")
+
+
+def _pagina_olvide(request: Request, mensaje: str | None = None, correo: str = "") -> HTMLResponse:
+    """Muestra el formulario de recuperación con un mensaje neutral.
+
+    Args:
+        request: Petición HTTP.
+        mensaje: Texto de confirmación o None.
+        correo: Correo escrito, para repoblar el campo.
+
+    Returns:
+        Página de recuperación.
+    """
+    contexto = contexto_base(None)
+    contexto.update({"titulo_pagina": "Recuperar contraseña", "mensaje": mensaje, "correo_ingresado": correo})
+    return plantillas.TemplateResponse(request, "olvide_contrasena.html", contexto)
+
+
+def _cuenta_del_enlace(bd: Session, token: str) -> usuarios.Usuario | None:
+    """Valida un enlace de recuperación contra la cuenta actual.
+
+    Args:
+        bd: Sesión de base de datos.
+        token: Token del enlace.
+
+    Returns:
+        La cuenta si el enlace es válido, vigente y no se ha usado; si no, None.
+    """
+    if not token:
+        return None
+    try:
+        contenido = decodificar_token_recuperacion(token)
+    except TokenInvalido:
+        return None
+    cuenta = usuarios.obtener_por_id(bd, str(contenido["sub"]))
+    if cuenta is None or not cuenta.activo:
+        return None
+    if usuarios.huella_contrasena(cuenta) != contenido.get("huella"):
+        return None
+    return cuenta
+
+
+def _pagina_restablecer(
+    request: Request, token: str, error: str | None = None, codigo: int = 200
+) -> HTMLResponse:
+    """Muestra el formulario de nueva contraseña o el aviso de enlace no válido.
+
+    Args:
+        request: Petición HTTP.
+        token: Token del enlace.
+        error: Mensaje de error opcional.
+        codigo: Código HTTP de la respuesta.
+
+    Returns:
+        Página de restablecimiento.
+    """
+    contexto = contexto_base(None)
+    contexto.update({"titulo_pagina": "Nueva contraseña", "token": token, "error": error})
+    return plantillas.TemplateResponse(
+        request, "restablecer_contrasena.html", contexto, status_code=codigo
+    )
+
+
+@router.post("/olvide-contrasena", response_class=HTMLResponse, name="procesar_olvide_contrasena", response_model=None)
+def procesar_olvide_contrasena(
+    request: Request,
+    correo: Annotated[str, Form()] = "",
+    bd: Session = Depends(obtener_bd),
+) -> HTMLResponse:
+    """Envía el enlace de recuperación por correo sin revelar si la cuenta existe.
+
+    Args:
+        request: Petición HTTP.
+        correo: Correo de la cuenta.
+        bd: Sesión de base de datos.
+
+    Returns:
+        Página con el mismo mensaje neutral en todos los casos.
+    """
+    correo_limpio = correo.strip().lower()[:254]
+    cuenta = usuarios.buscar_por_correo(bd, correo_limpio) if correo_limpio else None
+    if cuenta is not None and cuenta.activo:
+        token = crear_token_recuperacion(
+            cuenta.id_usuario, cuenta.rol, cuenta.alias, usuarios.huella_contrasena(cuenta)
+        )
+        enlace = f"{_base_publica(request)}/restablecer-contrasena?token={token}"
+        cuerpo = (
+            f"Hola {cuenta.alias}.\n\n"
+            "Para crear una nueva contraseña abre este enlace. Vence en 15 minutos:\n"
+            f"{enlace}\n\n"
+            "Si no pediste este cambio, ignora este correo."
+        )
+        servicio_correo.enviar_correo(cuenta.correo, "Recupera tu contraseña · OLB Finanzas", cuerpo)
+        auditoria.registrar(bd, cuenta.id_usuario, "RECUPERACION_SOLICITADA", "usuarios", "Enlace de recuperación enviado")
+    else:
+        auditoria.registrar(
+            bd, None, "RECUPERACION_SOLICITADA", "usuarios", f"Solicitud sin cuenta activa: {correo_limpio[:120]}"
+        )
+    return _pagina_olvide(request, mensaje=MENSAJE_RECUPERACION)
+
+
+@router.get("/restablecer-contrasena", response_class=HTMLResponse, name="ver_restablecer_contrasena", response_model=None)
+def ver_restablecer_contrasena(
+    request: Request,
+    token: str = "",
+    bd: Session = Depends(obtener_bd),
+) -> HTMLResponse:
+    """Muestra el formulario de nueva contraseña si el enlace es válido.
+
+    Args:
+        request: Petición HTTP.
+        token: Token del enlace del correo.
+        bd: Sesión de base de datos.
+
+    Returns:
+        Formulario o aviso de enlace no válido.
+    """
+    if _cuenta_del_enlace(bd, token) is None:
+        return _pagina_restablecer(request, "", "El enlace no es válido o ya venció. Solicita uno nuevo.", 400)
+    return _pagina_restablecer(request, token)
+
+
+@router.post("/restablecer-contrasena", response_class=HTMLResponse, name="procesar_restablecer_contrasena", response_model=None)
+def procesar_restablecer_contrasena(
+    request: Request,
+    token: Annotated[str, Form()] = "",
+    contrasena: Annotated[str, Form()] = "",
+    confirmacion: Annotated[str, Form()] = "",
+    bd: Session = Depends(obtener_bd),
+) -> HTMLResponse | RedirectResponse:
+    """Cambia la contraseña con un enlace válido y lo invalida al usarlo.
+
+    Args:
+        request: Petición HTTP.
+        token: Token del enlace.
+        contrasena: Nueva contraseña.
+        confirmacion: Repetición de la nueva contraseña.
+        bd: Sesión de base de datos.
+
+    Returns:
+        Redirección al login con confirmación, o el formulario con el error.
+    """
+    cuenta = _cuenta_del_enlace(bd, token)
+    if cuenta is None:
+        return _pagina_restablecer(request, "", "El enlace no es válido o ya venció. Solicita uno nuevo.", 400)
+    if contrasena != confirmacion:
+        return _pagina_restablecer(request, token, "Las contraseñas no coinciden.", 400)
+    try:
+        usuarios.restablecer_contrasena(bd, cuenta.id_usuario, contrasena)
+    except ValueError as fallo:
+        return _pagina_restablecer(request, token, str(fallo), 400)
+    auditoria.registrar(bd, cuenta.id_usuario, "CONTRASENA_RESTABLECIDA", "usuarios", "Contraseña cambiada por recuperación")
+    return RedirectResponse(url="/login?restablecida=1", status_code=status.HTTP_303_SEE_OTHER)
+

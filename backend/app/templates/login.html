@@ -2,61 +2,99 @@
 {% block titulo %}Iniciar sesión{% endblock %}
 
 {% block contenido %}
-  <section class="acceso">
-    <div class="acceso__panel">
-      <h1 class="acceso__titulo">Iniciar sesión</h1>
-      <p class="acceso__subtitulo">
-        Accede a tu cuadro de nómina y presupuesto quincenal.
-      </p>
+  <section class="acceso-nuevo">
+    <div class="acceso-nuevo__tarjeta">
+      <svg class="acceso-nuevo__onda acceso-nuevo__onda--superior" viewBox="0 0 400 90" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+        <path d="M0,50 C90,95 210,5 400,45 L400,0 L0,0 Z" fill="#0066cc" />
+        <path d="M0,70 C120,30 260,100 400,60 L400,0 L0,0 Z" fill="#00a8ff" fill-opacity="0.45" />
+      </svg>
+
+      <header class="acceso-nuevo__cabecera">
+        <span class="acceso-nuevo__marca">OLB·Finanzas</span>
+        <h1 class="acceso-nuevo__titulo">Iniciar sesión</h1>
+        <p class="acceso-nuevo__subtitulo">Accede a tu cuadro de nómina y presupuesto quincenal.</p>
+      </header>
 
       {% if registrado %}
-        <div class="alerta alerta--exito" role="status">
-          Cuenta creada correctamente. Ya puedes iniciar sesión.
-        </div>
+        <div class="alerta alerta--exito" role="status">Cuenta creada correctamente. Ya puedes iniciar sesión.</div>
       {% endif %}
-
+      {% if exito %}
+        <div class="alerta alerta--exito" role="status">{{ exito }}</div>
+      {% endif %}
       {% if error %}
         <div class="alerta alerta--error" role="alert">{{ error }}</div>
       {% endif %}
 
-      {# Formulario real: la validación y la sesión viven en el servidor. #}
-      <form class="formulario" method="post" action="/login">
-        <label class="campo">
-          <span class="campo__etiqueta">Correo electrónico</span>
-          <input class="campo__control" type="email" name="correo" autocomplete="email"
+      <form class="acceso-nuevo__formulario" method="post" action="/login">
+        {# 1. Correo o usuario #}
+        <label class="campo" for="campo-correo">
+          <span class="campo__etiqueta">Correo o usuario</span>
+          <input id="campo-correo" class="campo__control" type="text" name="correo" autocomplete="username"
                  placeholder="tu@correo.com" value="{{ correo_ingresado | default('', true) }}" required autofocus />
         </label>
-        <label class="campo">
+
+        {# 2. Contraseña con botón para mostrar u ocultar #}
+        <label class="campo" for="campo-clave">
           <span class="campo__etiqueta">Contraseña</span>
-          <input class="campo__control" type="password" name="contrasena"
-                 autocomplete="current-password" placeholder="••••••••" required />
+          <span class="campo__envoltorio">
+            <input id="campo-clave" class="campo__control" type="password" name="contrasena"
+                   autocomplete="current-password" placeholder="Tu contraseña" required />
+            <button type="button" class="campo__ojo" data-mostrar-clave="campo-clave"
+                    aria-label="Mostrar contraseña" aria-pressed="false">
+              <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor"
+                   stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+            </button>
+          </span>
         </label>
-        <button class="boton boton--primario" type="submit">Entrar</button>
+
+        {# 3. Enlace de recuperación debajo de la contraseña #}
+        <a class="acceso-nuevo__olvido" href="{{ url_for('ver_olvide_contrasena') }}">¿Olvidaste tu contraseña?</a>
+
+        {# 4. Iniciar sesión #}
+        <button class="boton boton--primario acceso-nuevo__boton" type="submit">Iniciar sesión</button>
+
+        {# 5. Registrarse #}
+        <a class="boton boton--secundario acceso-nuevo__boton" href="{{ url_for('ver_registro') }}">Registrarse</a>
       </form>
 
+      {# 6. Separador y Google (misma ruta OAuth de siempre, con el ícono oficial) #}
       {% if google_activo %}
-      <p class="acceso__pie">o</p>
-      <a class="boton boton--secundario" href="/login/google">Continuar con Gmail</a>
+        <div class="acceso-nuevo__separador"><span>O continúa con</span></div>
+        <div class="acceso-nuevo__google">
+          <a class="boton-google" href="/login/google" aria-label="Continuar con Google" title="Continuar con Google">
+            <svg viewBox="0 0 48 48" width="24" height="24" aria-hidden="true" focusable="false">
+              <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
+              <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
+              <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
+              <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
+            </svg>
+          </a>
+        </div>
       {% endif %}
 
-      <p class="acceso__pie">
-        ¿No tienes cuenta?
-        <a class="enlace" href="{{ url_for('ver_registro') }}">Crear una cuenta gratis</a>
-      </p>
+      <svg class="acceso-nuevo__onda acceso-nuevo__onda--inferior" viewBox="0 0 400 90" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+        <path d="M0,40 C110,0 240,90 400,35 L400,90 L0,90 Z" fill="#00a8ff" fill-opacity="0.35" />
+        <path d="M0,62 C140,30 270,92 400,58 L400,90 L0,90 Z" fill="#0066cc" />
+      </svg>
 
-      {# Cuentas de demostración: se eliminan al conectar la base de datos. #}
-      <div class="acceso__demo">
-        <h2 class="acceso__demo-titulo">Cuentas de demostración</h2>
-        <ul class="lista-parametros">
-          {% for cuenta in cuentas_demo %}
-            <li>
-              <span>{{ cuenta.rol }}</span>
-              <strong>{{ cuenta.correo }} · {{ cuenta.contrasena }}</strong>
-            </li>
-          {% endfor %}
-        </ul>
-        <p class="ayuda">Disponibles solo en entorno de desarrollo.</p>
-      </div>
+      {# Cuentas de demostración: solo en desarrollo. #}
+      {% if cuentas_demo %}
+        <div class="acceso__demo">
+          <h2 class="acceso__demo-titulo">Cuentas de demostración</h2>
+          <ul class="lista-parametros">
+            {% for cuenta in cuentas_demo %}
+              <li>
+                <span>{{ cuenta[3] }}</span>
+                <strong>{{ cuenta[0] }} · {{ cuenta[1] }}</strong>
+              </li>
+            {% endfor %}
+          </ul>
+          <p class="ayuda">Disponibles solo en entorno de desarrollo.</p>
+        </div>
+      {% endif %}
     </div>
   </section>
 {% endblock %}

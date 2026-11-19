@@ -18,6 +18,8 @@ diferencias de tipo entre motores de base de datos.
 from __future__ import annotations
 
 import calendar
+import re
+import unicodedata
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
@@ -879,6 +881,54 @@ def listar_movimientos_proveedor(bd: Session) -> list[MovimientoProveedor]:
     """
     consulta = select(MovimientoProveedor).order_by(MovimientoProveedor.fecha.desc())
     return list(bd.scalars(consulta))
+
+
+def _texto_busqueda(texto: str) -> str:
+    """Normaliza un texto para comparar búsquedas: sin tildes y en minúsculas.
+
+    Args:
+        texto: Texto original.
+
+    Returns:
+        Texto normalizado.
+    """
+    sin_tildes = unicodedata.normalize("NFKD", texto or "").encode("ascii", "ignore").decode("ascii")
+    return sin_tildes.lower().strip()
+
+
+def filtrar_ventas(ventas: list[Venta], consulta: str | None) -> list[Venta]:
+    """Filtra órdenes por número, cliente o fecha de venta (SRS v1.8, bloque 6).
+
+    La fecha se acepta como dd-mm-aaaa, dd/mm/aaaa o aaaa-mm-dd, completa o parcial.
+    Una consulta vacía devuelve todas las órdenes.
+
+    Args:
+        ventas: Órdenes ya ordenadas.
+        consulta: Texto que escribe la persona.
+
+    Returns:
+        Órdenes que coinciden, en el mismo orden.
+    """
+    buscado = _texto_busqueda(consulta or "")
+    if not buscado:
+        return list(ventas)
+    compacto = re.sub(r"[\s/.]+", "-", buscado)
+    resultado: list[Venta] = []
+    for venta in ventas:
+        fecha = venta.fecha_venta
+        fechas = [
+            fecha.strftime("%d-%m-%Y"),
+            fecha.strftime("%Y-%m-%d"),
+            fecha.strftime("%d/%m/%Y"),
+        ]
+        candidatos = [
+            str(venta.numero_orden),
+            _texto_busqueda(venta.cliente_nombre),
+            *[_texto_busqueda(f) for f in fechas],
+        ]
+        if any(buscado in candidato or compacto in candidato for candidato in candidatos):
+            resultado.append(venta)
+    return resultado
 
 
 def listar_ventas(bd: Session) -> list[Venta]:

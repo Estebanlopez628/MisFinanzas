@@ -25,19 +25,65 @@ RUTA_BACKEND = Path(__file__).resolve().parent.parent.parent
 RUTA_DATOS = RUTA_BACKEND / "datos"
 RUTA_DATOS.mkdir(exist_ok=True)
 
+RUTA_ENV = RUTA_BACKEND / ".env"
+
+
+def _cargar_archivo_entorno() -> None:
+    """Carga `backend/.env` en el entorno sin sobrescribir variables ya definidas.
+
+    Así Render o Koyeb, o las pruebas, mandan siempre sobre el archivo local. El
+    archivo no se versiona (`.gitignore`). No requiere dependencias externas.
+    """
+    if not RUTA_ENV.exists():
+        return
+    for linea in RUTA_ENV.read_text(encoding="utf-8").splitlines():
+        linea = linea.strip()
+        if not linea or linea.startswith("#") or "=" not in linea:
+            continue
+        clave, valor = linea.split("=", 1)
+        os.environ.setdefault(clave.strip(), valor.strip().strip('"').strip("'"))
+
+
+_cargar_archivo_entorno()
+
+
+def _url_con_driver(url: str) -> str:
+    """Indica a SQLAlchemy el driver `psycopg` (v3) para las URL `postgresql://`.
+
+    Neon y Koyeb entregan la cadena sin driver; sin este cambio SQLAlchemy buscaría
+    `psycopg2`, que el proyecto no usa.
+
+    Args:
+        url: URL de conexión tal como llega de la variable de entorno.
+
+    Returns:
+        La misma URL con `postgresql+psycopg://` cuando corresponde.
+    """
+    if url.startswith("postgresql://"):
+        return "postgresql+psycopg://" + url[len("postgresql://") :]
+    return url
+
+
 # `sqlite:///...` apunta a un archivo local; en pruebas se redefine la variable.
-URL_BASE_DATOS = os.getenv(
-    "DATABASE_URL", f"sqlite:///{(RUTA_DATOS / 'finanzas.db').as_posix()}"
+URL_BASE_DATOS = _url_con_driver(
+    os.getenv("DATABASE_URL", f"sqlite:///{(RUTA_DATOS / 'finanzas.db').as_posix()}")
 )
 
 _conexion_sqlite = URL_BASE_DATOS.startswith("sqlite")
+_conexion_postgres = URL_BASE_DATOS.startswith("postgresql")
 
-motor = create_engine(
-    URL_BASE_DATOS,
+_opciones_motor: dict[str, object] = {"pool_pre_ping": True}
+if _conexion_sqlite:
     # FastAPI atiende peticiones en varios hilos; SQLite necesita este ajuste.
-    connect_args={"check_same_thread": False} if _conexion_sqlite else {},
-    pool_pre_ping=True,
-)
+    _opciones_motor["connect_args"] = {"check_same_thread": False}
+elif _conexion_postgres:
+    # Neon usa PgBouncer en modo transacción, que no admite sentencias preparadas
+    # del servidor: se desactivan. `pool_recycle` renueva conexiones antes de que
+    # el proveedor las cierre por inactividad.
+    _opciones_motor["connect_args"] = {"prepare_threshold": None}
+    _opciones_motor["pool_recycle"] = 300
+
+motor = create_engine(URL_BASE_DATOS, **_opciones_motor)
 
 
 if _conexion_sqlite:
@@ -590,6 +636,22 @@ def _migrar_saldos_incapacidad() -> None:
         )
 
 
+def _migrar_columnas_usuarios() -> None:
+    """Agrega `avatar_url` a `usuarios` (SRS v1.8, avatar híbrido).
+
+    Las cuentas existentes quedan con `NULL` y muestran el círculo de iniciales hasta
+    que vuelvan a entrar con Google. Es idempotente: solo añade la columna si falta.
+    """
+    if not _conexion_sqlite:
+        return
+
+    with motor.begin() as conexion:
+        filas = conexion.exec_driver_sql("PRAGMA table_info(usuarios)").fetchall()
+        existentes = {fila[1] for fila in filas}
+        if existentes and "avatar_url" not in existentes:
+            conexion.exec_driver_sql("ALTER TABLE usuarios ADD COLUMN avatar_url VARCHAR(500)")
+
+
 def inicializar_base_datos() -> None:
     """Prepara el esquema y siembra las cuentas de demostración.
 
@@ -605,5 +667,6 @@ def inicializar_base_datos() -> None:
     _migrar_columnas_deudas()
     _migrar_proyeccion_quincena()
     _migrar_saldos_incapacidad()
+    _migrar_columnas_usuarios()
     with FabricaSesiones() as sesion:
         usuarios.sembrar_demostracion(sesion)

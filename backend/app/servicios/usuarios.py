@@ -11,12 +11,15 @@ Las cuentas de demostración se siembran una sola vez, cuando la tabla está vac
 
 from __future__ import annotations
 
+import hashlib
+
 import re
 from datetime import datetime, timezone
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.core.config import obtener_configuracion
 from app.core.seguridad import hash_contrasena, verificar_contrasena
 from app.modelos import Usuario
 
@@ -64,6 +67,10 @@ def sembrar_demostracion(bd: Session) -> None:
     Args:
         bd: Sesión de base de datos.
     """
+    # En producción nunca se crean cuentas con contraseñas conocidas: el acceso de
+    # administrador sale del inicio con Google y de CORREOS_ADMIN_OLB (ADR-49).
+    if obtener_configuracion().es_produccion:
+        return
     total = bd.scalar(select(func.count()).select_from(Usuario)) or 0
     if total:
         return
@@ -278,3 +285,74 @@ def cambiar_estado(bd: Session, id_usuario: str, activo: bool) -> None:
         raise ValueError("La cuenta no existe.")
     usuario.activo = activo
     bd.commit()
+
+
+def huella_contrasena(usuario: Usuario) -> str:
+    """Resumen corto de la contraseña vigente, usado en los enlaces de recuperación.
+
+    Args:
+        usuario: Cuenta a resumir.
+
+    Returns:
+        Huella de 24 caracteres hexadecimales.
+    """
+    return hashlib.sha256(usuario.hash_contrasena.encode("utf-8")).hexdigest()[:24]
+
+
+def restablecer_contrasena(bd: Session, id_usuario: str, contrasena_nueva: str) -> None:
+    """Fija una contraseña nueva tras validar el enlace de recuperación.
+
+    Args:
+        bd: Sesión de base de datos.
+        id_usuario: Cuenta a modificar.
+        contrasena_nueva: Nueva contraseña (mínimo 8 caracteres).
+
+    Raises:
+        ValueError: Si la cuenta no existe o la contraseña es muy corta.
+    """
+    usuario = obtener_por_id(bd, id_usuario)
+    if usuario is None:
+        raise ValueError("La cuenta no existe.")
+    if len(contrasena_nueva) < 8:
+        raise ValueError("La contraseña debe tener al menos 8 caracteres.")
+    usuario.hash_contrasena = hash_contrasena(contrasena_nueva)
+    bd.commit()
+
+
+# Solo fotos alojadas por Google (HTTPS). Cualquier otra URL se descarta: así la
+# base de datos nunca guarda enlaces arbitrarios que el navegador cargaría.
+PATRON_AVATAR_GOOGLE = re.compile(r"https://[a-z0-9-]+\.googleusercontent\.com/[A-Za-z0-9_\-./=%?&]+")
+LONGITUD_MAXIMA_AVATAR = 500
+
+
+def url_avatar_valida(url: str | None) -> bool:
+    """Indica si una URL de foto proviene de Google y cabe en la columna.
+
+    Args:
+        url: Dirección que devolvió el perfil de Google.
+
+    Returns:
+        `True` si es HTTPS, de `googleusercontent.com` y no supera 500 caracteres.
+    """
+    if not url or len(url) > LONGITUD_MAXIMA_AVATAR:
+        return False
+    return PATRON_AVATAR_GOOGLE.fullmatch(url) is not None
+
+
+def actualizar_avatar(bd: Session, id_usuario: str, url: str | None) -> None:
+    """Guarda la foto de Google de la cuenta, o la quita si ya no es válida.
+
+    Se llama en cada inicio de sesión con Google, así que la foto se mantiene al día.
+    Las cuentas con contraseña local nunca llegan aquí y conservan `NULL`.
+
+    Args:
+        bd: Sesión de base de datos.
+        id_usuario: Cuenta a actualizar.
+        url: Foto que informó Google, o `None` si no hay una válida.
+    """
+    usuario = obtener_por_id(bd, id_usuario)
+    if usuario is None:
+        return
+    usuario.avatar_url = url if url_avatar_valida(url) else None
+    bd.commit()
+

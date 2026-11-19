@@ -16,13 +16,15 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter, Depends, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
+from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.core.base_datos import obtener_bd
 from app.core.config import obtener_configuracion, obtener_parametros
-from app.servicios import acceso_google
+from app.servicios import acceso_google, factura_pdf
 from app.core.texto import (
     formatear_cop,
     formatear_fecha,
@@ -94,6 +96,29 @@ TARJETAS_DASHBOARD: list[dict[str, Any]] = [
 ]
 
 
+def iniciales_alias(alias: str | None) -> str:
+    """Obtiene las dos iniciales del alias para el avatar de respaldo (SRS v1.8).
+
+    Con dos o más palabras usa la inicial de las dos primeras («Oscar Lopez» → «OL»).
+    Con una sola palabra usa sus dos primeras letras («ana» → «AN»).
+
+    Args:
+        alias: Apodo del usuario.
+
+    Returns:
+        Hasta dos letras en mayúsculas; cadena vacía si el alias no tiene letras.
+    """
+    palabras = (alias or "").split()
+    if len(palabras) >= 2:
+        return (palabras[0][0] + palabras[1][0]).upper()
+    if palabras:
+        return palabras[0][:2].upper()
+    return ""
+
+
+plantillas.env.filters["iniciales"] = iniciales_alias
+
+
 def contexto_base(usuario: UsuarioSesion | None) -> dict[str, Any]:
     """Construye el contexto común a todas las plantillas.
 
@@ -104,23 +129,42 @@ def contexto_base(usuario: UsuarioSesion | None) -> dict[str, Any]:
     Returns:
         Diccionario con usuario, configuración, parámetros y año actual.
     """
+    configuracion = obtener_configuracion()
     return {
         "usuario": usuario,
-        "configuracion": obtener_configuracion(),
+        "configuracion": configuracion,
         "parametros": obtener_parametros(),
         "anio_actual": date.today().year,
         "google_activo": acceso_google.google_activo(),
+        # Apoyo voluntario: solo el QR de Bre-B (data URI). No se expone ningún número.
+        "cafe": {
+            "monto": "$6.000 COP",
+            "qr_bre_b": factura_pdf.logo_como_data_uri("bre_b_qr"),
+        },
     }
 
 
-@router.get("/salud", tags=["Sistema"])
-def verificar_salud() -> dict[str, str]:
-    """Endpoint de salud para monitoreo y despliegue.
+@router.get("/salud", tags=["Sistema"], response_model=None)
+def verificar_salud(bd: Session = Depends(obtener_bd)) -> dict[str, str] | JSONResponse:
+    """Endpoint de salud para monitoreo y despliegue, con consulta a la base.
+
+    Ejecuta `SELECT 1` contra la base activa (Neon en producción). Responde 200 si
+    la base contesta y 503 si no, para que el proveedor no envíe tráfico a una
+    instancia sin base de datos.
+
+    Args:
+        bd: Sesión de base de datos de la petición.
 
     Returns:
-        Estado simple de la aplicación en formato JSON.
+        Estado de la aplicación y de la base en JSON, o 503 si la base no responde.
     """
-    return {"estado": "ok", "servicio": obtener_configuracion().nombre}
+    try:
+        bd.execute(text("SELECT 1"))
+    except SQLAlchemyError:
+        return JSONResponse(
+            status_code=503, content={"estado": "error", "base_datos": "no disponible"}
+        )
+    return {"estado": "ok", "base_datos": "ok", "servicio": obtener_configuracion().nombre}
 
 
 @router.get("/", response_class=HTMLResponse, name="ver_dashboard")

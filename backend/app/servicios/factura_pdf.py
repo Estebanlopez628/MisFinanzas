@@ -57,6 +57,8 @@ PATRONES_LOGO = {
     "datafono": "*Datafono*",
     "nequi": "*Nequi*",
     "bre_b": "*bre-b*",
+    # QR de Bre-B para el apoyo voluntario; no es un logo de la factura.
+    "bre_b_qr": "Logo De Bre-B.png",
 }
 
 

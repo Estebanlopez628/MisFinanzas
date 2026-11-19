@@ -70,6 +70,47 @@
     });
   }
 
+  // ------------------- Login, diálogos de detalle ------------------------
+
+  // Mostrar u ocultar la contraseña del login sin recargar la página.
+  document.addEventListener("click", function (evento) {
+    var objetivo = evento.target instanceof Element ? evento.target.closest("[data-mostrar-clave]") : null;
+    if (!objetivo) {
+      return;
+    }
+    var campo = document.getElementById(objetivo.getAttribute("data-mostrar-clave"));
+    if (!campo) {
+      return;
+    }
+    var mostrar = campo.type === "password";
+    campo.type = mostrar ? "text" : "password";
+    objetivo.setAttribute("aria-pressed", mostrar ? "true" : "false");
+    objetivo.setAttribute("aria-label", mostrar ? "Ocultar contraseña" : "Mostrar contraseña");
+  });
+
+  // Abrir y cerrar el detalle de una orden o pendiente (vista móvil).
+  document.addEventListener("click", function (evento) {
+    var objetivo = evento.target instanceof Element ? evento.target : null;
+    if (!objetivo) {
+      return;
+    }
+    var abrir = objetivo.closest("[data-abrir-dialogo]");
+    if (abrir) {
+      var dialogo = document.getElementById(abrir.getAttribute("data-abrir-dialogo"));
+      if (dialogo && typeof dialogo.showModal === "function") {
+        dialogo.showModal();
+      }
+      return;
+    }
+    var cerrar = objetivo.closest("[data-cerrar-dialogo]");
+    if (cerrar) {
+      var contenedor = cerrar.closest("dialog");
+      if (contenedor) {
+        contenedor.close();
+      }
+    }
+  });
+
   // ------------------- Ediciones en línea y confirmaciones ----------------
 
   /**

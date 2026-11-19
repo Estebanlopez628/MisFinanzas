@@ -35,6 +35,7 @@ Cuenta de acceso y datos base del usuario. Fuente del alias usado en los saludos
 | `activo` | `BOOLEAN` | No | Sí | Default `true`. Baja lógica. |
 | `fecha_registro` | `TIMESTAMPTZ` | No | Sí | Default `now()`. |
 | `ultimo_acceso` | `TIMESTAMPTZ` | Sí | No | Actualizado al autenticar. |
+| `avatar_url` | `VARCHAR(500)` | Sí | No | Foto de perfil de Google (`https://*.googleusercontent.com`). Nula en cuentas con contraseña; se actualiza en cada inicio de sesión con Google. No se guarda ningún archivo. |
 
 **Índices:** `UNIQUE(correo)`, `INDEX(rol)`.
 

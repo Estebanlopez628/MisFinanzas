@@ -29,7 +29,7 @@ CABECERAS_SEGURIDAD = {
     "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
     "Content-Security-Policy": (
         "default-src 'self'; "
-        "img-src 'self' data:; "
+        "img-src 'self' data: https://*.googleusercontent.com; "
         "style-src 'self' 'unsafe-inline'; "
         "script-src 'self' 'unsafe-inline'; "
         "connect-src 'self'; "

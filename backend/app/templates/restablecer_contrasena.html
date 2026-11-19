@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block titulo %}Nueva contraseña{% endblock %}
+
+{% block contenido %}
+  <section class="acceso-nuevo">
+    <div class="acceso-nuevo__tarjeta">
+      <header class="acceso-nuevo__cabecera">
+        <h1 class="acceso-nuevo__titulo">Nueva contraseña</h1>
+        <p class="acceso-nuevo__subtitulo">Crea una contraseña de al menos 8 caracteres.</p>
+      </header>
+
+      {% if error %}
+        <div class="alerta alerta--error" role="alert">{{ error }}</div>
+      {% endif %}
+
+      {% if token %}
+        <form class="acceso-nuevo__formulario" method="post" action="{{ url_for('procesar_restablecer_contrasena') }}">
+          <input type="hidden" name="token" value="{{ token }}" />
+          <label class="campo" for="campo-nueva">
+            <span class="campo__etiqueta">Nueva contraseña</span>
+            <input id="campo-nueva" class="campo__control" type="password" name="contrasena"
+                   autocomplete="new-password" minlength="8" required />
+          </label>
+          <label class="campo" for="campo-confirmacion">
+            <span class="campo__etiqueta">Repite la contraseña</span>
+            <input id="campo-confirmacion" class="campo__control" type="password" name="confirmacion"
+                   autocomplete="new-password" minlength="8" required />
+          </label>
+          <button class="boton boton--primario acceso-nuevo__boton" type="submit">Guardar contraseña</button>
+        </form>
+      {% else %}
+        <a class="boton boton--secundario acceso-nuevo__boton" href="{{ url_for('ver_olvide_contrasena') }}">Solicitar un enlace nuevo</a>
+      {% endif %}
+    </div>
+  </section>
+{% endblock %}

@@ -61,6 +61,9 @@ class Usuario(Base):
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
     ultimo_acceso: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # URL pública de la foto de Google (SRS v1.8). Nunca se guarda un archivo: si es
+    # nula, la interfaz dibuja un círculo con las iniciales del alias.
+    avatar_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
 
 class PerfilFinanciero(Base):

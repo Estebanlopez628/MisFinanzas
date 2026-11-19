@@ -1,8 +1,10 @@
 {% extends "base.html" %}
+{% from "componentes/avatar.html" import avatar %}
 {% block titulo %}{{ 'Bienvenido' if es_onboarding else 'Mi perfil' }}{% endblock %}
 
 {% block contenido %}
   <section class="heroe">
+    <div class="heroe__avatar">{{ avatar(usuario, "destacado") }}</div>
     {% if es_onboarding %}
       {# Saludo de onboarding: usa el alias capturado en el registro (SRS v1.2). #}
       <h1 class="heroe__titulo">¡Hola {{ usuario.alias }}, bienvenido!</h1>

@@ -25,6 +25,69 @@
   </tr>
 {%- endmacro %}
 
+{% macro acciones_orden(venta, fila, anulada) -%}
+                  <div class="acciones-orden">
+                    <a class="boton boton--secundario boton--pequeno boton-icono"
+                       href="{{ url_for('ver_factura', id_venta=venta.id_venta) }}"
+                       aria-label="Ver factura" title="Ver factura"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg></a>
+                    {% if not anulada %}
+                      <button class="boton boton--primario boton--pequeno boton-icono" type="button"
+                              aria-label="Enviar por WhatsApp" title="Enviar por WhatsApp"
+                              data-compartir-factura
+                              data-fragmento="{{ url_for('ver_factura_hoja', id_venta=venta.id_venta) }}"
+                              data-nombre="{{ fila.nombre_archivo }}"
+                              data-texto="{{ fila.texto_compartir }}"
+                              data-whatsapp="{{ fila.enlace_whatsapp }}"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.4-.7-1.6-.8s-.4-.1-.5.1-.6.8-.8.9-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.6-1.2.1-.2 0-.3 0-.4l-.7-1.8c-.2-.4-.4-.4-.5-.4h-.5a.9.9 0 0 0-.6.3 2.7 2.7 0 0 0-.8 2 4.7 4.7 0 0 0 1 2.5 10.7 10.7 0 0 0 4.1 3.6c1.5.7 2.1.7 2.9.6a2.4 2.4 0 0 0 1.6-1.1 2 2 0 0 0 .1-1.1c0-.1-.2-.2-.4-.3z"/></svg></button>
+                      <details class="edicion-gasto edicion-gasto--modal">
+                        <summary class="boton boton--peligro boton--pequeno boton-icono" aria-label="Anular orden" title="Anular orden"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></summary>
+                        <form class="formulario formulario--compacto edicion-gasto__formulario" method="post"
+                              action="{{ url_for('anular_venta', id_venta=venta.id_venta) }}"
+                              data-confirmar="¿Anular la orden No. {{ venta.numero_orden }}? La deuda con el proveedor no se revierte.">
+                          <label class="campo">
+                            <span class="campo__etiqueta">Motivo</span>
+                            <input class="campo__control" type="text" name="motivo" required />
+                          </label>
+                          <label class="campo">
+                            <span class="campo__etiqueta">Devolver al cliente (COP)</span>
+                            <input class="campo__control" type="text" name="monto_devuelto" inputmode="decimal"
+                                   placeholder="0" />
+                            <span class="ayuda">Abonado: {{ venta.total_abonado | cop }}</span>
+                          </label>
+                          <label class="campo">
+                            <span class="campo__etiqueta">Medio de devolución</span>
+                            <select class="campo__control" name="metodo_devolucion">
+                              {% for metodo in metodos_pago %}
+                                <option value="{{ metodo }}">{{ metodo | capitalize }}</option>
+                              {% endfor %}
+                            </select>
+                          </label>
+                          <button class="boton boton--peligro boton--pequeno" type="submit">Confirmar anulación</button>
+                        </form>
+                      </details>
+                    {% elif fila.pendiente_devolver > 0 %}
+                      <details class="edicion-gasto edicion-gasto--modal">
+                        <summary class="boton boton--secundario boton--pequeno">Devolver</summary>
+                        <form class="formulario formulario--compacto edicion-gasto__formulario" method="post"
+                              action="{{ url_for('registrar_devolucion', id_venta=venta.id_venta) }}">
+                          <label class="campo">
+                            <span class="campo__etiqueta">Monto devuelto (COP)</span>
+                            <input class="campo__control" type="text" name="monto" inputmode="decimal" required />
+                          </label>
+                          <label class="campo">
+                            <span class="campo__etiqueta">Medio</span>
+                            <select class="campo__control" name="metodo_pago">
+                              {% for metodo in metodos_pago %}
+                                <option value="{{ metodo }}">{{ metodo | capitalize }}</option>
+                              {% endfor %}
+                            </select>
+                          </label>
+                          <button class="boton boton--primario boton--pequeno" type="submit">Registrar devolución</button>
+                        </form>
+                      </details>
+                    {% endif %}
+                  </div>
+{%- endmacro %}
+
 {% block contenido %}
   <section class="heroe heroe--compacto">
     <h1 class="heroe__titulo">🛠️ OLB_BYTE</h1>
@@ -266,8 +329,20 @@
   {# ------------------------------ Órdenes ---------------------------------- #}
   <section class="panel panel--tabla">
     <h2 class="panel__titulo">Órdenes registradas</h2>
+    <form class="formulario formulario--compacto formulario--buscar" method="get" action="{{ url_for('ver_olb_byte') }}" role="search">
+      <label class="campo">
+        <span class="campo__etiqueta">Buscar por No. de orden, cliente o fecha</span>
+        <input class="campo__control" type="search" name="q" value="{{ busqueda }}" placeholder="12, Ana o 10-11-2026" />
+      </label>
+      <div class="acciones-formulario">
+        <button class="boton boton--secundario boton--pequeno" type="submit">Buscar</button>
+        {% if busqueda %}
+          <a class="boton boton--secundario boton--pequeno" href="{{ url_for('ver_olb_byte') }}">Ver todas</a>
+        {% endif %}
+      </div>
+    </form>
     {% if ventas %}
-      <div class="tabla-contenedor">
+      <div class="tabla-contenedor tabla-escritorio">
         <table class="tabla tabla--tarjetas tabla--compacta">
           <thead>
             <tr>
@@ -316,75 +391,69 @@
                     —
                   {% endif %}
                 </td>
-                <td class="celda-acciones-orden" data-etiqueta="Acciones">
-                  <div class="acciones-orden">
-                    <a class="boton boton--secundario boton--pequeno boton-icono"
-                       href="{{ url_for('ver_factura', id_venta=venta.id_venta) }}"
-                       aria-label="Ver factura" title="Ver factura"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg></a>
-                    {% if not anulada %}
-                      <button class="boton boton--primario boton--pequeno boton-icono" type="button"
-                              aria-label="Enviar por WhatsApp" title="Enviar por WhatsApp"
-                              data-compartir-factura
-                              data-fragmento="{{ url_for('ver_factura_hoja', id_venta=venta.id_venta) }}"
-                              data-nombre="{{ fila.nombre_archivo }}"
-                              data-texto="{{ fila.texto_compartir }}"
-                              data-whatsapp="{{ fila.enlace_whatsapp }}"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.4-.7-1.6-.8s-.4-.1-.5.1-.6.8-.8.9-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.6-1.2.1-.2 0-.3 0-.4l-.7-1.8c-.2-.4-.4-.4-.5-.4h-.5a.9.9 0 0 0-.6.3 2.7 2.7 0 0 0-.8 2 4.7 4.7 0 0 0 1 2.5 10.7 10.7 0 0 0 4.1 3.6c1.5.7 2.1.7 2.9.6a2.4 2.4 0 0 0 1.6-1.1 2 2 0 0 0 .1-1.1c0-.1-.2-.2-.4-.3z"/></svg></button>
-                      <details class="edicion-gasto edicion-gasto--modal">
-                        <summary class="boton boton--peligro boton--pequeno boton-icono" aria-label="Anular orden" title="Anular orden"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></summary>
-                        <form class="formulario formulario--compacto edicion-gasto__formulario" method="post"
-                              action="{{ url_for('anular_venta', id_venta=venta.id_venta) }}"
-                              data-confirmar="¿Anular la orden No. {{ venta.numero_orden }}? La deuda con el proveedor no se revierte.">
-                          <label class="campo">
-                            <span class="campo__etiqueta">Motivo</span>
-                            <input class="campo__control" type="text" name="motivo" required />
-                          </label>
-                          <label class="campo">
-                            <span class="campo__etiqueta">Devolver al cliente (COP)</span>
-                            <input class="campo__control" type="text" name="monto_devuelto" inputmode="decimal"
-                                   placeholder="0" />
-                            <span class="ayuda">Abonado: {{ venta.total_abonado | cop }}</span>
-                          </label>
-                          <label class="campo">
-                            <span class="campo__etiqueta">Medio de devolución</span>
-                            <select class="campo__control" name="metodo_devolucion">
-                              {% for metodo in metodos_pago %}
-                                <option value="{{ metodo }}">{{ metodo | capitalize }}</option>
-                              {% endfor %}
-                            </select>
-                          </label>
-                          <button class="boton boton--peligro boton--pequeno" type="submit">Confirmar anulación</button>
-                        </form>
-                      </details>
-                    {% elif fila.pendiente_devolver > 0 %}
-                      <details class="edicion-gasto edicion-gasto--modal">
-                        <summary class="boton boton--secundario boton--pequeno">Devolver</summary>
-                        <form class="formulario formulario--compacto edicion-gasto__formulario" method="post"
-                              action="{{ url_for('registrar_devolucion', id_venta=venta.id_venta) }}">
-                          <label class="campo">
-                            <span class="campo__etiqueta">Monto devuelto (COP)</span>
-                            <input class="campo__control" type="text" name="monto" inputmode="decimal" required />
-                          </label>
-                          <label class="campo">
-                            <span class="campo__etiqueta">Medio</span>
-                            <select class="campo__control" name="metodo_pago">
-                              {% for metodo in metodos_pago %}
-                                <option value="{{ metodo }}">{{ metodo | capitalize }}</option>
-                              {% endfor %}
-                            </select>
-                          </label>
-                          <button class="boton boton--primario boton--pequeno" type="submit">Registrar devolución</button>
-                        </form>
-                      </details>
-                    {% endif %}
-                  </div>
-                </td>
+                <td class="celda-acciones-orden" data-etiqueta="Acciones">{{ acciones_orden(venta, fila, anulada) }}</td>
               </tr>
             {% endfor %}
           </tbody>
         </table>
       </div>
+
+      <ul class="ordenes-moviles" aria-label="Órdenes registradas">
+        <li class="orden-movil orden-movil--cabecera" aria-hidden="true">
+          <span>No.</span><span>Cliente</span><span>Fecha</span><span>Total</span>
+        </li>
+        {% for fila in ventas %}
+          {% set venta = fila.venta %}
+          <li>
+            <button type="button" class="orden-movil" data-abrir-dialogo="orden-{{ venta.id_venta }}">
+              <span>{{ venta.numero_orden }}</span>
+              <span>{{ venta.cliente_nombre }}</span>
+              <span>{{ venta.fecha_venta.strftime('%d-%m-%Y') }}</span>
+              <span>{{ venta.total | cop }}</span>
+            </button>
+          </li>
+        {% endfor %}
+      </ul>
+
+      {% for fila in ventas %}
+        {% set venta = fila.venta %}
+        {% set anulada = venta.estado_orden == 'ANULADA' %}
+        <dialog class="detalle-orden" id="orden-{{ venta.id_venta }}" aria-label="Detalle de la orden {{ venta.numero_orden }}">
+          <div class="detalle-orden__cuerpo">
+            <h3 class="detalle-orden__titulo">Orden No. {{ venta.numero_orden }}</h3>
+            <dl class="detalle-orden__lista">
+              <div><dt>No. de orden</dt><dd>{{ venta.numero_orden }}</dd></div>
+              <div><dt>Cliente</dt><dd>{{ venta.cliente_nombre }}</dd></div>
+              <div><dt>Fecha</dt><dd>{{ venta.fecha_venta.strftime('%d-%m-%Y') }}</dd></div>
+              <div>
+                <dt>Productos</dt>
+                <dd>{% for linea in fila.lineas %}{{ linea.nombre }} × {{ linea.cantidad }}{% if not loop.last %}, {% endif %}{% endfor %}</dd>
+              </div>
+              <div><dt>Total</dt><dd>{{ venta.total | cop }}</dd></div>
+              <div>
+                <dt>Estado</dt>
+                <dd>{% if anulada %}Anulada{% else %}{{ venta.estado_pago | capitalize }}{% endif %}</dd>
+              </div>
+              <div>
+                <dt>Garantía</dt>
+                <dd>
+                  {% if anulada %}—{% else %}
+                    {{ 'Vigente' if fila.semaforo == 'VERDE' else 'Vencida' }}
+                    · hasta {{ venta.garantia_fecha_fin.strftime('%d-%m-%Y') if venta.garantia_fecha_fin else '—' }}
+                  {% endif %}
+                </dd>
+              </div>
+            </dl>
+            <div class="detalle-orden__acciones">
+              <p class="detalle-orden__subtitulo">Acciones</p>
+              {{ acciones_orden(venta, fila, anulada) }}
+            </div>
+            <button type="button" class="boton boton--secundario boton--pequeno detalle-orden__volver" data-cerrar-dialogo>Volver a todas las órdenes</button>
+          </div>
+        </dialog>
+      {% endfor %}
     {% else %}
-      <p class="tabla__vacia">Aún no hay órdenes registradas.</p>
+      <p class="tabla__vacia">{% if busqueda %}No hay órdenes que coincidan con «{{ busqueda }}».{% else %}Aún no hay órdenes registradas.{% endif %}</p>
     {% endif %}
   </section>
 {% endblock %}

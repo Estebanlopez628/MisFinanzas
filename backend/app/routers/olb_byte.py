@@ -161,6 +161,7 @@ def _contexto(
     error: str | None = None,
     guardado: bool = False,
     borrador: dict[str, object] | None = None,
+    busqueda: str | None = None,
 ) -> dict[str, object]:
     """Prepara el contexto del panel comercial.
 
@@ -176,9 +177,10 @@ def _contexto(
     """
     hoy = datetime.now(comercial.ZONA_TIENDA).date()
     ventas = comercial.listar_ventas(bd)
+    ventas_visibles = comercial.filtrar_ventas(ventas, busqueda)
     clientes = comercial.listar_clientes(bd)
     ventas_info = []
-    for venta in ventas:
+    for venta in ventas_visibles:
         lineas = _detalle_de_venta(bd, venta.id_venta)
         semaforo, dias = comercial.estado_garantia(venta, hoy)
         ventas_info.append(
@@ -201,6 +203,7 @@ def _contexto(
             "titulo_pagina": "OLB_BYTE",
             "clientes": clientes,
             "ventas": ventas_info,
+            "busqueda": busqueda or "",
             "pendientes_total": len(comercial.cartera(bd)),
             "resumen": cartera,
             "total_ventas": sum((v.total for v in ventas if v.estado_orden == comercial.ESTADO_ACTIVA), start=0),
@@ -291,6 +294,7 @@ def ver_olb_byte(
     usuario: UsuarioSesion = Depends(obtener_usuario_actual),
     bd: Session = Depends(obtener_bd),
     guardado: int = 0,
+    q: str = "",
 ) -> HTMLResponse:
     """Muestra el panel comercial.
 
@@ -308,7 +312,7 @@ def ver_olb_byte(
     """
     exigir_olb_byte(usuario)
     return plantillas.TemplateResponse(
-        request, "olb_byte/index.html", _contexto(usuario, bd, guardado=bool(guardado))
+        request, "olb_byte/index.html", _contexto(usuario, bd, guardado=bool(guardado), busqueda=q)
     )
 
 

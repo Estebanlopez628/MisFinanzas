@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block titulo %}Recuperar contraseña{% endblock %}
+
+{% block contenido %}
+  <section class="acceso-nuevo">
+    <div class="acceso-nuevo__tarjeta">
+      <header class="acceso-nuevo__cabecera">
+        <h1 class="acceso-nuevo__titulo">Recuperar contraseña</h1>
+        <p class="acceso-nuevo__subtitulo">Escribe el correo de tu cuenta y te enviaremos un enlace.</p>
+      </header>
+
+      {% if mensaje %}
+        <div class="alerta alerta--exito" role="status">{{ mensaje }}</div>
+      {% endif %}
+
+      <form class="acceso-nuevo__formulario" method="post" action="{{ url_for('procesar_olvide_contrasena') }}">
+        <label class="campo" for="campo-correo-recuperar">
+          <span class="campo__etiqueta">Correo electrónico</span>
+          <input id="campo-correo-recuperar" class="campo__control" type="email" name="correo" autocomplete="email"
+                 placeholder="tu@correo.com" value="{{ correo_ingresado | default('', true) }}" required />
+        </label>
+        <button class="boton boton--primario acceso-nuevo__boton" type="submit">Enviar enlace</button>
+      </form>
+
+      <a class="boton boton--secundario acceso-nuevo__boton" href="{{ url_for('ver_login') }}">Volver a iniciar sesión</a>
+    </div>
+  </section>
+{% endblock %}

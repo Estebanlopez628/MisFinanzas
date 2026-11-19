@@ -174,7 +174,7 @@ def crear_token(
     return f"{mensaje}.{firma}"
 
 
-def decodificar_token(token: str, ahora: float | None = None) -> dict[str, object]:
+def _decodificar_contenido(token: str, ahora: float | None = None) -> dict[str, object]:
     """Verifica la firma y vigencia de un token y devuelve su contenido.
 
     Args:
@@ -215,3 +215,84 @@ def decodificar_token(token: str, ahora: float | None = None) -> dict[str, objec
         raise TokenInvalido("El token no contiene los datos de sesión.")
 
     return contenido
+
+
+def decodificar_token(token: str, ahora: float | None = None) -> dict[str, object]:
+    """Verifica un token de sesión. Rechaza los tokens de recuperación (SRS v1.8).
+
+    Args:
+        token: Token de la cookie de sesión.
+        ahora: Marca de tiempo Unix de referencia (útil en pruebas).
+
+    Returns:
+        Contenido del token de sesión.
+
+    Raises:
+        TokenInvalido: Si el token no es de sesión o no es válido.
+    """
+    contenido = _decodificar_contenido(token, ahora)
+    if "proposito" in contenido:
+        raise TokenInvalido("El token no es una sesión válida.")
+    return contenido
+
+
+def crear_token_recuperacion(
+    id_usuario: str,
+    rol: str,
+    alias: str,
+    huella: str,
+    minutos: int = 15,
+    ahora: float | None = None,
+) -> str:
+    """Emite un enlace de recuperación de contraseña que vence en 15 minutos.
+
+    La huella es un resumen de la contraseña actual: al cambiarla, el enlace deja de
+    servir, así que no se puede usar dos veces.
+
+    Args:
+        id_usuario: Cuenta que recupera la contraseña.
+        rol: Rol de la cuenta (requerido por el formato común de tokens).
+        alias: Alias de la cuenta.
+        huella: Resumen de la contraseña vigente.
+        minutos: Vigencia en minutos.
+        ahora: Marca de tiempo Unix de referencia (útil en pruebas).
+
+    Returns:
+        Token firmado con propósito `recuperacion`.
+    """
+    instante = int(ahora if ahora is not None else time.time())
+    cabecera = {"alg": "HS256", "typ": "JWT"}
+    contenido = {
+        "sub": id_usuario,
+        "rol": rol,
+        "alias": alias,
+        "iat": instante,
+        "exp": instante + minutos * 60,
+        "proposito": "recuperacion",
+        "huella": huella,
+    }
+    cabecera_codificada = _codificar_base64url(json.dumps(cabecera, separators=(",", ":")).encode("utf-8"))
+    contenido_codificado = _codificar_base64url(json.dumps(contenido, separators=(",", ":")).encode("utf-8"))
+    mensaje = f"{cabecera_codificada}.{contenido_codificado}"
+    firma = _codificar_base64url(_firmar(mensaje))
+    return f"{mensaje}.{firma}"
+
+
+def decodificar_token_recuperacion(token: str, ahora: float | None = None) -> dict[str, object]:
+    """Verifica un enlace de recuperación (firma, vigencia y propósito).
+
+    Args:
+        token: Token recibido en el enlace del correo.
+        ahora: Marca de tiempo Unix de referencia (útil en pruebas).
+
+    Returns:
+        Contenido del token, con `sub` y `huella`.
+
+    Raises:
+        TokenInvalido: Si no es un enlace de recuperación válido o venció.
+    """
+    contenido = _decodificar_contenido(token, ahora)
+    if contenido.get("proposito") != "recuperacion" or not contenido.get("huella"):
+        raise TokenInvalido("El enlace no es de recuperación.")
+    return contenido
+

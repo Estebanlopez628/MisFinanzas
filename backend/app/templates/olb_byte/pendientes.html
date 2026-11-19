@@ -33,7 +33,7 @@
     </form>
 
     {% if pendientes %}
-      <div class="tabla-contenedor">
+      <div class="tabla-contenedor tabla-escritorio">
         <table class="tabla tabla--tarjetas tabla--compacta">
           <thead>
             <tr>
@@ -67,6 +67,42 @@
           </tbody>
         </table>
       </div>
+
+      <ul class="ordenes-moviles" aria-label="Pendientes de pago">
+        <li class="orden-movil orden-movil--tres orden-movil--cabecera" aria-hidden="true">
+          <span>No.</span><span>Cliente</span><span>Saldo</span>
+        </li>
+        {% for fila in pendientes %}
+          {% set venta = fila.venta %}
+          <li>
+            <button type="button" class="orden-movil orden-movil--tres" data-abrir-dialogo="pendiente-{{ venta.id_venta }}">
+              <span>{{ venta.numero_orden }}</span>
+              <span>{{ venta.cliente_nombre }}</span>
+              <span class="valor-negativo">{{ venta.saldo_pendiente | cop }}</span>
+            </button>
+          </li>
+        {% endfor %}
+      </ul>
+
+      {% for fila in pendientes %}
+        {% set venta = fila.venta %}
+        <dialog class="detalle-orden" id="pendiente-{{ venta.id_venta }}" aria-label="Detalle de la orden {{ venta.numero_orden }}">
+          <div class="detalle-orden__cuerpo">
+            <h3 class="detalle-orden__titulo">Orden No. {{ venta.numero_orden }}</h3>
+            <dl class="detalle-orden__lista">
+              <div><dt>No. de orden</dt><dd>{{ venta.numero_orden }}</dd></div>
+              <div><dt>Cliente</dt><dd>{{ venta.cliente_nombre }}</dd></div>
+              <div><dt>Celular</dt><dd>{{ venta.cliente_telefono or '—' }}</dd></div>
+              <div><dt>Fecha</dt><dd>{{ venta.fecha_venta.strftime('%d-%m-%Y') }}</dd></div>
+              <div><dt>Total</dt><dd>{{ venta.total | cop }}</dd></div>
+              <div><dt>Abonado</dt><dd>{{ venta.total_abonado | cop }}</dd></div>
+              <div><dt>Saldo</dt><dd class="valor-negativo">{{ venta.saldo_pendiente | cop }}</dd></div>
+            </dl>
+            <a class="boton boton--primario boton--pequeno" href="{{ url_for('ver_cobro', id_venta=venta.id_venta) }}">Cobro</a>
+            <button type="button" class="boton boton--secundario boton--pequeno detalle-orden__volver" data-cerrar-dialogo>Volver a pendientes de pago</button>
+          </div>
+        </dialog>
+      {% endfor %}
     {% else %}
       <p class="tabla__vacia">
         {% if q %}

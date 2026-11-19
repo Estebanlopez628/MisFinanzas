@@ -60,6 +60,7 @@ class UsuarioSesion:
         rol: Rol RBAC; determina tarjetas y rutas visibles.
         perfil_configurado: `True` si ya existe su perfil financiero. Se calcula
             en cada petición para que el onboarding se libere al guardar.
+        avatar_url: Foto de perfil de Google, o `None` para mostrar las iniciales.
     """
 
     id_usuario: str
@@ -67,6 +68,7 @@ class UsuarioSesion:
     alias: str
     rol: str
     perfil_configurado: bool = False
+    avatar_url: str | None = None
 
     @property
     def es_administrador(self) -> bool:
@@ -115,6 +117,7 @@ def _usuario_desde_token(bd: Session, token: str) -> UsuarioSesion | None:
         alias=usuario.alias,
         rol=usuario.rol,
         perfil_configurado=perfiles.perfil_configurado(bd, usuario.id_usuario),
+        avatar_url=usuario.avatar_url,
     )
 
 
