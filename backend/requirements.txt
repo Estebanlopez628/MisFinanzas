@@ -6,5 +6,3 @@ uvicorn[standard]>=0.30
 jinja2>=3.1
 python-multipart>=0.0.9
 sqlalchemy>=2.0,<3.0
-# Factura PDF de OLB_BYTE (ADR-36). Requiere `python -m playwright install chromium`.
-playwright>=1.45

@@ -7,8 +7,8 @@ Responsabilidad
   muestren exactamente la misma factura.
 - Embeber los logos de `assets/` y el CSS del diseño como texto, para que el PDF no
   dependa de rutas ni de la red.
-- Dar el nombre de archivo `Factura_OLB_BYTE_No_{numero}_{cliente}.pdf`.
-- Convertir el HTML ya renderizado en PDF tamaño Carta con Playwright.
+- Dar el nombre de archivo `Factura_OLB_BYTE_No_{numero}_{cliente}.png`.
+- Entregar la hoja en HTML: el navegador la convierte en PNG (ADR-50).
 
 Los datos fijos de la empresa (dirección, teléfono, cuenta bancaria, NIT) están en las
 constantes de este módulo. El diseño visual vive en `static/css/factura-olb.css` y en
@@ -35,8 +35,6 @@ RUTA_CSS_FACTURA = Path(__file__).resolve().parents[1] / "static" / "css" / "fac
 # La hoja Carta admite hasta diez productos; el diseño completa hasta nueve filas.
 MAX_LINEAS_PDF = 10
 FILAS_MINIMAS_TABLA = 9
-# Escala del PDF: con diez productos el diseño solo cabe en una hoja a 75 %.
-ESCALA_PDF = 0.72
 
 NIT = "1151949473-3"
 RESPONSABLE = "Esteban Lopez"
@@ -70,11 +68,11 @@ def nombre_archivo(numero_orden: int, cliente: str) -> str:
         cliente: Nombre del cliente tal como se guardó en la orden.
 
     Returns:
-        Nombre como `Factura_OLB_BYTE_No_1_Ana_Perez.pdf`.
+        Nombre como `Factura_OLB_BYTE_No_1_Ana_Perez.png`.
     """
     sin_tildes = unicodedata.normalize("NFKD", cliente).encode("ascii", "ignore").decode("ascii")
     cliente_limpio = re.sub(r"[^A-Za-z0-9]+", "_", sin_tildes).strip("_") or "Cliente"
-    return f"Factura_OLB_BYTE_No_{numero_orden}_{cliente_limpio[:60]}.pdf"
+    return f"Factura_OLB_BYTE_No_{numero_orden}_{cliente_limpio[:60]}.png"
 
 
 @lru_cache(maxsize=None)
@@ -149,53 +147,3 @@ def datos_factura(bd: Session, venta: Venta, validar_maximo: bool = True) -> dic
         "css": RUTA_CSS_FACTURA.read_text(encoding="utf-8"),
         "nombre_archivo": nombre_archivo(venta.numero_orden, venta.cliente_nombre),
     }
-
-
-class ChromiumNoDisponible(RuntimeError):
-    """Se lanza cuando Playwright no encuentra el navegador instalado."""
-
-
-def generar_pdf(html: str) -> bytes:
-    """Convierte HTML en un PDF tamaño Carta con una sola página por factura.
-
-    Usa `printBackground=True` para que se vean la cabecera, el efecto cebra y los
-    logos. Abre un navegador por petición: es lento, pero sencillo y sin estado
-    compartido entre peticiones.
-
-    Args:
-        html: Documento HTML completo con estilos y logos embebidos.
-
-    Returns:
-        Bytes del PDF.
-
-    Raises:
-        ChromiumNoDisponible: Si el navegador de Playwright no está instalado.
-    """
-    from playwright.sync_api import Error as ErrorPlaywright
-    from playwright.sync_api import sync_playwright
-
-    # El diseño completo mide más que una hoja Carta a 100 %. Se dibuja en un cuerpo más
-    # ancho y se reduce con `scale`: el papel sigue siendo Carta y cabe en una página.
-    ancho_cuerpo = f"{8.5 / ESCALA_PDF:.4f}in"
-    html = html.replace("</head>", f"<style>body {{ width: {ancho_cuerpo} !important; }}</style></head>", 1)
-
-    try:
-        with sync_playwright() as playwright:
-            navegador = playwright.chromium.launch()
-            try:
-                pagina = navegador.new_page()
-                pagina.set_content(html, wait_until="load")
-                return pagina.pdf(
-                    format="Letter",
-                    print_background=True,
-                    scale=ESCALA_PDF,
-                    margin={"top": "0", "right": "0", "bottom": "0", "left": "0"},
-                    prefer_css_page_size=True,
-                )
-            finally:
-                navegador.close()
-    except ErrorPlaywright as error:
-        raise ChromiumNoDisponible(
-            "No se pudo generar el PDF: el navegador no está instalado. "
-            "Ejecute «python -m playwright install chromium» en el servidor."
-        ) from error

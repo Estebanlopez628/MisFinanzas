@@ -602,50 +602,6 @@ def ver_recibo(
     return plantillas.TemplateResponse(request, "olb_byte/recibo.html", contexto)
 
 
-@router.get("/olb-byte/recibos/{id_abono}/imagen", name="ver_recibo_imagen", response_model=None)
-def ver_recibo_imagen(
-    id_abono: str,
-    usuario: UsuarioSesion = Depends(obtener_usuario_actual),
-    bd: Session = Depends(obtener_bd),
-    descargar: int = 1,
-) -> Response:
-    """Genera el recibo de un abono como imagen PNG para compartir (RF-07).
-
-    Args:
-        id_abono: Abono del recibo.
-        usuario: Administrador autenticado.
-        bd: Sesión de base de datos.
-        descargar: `1` para descargar el archivo; `0` para mostrarlo en línea.
-
-    Returns:
-        Imagen PNG, o texto con el motivo si no se pudo generar.
-
-    Raises:
-        HTTPException: 403 si el usuario no es administrador; 404 si el abono no existe.
-    """
-    exigir_olb_byte(usuario)
-    abono = comercial.obtener_abono(bd, id_abono)
-    if abono is None:
-        raise HTTPException(status_code=404, detail="Recibo no encontrado.")
-    try:
-        contexto = recibo_imagen.datos_recibo(bd, abono)
-    except ValueError as error:
-        raise HTTPException(status_code=404, detail=str(error))
-
-    html = plantillas.get_template("olb_byte/recibo_imagen.html").render(contexto)
-    try:
-        imagen = recibo_imagen.imagen_recibo(html)
-    except factura_pdf.ChromiumNoDisponible as error:
-        return Response(content=str(error), media_type="text/plain; charset=utf-8", status_code=503)
-
-    disposicion = "attachment" if descargar else "inline"
-    return Response(
-        content=imagen,
-        media_type="image/png",
-        headers={"Content-Disposition": f'{disposicion}; filename="{contexto["nombre_archivo"]}"'},
-    )
-
-
 @router.post("/olb-byte/ventas/{id_venta}/anular", name="anular_venta", response_model=None)
 def anular_venta(
     request: Request,
@@ -710,6 +666,60 @@ def registrar_devolucion(
     except (ValueError, ArithmeticError) as error:
         return _pagina_con_error(request, bd, usuario, str(error))
     return RedirectResponse(url="/olb-byte?guardado=1", status_code=status.HTTP_303_SEE_OTHER)
+
+
+@router.get("/olb-byte/factura/{id_venta}/hoja", response_class=HTMLResponse, name="ver_factura_hoja")
+def ver_factura_hoja(
+    id_venta: str,
+    usuario: UsuarioSesion = Depends(obtener_usuario_actual),
+    bd: Session = Depends(obtener_bd),
+) -> HTMLResponse:
+    """Entrega solo la hoja de la factura con sus estilos, para convertirla en PNG (ADR-50).
+
+    Args:
+        id_venta: Orden facturada.
+        usuario: Usuario autenticado.
+        bd: Sesión de base de datos.
+
+    Returns:
+        Fragmento HTML de la hoja.
+
+    Raises:
+        HTTPException: 403 si el correo no está autorizado; 404 si la orden no existe.
+    """
+    exigir_olb_byte(usuario)
+    venta: Venta | None = comercial.obtener_venta(bd, id_venta)
+    if venta is None:
+        raise HTTPException(status_code=404, detail="Venta no encontrada.")
+    contexto = factura_pdf.datos_factura(bd, venta, validar_maximo=False)
+    return HTMLResponse(plantillas.get_template("olb_byte/_fragmento_factura.html").render(contexto))
+
+
+@router.get("/olb-byte/recibos/{id_abono}/hoja", response_class=HTMLResponse, name="ver_recibo_hoja")
+def ver_recibo_hoja(
+    id_abono: str,
+    usuario: UsuarioSesion = Depends(obtener_usuario_actual),
+    bd: Session = Depends(obtener_bd),
+) -> HTMLResponse:
+    """Entrega solo la tarjeta del recibo de abono, para convertirla en PNG (ADR-50).
+
+    Args:
+        id_abono: Abono del recibo.
+        usuario: Usuario autenticado.
+        bd: Sesión de base de datos.
+
+    Returns:
+        Fragmento HTML de la tarjeta del recibo.
+
+    Raises:
+        HTTPException: 403 si el correo no está autorizado; 404 si el abono no existe.
+    """
+    exigir_olb_byte(usuario)
+    abono = comercial.obtener_abono(bd, id_abono)
+    if abono is None:
+        raise HTTPException(status_code=404, detail="Recibo no encontrado.")
+    contexto = recibo_imagen.datos_recibo(bd, abono)
+    return HTMLResponse(plantillas.get_template("olb_byte/_fragmento_recibo.html").render(contexto))
 
 
 @router.get("/olb-byte/factura/{id_venta}", response_class=HTMLResponse, name="ver_factura")
@@ -860,50 +870,6 @@ def _pagina_error_pdf(id_venta: str, mensaje: str, codigo: int) -> HTMLResponse:
         "</body></html>"
     )
     return HTMLResponse(cuerpo, status_code=codigo)
-
-
-@router.get("/olb-byte/factura/{id_venta}/pdf", name="ver_factura_pdf", response_model=None)
-def ver_factura_pdf(
-    id_venta: str,
-    usuario: UsuarioSesion = Depends(obtener_usuario_actual),
-    bd: Session = Depends(obtener_bd),
-    descargar: int = 1,
-) -> Response:
-    """Genera la factura en PDF tamaño Carta (RF-18 y RF-19).
-
-    Args:
-        id_venta: Orden facturada.
-        usuario: Administrador autenticado.
-        bd: Sesión de base de datos.
-        descargar: `1` para descargar el archivo; `0` para mostrarlo en la vista previa.
-
-    Returns:
-        Archivo PDF, o una página con el motivo si no se pudo generar.
-
-    Raises:
-        HTTPException: 403 si el usuario no es administrador; 404 si la orden no existe.
-    """
-    exigir_olb_byte(usuario)
-    venta = comercial.obtener_venta(bd, id_venta)
-    if venta is None:
-        raise HTTPException(status_code=404, detail="Venta no encontrada.")
-    try:
-        contexto = factura_pdf.datos_factura(bd, venta)
-    except ValueError as error:
-        return _pagina_error_pdf(id_venta, str(error), 422)
-
-    html = plantillas.get_template("olb_byte/factura_pdf.html").render(contexto)
-    try:
-        pdf = factura_pdf.generar_pdf(html)
-    except factura_pdf.ChromiumNoDisponible as error:
-        return _pagina_error_pdf(id_venta, str(error), 503)
-
-    disposicion = "attachment" if descargar else "inline"
-    return Response(
-        content=pdf,
-        media_type="application/pdf",
-        headers={"Content-Disposition": f'{disposicion}; filename="{contexto["nombre_archivo"]}"'},
-    )
 
 
 @router.get("/olb-byte/analitica", response_class=HTMLResponse, name="ver_analitica")

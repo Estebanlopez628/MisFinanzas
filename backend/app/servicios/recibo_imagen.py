@@ -4,10 +4,8 @@ Responsabilidad
 ---------------
 - Reunir los datos del recibo de un abono (orden, abonos y saldo).
 - Dibujar el recibo con la misma tarjeta de la pantalla (`_recibo.html`) y el CSS
-  de la aplicación, y convertirlo en PNG con Chromium.
 - Dar el nombre del archivo y el mensaje que acompaña la imagen.
 
-El navegador es el mismo que usa la factura PDF (ADR-36).
 """
 
 from __future__ import annotations
@@ -18,7 +16,6 @@ from sqlalchemy.orm import Session
 
 from app.modelos import Abono, Venta
 from app.servicios import comercial
-from app.servicios.factura_pdf import ChromiumNoDisponible
 
 RUTA_CSS_APLICACION = Path(__file__).resolve().parents[1] / "static" / "css" / "estilos.css"
 
@@ -74,36 +71,3 @@ def datos_recibo(bd: Session, abono: Abono) -> dict[str, object]:
         "nombre_archivo": nombre_archivo_recibo(venta, abono),
         "texto_compartir": texto_compartir_recibo(venta),
     }
-
-
-def imagen_recibo(html: str) -> bytes:
-    """Convierte el HTML de un recibo en una imagen PNG nítida (dos veces el tamaño).
-
-    Args:
-        html: Documento HTML con el recibo y sus estilos.
-
-    Returns:
-        Bytes del PNG, recortado a la tarjeta del recibo.
-
-    Raises:
-        ChromiumNoDisponible: Si el navegador de Playwright no está instalado.
-    """
-    from playwright.sync_api import Error as ErrorPlaywright
-    from playwright.sync_api import sync_playwright
-
-    try:
-        with sync_playwright() as playwright:
-            navegador = playwright.chromium.launch()
-            try:
-                pagina = navegador.new_page(
-                    viewport={"width": 520, "height": 900}, device_scale_factor=2
-                )
-                pagina.set_content(html, wait_until="load")
-                return pagina.locator(".recibo-captura").screenshot(type="png")
-            finally:
-                navegador.close()
-    except ErrorPlaywright as error:
-        raise ChromiumNoDisponible(
-            "No se pudo generar la imagen: el navegador no está instalado. "
-            "Ejecute «python -m playwright install chromium» en el servidor."
-        ) from error

@@ -246,7 +246,7 @@ def test_acciones_de_orden_van_en_fila_con_whatsapp_adjunto(cliente_admin: TestC
     assert 'class="acciones-orden"' in texto
     assert "data-compartir-factura" in texto
     assert 'data-texto="Hola Ana Pérez, adjunto tu factura de compra."' in texto
-    assert "Factura_OLB_BYTE_No_1_Ana_Perez.pdf" in texto
+    assert "Factura_OLB_BYTE_No_1_Ana_Perez.png" in texto
 
 
 def test_formulario_muestra_categoria_antes_del_nombre_y_pago(cliente_admin: TestClient) -> None:

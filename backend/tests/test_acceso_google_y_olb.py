@@ -139,3 +139,22 @@ def test_google_rechaza_un_correo_no_verificado(cliente, monkeypatch) -> None:
 
     assert respuesta.status_code == 401
     assert "Google no confirmó tu correo." in respuesta.text
+
+
+def test_google_asigna_admin_olb_a_los_correos_definidos(cliente, bd, monkeypatch) -> None:
+    """Un correo de administrador OLB verificado con Google recibe el rol ADMIN_OLB."""
+    correo = "oscar.esteban.lopez.bedoya@gmail.com"
+    monkeypatch.setattr(
+        acceso_google,
+        "intercambiar_codigo",
+        lambda codigo: {"email": correo, "email_verified": True, "given_name": "Oscar"},
+    )
+    cliente.cookies.set("estado_google", "estado-admin")
+
+    respuesta = cliente.get("/login/google/callback?code=abc&state=estado-admin", follow_redirects=False)
+
+    assert respuesta.status_code == 303
+    cuenta = usuarios.buscar_por_correo(bd, correo)
+    assert cuenta is not None
+    assert cuenta.rol == usuarios.ROL_ADMIN
+

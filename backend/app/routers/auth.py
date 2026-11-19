@@ -359,6 +359,12 @@ def callback_google(
     if not cuenta.activo:
         return _login_con_error(request, "Tu cuenta está desactivada. Escribe al administrador.")
 
+    # El administrador OLB_BYTE solo se asigna a quien demuestra el correo con Google;
+    # un registro con contraseña no comprueba la propiedad del correo.
+    if correo in obtener_configuracion().correos_admin_olb and cuenta.rol != usuarios.ROL_ADMIN:
+        usuarios.cambiar_rol(bd, cuenta.id_usuario, usuarios.ROL_ADMIN)
+        cuenta = usuarios.obtener_por_id(bd, cuenta.id_usuario) or cuenta
+
     auditoria.registrar(bd, cuenta.id_usuario, "LOGIN_GOOGLE", "usuarios", "Sesión iniciada con Google")
     token = crear_token(cuenta.id_usuario, cuenta.rol, cuenta.alias)
     respuesta = RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)

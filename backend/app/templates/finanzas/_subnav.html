@@ -13,13 +13,11 @@
      {% if seccion|default('') == 'gastos' %}aria-current="page"{% endif %}>
     Gastos y Presupuesto
   </a>
-  {% if usuario and usuario.es_administrador %}
-    <a class="subnav-finanzas__enlace {% if seccion|default('') == 'atajos' %}subnav-finanzas__enlace--activo{% endif %}"
-       href="{{ url_for('ver_chancucos') }}"
-       {% if seccion|default('') == 'atajos' %}aria-current="page"{% endif %}>
-      Configurar Atajos de Pago
-    </a>
-  {% endif %}
+  <a class="subnav-finanzas__enlace {% if seccion|default('') == 'atajos' %}subnav-finanzas__enlace--activo{% endif %}"
+     href="{{ url_for('ver_chancucos') }}"
+     {% if seccion|default('') == 'atajos' %}aria-current="page"{% endif %}>
+    Configurar Atajos de Pago
+  </a>
   <a class="subnav-finanzas__enlace {% if seccion|default('') == 'historial' %}subnav-finanzas__enlace--activo{% endif %}"
      href="{{ url_for('ver_historial') }}"
      {% if seccion|default('') == 'historial' %}aria-current="page"{% endif %}>

@@ -9,33 +9,26 @@
   <div class="barra-herramientas-factura no-imprimir">
     <div class="acciones-formulario">
       <a class="boton boton--secundario boton--pequeno" href="{{ url_for('ver_olb_byte') }}">← Volver a Ventas</a>
-      <button class="boton boton--secundario boton--pequeno" type="button" data-vista-pdf>Vista previa PDF</button>
-      <a class="boton boton--primario boton--pequeno"
-         href="{{ url_for('ver_factura_pdf', id_venta=venta.id_venta) }}">Descargar PDF</a>
+      <button class="boton boton--primario boton--pequeno" type="button"
+              data-descargar-imagen
+              data-fragmento="{{ url_for('ver_factura_hoja', id_venta=venta.id_venta) }}"
+              data-nombre="{{ nombre_archivo }}">Descargar imagen</button>
       <button class="boton boton--secundario boton--pequeno" type="button"
               data-compartir
-              data-pdf="{{ url_for('ver_factura_pdf', id_venta=venta.id_venta) }}"
+              data-fragmento="{{ url_for('ver_factura_hoja', id_venta=venta.id_venta) }}"
               data-nombre="{{ nombre_archivo }}"
               data-texto="{{ texto_compartir }}"
-              data-whatsapp="{{ enlace_whatsapp }}">Enviar por WhatsApp</button>
+              data-whatsapp="{{ enlace_whatsapp }}">Compartir por WhatsApp</button>
       <button class="boton boton--secundario boton--pequeno" type="button" onclick="window.print()">
         Imprimir
       </button>
     </div>
   </div>
 
-  <dialog class="vista-previa no-imprimir" data-dialogo-pdf aria-label="Vista previa de la factura">
-    <div class="vista-previa__barra">
-      <strong>Vista previa de la factura</strong>
-      <button class="boton boton--secundario boton--pequeno" type="button" data-cerrar-pdf>Cerrar</button>
-    </div>
-    <iframe class="vista-previa__marco" title="Factura en PDF" data-marco-pdf
-            data-src="{{ url_for('ver_factura_pdf', id_venta=venta.id_venta) }}?descargar=0"></iframe>
-  </dialog>
-
   {% include "olb_byte/_hoja_factura.html" %}
 {% endblock %}
 
 {% block scripts %}
+  <script src="{{ url_for('estaticos', path='js/vendor/html-to-image.js') }}" defer></script>
   <script src="{{ url_for('estaticos', path='js/factura.js') }}" defer></script>
 {% endblock %}

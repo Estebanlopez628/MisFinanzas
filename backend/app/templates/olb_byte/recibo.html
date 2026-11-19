@@ -7,7 +7,7 @@
     <button class="boton boton--secundario boton--pequeno" type="button" onclick="window.print()">Imprimir</button>
     <button class="boton boton--primario boton--pequeno" type="button"
             data-compartir
-            data-pdf="{{ url_for('ver_recibo_imagen', id_abono=abono.id_abono) }}"
+            data-fragmento="{{ url_for('ver_recibo_hoja', id_abono=abono.id_abono) }}"
             data-nombre="{{ nombre_archivo }}"
             data-texto="{{ texto_compartir }}"
             data-whatsapp="{{ enlace_whatsapp }}">Compartir recibo</button>
@@ -17,5 +17,6 @@
 {% endblock %}
 
 {% block scripts %}
+  <script src="{{ url_for('estaticos', path='js/vendor/html-to-image.js') }}" defer></script>
   <script src="{{ url_for('estaticos', path='js/factura.js') }}" defer></script>
 {% endblock %}

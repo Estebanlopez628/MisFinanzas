@@ -289,16 +289,12 @@ portables. Para migrar:
 Los respaldos diarios permiten además recuperar datos concretos sin revertir el
 código: abre la copia con `sqlite3` y exporta las filas necesarias.
 
-## 13. Factura PDF de OLB_BYTE (Chromium con Playwright, ADR-36)
+## 13. Factura y recibo como imagen PNG (ADR-50)
 
-La factura PDF usa Chromium headless. Tras instalar las dependencias del proyecto, ejecutar **una vez** en el servidor (con el mismo entorno virtual):
+La factura y el recibo de abono se convierten en imagen PNG en el navegador con `html-to-image`, una librería que vive en `backend/app/static/js/vendor/html-to-image.js`. El servidor solo entrega la hoja en HTML. Por eso **ya no hace falta Chromium ni Playwright en el servidor**: el paso de compilación de Render no necesita instalar navegadores.
 
-```bash
-cd backend
-python -m playwright install --with-deps chromium
-```
+Para compartir, el navegador usa la hoja de compartir del sistema en móvil (con la imagen adjunta). En escritorio copia la imagen al portapapeles para pegarla en WhatsApp Web con Ctrl+V y además la descarga como respaldo.
 
-En un hosting Linux (por ejemplo, Render) este comando debe ir en el **paso de compilación** (build), porque el navegador no existe en el servidor por defecto. Si falta, la descarga, la vista previa y el envío por WhatsApp muestran «No se pudo generar el PDF» (HTTP 503). La vista de factura y el botón **Imprimir** del navegador siguen funcionando sin Chromium del servidor.
+Los logos viajan embebidos en el HTML (`data:`), así la captura no depende de la red ni de permisos de origen.
 
-Los logos se leen de la carpeta `assets/` de la raíz del proyecto: debe desplegarse junto con `backend/`. El logo que se usa es `assets/Nuevo Logo.png`.
-
+Si cambia el diseño, edite `templates/olb_byte/_hoja_factura.html` y `static/css/factura-olb.css`. Si cambia la librería, reemplace `static/js/vendor/html-to-image.js` y suba la versión de `sw.js`.

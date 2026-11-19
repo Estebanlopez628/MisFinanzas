@@ -163,6 +163,12 @@ class ConfiguracionApp:
             _lista_desde_entorno("CORREOS_OLB_BYTE", CORREOS_OLB_BYTE_PREDETERMINADOS)
         )
     )
+    # Cuentas que pasan a ADMIN_OLB al entrar con Google (correo verificado).
+    correos_admin_olb: frozenset[str] = field(
+        default_factory=lambda: frozenset(
+            _lista_desde_entorno("CORREOS_ADMIN_OLB", CORREOS_OLB_BYTE_PREDETERMINADOS)
+        )
+    )
     google_client_id: str = field(default_factory=lambda: os.getenv("GOOGLE_CLIENT_ID", "").strip())
     google_client_secret: str = field(
         default_factory=lambda: os.getenv("GOOGLE_CLIENT_SECRET", "").strip()

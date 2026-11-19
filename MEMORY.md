@@ -427,6 +427,48 @@ Recálculo en tiempo real (<100 ms) sin recargar página. Se implementa con func
 
 ## Bitácora de Cambios
 
+### 2026-11-19 — Factura y recibo como PNG en el navegador; sin Playwright en el servidor (ADR-50)
+
+**Decisión:** la imagen de la factura y del recibo se genera en el navegador con `html-to-image` (local, en `static/js/vendor/`). Se elimina Playwright y Chromium del servidor, que consumían mucha RAM en Render gratuito. ADR-50 reemplaza a ADR-36 y ADR-41 en lo relativo al PDF.
+
+**Cambios realizados**
+1. `servicios/factura_pdf.py` y `servicios/recibo_imagen.py`: sin Playwright; los archivos se llaman `.png`.
+2. Rutas nuevas: `GET /olb-byte/factura/{id}/hoja` y `GET /olb-byte/recibos/{id}/hoja` (solo HTML). Se eliminan `/factura/{id}/pdf` y `/recibos/{id}/imagen`.
+3. `templates/olb_byte/_fragmento_factura.html` y `_fragmento_recibo.html` (nuevas); se eliminan `factura_pdf.html` y `recibo_imagen.html`.
+4. `static/js/factura.js` reescrito: monta la hoja fuera de la vista, la convierte en PNG con `pixelRatio: 2`, comparte con `navigator.share` o copia al portapapeles y descarga.
+5. `templates/olb_byte/factura.html`, `recibo.html` e `index.html`: botones «Descargar imagen» y «Compartir por WhatsApp»; se quita la vista previa PDF.
+6. `requirements.txt` sin `playwright`; `DESPLIEGUE.md` §13 reescrita.
+7. `sw.js` en `olb-finanzas-v26` con la librería en la caché.
+8. Pruebas: `tests/test_factura_imagen.py` reemplaza a `test_factura_pdf.py` y `test_recibo_imagen.py`.
+
+**Verificación:** `pytest` en verde (505). En Chromium con base temporal: la factura se descarga como PNG de 1700 × 2630 px, y el recibo como PNG de 936 × 1040 px, ambos legibles.
+
+**Pendiente:** `Guia.md` aún tiene fichas de los archivos eliminados; el verificador sigue bloqueado por el BOM de OLB_BYTE.
+
+### 2026-11-19 — Administrador OLB_BYTE para los correos del propietario (ADR-49)
+
+**Decisión:** `CORREOS_ADMIN_OLB` (por defecto, los dos correos del propietario). El rol `ADMIN_OLB` se asigna solo cuando la cuenta entra con Google y Google confirma el correo. No se asigna por registro con contraseña, porque cualquiera podría registrar un correo ajeno. Para otras cuentas, el rol se cambia desde «Administración de cuentas».
+
+**Cambios realizados**
+1. `core/config.py`: `correos_admin_olb` desde `CORREOS_ADMIN_OLB`.
+2. `routers/auth.py`: en el inicio con Google, si el correo está en la lista, se asigna `ADMIN_OLB`.
+3. `tests/test_acceso_google_y_olb.py`: prueba del ascenso con Google.
+
+**Verificación:** `pytest` en verde (522 pruebas).
+
+**Pendiente:** las dos cuentas no existen aún en la base local. Deben entrar con Google en el servidor para recibir el rol. El registro con contraseña para esos correos sigue abierto; conviene bloquearlo.
+
+### 2026-11-19 — Chancucos (Atajos de Pago) para todos los usuarios (SRS v1.8)
+
+**Cambios realizados**
+1. `routers/chancucos.py`: las cuatro rutas usan `obtener_usuario_actual`; ya no exigen administrador.
+2. `routers/finanzas.py`: el bloque de atajos del resumen se entrega a todos los usuarios.
+3. `templates/finanzas/_subnav.html`: el enlace «Configurar Atajos de Pago» se muestra a todos.
+4. `servicios/chancucos.py`: cada usuario ve y gestiona solo sus atajos (`Chancuco.id_usuario`).
+5. Pruebas nuevas en `tests/test_chancucos_publicos.py` (3).
+
+**Verificación:** `pytest` en verde (521 pruebas).
+
 ### 2026-11-18 — Acceso por correo a OLB_BYTE e inicio con Gmail (ADR-48)
 
 **Decisión:** OLB_BYTE solo para los correos de `CORREOS_OLB_BYTE` (por defecto, dos cuentas de Gmail). La tarjeta del panel y las rutas `/olb-byte` usan `exigir_olb_byte`, no el rol. El inicio con Google usa OAuth 2.0 con la biblioteca estándar (`urllib`), sin dependencias nuevas, y crea la cuenta como `USER_FINANZAS`.
