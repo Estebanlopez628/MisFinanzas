@@ -208,3 +208,25 @@ def test_panel_de_analitica_muestra_reportes(cliente_admin: TestClient, bd) -> N
 def test_usuario_publico_no_ve_la_analitica(cliente_usuario: TestClient) -> None:
     """La analítica exige administrador."""
     assert cliente_usuario.get("/olb-byte/analitica").status_code == 403
+
+def test_mismo_celular_con_otro_nombre_son_clientes_distintos(bd) -> None:
+    """Un número compartido por dos personas no las une: cada una aparece en el ranking."""
+    _vender(bd, fecha=_fecha(2026, 3), precio="50000", costo="30000", cliente="Ana", telefono="3001111111")
+    _vender(bd, fecha=_fecha(2026, 4), precio="80000", costo="30000", cliente="Luis", telefono="3001111111")
+
+    ranking = analitica.ranking_vip(bd)
+
+    assert [fila["cliente"] for fila in ranking] == ["Luis", "Ana"]
+    assert ranking[0]["monto"] == Decimal("80000")
+    assert ranking[1]["monto"] == Decimal("50000")
+
+
+def test_mismo_celular_y_mismo_nombre_es_un_solo_cliente(bd) -> None:
+    """Dos compras de la misma persona con el mismo celular suman en un solo cliente."""
+    _vender(bd, fecha=_fecha(2026, 5), precio="50000", costo="30000", cliente="Ana", telefono="3002222222")
+    _vender(bd, fecha=_fecha(2026, 6), precio="50000", costo="30000", cliente="Ana", telefono="3002222222")
+
+    ranking = analitica.ranking_vip(bd)
+
+    assert len(ranking) == 1
+    assert ranking[0]["compras"] == 2

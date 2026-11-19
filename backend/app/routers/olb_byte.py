@@ -27,7 +27,7 @@ from app.core.base_datos import obtener_bd
 from app.dependencias import UsuarioSesion, exigir_administrador, obtener_usuario_actual
 from app.modelos import Cliente, Venta, VentaDetalle
 from app.routers.vistas import contexto_base, plantillas
-from app.servicios import analitica, auditoria, comercial, factura_pdf
+from app.servicios import analitica, auditoria, comercial, factura_pdf, recibo_imagen
 
 router = APIRouter(tags=["OLB_BYTE"])
 
@@ -595,9 +595,55 @@ def ver_recibo(
             "abonos": abonos,
             "saldada": venta.saldo_pendiente <= 0,
             "enlace_whatsapp": comercial.enlace_whatsapp_recibo(venta, abono),
+            "nombre_archivo": recibo_imagen.nombre_archivo_recibo(venta, abono),
+            "texto_compartir": recibo_imagen.texto_compartir_recibo(venta),
         }
     )
     return plantillas.TemplateResponse(request, "olb_byte/recibo.html", contexto)
+
+
+@router.get("/olb-byte/recibos/{id_abono}/imagen", name="ver_recibo_imagen", response_model=None)
+def ver_recibo_imagen(
+    id_abono: str,
+    usuario: UsuarioSesion = Depends(obtener_usuario_actual),
+    bd: Session = Depends(obtener_bd),
+    descargar: int = 1,
+) -> Response:
+    """Genera el recibo de un abono como imagen PNG para compartir (RF-07).
+
+    Args:
+        id_abono: Abono del recibo.
+        usuario: Administrador autenticado.
+        bd: Sesión de base de datos.
+        descargar: `1` para descargar el archivo; `0` para mostrarlo en línea.
+
+    Returns:
+        Imagen PNG, o texto con el motivo si no se pudo generar.
+
+    Raises:
+        HTTPException: 403 si el usuario no es administrador; 404 si el abono no existe.
+    """
+    exigir_administrador(usuario)
+    abono = comercial.obtener_abono(bd, id_abono)
+    if abono is None:
+        raise HTTPException(status_code=404, detail="Recibo no encontrado.")
+    try:
+        contexto = recibo_imagen.datos_recibo(bd, abono)
+    except ValueError as error:
+        raise HTTPException(status_code=404, detail=str(error))
+
+    html = plantillas.get_template("olb_byte/recibo_imagen.html").render(contexto)
+    try:
+        imagen = recibo_imagen.imagen_recibo(html)
+    except factura_pdf.ChromiumNoDisponible as error:
+        return Response(content=str(error), media_type="text/plain; charset=utf-8", status_code=503)
+
+    disposicion = "attachment" if descargar else "inline"
+    return Response(
+        content=imagen,
+        media_type="image/png",
+        headers={"Content-Disposition": f'{disposicion}; filename="{contexto["nombre_archivo"]}"'},
+    )
 
 
 @router.post("/olb-byte/ventas/{id_venta}/anular", name="anular_venta", response_model=None)

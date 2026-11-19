@@ -213,12 +213,18 @@ def test_pdf_con_diez_productos_cabe_en_una_pagina(bd) -> None:
 
     assert _paginas(pdf) == 1
 
-def test_factura_usa_el_logo_oficial_y_carga_su_css_en_la_cabecera(cliente_admin: TestClient, bd) -> None:
-    """La factura muestra el logo de assets/ y su CSS se carga dentro de <head>."""
+def test_factura_muestra_la_marca_y_carga_su_css_en_la_cabecera(cliente_admin: TestClient, bd) -> None:
+    """La factura muestra la marca en texto y su CSS se carga dentro de <head>."""
     venta = _venta(bd, lineas=1)
 
     texto = cliente_admin.get(f"/olb-byte/factura/{venta.id_venta}").text
 
-    assert 'alt="OLB BYTE · Alta Tecnología"' in texto
-    assert "data:image/png;base64," in texto
+    assert "OLB BYTE" in texto
     assert texto.index("factura-olb.css") < texto.index("</head>")
+def test_css_de_la_factura_pdf_llega_sin_escapar(bd) -> None:
+    """El PDF recibe el diseño tal cual; escapado, no tendría estilos."""
+    venta = _venta(bd, lineas=1)
+    html = plantillas.get_template("olb_byte/factura_pdf.html").render(factura_pdf.datos_factura(bd, venta))
+
+    assert ".factura-info-grid" in html
+    assert "&gt;" not in html.split("<body>")[0]

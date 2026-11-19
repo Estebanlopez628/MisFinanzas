@@ -1,4 +1,4 @@
-"""Operación comercial de OLB_BYTE: ventas a crédito, cartera y deuda con proveedor.
+﻿"""Operación comercial de OLB_BYTE: ventas a crédito, cartera y deuda con proveedor.
 
 Responsabilidad
 ---------------
@@ -190,7 +190,7 @@ def _validar_linea(linea: LineaVenta) -> None:
 def _cliente_para_venta(bd: Session, nombre: str, telefono: str | None) -> Cliente:
     """Busca el cliente por celular o por nombre, o lo crea si no existe.
 
-    Con celular se busca por el número, porque dos personas pueden llamarse igual.
+    Con celular se busca por número y nombre: un mismo número puede ser de dos personas.
     Sin celular se busca por nombre entre los clientes que no tienen número.
 
     Args:
@@ -202,7 +202,14 @@ def _cliente_para_venta(bd: Session, nombre: str, telefono: str | None) -> Clien
         Cliente existente o recién creado (todavía sin confirmar).
     """
     if telefono:
-        existente = bd.scalar(select(Cliente).where(Cliente.telefono_whatsapp == telefono))
+        # Celular y nombre deben coincidir: un número compartido por dos personas distintas
+        # no las une en un solo cliente.
+        existente = bd.scalar(
+            select(Cliente).where(
+                Cliente.telefono_whatsapp == telefono,
+                func.lower(Cliente.nombre) == nombre.lower(),
+            )
+        )
     else:
         existente = bd.scalar(
             select(Cliente).where(

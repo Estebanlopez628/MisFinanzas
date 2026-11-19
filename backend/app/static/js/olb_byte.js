@@ -453,89 +453,57 @@
     });
   }
 
-  var botonContactos = formulario.querySelector("[data-contactos]");
+  var botonPegar = formulario.querySelector("[data-pegar-numero]");
   var nota = formulario.querySelector("[data-nota-contactos]");
-  var soportaContactos = "contacts" in navigator && "ContactsManager" in window;
 
   /**
-   * Abre la libreta del celular y copia el nombre y el número elegidos.
+   * Muestra una nota junto al campo de celular.
+   *
+   * @param {string} texto Mensaje para el usuario; vacío la oculta.
    */
-  function importarContacto() {
-    navigator.contacts
-      .select(["name", "tel"], { multiple: false })
-      .then(function (contactos) {
-        if (!contactos || !contactos.length) {
+  function mostrarNotaContactos(texto) {
+    if (!nota) {
+      return;
+    }
+    nota.textContent = texto;
+    nota.hidden = !texto;
+  }
+
+  /**
+   * Toma el número que el usuario copió (por ejemplo, desde Contactos) y lo pone en el campo.
+   * En iPhone el navegador pide confirmar «Pegar» la primera vez.
+   */
+  function pegarNumero() {
+    if (!navigator.clipboard || !navigator.clipboard.readText) {
+      mostrarNotaContactos(
+        "Este navegador no puede leer el portapapeles. Mantén presionado el campo de celular y toca Pegar."
+      );
+      return;
+    }
+    navigator.clipboard
+      .readText()
+      .then(function (copiado) {
+        var numero = normalizarTelefono(copiado);
+        if (numero.length !== 10) {
+          mostrarNotaContactos(
+            "Lo copiado no es un celular de 10 dígitos. Copia el número del contacto e inténtalo de nuevo."
+          );
           return;
         }
-        var contacto = contactos[0];
-        if (contacto.tel && contacto.tel.length && campoTelefono) {
-          campoTelefono.value = normalizarTelefono(contacto.tel[0]);
+        if (campoTelefono) {
+          campoTelefono.value = numero;
         }
-        if (contacto.name && contacto.name.length && campoNombre && !campoNombre.value.trim()) {
-          campoNombre.value = contacto.name[0];
-        }
+        mostrarNotaContactos("");
       })
-      .catch(function (error) {
-        if (error && error.name === "AbortError") {
-          return;
-        }
-        if (nota) {
-          nota.textContent = "No se pudo abrir tu libreta. Escribe el número a mano.";
-          nota.hidden = false;
-        }
+      .catch(function () {
+        mostrarNotaContactos(
+          "No se pudo leer el portapapeles. Mantén presionado el campo de celular y toca Pegar."
+        );
       });
   }
 
-  /**
-   * Descarga una tarjeta de contacto (.vcf) con el cliente. Al abrirla, el celular
-   * muestra la pantalla para guardarlo en la libreta.
-   */
-  function guardarEnLibreta() {
-    var nombre = campoNombre ? campoNombre.value.trim() : "";
-    var telefono = campoTelefono ? normalizarTelefono(campoTelefono.value) : "";
-    if (!nombre) {
-      window.alert("Escribe el nombre del cliente.");
-      return;
-    }
-    if (telefono.length !== 10) {
-      window.alert("Escribe el celular de 10 dígitos para guardarlo.");
-      return;
-    }
-    var contenido = [
-      "BEGIN:VCARD",
-      "VERSION:3.0",
-      "FN:" + nombre,
-      "TEL;TYPE=CELL:+57" + telefono,
-      "END:VCARD",
-    ].join("\r\n");
-    var blob = new Blob([contenido], { type: "text/vcard" });
-    var url = URL.createObjectURL(blob);
-    var enlace = document.createElement("a");
-    enlace.href = url;
-    enlace.download = nombre.replace(/[^A-Za-z0-9]+/g, "_") + ".vcf";
-    document.body.appendChild(enlace);
-    enlace.click();
-    document.body.removeChild(enlace);
-    window.setTimeout(function () {
-      URL.revokeObjectURL(url);
-    }, 1000);
-  }
-
-  if (botonContactos) {
-    if (soportaContactos) {
-      botonContactos.textContent = "Buscar en Contactos";
-      botonContactos.hidden = false;
-      botonContactos.addEventListener("click", importarContacto);
-    } else {
-      botonContactos.textContent = "Guardar en contactos";
-      botonContactos.hidden = false;
-      botonContactos.addEventListener("click", guardarEnLibreta);
-      if (nota) {
-        nota.textContent =
-          "Descarga el contacto y ábrelo en tu celular para guardarlo en tu libreta.";
-        nota.hidden = false;
-      }
-    }
+  if (botonPegar) {
+    botonPegar.addEventListener("click", pegarNumero);
   }
 
   // ----------------------------------- Arranque ---------------------------------

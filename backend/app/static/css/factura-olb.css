@@ -1,4 +1,4 @@
-/* =========================================================
+﻿/* =========================================================
    DISEÑO CORPORATIVO TECNOLÓGICO - OLB BYTE
    Este archivo se usa en la pantalla y se incrusta en el PDF.
    ========================================================= */
@@ -631,31 +631,4 @@
   .footer-franjas-azules {
     display: none;
   }
-}
-
-/* Logo oficial OLB BYTE (imagen de assets/) en la cabecera */
-.logo-ob-imagen {
-  display: block;
-  width: 260px;
-  max-width: 100%;
-  height: auto;
-  margin: 0 auto;
-  filter: drop-shadow(0 6px 18px rgba(0, 210, 255, 0.35));
-}
-
-@media (max-width: 760px) {
-  .logo-ob-imagen {
-    width: 190px;
-  }
-}
-
-/* El PNG del logo trae fondo negro: el modo "screen" lo vuelve transparente sobre la cabecera azul. */
-.logo-ob-imagen {
-  mix-blend-mode: screen;
-}
-
-/* Sin capa propia en la marca, para que el modo "screen" del logo se mezcle con la cabecera. */
-.marca-contenedor {
-  z-index: auto;
-  isolation: auto;
 }

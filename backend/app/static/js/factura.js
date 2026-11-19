@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Acciones de la factura de OLB_BYTE: vista previa y envío por WhatsApp con el PDF.
  *
  * Responsabilidad
@@ -83,12 +83,12 @@
     fetch(url, { credentials: "same-origin" })
       .then(function (respuesta) {
         if (!respuesta.ok) {
-          throw new Error("No se pudo generar el PDF.");
+          throw new Error("No se pudo generar el archivo.");
         }
         return respuesta.blob();
       })
       .then(function (blob) {
-        var archivo = new File([blob], nombre, { type: "application/pdf" });
+        var archivo = new File([blob], nombre, { type: blob.type || "application/octet-stream" });
         if (navigator.share && navigator.canShare && navigator.canShare({ files: [archivo] })) {
           if (ventana) {
             ventana.close();
@@ -100,7 +100,7 @@
           ventana.location.href = whatsapp;
         }
         window.alert(
-          "La factura se descargó. En WhatsApp, toca el clip 📎 y adjúntala antes de enviar."
+          "El archivo se descargó. En WhatsApp, toca el clip 📎 y adjúntalo antes de enviar."
         );
         return null;
       })
@@ -114,7 +114,7 @@
         }
         window.alert(
           (error && error.message) ||
-            "No se pudo preparar la factura. Revisa la instalación de Chromium (Guía, sección 13)."
+            "No se pudo preparar el archivo. Revisa la instalación de Chromium (DESPLIEGUE.md, sección 13)."
         );
       })
       .then(function () {

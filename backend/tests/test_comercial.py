@@ -1,4 +1,4 @@
-"""Pruebas del servicio comercial OLB_BYTE sin inventario (ADR-35).
+﻿"""Pruebas del servicio comercial OLB_BYTE sin inventario (ADR-35).
 
 Cubren consecutivo, copia de datos en la venta, deuda con el proveedor, abonos
 con fecha y hora, anulación con devolución, cartera y caja. Las rutas HTTP se
@@ -140,14 +140,13 @@ def test_linea_sin_garantia_vence_el_mismo_dia(bd) -> None:
     assert venta.garantia_fecha_fin == date(2026, 5, 10)
 
 
-def test_cliente_se_reutiliza_por_celular(bd) -> None:
-    """Dos ventas con el mismo celular comparten el cliente aunque el nombre cambie."""
+def test_cliente_se_reutiliza_por_celular_y_nombre(bd) -> None:
+    """Dos ventas con el mismo celular y el mismo nombre (sin distinguir mayúsculas) son un cliente."""
     primera = _venta(bd, nombre="Ana Pérez", telefono="3001234567")
-    segunda = _venta(bd, nombre="Ana P.", telefono="300 123 4567")
+    segunda = _venta(bd, nombre="ana pérez", telefono="300 123 4567")
 
     assert primera.id_cliente == segunda.id_cliente
     assert len(comercial.listar_clientes(bd)) == 1
-
 
 def test_mismo_nombre_con_otro_celular_crea_otro_cliente(bd) -> None:
     """Dos personas con el mismo nombre y distinto celular no se mezclan."""

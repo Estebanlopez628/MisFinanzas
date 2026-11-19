@@ -66,16 +66,13 @@ def test_submenu_marca_la_seccion_activa_en_cada_vista(cliente_admin: TestClient
     assert _pestana_activa(cliente_admin.get("/olb-byte").text) == "Ventas"
 
 
-def test_boton_de_contactos_empieza_oculto(cliente_admin: TestClient) -> None:
-    """El botón «Buscar en Contactos» no aparece hasta que el navegador confirma la API.
-
-    Un botón visible que no hace nada fue el defecto reportado: el atributo `hidden`
-    debe ganar al estilo del botón (ver la regla global `[hidden]` en el CSS).
-    """
+def test_boton_pegar_numero_reemplaza_a_contactos(cliente_admin: TestClient) -> None:
+    """El botón «Pegar número» aparece y el de contactos ya no existe."""
     texto = cliente_admin.get("/olb-byte").text
 
-    assert re.search(r"<button[^>]*data-contactos[^>]*hidden", texto)
-    assert re.search(r"<span[^>]*data-nota-contactos[^>]*hidden", texto)
+    assert "data-pegar-numero" in texto
+    assert "Pegar número" in texto
+    assert "Buscar en Contactos" not in texto
 
 
 def test_regla_global_de_hidden_esta_en_el_css() -> None:

@@ -852,8 +852,9 @@ bloquea el panel (`guardarProducto`); «+ Agregar otro producto» lo desbloquea 
 campos en blanco (`habilitarPanel`). Si queda un producto escrito y sin guardar al
 registrar la venta, se guarda antes. Cada fila guarda sus datos en campos ocultos
 (`leerFila`, `escribirFila`). «Actualizar» abre el cuadro de edición y «Cancelar» lo
-cierra sin cambios. `recalcular` actualiza total, costo y ganancia. Si el navegador no
-tiene la API de contactos, el botón guarda el número como tarjeta de contacto (.vcf).
+cierra sin cambios. `recalcular` actualiza total, costo y ganancia. «Pegar número» lee el
+número copiado (desde Contactos del celular) y lo pone en el campo de celular; si no tiene
+10 dígitos, o el navegador no permite leer el portapapeles, muestra una nota.
 
 ### `backend/app/templates/olb_byte/_subnav.html`
 

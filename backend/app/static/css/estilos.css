@@ -2973,3 +2973,18 @@ textarea.campo__control {
   width: auto;
   align-self: flex-start;
 }
+
+/* Separación entre el buscador de pendientes y la tabla */
+.formulario--buscar {
+  margin-bottom: 18px;
+}
+
+/* Factura, WhatsApp y Anular de la misma medida en la tabla de órdenes */
+.acciones-orden > a,
+.acciones-orden > button,
+.acciones-orden > details > summary {
+  min-width: 104px;
+  justify-content: center;
+  text-align: center;
+  box-sizing: border-box;
+}

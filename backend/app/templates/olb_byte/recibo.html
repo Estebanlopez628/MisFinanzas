@@ -2,54 +2,20 @@
 {% block titulo %}Recibo de abono · No. {{ venta.numero_orden }}{% endblock %}
 
 {% block contenido %}
-  <div class="acciones-formulario no-imprimir">
-    <a class="boton boton--secundario boton--pequeno" href="{{ url_for('ver_pendientes') }}">Volver a pendientes</a>
+  <div class="acciones-formulario acciones-volver no-imprimir">
+    <a class="boton boton--secundario boton--pequeno" href="{{ url_for('ver_pendientes') }}">← Volver a pendientes</a>
     <button class="boton boton--secundario boton--pequeno" type="button" onclick="window.print()">Imprimir</button>
-    <a class="boton boton--primario boton--pequeno" href="{{ enlace_whatsapp }}" target="_blank" rel="noopener">
-      Compartir por WhatsApp
-    </a>
+    <button class="boton boton--primario boton--pequeno" type="button"
+            data-compartir
+            data-pdf="{{ url_for('ver_recibo_imagen', id_abono=abono.id_abono) }}"
+            data-nombre="{{ nombre_archivo }}"
+            data-texto="{{ texto_compartir }}"
+            data-whatsapp="{{ enlace_whatsapp }}">Compartir recibo</button>
   </div>
 
-  <article class="recibo" aria-label="Recibo de abono">
-    <header class="recibo__cabecera">
-      <span class="recibo__marca">OLB_BYTE</span>
-      <span class="recibo__titulo">Recibo de abono</span>
-    </header>
+  {% include "olb_byte/_recibo.html" %}
+{% endblock %}
 
-    <div class="recibo__monto">
-      <span class="recibo__etiqueta">Abonaste</span>
-      <strong class="recibo__cifra">{{ abono.monto | cop }}</strong>
-      <span class="recibo__detalle">
-        {{ abono.metodo_pago | capitalize }} · {{ abono.fecha_abono.strftime('%d/%m/%Y %I:%M %p') }}
-      </span>
-    </div>
-
-    <dl class="recibo__datos">
-      <div><dt>Cliente</dt><dd>{{ venta.cliente_nombre }}</dd></div>
-      <div><dt>Factura</dt><dd>No. {{ venta.numero_orden }}</dd></div>
-      <div><dt>Total de la venta</dt><dd>{{ venta.total | cop }}</dd></div>
-      <div><dt>Total abonado</dt><dd>{{ venta.total_abonado | cop }}</dd></div>
-    </dl>
-
-    {% if abonos | length > 1 %}
-      <h2 class="recibo__subtitulo">Desglose de abonos</h2>
-      <ul class="recibo__desglose">
-        {% for item in abonos %}
-          <li{% if item.id_abono == abono.id_abono %} class="recibo__desglose--actual"{% endif %}>
-            <span>{{ item.fecha_abono.strftime('%d/%m %H:%M') }} · {{ item.metodo_pago | capitalize }}</span>
-            <strong>{{ item.monto | cop }}</strong>
-          </li>
-        {% endfor %}
-      </ul>
-    {% endif %}
-
-    <footer class="recibo__pie">
-      {% if saldada %}
-        <span class="insignia insignia--saldo-total">¡Saldo total cancelado!</span>
-      {% else %}
-        <span class="recibo__saldo">Saldo pendiente</span>
-        <strong class="valor-negativo recibo__cifra recibo__cifra--saldo">{{ venta.saldo_pendiente | cop }}</strong>
-      {% endif %}
-    </footer>
-  </article>
+{% block scripts %}
+  <script src="{{ url_for('estaticos', path='js/factura.js') }}" defer></script>
 {% endblock %}

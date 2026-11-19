@@ -1,4 +1,4 @@
-"""Pruebas HTTP del panel OLB_BYTE: formulario de venta, cobros, anulación y factura.
+﻿"""Pruebas HTTP del panel OLB_BYTE: formulario de venta, cobros, anulación y factura.
 
 Usan el cliente autenticado como `ADMIN_OLB` y verifican la persistencia real con
 la sesión de base de datos de cada prueba.
@@ -47,7 +47,7 @@ def test_panel_muestra_formulario_de_venta_sin_inventario(cliente_admin: TestCli
     assert respuesta.status_code == 200
     assert "Registrar venta" in respuesta.text
     assert "+ Agregar otro producto" in respuesta.text
-    assert "Buscar en Contactos" in respuesta.text
+    assert "Pegar número" in respuesta.text
     assert "Inventario" not in respuesta.text
     assert "stock" not in respuesta.text.lower()
 
