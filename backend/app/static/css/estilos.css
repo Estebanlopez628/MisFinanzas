@@ -384,6 +384,15 @@ a.tarjeta:focus-visible {
   border-top: 1px dashed var(--borde-suave);
 }
 
+/* SRS v1.7 (Trabajos Extras): cada tabla de pagos (mes completo o quincena)
+   con su encabezado, filas y formulario de gasto fijo. */
+.bloque-tabla-pagos {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
 .bloque-gastos__subtitulo {
   margin: 0 0 10px;
   color: var(--text-muted);

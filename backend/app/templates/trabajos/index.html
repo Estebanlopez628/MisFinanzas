@@ -3,19 +3,92 @@
 {% from "finanzas/_capacidad.html" import panel_capacidad with context %}
 {% block titulo %}Trabajos Extras{% endblock %}
 
+{#
+  Tabla de un periodo de un contrato (mes completo, quincena 1 o quincena 2).
+  Sus gastos fijos viven solo aquí: nunca pasan a las quincenas de Mis Finanzas.
+#}
+{% macro tabla_periodo(trabajo, periodo, hoy) -%}
+  <div class="bloque-tabla-pagos">
+    <header class="quincena__cabecera">
+      <h3 class="quincena__titulo">{{ periodo.etiqueta }}</h3>
+      <span class="badge badge--publico">
+        Pago {{ periodo.valor | cop }}{% if periodo.porcentaje is not none %} · {{ periodo.porcentaje }} %{% endif %}
+      </span>
+    </header>
+
+    {% if periodo.pago %}
+      <ul class="lista-gastos">
+        {{ fila_gasto(periodo.pago, hoy, 'trabajos', trabajo.id_trabajo) }}
+      </ul>
+    {% else %}
+      <p class="ayuda">Sin pago programado en este periodo.</p>
+    {% endif %}
+
+    <h4 class="bloque-gastos__subtitulo">Gastos fijos de este trabajo</h4>
+    {% if periodo.gastos %}
+      <ul class="lista-gastos">
+        {% for gasto in periodo.gastos %}
+          <li class="lista-gastos__item">
+            <span class="lista-gastos__nombre">{{ gasto.descripcion }} - {{ gasto.categoria }}</span>
+            <span class="lista-gastos__valor">{{ gasto.valor | cop }}</span>
+            <form method="post" action="{{ url_for('eliminar_gasto', id_gasto=gasto.id_gasto) }}" data-proteccion>
+              <input type="hidden" name="origen" value="trabajos" />
+              <button class="boton boton--peligro boton-circular" type="submit"
+                      aria-label="Eliminar {{ gasto.descripcion }}" title="Eliminar gasto fijo">×</button>
+            </form>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="ayuda">Aún no hay gastos fijos en este periodo.</p>
+    {% endif %}
+
+    <form class="formulario formulario--compacto" method="post"
+          action="{{ url_for('agregar_gasto_trabajo', id_trabajo=trabajo.id_trabajo) }}" data-proteccion>
+      {% if periodo.quincena %}<input type="hidden" name="quincena" value="{{ periodo.quincena }}" />{% endif %}
+      <div class="fila-campos">
+        <label class="campo">
+          <span class="campo__etiqueta">Gasto fijo</span>
+          <input class="campo__control" type="text" name="descripcion"
+                 placeholder="Transporte, internet, cuota." required />
+        </label>
+        <label class="campo">
+          <span class="campo__etiqueta">Categoría</span>
+          <input class="campo__control" type="text" name="categoria" value="Hogar" required />
+        </label>
+        <label class="campo">
+          <span class="campo__etiqueta">Valor (COP)</span>
+          <input class="campo__control" type="text" name="valor" inputmode="decimal"
+                 placeholder="150.000" required />
+        </label>
+      </div>
+      <button class="boton boton--secundario boton--pequeno" type="submit">Agregar gasto fijo</button>
+    </form>
+
+    <p class="ayuda">
+      <strong>Disponible:</strong> {{ periodo.disponible | cop }}
+      (cobrado {{ periodo.cobrado | cop }} − gastos fijos {{ periodo.gastos_total | cop }})
+    </p>
+  </div>
+{%- endmacro %}
+
 {% block contenido %}
   <section class="heroe">
     <h1 class="heroe__titulo">🚀 Trabajos Extras</h1>
     <p class="heroe__subtitulo">
       Contratos por fuera del salario con su frecuencia de pago. Marca cada
-      cobro con el mismo check de los gastos fijos: el neto del mes pasa al
-      diagnóstico de <strong>Gastos y Presupuesto</strong> sin tocar el sueldo
-      ni las quincenas.
+      cobro con el check: el disponible de cada periodo (lo cobrado menos sus
+      gastos fijos) pasa al diagnóstico de <strong>Gastos y Presupuesto</strong>
+      sin tocar tu sueldo ni las quincenas de Mis Finanzas.
     </p>
   </section>
 
+  <div class="acciones-formulario acciones-volver">
+    <a class="boton boton--secundario boton--pequeno" href="{{ url_for('ver_dashboard') }}">← Volver al inicio</a>
+  </div>
+
   {% if guardado %}
-    <div class="alerta alerta--exito" role="status">Trabajo extra guardado.</div>
+    <div class="alerta alerta--exito" role="status">Guardado en Trabajos Extras.</div>
   {% endif %}
   {% if error %}
     <div class="alerta alerta--error" role="alert">{{ error }}</div>
@@ -40,7 +113,7 @@
       <span class="tarjeta__icono" aria-hidden="true">🧾</span>
       <h3 class="tarjeta__titulo">{{ extras_mes | cop }}</h3>
       <p class="tarjeta__descripcion">
-        Neto cobrado que se suma al diagnóstico del mes.
+        Disponible del mes tras los gastos fijos de tus trabajos; se suma al diagnóstico.
       </p>
     </article>
   </div>
@@ -66,48 +139,87 @@
         </label>
         <div class="fila-campos">
           <label class="campo">
-            <span class="campo__etiqueta">Valor por pago (COP)</span>
-            <input class="campo__control" type="text" name="valor"
-                   inputmode="decimal" required />
+            <span class="campo__etiqueta">Valor del pago (COP)</span>
+            <input class="campo__control" type="text" name="valor" inputmode="decimal" required />
             <span class="ayuda">
-              Es el monto de <strong>cada</strong> pago. En frecuencia quincenal
-              se cobra dos veces al mes.
+              Mensual: lo que te pagan en el mes. Quincenal: lo que te pagan en
+              total al mes, sumando las dos quincenas.
             </span>
           </label>
           <label class="campo">
             <span class="campo__etiqueta">Tipo de contrato</span>
-            <select class="campo__control" name="tipo_contrato"
-                    data-contrato-tipo>
+            <select class="campo__control" name="tipo_contrato" data-contrato-tipo>
               <option value="INDEFINIDO">Indefinido</option>
               <option value="TERMINO_FIJO">Término fijo</option>
             </select>
           </label>
         </div>
         <label class="campo">
-          <span class="campo__etiqueta">Frecuencia</span>
-          <select class="campo__control" name="frecuencia">
+          <span class="campo__etiqueta">Frecuencia del pago</span>
+          <select class="campo__control" name="frecuencia" data-frecuencia-tipo>
             <option value="MENSUAL">Mensual · un pago al mes</option>
             <option value="QUINCENAL">Quincenal · dos pagos al mes</option>
           </select>
         </label>
+
         <div class="fila-campos">
           <label class="campo">
             <span class="campo__etiqueta">Inicio del contrato</span>
-            <input class="campo__control" type="date" name="fecha"
-                   value="{{ fecha_hoy }}" required />
+            <input class="campo__control" type="date" name="fecha" value="{{ fecha_hoy }}" required />
           </label>
           <label class="campo">
             <span class="campo__etiqueta">Fecha del primer pago</span>
-            <input class="campo__control" type="date" name="fecha_pago"
-                   value="{{ fecha_hoy }}" required />
+            <input class="campo__control" type="date" name="fecha_pago" value="{{ fecha_hoy }}" required />
           </label>
           <label class="campo" data-contrato-fin hidden>
             <span class="campo__etiqueta">Final del contrato</span>
             <input class="campo__control" type="date" name="fecha_fin" />
-            <span class="ayuda">
-              Solo para término fijo: los pagos se detienen en esta fecha.
-            </span>
+            <span class="ayuda">Solo para término fijo: los pagos se detienen en esta fecha.</span>
           </label>
+        </div>
+
+        {# Solo en quincenal: ¿conoce los porcentajes? (SRS v1.8) #}
+        <div class="bloque-quincenal" data-solo-quincenal>
+          <label class="campo">
+            <span class="campo__etiqueta">¿Conoce el porcentaje con el que le pagan?</span>
+            <select class="campo__control" name="conoce_porcentaje" data-conoce-porcentaje>
+              <option value="0">No, lo calculo con el valor de una quincena</option>
+              <option value="1">Sí, los conozco</option>
+            </select>
+          </label>
+
+          <div class="fila-campos" data-conoce-si>
+            <label class="campo">
+              <span class="campo__etiqueta">Porcentaje quincena 1 (%)</span>
+              <input class="campo__control" type="text" name="porcentaje_quincena_1" inputmode="decimal" placeholder="50" />
+            </label>
+            <label class="campo">
+              <span class="campo__etiqueta">Porcentaje quincena 2 (%)</span>
+              <input class="campo__control" type="text" name="porcentaje_quincena_2" inputmode="decimal" placeholder="50" />
+              <span class="ayuda">Deben sumar 100 %.</span>
+            </label>
+          </div>
+
+          <div class="fila-campos" data-conoce-no>
+            <label class="campo">
+              <span class="campo__etiqueta">Quincena del valor que escribes</span>
+              <select class="campo__control" name="quincena_digitada">
+                <option value="1">Quincena 1 · día 15</option>
+                <option value="2">Quincena 2 · día 30</option>
+              </select>
+            </label>
+            <label class="campo">
+              <span class="campo__etiqueta">Valor de esa quincena (COP)</span>
+              <input class="campo__control" type="text" name="valor_quincena" inputmode="decimal" />
+              <span class="ayuda">Calculamos la otra quincena y sus porcentajes a partir del valor del pago.</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="alerta alerta--aviso" role="note">
+          <strong>Ten en cuenta:</strong> el valor es el de <strong>cada pago</strong>
+          del periodo. Si el pago es quincenal, el valor del pago es el total del mes:
+          las dos quincenas lo reparten.
         </div>
         <button class="boton boton--primario" type="submit">Registrar trabajo</button>
       </form>
@@ -123,7 +235,7 @@
                 <th scope="col">Descripción</th>
                 <th scope="col">Cliente</th>
                 <th scope="col">Contrato</th>
-                <th scope="col">Valor por pago</th>
+                <th scope="col">Valor del pago</th>
                 <th scope="col">Acciones</th>
               </tr>
             </thead>
@@ -140,14 +252,19 @@
                       {%- if trabajo.fecha_fin %} · fin {{ trabajo.fecha_fin | fecha_larga }}{% endif %}
                     </small>
                   </td>
-                  <td class="tabla__numero">{{ trabajo.valor | cop }}</td>
+                  <td class="tabla__numero">
+                    {% if trabajo.frecuencia == 'QUINCENAL' and trabajo.valor_quincena_1 is not none %}
+                      Total {{ trabajo.valor | cop }}<br>
+                      <small class="ayuda">Q1 {{ trabajo.valor_quincena_1 | cop }} · Q2 {{ trabajo.valor_quincena_2 | cop }}</small>
+                    {% else %}
+                      {{ trabajo.valor | cop }}
+                    {% endif %}
+                  </td>
                   <td class="tabla__acciones">
                     <form method="post"
                           action="{{ url_for('eliminar_trabajo', id_trabajo=trabajo.id_trabajo) }}"
-                          data-confirmar="¿Eliminar este trabajo y todos sus pagos?">
-                      <button class="boton boton--peligro boton--pequeno" type="submit">
-                        Eliminar
-                      </button>
+                          data-confirmar="¿Eliminar este trabajo, sus pagos y sus gastos fijos?">
+                      <button class="boton boton--peligro boton--pequeno" type="submit">Eliminar</button>
                     </form>
                   </td>
                 </tr>
@@ -164,7 +281,7 @@
   <section class="panel panel--quincena" aria-live="polite">
     <header class="quincena__cabecera">
       <h2 class="quincena__titulo">Pagos de {{ mes_visible }}</h2>
-      <span class="badge badge--publico">{{ extras_mes | cop }} al diagnóstico</span>
+      <span class="badge badge--publico">{{ extras_mes | cop }} disponible al diagnóstico</span>
     </header>
 
     {% if bloques %}
@@ -173,15 +290,14 @@
           <h4 class="bloque-gastos__subtitulo">
             {{ bloque.trabajo.descripcion }}
             <span class="ayuda">
-              {{ 'Mensual' if bloque.trabajo.frecuencia == 'MENSUAL' else 'Quincenal' }}
+              {{ 'Pago mensual' if bloque.trabajo.frecuencia == 'MENSUAL' else 'Quincenal' }}
               · cobrado {{ bloque.cobrado | cop }} · pendiente {{ bloque.pendiente | cop }}
+              · disponible {{ bloque.disponible | cop }}
             </span>
           </h4>
-          <ul class="lista-gastos">
-            {% for pago in bloque.pagos %}
-              {{ fila_gasto(pago, hoy, 'trabajos') }}
-            {% endfor %}
-          </ul>
+          {% for periodo in bloque.periodos %}
+            {{ tabla_periodo(bloque.trabajo, periodo, hoy) }}
+          {% endfor %}
         </div>
       {% endfor %}
     {% else %}

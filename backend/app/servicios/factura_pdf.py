@@ -36,7 +36,7 @@ RUTA_CSS_FACTURA = Path(__file__).resolve().parents[1] / "static" / "css" / "fac
 MAX_LINEAS_PDF = 10
 FILAS_MINIMAS_TABLA = 9
 # Escala del PDF: con diez productos el diseño solo cabe en una hoja a 75 %.
-ESCALA_PDF = 0.75
+ESCALA_PDF = 0.72
 
 NIT = "1151949473-3"
 RESPONSABLE = "Esteban Lopez"
@@ -54,7 +54,7 @@ PIE_LEGAL = "Documento generado por OLB BYTE. No reemplaza la factura electróni
 # Patrones de búsqueda de los logos. Se usan globs porque los nombres de `assets/`
 # tienen tildes que cambian según el sistema de archivos.
 PATRONES_LOGO = {
-    "olb": "Nuevo Logo*",
+    "olb": "Nuevo Logo.png",
     "visa_mastercard": "*Mastercard*",
     "datafono": "*Datafono*",
     "nequi": "*Nequi*",

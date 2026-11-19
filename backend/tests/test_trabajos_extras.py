@@ -10,6 +10,7 @@ from __future__ import annotations
 from datetime import date, timedelta
 from decimal import Decimal
 
+import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import select
 
@@ -82,6 +83,9 @@ def test_contrato_mensual_genera_un_pago_por_mes(bd) -> None:
     assert pagos[0].valor == Decimal("500000.00")
 
 
+TOTAL = Decimal("600000")
+
+
 def test_contrato_quincenal_genera_dos_pagos(bd) -> None:
     """Con frecuencia quincenal hay pagos en la quincena 1 y en la 2."""
     id_usuario = _id_admin(bd)
@@ -89,18 +93,97 @@ def test_contrato_quincenal_genera_dos_pagos(bd) -> None:
         bd,
         id_usuario,
         "Asesoría",
-        "300.000",
+        "600.000",
         date(2026, 11, 1),
         tipo_contrato=trabajos.CONTRATO_TERMINO_FIJO,
         frecuencia=trabajos.FRECUENCIA_QUINCENAL,
         fecha_fin=date(2026, 11, 30),
         fecha_pago=date(2026, 11, 1),
+        quincena_digitada=1,
+        valor_quincena="250.000",
     )
     trabajos.asegurar_pagos_trabajos(bd, id_usuario, 2026, 11)
 
     pagos = _pagos(bd, trabajo.id_trabajo)
     assert [pago.quincena for pago in pagos] == [1, 2]
     assert [pago.fecha.day for pago in pagos] == [15, 30]
+    assert [pago.valor for pago in pagos] == [Decimal("250000.00"), Decimal("350000.00")]
+
+
+def test_quincena_escrita_como_dos_calcula_la_uno(bd) -> None:
+    """Si se escribe la quincena 2, la 1 es el total menos esa cantidad."""
+    trabajo = trabajos.crear_trabajo(
+        bd,
+        _id_admin(bd),
+        "Diseño",
+        "600.000",
+        date(2026, 11, 1),
+        frecuencia=trabajos.FRECUENCIA_QUINCENAL,
+        quincena_digitada="2",
+        valor_quincena="250.000",
+    )
+
+    assert trabajo.valor_quincena_1 == Decimal("350000.00")
+    assert trabajo.valor_quincena_2 == Decimal("250000.00")
+
+
+def test_porcentajes_conocidos_reparten_el_total(bd) -> None:
+    """Con los porcentajes de la usuaria, cada quincena es su parte del total."""
+    trabajo = trabajos.crear_trabajo(
+        bd,
+        _id_admin(bd),
+        "Soporte",
+        "600.000",
+        date(2026, 11, 1),
+        frecuencia=trabajos.FRECUENCIA_QUINCENAL,
+        conoce_porcentaje=True,
+        porcentaje_quincena_1="40",
+        porcentaje_quincena_2="60",
+    )
+
+    assert trabajo.valor_quincena_1 == Decimal("240000.00")
+    assert trabajo.valor_quincena_2 == Decimal("360000.00")
+
+
+def test_porcentajes_deben_sumar_cien() -> None:
+    """Los dos porcentajes deben sumar exactamente 100 %."""
+    with pytest.raises(ValueError, match="sumar 100"):
+        trabajos.reparto_por_porcentajes(TOTAL, Decimal("40"), Decimal("50"))
+
+
+def test_quincena_escrita_no_puede_superar_el_total() -> None:
+    """Una quincena no puede valer más que el pago del mes."""
+    with pytest.raises(ValueError, match="superar"):
+        trabajos.reparto_quincenal(TOTAL, 1, Decimal("700000"))
+
+
+def test_quincenal_sin_quincena_escrita_se_rechaza(bd) -> None:
+    """Un contrato quincenal debe indicar qué quincena se escribió."""
+    with pytest.raises(ValueError, match="quincena 1 o la quincena 2"):
+        trabajos.crear_trabajo(
+            bd,
+            _id_admin(bd),
+            "Asesoría",
+            "600.000",
+            date(2026, 11, 1),
+            frecuencia=trabajos.FRECUENCIA_QUINCENAL,
+            valor_quincena="250.000",
+        )
+
+
+def test_quincenal_con_porcentajes_incompletos_se_rechaza(bd) -> None:
+    """Si dice que conoce los porcentajes, debe escribir los dos."""
+    with pytest.raises(ValueError, match="porcentajes"):
+        trabajos.crear_trabajo(
+            bd,
+            _id_admin(bd),
+            "Asesoría",
+            "600.000",
+            date(2026, 11, 1),
+            frecuencia=trabajos.FRECUENCIA_QUINCENAL,
+            conoce_porcentaje=True,
+            porcentaje_quincena_1="40",
+        )
 
 
 def test_quincena_ajusta_al_ultimo_dia_del_mes(bd) -> None:
@@ -110,12 +193,14 @@ def test_quincena_ajusta_al_ultimo_dia_del_mes(bd) -> None:
         bd,
         id_usuario,
         "Soporte",
-        "200.000",
+        "400.000",
         date(2027, 2, 1),
         tipo_contrato=trabajos.CONTRATO_TERMINO_FIJO,
         frecuencia=trabajos.FRECUENCIA_QUINCENAL,
         fecha_fin=date(2027, 2, 28),
         fecha_pago=date(2027, 2, 1),
+        quincena_digitada=1,
+        valor_quincena="200.000",
     )
     trabajos.asegurar_pagos_trabajos(bd, id_usuario, 2027, 2)
 
@@ -337,6 +422,8 @@ def test_http_crea_contrato_y_muestra_sus_pagos(cliente_admin: TestClient) -> No
             "fecha_pago": inicio.isoformat(),
             "tipo_contrato": "TERMINO_FIJO",
             "frecuencia": "QUINCENAL",
+            "quincena_digitada": "1",
+            "valor_quincena": "150.000",
             "fecha_fin": fin.isoformat(),
         },
         follow_redirects=False,
@@ -384,3 +471,128 @@ def test_migracion_de_trabajos_es_idempotente() -> None:
         ]
 
     assert {"tipo_contrato", "frecuencia", "fecha_fin", "fecha_pago"} <= set(columnas)
+
+
+def test_pagos_mensuales_muestran_mes_completo(cliente_admin, bd) -> None:
+    """Un contrato mensual muestra una sola tabla «Pago mensual» con gastos fijos."""
+    trabajos.crear_trabajo(bd, _id_admin(bd), "Mensual", "500.000", HOY.replace(day=1))
+
+    html = cliente_admin.get("/trabajos-extras").text
+
+    assert "Pago mensual" in html
+    assert 'quincena__titulo">Quincena 1' not in html
+    assert "Agregar gasto fijo" in html
+
+
+def test_pagos_quincenales_muestran_dos_tablas(cliente_admin, bd) -> None:
+    """Un contrato quincenal muestra las tablas de la quincena 1 y la 2."""
+    trabajos.crear_trabajo(
+        bd,
+        _id_admin(bd),
+        "Quincenal",
+        "300.000",
+        HOY.replace(day=1),
+        frecuencia=trabajos.FRECUENCIA_QUINCENAL,
+        quincena_digitada=1,
+        valor_quincena="150.000",
+    )
+
+    html = cliente_admin.get("/trabajos-extras").text
+
+    assert 'quincena__titulo">Quincena 1 · día 15' in html
+    assert 'quincena__titulo">Quincena 2 · día 30' in html
+    assert "Mes completo" not in html
+
+
+def test_botones_de_vuelta_en_los_modulos_de_finanzas(cliente_admin) -> None:
+    """Mis Finanzas, Gastos y Presupuesto, Deudas y Trabajos ofrecen volver."""
+    assert "Volver al inicio" in cliente_admin.get("/finanzas").text
+    assert "Volver a Mis Finanzas" in cliente_admin.get("/presupuesto").text
+    assert "Volver al inicio" in cliente_admin.get("/deudas").text
+    assert "Volver al inicio" in cliente_admin.get("/trabajos-extras").text
+
+
+def test_gasto_fijo_de_trabajo_no_pasa_a_las_quincenas(bd) -> None:
+    """Un gasto fijo del trabajo solo vive en Trabajos Extras, no en Mis Finanzas."""
+    id_usuario = _id_admin(bd)
+    trabajo = trabajos.crear_trabajo(
+        bd,
+        id_usuario,
+        "Diseño",
+        "600.000",
+        date(2026, 11, 1),
+        frecuencia=trabajos.FRECUENCIA_QUINCENAL,
+        quincena_digitada=1,
+        valor_quincena="250.000",
+    )
+    trabajos.crear_gasto_trabajo(bd, id_usuario, trabajo.id_trabajo, "Hogar", "Transporte", "80.000", "1")
+
+    assert gastos.listar_gastos(bd, id_usuario) == []
+    assert gastos.total_gastos_quincena(bd, id_usuario, 2026, 11, 1) == Decimal("0")
+    assert [g.descripcion for g in trabajos.gastos_fijos_trabajo(bd, trabajo.id_trabajo)] == ["Transporte"]
+
+
+def test_disponible_es_cobrado_menos_gastos_del_trabajo(bd) -> None:
+    """El disponible que viaja al diagnóstico descuenta los gastos fijos del trabajo."""
+    id_usuario = _id_admin(bd)
+    trabajo = trabajos.crear_trabajo(bd, id_usuario, "Diseño", "500.000", date(2026, 11, 1))
+    trabajos.asegurar_pagos_trabajos(bd, id_usuario, 2026, 11)
+    pago = _pagos(bd, trabajo.id_trabajo)[0]
+    pagos_metas.marcar_pagado(bd, id_usuario, pago.id_gasto, HOY)
+    trabajos.crear_gasto_trabajo(bd, id_usuario, trabajo.id_trabajo, "Hogar", "Internet", "120.000")
+
+    assert trabajos.extras_cobrados_mes(bd, id_usuario, 2026, 11) == Decimal("380000.00")
+
+
+def test_http_gasto_fijo_de_trabajo_se_queda_en_trabajos(cliente_admin, bd) -> None:
+    """El formulario del trabajo guarda el gasto y no aparece en Mis Finanzas."""
+    id_usuario = _id_admin(bd)
+    trabajo = trabajos.crear_trabajo(bd, id_usuario, "Diseño", "500.000", HOY.replace(day=1))
+
+    respuesta = cliente_admin.post(
+        f"/trabajos-extras/{trabajo.id_trabajo}/gastos",
+        data={"categoria": "Hogar", "descripcion": "Gasto-solo-trabajo", "valor": "90.000"},
+        follow_redirects=False,
+    )
+
+    assert respuesta.status_code == 303
+    assert "Gasto-solo-trabajo" in cliente_admin.get("/trabajos-extras").text
+    assert "Gasto-solo-trabajo" not in cliente_admin.get("/finanzas").text
+
+
+def test_caso_confirmado_por_la_usuaria(bd) -> None:
+    """El valor del pago es el total: 1.500.000 con 50/50 da 750.000 cada quincena."""
+    id_usuario = _id_admin(bd)
+    quincenal = trabajos.crear_trabajo(
+        bd,
+        id_usuario,
+        "Consultoría",
+        "1.500.000",
+        date(2026, 11, 1),
+        frecuencia=trabajos.FRECUENCIA_QUINCENAL,
+        conoce_porcentaje=True,
+        porcentaje_quincena_1="50",
+        porcentaje_quincena_2="50",
+    )
+    por_valor = trabajos.crear_trabajo(
+        bd,
+        id_usuario,
+        "Consultoría",
+        "1.500.000",
+        date(2026, 11, 1),
+        frecuencia=trabajos.FRECUENCIA_QUINCENAL,
+        quincena_digitada=1,
+        valor_quincena="600.000",
+    )
+    mensual = trabajos.crear_trabajo(bd, id_usuario, "Consultoría", "1.500.000", date(2026, 11, 1))
+
+    assert (quincenal.valor_quincena_1, quincenal.valor_quincena_2) == (
+        Decimal("750000.00"),
+        Decimal("750000.00"),
+    )
+    assert (por_valor.valor_quincena_1, por_valor.valor_quincena_2) == (
+        Decimal("600000.00"),
+        Decimal("900000.00"),
+    )
+    assert mensual.valor == Decimal("1500000.00")
+    assert trabajos.porcentaje_del_total(por_valor.valor_quincena_2, por_valor.valor) == Decimal("60.0")

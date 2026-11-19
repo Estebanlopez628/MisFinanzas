@@ -427,6 +427,48 @@ Recálculo en tiempo real (<100 ms) sin recargar página. Se implementa con func
 
 ## Bitácora de Cambios
 
+### 2026-11-18 — Trabajos Extras: quincenas propias, gastos fijos aislados y factura (SRS v1.8)
+
+**Cambios realizados**
+1. Los gastos fijos de un trabajo se guardan con `id_trabajo` y otra categoría; no aparecen en las quincenas ni en los totales de Mis Finanzas (`gastos.listar_gastos` ya los excluye). Ruta `POST /trabajos-extras/{id}/gastos` (`agregar_gasto_trabajo`).
+2. Cada contrato muestra sus periodos: mensual «Pago mensual»; quincenal «Quincena 1» y «Quincena 2». Cada periodo tiene su pago, sus gastos fijos y el disponible (cobrado − gastos fijos). Ese disponible suma al diagnóstico de Gastos y Presupuesto.
+3. Formulario: `valor del pago` es el total del mes. Mensual pide solo fechas. Quincenal pregunta si conoce los porcentajes: si sí, se escriben ambos (suman 100 %); si no, se escribe el valor de una quincena y el sistema calcula la otra y sus porcentajes. Reemplaza el reparto anterior contra el sueldo (ADR-47).
+4. Factura: medios de pago Bre-B, Nequi y datáfono con Mastercard y Visa en un solo recuadro; BBVA retirado; eslogan junto al logo; PDF a escala 0,72 para mantener una hoja.
+5. Recibo de abono: el botón copia la imagen PNG al portapapeles cuando el navegador no puede compartir archivos (PC), para pegarla en WhatsApp Web.
+6. «← Volver» en Configurar Atajos de Pago y en el Historial.
+
+**Verificación:** `pytest` en verde (504 pruebas). En Chromium con base temporal: formulario que cambia con la frecuencia y el porcentaje, tablas por quincena sin desborde a 390 px, regresos presentes, factura sin BBVA.
+
+**Pendiente:** la vista previa y el PDF necesitan Chromium instalado en el servidor (DESPLIEGUE §13). Revisar la factura en un celular real.
+
+### 2026-11-18 — OLB_BYTE: logo sin recuadro, logo exacto y PDF/impresión (puntos 4 y 5)
+
+**Cambios realizados**
+1. `servicios/factura_pdf.py` — el logo se busca por el nombre exacto `Nuevo Logo.png`; el patrón `Nuevo Logo*` tomaba `Nuevo Logo2.png` (1,4 MB).
+2. `static/css/factura-olb.css` — `.logo-ob-caja` sin fondo blanco, relleno, esquinas ni sombra: el PNG ya es transparente.
+3. `static/js/sw.js` — caché `olb-finanzas-v18`. El service worker sirve CSS y JS desde caché primero; sin subir la versión, el navegador seguía mostrando el recuadro anterior.
+4. `DESPLIEGUE.md` §13 — bloque de instalación de Chromium corregido (estaba roto) y comando `playwright install --with-deps chromium` para el paso de compilación del hosting.
+5. `tests/test_factura_pdf.py` — prueba de regresión del logo.
+
+**Causa del PDF «no pudo generar»:** en el servidor publicado no está instalado el navegador de Playwright; el endpoint responde 503. En local el PDF se genera (una hoja Carta, logo transparente). Requiere ejecutar el comando de §13 en el servidor.
+
+**Verificación:** `pytest` en verde (499 pruebas). En Chromium con base temporal: logo cargado desde `Nuevo Logo.png` (612 px) sin caja; vista de impresión con la factura completa; PDF 200 en una hoja.
+
+**Pendiente:** confirmar en el hosting que el build instala Chromium y revisar el botón Imprimir en un celular real.
+
+### 2026-11-18 — Botones de vuelta, Trabajos Extras por frecuencia y proyección retirada
+
+**Cambios realizados**
+1. Botón «← Volver» (mismo patrón que OLB_BYTE) en Mis Finanzas y Resumen de Deudas y Trabajos Extras (al inicio) y en Gastos y Presupuesto (a Mis Finanzas).
+2. Se retira la tabla «Proyección a 12 meses» de la capacidad (Gastos y Presupuesto y Trabajos Extras); la dona y el semáforo se conservan.
+3. Trabajos Extras: aviso «Ten en cuenta» sobre el valor por pago al registrar.
+4. Frecuencia mensual: una tabla «Mes completo». Quincenal: tablas «Quincena 1» y «Quincena 2», cada una con su porcentaje del sueldo y el formulario «Gasto fijo – Categoría – Valor» (crea el gasto en Mis Finanzas, `origen=trabajos`).
+5. Quincenal: se escribe el valor de una quincena; la otra es sueldo menos esa cantidad (`servicios/trabajos.reparto_quincenal`). Columnas `valor_quincena_1` y `valor_quincena_2` con migración idempotente.
+
+**Fuera de alcance (módulo OLB_BYTE, no tocado):** logo «Nuevo Logo.png» con recuadro y descarga de PDF/WhatsApp.
+
+**Verificación:** `pytest` en verde (498 pruebas, incluidas las nuevas de reparto, tablas por frecuencia y botones de vuelta).
+
 ### 2026-11-18 — Ajuste móvil: la edición de gastos se abre como ventana centrada (ADR-30)
 
 **Contexto:** en el celular el lápiz de cada gasto queda al final de la fila y el

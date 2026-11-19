@@ -704,6 +704,10 @@ class TrabajoExtra(Base):
     )
     fecha_fin: Mapped[date | None] = mapped_column(Date, nullable=True)
     fecha_pago: Mapped[date | None] = mapped_column(Date, nullable=True)
+    # Con frecuencia quincenal cada pago tiene su propio monto: la usuaria escribe
+    # una quincena y el sistema calcula la otra con el resto de su sueldo.
+    valor_quincena_1: Mapped[Decimal | None] = mapped_column(Numeric(14, 2), nullable=True)
+    valor_quincena_2: Mapped[Decimal | None] = mapped_column(Numeric(14, 2), nullable=True)
     estado: Mapped[str] = mapped_column(String(20), nullable=False, default="PENDIENTE")
 
 

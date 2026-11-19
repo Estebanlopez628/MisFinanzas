@@ -185,6 +185,8 @@ def _migrar_columnas_trabajos() -> None:
             "frecuencia": "VARCHAR(12) NOT NULL DEFAULT 'MENSUAL'",
             "fecha_fin": "DATE",
             "fecha_pago": "DATE",
+            "valor_quincena_1": "NUMERIC(14, 2)",
+            "valor_quincena_2": "NUMERIC(14, 2)",
         }
         for columna, tipo in nuevas.items():
             if columna not in existentes:

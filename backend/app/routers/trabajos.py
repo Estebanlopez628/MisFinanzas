@@ -14,6 +14,7 @@ from __future__ import annotations
 
 from datetime import date
 from typing import Annotated
+from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, Form, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -135,6 +136,11 @@ def crear_trabajo(
     frecuencia: Annotated[str, Form()] = trabajos.FRECUENCIA_MENSUAL,
     fecha_fin: Annotated[str, Form()] = "",
     fecha_pago: Annotated[str, Form()] = "",
+    conoce_porcentaje: Annotated[str, Form()] = "",
+    porcentaje_quincena_1: Annotated[str, Form()] = "",
+    porcentaje_quincena_2: Annotated[str, Form()] = "",
+    quincena_digitada: Annotated[str, Form()] = "",
+    valor_quincena: Annotated[str, Form()] = "",
 ) -> HTMLResponse | RedirectResponse:
     """Registra un trabajo extra y genera sus pagos del mes.
 
@@ -144,12 +150,17 @@ def crear_trabajo(
         bd: Sesión de base de datos.
         descripcion: Trabajo realizado.
         cliente: Cliente que contrató.
-        valor: Monto de cada pago.
+        valor: Valor del pago (mensual: el del mes; quincenal: el total del mes).
         fecha: Fecha de inicio del contrato (ISO); si falta se usa hoy.
         tipo_contrato: `INDEFINIDO` o `TERMINO_FIJO`.
         frecuencia: `MENSUAL` o `QUINCENAL`.
         fecha_fin: Final del contrato; obligatorio en término fijo.
         fecha_pago: Fecha del primer pago; si falta se usa el inicio.
+        conoce_porcentaje: En quincenal, `1` si la usuaria escribe los porcentajes.
+        porcentaje_quincena_1: Porcentaje de la quincena 1 (si lo conoce).
+        porcentaje_quincena_2: Porcentaje de la quincena 2 (si lo conoce).
+        quincena_digitada: Quincena a la que corresponde `valor_quincena`.
+        valor_quincena: Valor escrito de una quincena (si no conoce el porcentaje).
 
     Returns:
         Redirección o vista con error.
@@ -167,6 +178,11 @@ def crear_trabajo(
             frecuencia=frecuencia,
             fecha_fin=_fecha_opcional(fecha_fin),
             fecha_pago=_fecha_opcional(fecha_pago),
+            conoce_porcentaje=conoce_porcentaje == "1",
+            porcentaje_quincena_1=porcentaje_quincena_1,
+            porcentaje_quincena_2=porcentaje_quincena_2,
+            quincena_digitada=quincena_digitada or None,
+            valor_quincena=valor_quincena,
         )
         hoy = date.today()
         trabajos.asegurar_pagos_trabajos(bd, usuario.id_usuario, hoy.year, hoy.month)
@@ -238,3 +254,42 @@ def eliminar_trabajo(
             bd, usuario.id_usuario, "TRABAJO_ELIMINADO", "trabajos_extras", id_trabajo
         )
     return RedirectResponse(url="/trabajos-extras", status_code=status.HTTP_303_SEE_OTHER)
+
+
+@router.post("/trabajos-extras/{id_trabajo}/gastos", name="agregar_gasto_trabajo", response_model=None)
+def agregar_gasto_trabajo(
+    id_trabajo: str,
+    usuario: UsuarioSesion = Depends(obtener_usuario_actual),
+    bd: Session = Depends(obtener_bd),
+    categoria: Annotated[str, Form()] = "Hogar",
+    descripcion: Annotated[str, Form()] = "",
+    valor: Annotated[str, Form()] = "",
+    quincena: Annotated[str, Form()] = "",
+) -> RedirectResponse:
+    """Registra un gasto fijo dentro de un trabajo extra.
+
+    El gasto solo se muestra en Trabajos Extras; no pasa a las quincenas de Mis
+    Finanzas.
+
+    Args:
+        id_trabajo: Contrato al que pertenece el gasto.
+        usuario: Usuario autenticado.
+        bd: Sesión de base de datos.
+        categoria: Categoría libre del gasto.
+        descripcion: Nombre del gasto fijo.
+        valor: Monto del gasto.
+        quincena: `1` o `2` en contratos quincenales; vacío en mensuales.
+
+    Returns:
+        Redirección a Trabajos Extras con el mensaje de éxito o de error.
+    """
+    try:
+        trabajos.crear_gasto_trabajo(
+            bd, usuario.id_usuario, id_trabajo, categoria, descripcion, valor, quincena or None
+        )
+    except ValueError as error:
+        return RedirectResponse(
+            url=f"/trabajos-extras?error={quote(str(error))}", status_code=status.HTTP_303_SEE_OTHER
+        )
+    auditoria.registrar(bd, usuario.id_usuario, "GASTO_TRABAJO_CREADO", "gastos", descripcion)
+    return RedirectResponse(url="/trabajos-extras?guardado=1", status_code=status.HTTP_303_SEE_OTHER)

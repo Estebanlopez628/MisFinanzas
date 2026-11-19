@@ -237,3 +237,9 @@ def test_el_logo_de_la_factura_es_nuevo_logo(bd) -> None:
 
     assert archivo.name == "Nuevo Logo.png"
     assert fp.logo_como_data_uri("olb").startswith("data:image/png;base64,")
+
+
+def test_logo_olb_es_el_png_oficial_sin_confundirse_con_otro() -> None:
+    """El logo usa exactamente «Nuevo Logo.png», no «Nuevo Logo2.png»."""
+    assert factura_pdf.PATRONES_LOGO["olb"] == "Nuevo Logo.png"
+    assert factura_pdf.logo_como_data_uri("olb").startswith("data:image/png;base64,")

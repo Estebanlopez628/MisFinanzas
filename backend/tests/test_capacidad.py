@@ -224,9 +224,7 @@ def test_el_extra_cobrado_suma_al_ingreso(bd) -> None:
         fecha_pago=HOY,
     )
     trabajos.asegurar_pagos_trabajos(bd, id_usuario, HOY.year, HOY.month)
-    pago = next(iter(trabajos.pagos_del_mes(bd, id_usuario, HOY.year, HOY.month)))[
-        "pagos"
-    ][0]
+    pago = next(iter(trabajos.pagos_del_mes(bd, id_usuario, HOY.year, HOY.month)))["periodos"][0]["pago"]
     pagos_metas.marcar_pagado(bd, id_usuario, pago.id_gasto, HOY)
 
     resultado = capacidad.capacidad_endeudamiento(
@@ -238,12 +236,12 @@ def test_el_extra_cobrado_suma_al_ingreso(bd) -> None:
 
 
 def test_presupuesto_muestra_el_panel_de_capacidad(cliente_admin) -> None:
-    """«Gastos y Presupuesto» incluye la dona y la proyección."""
+    """«Gastos y Presupuesto» incluye la dona, sin la tabla de 12 meses."""
     respuesta = cliente_admin.get("/presupuesto")
 
     assert respuesta.status_code == 200
     assert "Capacidad de endeudamiento" in respuesta.text
-    assert "Proyección a 12 meses" in respuesta.text
+    assert "Proyección a 12 meses" not in respuesta.text
     assert "Deudas por terminar" in respuesta.text
 
 
@@ -253,4 +251,4 @@ def test_trabajos_extras_muestra_su_propia_instancia(cliente_admin) -> None:
 
     assert respuesta.status_code == 200
     assert "Capacidad con tus ingresos extras" in respuesta.text
-    assert "Proyección a 12 meses" in respuesta.text
+    assert "Proyección a 12 meses" not in respuesta.text

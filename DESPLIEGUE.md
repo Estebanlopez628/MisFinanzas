@@ -293,11 +293,12 @@ código: abre la copia con `sqlite3` y exporta las filas necesarias.
 
 La factura PDF usa Chromium headless. Tras instalar las dependencias del proyecto, ejecutar **una vez** en el servidor (con el mismo entorno virtual):
 
-`ash
+```bash
 cd backend
-python -m playwright install chromium
-`
+python -m playwright install --with-deps chromium
+```
 
-En Linux puede hacer falta además python -m playwright install-deps chromium para las librerías del sistema. Si el navegador no está instalado, la vista de factura sigue funcionando; solo la descarga y la vista previa PDF muestran el aviso con este comando (HTTP 503).
+En un hosting Linux (por ejemplo, Render) este comando debe ir en el **paso de compilación** (build), porque el navegador no existe en el servidor por defecto. Si falta, la descarga, la vista previa y el envío por WhatsApp muestran «No se pudo generar el PDF» (HTTP 503). La vista de factura y el botón **Imprimir** del navegador siguen funcionando sin Chromium del servidor.
 
-Los logos se leen de la carpeta ssets/ de la raíz del proyecto: debe desplegarse junto con ackend/.
+Los logos se leen de la carpeta `assets/` de la raíz del proyecto: debe desplegarse junto con `backend/`. El logo que se usa es `assets/Nuevo Logo.png`.
+

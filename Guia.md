@@ -714,7 +714,9 @@ completan el CRUD. El favorito se ordena primero en la vista.
 
 Trabajos extras. `crear_trabajo` registra el ingreso, `cambiar_estado` alterna
 pendiente/cobrado, `eliminar_trabajo` borra y `resumen_trabajos` suma pendientes y
-cobrados por periodo.
+cobrados por periodo. En frecuencia quincenal, `reparto_quincenal` toma la quincena
+escrita y calcula la otra como sueldo menos esa cantidad (las dos suman el sueldo);
+`valor_del_pago` indica el monto de cada pago generado.
 
 ### `backend/app/servicios/auditoria.py`
 

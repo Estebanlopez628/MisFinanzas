@@ -155,6 +155,35 @@
     sincronizarContrato();
   }
 
+  // SRS v1.8: en Trabajos Extras la frecuencia decide si se piden los datos de
+  // quincena, y «¿conoce el porcentaje?» decide qué reparto se muestra. Sin
+  // JavaScript los campos quedan visibles y el servidor valida.
+  var selectorFrecuencia = document.querySelector("[data-frecuencia-tipo]");
+  var selectorConoce = document.querySelector("[data-conoce-porcentaje]");
+  if (selectorFrecuencia) {
+    var sincronizarFrecuencia = function () {
+      var quincenal = selectorFrecuencia.value === "QUINCENAL";
+      var conoce = selectorConoce ? selectorConoce.value === "1" : false;
+      var solo = document.querySelectorAll("[data-solo-quincenal]");
+      for (var s = 0; s < solo.length; s += 1) {
+        solo[s].hidden = !quincenal;
+      }
+      var si = document.querySelectorAll("[data-conoce-si]");
+      for (var a = 0; a < si.length; a += 1) {
+        si[a].hidden = !conoce;
+      }
+      var no = document.querySelectorAll("[data-conoce-no]");
+      for (var b = 0; b < no.length; b += 1) {
+        no[b].hidden = conoce;
+      }
+    };
+    selectorFrecuencia.addEventListener("change", sincronizarFrecuencia);
+    if (selectorConoce) {
+      selectorConoce.addEventListener("change", sincronizarFrecuencia);
+    }
+    sincronizarFrecuencia();
+  }
+
   // ------------------- Filas dinámicas de la venta -------------------------
 
   var botonAgregar = document.querySelector("[data-agregar-linea]");

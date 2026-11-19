@@ -10,6 +10,10 @@
     </p>
   </section>
 
+  <div class="acciones-formulario acciones-volver">
+    <a class="boton boton--secundario boton--pequeno" href="{{ url_for('ver_finanzas') }}">← Volver a Mis Finanzas</a>
+  </div>
+
   {% include "finanzas/_subnav.html" %}
 
   {% if guardado %}

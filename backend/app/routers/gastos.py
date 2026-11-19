@@ -129,6 +129,11 @@ def crear_gasto(
                 url=f"/finanzas?error_gasto={quote(str(error))}#quincenas",
                 status_code=status.HTTP_303_SEE_OTHER,
             )
+        if origen == "trabajos":
+            return RedirectResponse(
+                url=f"/trabajos-extras?error={quote(str(error))}",
+                status_code=status.HTTP_303_SEE_OTHER,
+            )
         hoy = date.today()
         contexto = contexto_base(usuario)
         contexto.update(
@@ -153,6 +158,10 @@ def crear_gasto(
         return RedirectResponse(
             url="/finanzas?guardado_gasto=1#quincenas",
             status_code=status.HTTP_303_SEE_OTHER,
+        )
+    if origen == "trabajos":
+        return RedirectResponse(
+            url="/trabajos-extras?guardado_gasto=1", status_code=status.HTTP_303_SEE_OTHER
         )
     return RedirectResponse(url="/gastos?guardado=1", status_code=status.HTTP_303_SEE_OTHER)
 

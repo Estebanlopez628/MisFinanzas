@@ -93,46 +93,6 @@
         </p>
       {% endif %}
 
-      <h3 class="capacidad__subtitulo">Proyección a 12 meses</h3>
-      <p class="ayuda">
-        Supone tu ingreso y tus gastos fijos actuales: la cuota de deuda baja
-        cuando cada obligación termina.
-      </p>
-      <div class="tabla-contenedor">
-        <table class="tabla capacidad__tabla">
-          <thead>
-            <tr>
-              <th scope="col">Mes</th>
-              <th scope="col">Cuota de deudas</th>
-              <th scope="col">Libre</th>
-              <th scope="col">Termina</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for fila in capacidad.proyeccion %}
-              <tr>
-                <td>{{ fila.etiqueta }}</td>
-                <td>{{ fila.deuda | cop }}</td>
-                <td>
-                  <span class="capacidad__libre{% if fila.libre < 0 %} valor-negativo{% endif %}">
-                    {{ fila.libre | cop }}
-                  </span>
-                  <span class="barra capacidad__barra" aria-hidden="true">
-                    <span style="width: {{ fila.porcentaje_libre }}%"></span>
-                  </span>
-                </td>
-                <td>
-                  {% if fila.terminan %}
-                    {{ fila.terminan | join(', ') }}
-                  {% else %}
-                    —
-                  {% endif %}
-                </td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
     {% endif %}
   </section>
 {%- endmacro %}

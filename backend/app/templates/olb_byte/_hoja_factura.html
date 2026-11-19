@@ -219,25 +219,15 @@
       </div>
 
       <div class="pago-item">
-        {% if logos.datafono %}<img src="{{ logos.datafono }}" alt="Datáfono" class="pago-logo pago-logo--datafono">{% endif %}
-        <span class="pago-dato">Datáfono</span>
-      </div>
-
-      <div class="pago-item">
-        <div class="logo-bbva-texto">{{ banco.nombre }}</div>
-        <span class="pago-subtitulo">{{ banco.tipo }}</span>
-        <span class="pago-dato">{{ banco.cuenta }}</span>
-        <span class="pago-dato">{{ banco.telefono }}</span>
-      </div>
-
-      <div class="pago-item">
         {% if logos.nequi %}<img src="{{ logos.nequi }}" alt="Nequi" class="pago-logo">{% endif %}
         <span class="pago-dato">{{ nequi }}</span>
       </div>
 
-      <div class="pago-item">
+      <div class="pago-item pago-item--datafono">
+        {% if logos.datafono %}<img src="{{ logos.datafono }}" alt="Datáfono" class="pago-logo pago-logo--datafono">{% endif %}
+        <span class="pago-dato">Datáfono</span>
         {% if logos.visa_mastercard %}<img src="{{ logos.visa_mastercard }}" alt="Mastercard y Visa" class="pago-logo pago-logo--tarjetas">{% endif %}
-        <span class="pago-dato">Crédito / Débito</span>
+        <span class="pago-subtitulo">Recibe Mastercard y Visa</span>
       </div>
 
     </div>

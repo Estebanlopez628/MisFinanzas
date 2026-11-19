@@ -10,6 +10,10 @@
     </p>
   </section>
 
+  <div class="acciones-formulario acciones-volver">
+    <a class="boton boton--secundario boton--pequeno" href="{{ url_for('ver_dashboard') }}">← Volver al inicio</a>
+  </div>
+
   {% if guardado %}
     <div class="alerta alerta--exito" role="status">Deuda registrada.</div>
   {% endif %}

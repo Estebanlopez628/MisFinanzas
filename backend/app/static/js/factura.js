@@ -62,6 +62,26 @@
   }
 
   /**
+   * Copia una imagen PNG al portapapeles para pegarla en WhatsApp Web (Ctrl+V).
+   *
+   * @param {Blob} blob Imagen del recibo.
+   * @returns {Promise<boolean>} `true` si el navegador la copió.
+   */
+  function copiarImagen(blob) {
+    if (!navigator.clipboard || typeof window.ClipboardItem === "undefined" || blob.type !== "image/png") {
+      return Promise.resolve(false);
+    }
+    return navigator.clipboard
+      .write([new window.ClipboardItem({ "image/png": blob })])
+      .then(function () {
+        return true;
+      })
+      .catch(function () {
+        return false;
+      });
+  }
+
+  /**
    * Envía la factura por WhatsApp con el PDF como archivo cuando es posible.
    *
    * @param {Event} evento Clic en el botón de envío.
@@ -96,13 +116,17 @@
           return navigator.share({ files: [archivo], text: texto, title: nombre });
         }
         descargar(blob, nombre);
-        if (ventana) {
-          ventana.location.href = whatsapp;
-        }
-        window.alert(
-          "El archivo se descargó. En WhatsApp, toca el clip 📎 y adjúntalo antes de enviar."
-        );
-        return null;
+        return copiarImagen(blob).then(function (copiada) {
+          if (ventana) {
+            ventana.location.href = whatsapp;
+          }
+          window.alert(
+            copiada
+              ? "La imagen se copió y se descargó. En WhatsApp, pégala con Ctrl+V."
+              : "El archivo se descargó. En WhatsApp, toca el clip y adjúntalo antes de enviar."
+          );
+          return null;
+        });
       })
       .catch(function (error) {
         if (ventana) {

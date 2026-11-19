@@ -502,6 +502,8 @@ Ingresos independientes del salario (módulo `Trabajos Extras`). Se añadió al 
 | `frecuencia` | `VARCHAR(12)` | No | Sí | `MENSUAL` (un pago al mes) o `QUINCENAL` (dos pagos: día 15 y día 30 ajustado). Default `MENSUAL`. |
 | `fecha_fin` | `DATE` | Sí | Solo término fijo | Final del contrato. La generación de pagos se detiene en este mes. |
 | `fecha_pago` | `DATE` | Sí | Sí en registros nuevos | Fecha del primer pago; ancla el día mensual y el inicio de la ventana. |
+| `valor_quincena_1` | `NUMERIC(14,2)` | Sí | Solo quincenal | Monto de la quincena 1. `valor` es el total del mes; ambas quincenas suman ese total (por porcentajes conocidos o por el valor de una quincena escrita). |
+| `valor_quincena_2` | `NUMERIC(14,2)` | Sí | Solo quincenal | Monto de la quincena 2; es el total menos la quincena 1. |
 | `estado` | `VARCHAR(20)` | No | Sí | `PENDIENTE` o `COBRADO`. Default `PENDIENTE`. Se conserva por compatibilidad; el cobro real se marca pago a pago. |
 
 **Migración SRS v1.7:** `_migrar_columnas_trabajos()` agrega `tipo_contrato`,

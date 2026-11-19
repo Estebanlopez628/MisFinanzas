@@ -2,27 +2,31 @@
 
 Responsabilidad
 ---------------
-- Registrar contratos de trabajo por fuera del salario con sus datos básicos:
-  descripción, cliente, valor por pago, tipo de contrato y frecuencia.
-- Generar, de forma idempotente, un pago por mes o dos pagos por mes (quincenas)
-  dentro de la ventana del contrato.
-- Guardar esos pagos como filas de `gastos` con `id_trabajo` para reutilizar la
-  misma fila con check de los gastos fijos. `gastos.listar_gastos` los excluye,
-  de modo que **no** restan del sueldo ni de las quincenas.
-- Calcular el neto cobrado del mes, que el diagnóstico de «Gastos y Presupuesto»
-  suma al dinero disponible.
-- Eliminar el contrato y sus pagos en cascada.
+- Registrar contratos de trabajo por fuera del salario: descripción, cliente, valor
+  del pago, tipo de contrato y frecuencia.
+- Generar, de forma idempotente, el pago del mes (mensual) o los dos pagos de la
+  quincena 1 y 2 (quincenal) dentro de la ventana del contrato.
+- Guardar esos pagos como filas de `gastos` con `id_trabajo` y categoría
+  `CATEGORIA_TRABAJO`, para reutilizar la fila con check de los gastos fijos.
+- Registrar los **gastos fijos del propio trabajo** (también `gastos` con
+  `id_trabajo`, pero con otra categoría). Solo se ven en Trabajos Extras.
+- Calcular el disponible de cada periodo: cobrado menos gastos fijos del trabajo.
+  Ese disponible es el que suma el diagnóstico de «Gastos y Presupuesto».
+- Eliminar el contrato con sus pagos y gastos en cascada.
 
 Reglas
 ------
-- `valor` es el monto **de cada pago**: mensual = un pago; quincenal = dos pagos
-  (día 15 y día 30, ajustado al último día del mes).
+- Ningún gasto con `id_trabajo` aparece en las quincenas ni en los totales de
+  Mis Finanzas: `gastos.listar_gastos` los excluye.
+- Mensual: el valor del pago es el monto del mes. Solo se pregunta fecha de inicio
+  y fecha del primer pago (y fecha final si es término fijo).
+- Quincenal: el valor del pago es el total del mes. Si la usuaria conoce los
+  porcentajes de cada quincena, los escribe (suman 100 %). Si no, escribe el valor
+  de una quincena y el sistema calcula la otra y los porcentajes.
 - Contrato `INDEFINIDO`: ventana móvil de 12 meses que se extiende al abrir el
   módulo. Contrato `TERMINO_FIJO`: termina en `fecha_fin`.
-- Un pago generado nunca se borra desde la interfaz: la × lo inhabilita 15 días
-  (igual que un pago saltado de meta) para que no vuelva a generarse.
-- Los trabajos anteriores a la SRS v1.7 se migran como término fijo de un solo
-  mes, para no inventar ingresos recurrentes.
+- Un pago generado nunca se borra desde la interfaz: la × lo inhabilita 15 días.
+- Los trabajos anteriores a la SRS v1.7 se migran como término fijo de un solo mes.
 
 La tabla `trabajos_extras` está documentada en `diccionario_datos.md` §12.
 """
@@ -31,7 +35,7 @@ from __future__ import annotations
 
 import calendar
 from datetime import date
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -39,9 +43,10 @@ from sqlalchemy.orm import Session
 from app.core.numeros import redondear_dinero
 from app.core.texto import parsear_monto
 from app.modelos import Gasto, TrabajoExtra
-from app.servicios.gastos import valor_computable
+from app.servicios.gastos import crear_gasto, valor_computable
 
 CERO = Decimal("0")
+CIEN = Decimal("100")
 ESTADO_PENDIENTE = "PENDIENTE"
 ESTADO_COBRADO = "COBRADO"
 ESTADOS_VALIDOS = (ESTADO_PENDIENTE, ESTADO_COBRADO)
@@ -59,6 +64,8 @@ FRECUENCIAS_VALIDAS = (FRECUENCIA_MENSUAL, FRECUENCIA_QUINCENAL)
 MESES_VENTANA = 12
 # Días de cada quincena para un contrato quincenal.
 DIAS_QUINCENA = ((1, 15), (2, 30))
+# Categoría de las filas que son pagos del contrato. Los gastos fijos del trabajo
+# llevan otra categoría y `id_trabajo`, pero nunca esta.
 CATEGORIA_TRABAJO = "Trabajo extra"
 PREFIJO_TRABAJO = "Trabajo · "
 
@@ -127,7 +134,7 @@ def _fecha_con_dia(anio: int, mes: int, dia: int) -> date:
 
 
 # ---------------------------------------------------------------------------
-# Validación
+# Validación y reparto
 # ---------------------------------------------------------------------------
 
 
@@ -169,6 +176,156 @@ def _normalizar_frecuencia(valor: str | None) -> str:
     return limpio
 
 
+def _normalizar_quincena(valor: int | str | None) -> int:
+    """Valida una quincena (1 o 2) escrita en un formulario.
+
+    Args:
+        valor: `1` o `2` (texto o número).
+
+    Returns:
+        `1` o `2`.
+
+    Raises:
+        ValueError: Si el valor no es 1 ni 2.
+    """
+    try:
+        numero = int(str(valor).strip())
+    except (TypeError, ValueError) as error:
+        raise ValueError("Elige la quincena 1 o la quincena 2.") from error
+    if numero not in (1, 2):
+        raise ValueError("Elige la quincena 1 o la quincena 2.")
+    return numero
+
+
+def _monto_opcional(valor: str | int | Decimal | None) -> Decimal | None:
+    """Convierte un monto opcional en `Decimal` a pesos.
+
+    Args:
+        valor: Texto del formulario o número; vacío significa «no escrito».
+
+    Returns:
+        Monto redondeado a pesos, o `None` si no se escribió.
+
+    Raises:
+        ValueError: Si el texto no es un monto válido o es negativo.
+    """
+    if valor is None or str(valor).strip() == "":
+        return None
+    monto = redondear_dinero(parsear_monto(str(valor)))
+    if monto < CERO:
+        raise ValueError("Los montos no pueden ser negativos.")
+    return monto
+
+
+def _porcentaje_opcional(valor: str | None) -> Decimal | None:
+    """Convierte un porcentaje escrito por la usuaria.
+
+    Args:
+        valor: Texto del formulario (acepta coma o punto decimal); vacío significa
+            «no escrito».
+
+    Returns:
+        Porcentaje entre 0 y 100, o `None` si no se escribió.
+
+    Raises:
+        ValueError: Si no es un número o está fuera de 0–100.
+    """
+    if valor is None or str(valor).strip() == "":
+        return None
+    try:
+        numero = Decimal(str(valor).strip().replace(",", "."))
+    except InvalidOperation as error:
+        raise ValueError("El porcentaje debe ser un número.") from error
+    if numero < CERO or numero > CIEN:
+        raise ValueError("El porcentaje debe estar entre 0 y 100.")
+    return numero
+
+
+def reparto_por_porcentajes(
+    total: Decimal, porcentaje_1: Decimal, porcentaje_2: Decimal
+) -> tuple[Decimal, Decimal]:
+    """Reparte el total mensual según los porcentajes que conoce la usuaria.
+
+    La quincena 2 es el resto del total, así las dos suman exacto aunque haya
+    centavos de redondeo.
+
+    Args:
+        total: Valor del pago mensual (las dos quincenas).
+        porcentaje_1: Porcentaje de la quincena 1.
+        porcentaje_2: Porcentaje de la quincena 2.
+
+    Returns:
+        Tupla `(quincena_1, quincena_2)` en pesos.
+
+    Raises:
+        ValueError: Si los porcentajes no suman 100 %.
+    """
+    if porcentaje_1 + porcentaje_2 != CIEN:
+        raise ValueError("Los porcentajes de las dos quincenas deben sumar 100 %.")
+    quincena_1 = redondear_dinero(total * porcentaje_1 / CIEN)
+    return quincena_1, redondear_dinero(total - quincena_1)
+
+
+def reparto_quincenal(
+    total: Decimal, quincena_digitada: int, valor_quincena: Decimal
+) -> tuple[Decimal, Decimal]:
+    """Calcula las dos quincenas cuando la usuaria escribe el valor de una.
+
+    La otra quincena es el total menos la escrita. Así se obtiene también su
+    porcentaje, que la vista muestra junto a cada tabla.
+
+    Args:
+        total: Valor del pago mensual (las dos quincenas).
+        quincena_digitada: `1` o `2`, la quincena a la que corresponde el valor.
+        valor_quincena: Valor escrito para esa quincena.
+
+    Returns:
+        Tupla `(quincena_1, quincena_2)` en pesos.
+
+    Raises:
+        ValueError: Si la quincena escrita supera el total.
+    """
+    if valor_quincena > total:
+        raise ValueError("El valor de la quincena no puede superar el valor del pago del mes.")
+    otra = redondear_dinero(total - valor_quincena)
+    if quincena_digitada == 1:
+        return valor_quincena, otra
+    return otra, valor_quincena
+
+
+def porcentaje_del_total(valor: Decimal | None, total: Decimal) -> Decimal | None:
+    """Calcula qué porcentaje del total representa un valor.
+
+    Args:
+        valor: Monto de una quincena.
+        total: Valor del pago mensual.
+
+    Returns:
+        Porcentaje con un decimal, o `None` si no hay datos suficientes.
+    """
+    if valor is None or total <= CERO:
+        return None
+    return (valor / total * CIEN).quantize(Decimal("0.1"))
+
+
+def valor_del_pago(trabajo: TrabajoExtra, quincena: int | None) -> Decimal:
+    """Indica cuánto vale un pago generado de un contrato.
+
+    Args:
+        trabajo: Contrato dueño del pago.
+        quincena: `1` o `2` en contratos quincenales; `None` en mensuales.
+
+    Returns:
+        Monto del pago; cae en `valor` si el contrato no tiene montos por quincena.
+    """
+    if trabajo.frecuencia == FRECUENCIA_QUINCENAL:
+        if quincena == 1 and trabajo.valor_quincena_1 is not None:
+            return trabajo.valor_quincena_1
+        if quincena == 2 and trabajo.valor_quincena_2 is not None:
+            return trabajo.valor_quincena_2
+    return trabajo.valor
+
+
 # ---------------------------------------------------------------------------
 # Contratos
 # ---------------------------------------------------------------------------
@@ -186,6 +343,11 @@ def crear_trabajo(
     frecuencia: str | None = FRECUENCIA_MENSUAL,
     fecha_fin: date | None = None,
     fecha_pago: date | None = None,
+    conoce_porcentaje: bool = False,
+    porcentaje_quincena_1: str | None = None,
+    porcentaje_quincena_2: str | None = None,
+    quincena_digitada: int | str | None = None,
+    valor_quincena: str | None = None,
 ) -> TrabajoExtra:
     """Registra un trabajo extra como contrato recurrente.
 
@@ -193,28 +355,33 @@ def crear_trabajo(
         bd: Sesión de base de datos.
         id_usuario: Dueño del registro.
         descripcion: Trabajo o servicio realizado.
-        valor: Monto pactado **por cada pago**; no puede ser negativo.
+        valor: Valor del pago. Mensual: el monto del mes. Quincenal: el total del mes.
         fecha: Fecha de inicio del contrato.
         cliente: Persona o empresa que contrató.
         tipo_contrato: `INDEFINIDO` o `TERMINO_FIJO`.
         frecuencia: `MENSUAL` (un pago) o `QUINCENAL` (dos pagos).
         fecha_fin: Final del contrato; obligatorio en término fijo.
         fecha_pago: Fecha del primer pago; si falta se usa la fecha de inicio.
+        conoce_porcentaje: En quincenal, `True` si la usuaria escribe los porcentajes.
+        porcentaje_quincena_1: Porcentaje de la quincena 1 (si conoce el reparto).
+        porcentaje_quincena_2: Porcentaje de la quincena 2 (si conoce el reparto).
+        quincena_digitada: Quincena a la que corresponde `valor_quincena`.
+        valor_quincena: Valor escrito de una de las quincenas (si no conoce el reparto).
 
     Returns:
         El trabajo persistido.
 
     Raises:
-        ValueError: Si la descripción está vacía, el valor es negativo o
-            inválido, el catálogo no es válido o las fechas se contradicen.
+        ValueError: Si faltan datos obligatorios, un monto o porcentaje es inválido,
+            el catálogo no es válido o las fechas se contradicen.
     """
     descripcion_limpia = descripcion.strip()
     if not descripcion_limpia:
         raise ValueError("La descripción del trabajo es obligatoria.")
 
-    monto = redondear_dinero(parsear_monto(str(valor)))
-    if monto < CERO:
-        raise ValueError("El valor del trabajo no puede ser negativo.")
+    monto = _monto_opcional(valor)
+    if monto is None or monto <= CERO:
+        raise ValueError("Escribe el valor del pago.")
 
     contrato = _normalizar_contrato(tipo_contrato)
     ritmo = _normalizar_frecuencia(frecuencia)
@@ -236,6 +403,22 @@ def crear_trabajo(
     elif fecha_fin is not None and fecha_fin < fecha:
         raise ValueError("La fecha final no puede ser anterior al inicio.")
 
+    quincena_1: Decimal | None = None
+    quincena_2: Decimal | None = None
+    if ritmo == FRECUENCIA_QUINCENAL:
+        if conoce_porcentaje:
+            porcentaje_1 = _porcentaje_opcional(porcentaje_quincena_1)
+            porcentaje_2 = _porcentaje_opcional(porcentaje_quincena_2)
+            if porcentaje_1 is None or porcentaje_2 is None:
+                raise ValueError("Escribe los porcentajes de la quincena 1 y de la 2.")
+            quincena_1, quincena_2 = reparto_por_porcentajes(monto, porcentaje_1, porcentaje_2)
+        else:
+            digitada = _normalizar_quincena(quincena_digitada)
+            escrita = _monto_opcional(valor_quincena)
+            if escrita is None:
+                raise ValueError("Escribe el valor de una de las quincenas.")
+            quincena_1, quincena_2 = reparto_quincenal(monto, digitada, escrita)
+
     trabajo = TrabajoExtra(
         id_usuario=id_usuario,
         descripcion=descripcion_limpia[:150],
@@ -246,6 +429,8 @@ def crear_trabajo(
         frecuencia=ritmo,
         fecha_fin=final,
         fecha_pago=primer_pago,
+        valor_quincena_1=quincena_1,
+        valor_quincena_2=quincena_2,
         estado=ESTADO_PENDIENTE,
     )
     bd.add(trabajo)
@@ -308,7 +493,7 @@ def cambiar_estado(
 
 
 def eliminar_trabajo(bd: Session, id_usuario: str, id_trabajo: str) -> bool:
-    """Elimina un trabajo extra y todos sus pagos generados.
+    """Elimina un trabajo extra con sus pagos y sus gastos fijos.
 
     Args:
         bd: Sesión de base de datos.
@@ -323,11 +508,85 @@ def eliminar_trabajo(bd: Session, id_usuario: str, id_trabajo: str) -> bool:
         return False
     # Borrado explícito además de la cascada de la base: deja la operación
     # correcta incluso en motores donde las claves foráneas no están activas.
-    for pago in bd.scalars(select(Gasto).where(Gasto.id_trabajo == id_trabajo)):
-        bd.delete(pago)
+    for fila in bd.scalars(select(Gasto).where(Gasto.id_trabajo == id_trabajo)):
+        bd.delete(fila)
     bd.delete(trabajo)
     bd.commit()
     return True
+
+
+# ---------------------------------------------------------------------------
+# Gastos fijos del trabajo (solo viven en Trabajos Extras)
+# ---------------------------------------------------------------------------
+
+
+def gastos_fijos_trabajo(bd: Session, id_trabajo: str) -> list[Gasto]:
+    """Lista los gastos fijos que la usuaria registró dentro de un trabajo.
+
+    Args:
+        bd: Sesión de base de datos.
+        id_trabajo: Contrato dueño de los gastos.
+
+    Returns:
+        Gastos fijos ordenados por descripción; nunca incluye los pagos.
+    """
+    consulta = (
+        select(Gasto)
+        .where(Gasto.id_trabajo == id_trabajo, Gasto.categoria != CATEGORIA_TRABAJO)
+        .order_by(Gasto.descripcion)
+    )
+    return list(bd.scalars(consulta))
+
+
+def crear_gasto_trabajo(
+    bd: Session,
+    id_usuario: str,
+    id_trabajo: str,
+    categoria: str,
+    descripcion: str,
+    valor: str | int | float | Decimal,
+    quincena: int | str | None = None,
+) -> Gasto:
+    """Registra un gasto fijo dentro de un trabajo extra.
+
+    El gasto se guarda con `id_trabajo`, así que no aparece en las quincenas de Mis
+    Finanzas. En un contrato mensual el gasto es del mes completo (sin quincena); en
+    uno quincenal debe indicar la quincena 1 o 2.
+
+    Args:
+        bd: Sesión de base de datos.
+        id_usuario: Dueño del trabajo.
+        id_trabajo: Trabajo al que pertenece el gasto.
+        categoria: Categoría libre.
+        descripcion: Nombre del gasto fijo.
+        valor: Monto del gasto.
+        quincena: `1` o `2` en contratos quincenales.
+
+    Returns:
+        El gasto persistido.
+
+    Raises:
+        ValueError: Si el trabajo no existe o los datos del gasto no son válidos.
+    """
+    trabajo = bd.get(TrabajoExtra, id_trabajo)
+    if trabajo is None or trabajo.id_usuario != id_usuario:
+        raise ValueError("El trabajo no existe.")
+    periodo = _normalizar_quincena(quincena) if trabajo.frecuencia == FRECUENCIA_QUINCENAL else None
+    gasto = crear_gasto(
+        bd,
+        id_usuario,
+        categoria,
+        descripcion,
+        valor,
+        date.today(),
+        es_fijo=True,
+        quincena=periodo,
+    )
+    gasto.id_trabajo = id_trabajo
+    gasto.check_visible = False
+    bd.commit()
+    bd.refresh(gasto)
+    return gasto
 
 
 # ---------------------------------------------------------------------------
@@ -347,13 +606,14 @@ def _pagos_del_mes(
         mes: Mes (1–12).
 
     Returns:
-        Pagos del mes ordenados por quincena.
+        Pagos del mes ordenados por quincena (sin los gastos fijos del trabajo).
     """
     inicio, fin = _rango_del_mes(anio, mes)
     consulta = (
         select(Gasto)
         .where(
             Gasto.id_trabajo == id_trabajo,
+            Gasto.categoria == CATEGORIA_TRABAJO,
             Gasto.fecha >= inicio,
             Gasto.fecha < fin,
         )
@@ -368,9 +628,8 @@ def _meses_a_generar(
     """Determina los meses del contrato que deben tener pagos.
 
     La generación arranca en el mes visible (o en el primer pago si es futuro) y
-    no crea historia anterior: los pagos del mes visible son los que el usuario
-    ve. En un contrato indefinido la ventana es móvil de doce meses; un término
-    fijo se detiene en `fecha_fin`.
+    no crea historia anterior. En un contrato indefinido la ventana es móvil de doce
+    meses; un término fijo se detiene en `fecha_fin`.
 
     Args:
         trabajo: Contrato persistido.
@@ -429,7 +688,7 @@ def _crear_pagos_del_mes(
             id_usuario=trabajo.id_usuario,
             categoria=CATEGORIA_TRABAJO,
             descripcion=f"{PREFIJO_TRABAJO}{trabajo.descripcion}"[:150],
-            valor=trabajo.valor,
+            valor=valor_del_pago(trabajo, quincena),
             es_fijo=True,
             fecha=fecha_pago,
             quincena=quincena,
@@ -470,6 +729,61 @@ def asegurar_pagos_trabajos(
     return creados
 
 
+def _periodos_del_trabajo(
+    bd: Session, trabajo: TrabajoExtra, pagos: list[Gasto]
+) -> list[dict[str, object]]:
+    """Arma las tablas de un contrato: pago, gastos fijos y disponible por periodo.
+
+    Mensual: una sola tabla («Pago mensual»). Quincenal: una tabla por quincena. El
+    disponible de cada periodo es lo cobrado menos sus gastos fijos.
+
+    Args:
+        bd: Sesión de base de datos.
+        trabajo: Contrato a mostrar.
+        pagos: Pagos del contrato en el mes visible.
+
+    Returns:
+        Lista de diccionarios con `etiqueta`, `quincena`, `valor`, `porcentaje`,
+        `pago`, `gastos`, `gastos_total`, `cobrado` y `disponible`.
+    """
+    fijos = gastos_fijos_trabajo(bd, trabajo.id_trabajo)
+    if trabajo.frecuencia == FRECUENCIA_QUINCENAL:
+        definiciones: list[tuple[int | None, str]] = [
+            (1, "Quincena 1 · día 15"),
+            (2, "Quincena 2 · día 30"),
+        ]
+    else:
+        definiciones = [(None, "Pago mensual")]
+
+    periodos: list[dict[str, object]] = []
+    for quincena, etiqueta in definiciones:
+        valor = valor_del_pago(trabajo, quincena)
+        pago = next((fila for fila in pagos if fila.quincena == quincena), None)
+        gastos_periodo = [gasto for gasto in fijos if gasto.quincena == quincena]
+        gastos_total = redondear_dinero(
+            sum((valor_computable(gasto) for gasto in gastos_periodo), start=CERO)
+        )
+        cobrado = (
+            valor_computable(pago) if pago is not None and pago.pagado else CERO
+        )
+        periodos.append(
+            {
+                "etiqueta": etiqueta,
+                "quincena": quincena,
+                "valor": valor,
+                "porcentaje": porcentaje_del_total(valor, trabajo.valor)
+                if quincena is not None
+                else None,
+                "pago": pago,
+                "gastos": gastos_periodo,
+                "gastos_total": gastos_total,
+                "cobrado": redondear_dinero(cobrado),
+                "disponible": redondear_dinero(cobrado - gastos_total),
+            }
+        )
+    return periodos
+
+
 def pagos_del_mes(
     bd: Session, id_usuario: str, anio: int, mes: int
 ) -> list[dict[str, object]]:
@@ -482,41 +796,40 @@ def pagos_del_mes(
         mes: Mes visible (1–12).
 
     Returns:
-        Lista de diccionarios con el contrato, sus pagos del mes y sus totales
-        `cobrado` y `pendiente`.
+        Lista de diccionarios con el contrato, sus periodos (`periodos`), y los
+        totales `cobrado`, `pendiente` y `disponible` del contrato en el mes.
     """
     bloques: list[dict[str, object]] = []
     for trabajo in listar_trabajos(bd, id_usuario):
         pagos = _pagos_del_mes(bd, trabajo.id_trabajo, anio, mes)
         if not pagos:
             continue
-        cobrado = redondear_dinero(
-            sum(
-                (valor_computable(pago) for pago in pagos if pago.pagado),
-                start=CERO,
-            )
-        )
+        periodos = _periodos_del_trabajo(bd, trabajo, pagos)
+        cobrado = redondear_dinero(sum((periodo["cobrado"] for periodo in periodos), start=CERO))
         pendiente = redondear_dinero(
             sum(
                 (valor_computable(pago) for pago in pagos if not pago.pagado),
                 start=CERO,
             )
         )
+        disponible = redondear_dinero(sum((periodo["disponible"] for periodo in periodos), start=CERO))
         bloques.append(
             {
                 "trabajo": trabajo,
-                "pagos": pagos,
+                "periodos": periodos,
                 "cobrado": cobrado,
                 "pendiente": pendiente,
+                "disponible": disponible,
             }
         )
     return bloques
 
 
 def extras_cobrados_mes(bd: Session, id_usuario: str, anio: int, mes: int) -> Decimal:
-    """Suma el neto cobrado de trabajos extras en un mes.
+    """Suma el disponible de trabajos extras en un mes.
 
-    Es el monto que el diagnóstico de «Gastos y Presupuesto» suma al saldo libre.
+    Es lo cobrado menos los gastos fijos del trabajo. El diagnóstico de «Gastos y
+    Presupuesto» suma este saldo al dinero libre del mes.
 
     Args:
         bd: Sesión de base de datos.
@@ -525,21 +838,10 @@ def extras_cobrados_mes(bd: Session, id_usuario: str, anio: int, mes: int) -> De
         mes: Mes (1–12).
 
     Returns:
-        Total cobrado, redondeado a pesos.
+        Disponible total, redondeado a pesos.
     """
-    inicio, fin = _rango_del_mes(anio, mes)
-    pagos = bd.scalars(
-        select(Gasto).where(
-            Gasto.id_usuario == id_usuario,
-            Gasto.id_trabajo.is_not(None),
-            Gasto.pagado.is_(True),
-            Gasto.fecha >= inicio,
-            Gasto.fecha < fin,
-        )
-    )
-    return redondear_dinero(
-        sum((valor_computable(pago) for pago in pagos), start=CERO)
-    )
+    bloques = pagos_del_mes(bd, id_usuario, anio, mes)
+    return redondear_dinero(sum((bloque["disponible"] for bloque in bloques), start=CERO))
 
 
 def resumen_trabajos(
@@ -556,20 +858,15 @@ def resumen_trabajos(
     Returns:
         Diccionario con total cobrado, total pendiente y conteos de pagos.
     """
+    filtros = [
+        Gasto.id_usuario == id_usuario,
+        Gasto.id_trabajo.is_not(None),
+        Gasto.categoria == CATEGORIA_TRABAJO,
+    ]
     if anio is not None and mes is not None:
         inicio, fin = _rango_del_mes(anio, mes)
-        consulta = select(Gasto).where(
-            Gasto.id_usuario == id_usuario,
-            Gasto.id_trabajo.is_not(None),
-            Gasto.fecha >= inicio,
-            Gasto.fecha < fin,
-        )
-    else:
-        consulta = select(Gasto).where(
-            Gasto.id_usuario == id_usuario,
-            Gasto.id_trabajo.is_not(None),
-        )
-    pagos = list(bd.scalars(consulta))
+        filtros += [Gasto.fecha >= inicio, Gasto.fecha < fin]
+    pagos = list(bd.scalars(select(Gasto).where(*filtros)))
     cobrados = [pago for pago in pagos if pago.pagado]
     pendientes = [pago for pago in pagos if not pago.pagado]
     return {
