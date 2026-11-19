@@ -1185,7 +1185,7 @@ Python encuentra cada uno por una palabra de su nombre de archivo (`PATRONES_LOG
 | `datafono` | `Datafono` | Medios de pago, segunda tarjeta |
 | `nequi` | `Nequi` | Medios de pago, cuarta tarjeta |
 | `visa_mastercard` | `Mastercard` | Medios de pago, última tarjeta |
-| `olb` | `Logotipo OLB` | Disponible en el contexto; el diseño actual usa el texto «OB / OLB BYTE» |
+| `olb` | `Nuevo Logo` (archivo `Nuevo Logo.png`) | Cabecera de la factura, dentro de un recuadro blanco |
 
 Para reemplazar un logo, guarda el PNG nuevo en `assets/` con la misma palabra en el nombre y
 borra el archivo viejo (si hay dos archivos con la misma palabra, gana el primero que encuentre

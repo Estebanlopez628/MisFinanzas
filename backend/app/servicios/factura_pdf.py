@@ -54,7 +54,7 @@ PIE_LEGAL = "Documento generado por OLB BYTE. No reemplaza la factura electróni
 # Patrones de búsqueda de los logos. Se usan globs porque los nombres de `assets/`
 # tienen tildes que cambian según el sistema de archivos.
 PATRONES_LOGO = {
-    "olb": "*Logotipo OLB*",
+    "olb": "Nuevo Logo*",
     "visa_mastercard": "*Mastercard*",
     "datafono": "*Datafono*",
     "nequi": "*Nequi*",

@@ -228,3 +228,12 @@ def test_css_de_la_factura_pdf_llega_sin_escapar(bd) -> None:
 
     assert ".factura-info-grid" in html
     assert "&gt;" not in html.split("<body>")[0]
+
+def test_el_logo_de_la_factura_es_nuevo_logo(bd) -> None:
+    """La factura usa assets/Nuevo Logo.png como logo oficial."""
+    from app.servicios import factura_pdf as fp
+
+    archivo = next(fp.RUTA_ASSETS.glob(fp.PATRONES_LOGO["olb"]))
+
+    assert archivo.name == "Nuevo Logo.png"
+    assert fp.logo_como_data_uri("olb").startswith("data:image/png;base64,")

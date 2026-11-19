@@ -632,3 +632,25 @@
     display: none;
   }
 }
+
+/* Logo oficial (assets/Nuevo Logo.png): fondo blanco propio, dentro de un recuadro blanco redondeado */
+.logo-ob-caja {
+  display: inline-block;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 10px 16px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+}
+
+.logo-ob-imagen {
+  display: block;
+  width: 230px;
+  max-width: 100%;
+  height: auto;
+}
+
+@media (max-width: 760px) {
+  .logo-ob-imagen {
+    width: 170px;
+  }
+}
