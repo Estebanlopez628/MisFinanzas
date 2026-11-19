@@ -34,6 +34,7 @@ os.environ["DATABASE_URL"] = f"sqlite:///{ARCHIVO_BD.as_posix()}"
 os.environ["ENTORNO"] = "pruebas"
 os.environ["CLAVE_SECRETA"] = "clave-secreta-solo-para-pruebas-0123456789"
 os.environ["PUBLICIDAD_ACTIVA"] = "1"
+os.environ.setdefault("CORREOS_OLB_BYTE", "admin@olbbyte.co,oscar.esteban.lopez.bedoya@gmail.com,oscaresteban.lopez93@gmail.com")
 
 import pytest
 from fastapi.testclient import TestClient

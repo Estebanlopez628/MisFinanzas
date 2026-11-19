@@ -81,8 +81,8 @@ def _contexto(
             "extras_mes": trabajos.extras_cobrados_mes(
                 bd, usuario.id_usuario, hoy.year, hoy.month
             ),
-            "capacidad": capacidad.capacidad_endeudamiento(
-                bd, usuario.id_usuario, perfil, hoy.year, hoy.month
+            "capacidad": capacidad.capacidad_trabajos(
+                bd, usuario.id_usuario, hoy.year, hoy.month
             ),
             "mes_visible": formatear_mes_anio(hoy.year, hoy.month),
             "hoy": hoy,
@@ -136,6 +136,7 @@ def crear_trabajo(
     frecuencia: Annotated[str, Form()] = trabajos.FRECUENCIA_MENSUAL,
     fecha_fin: Annotated[str, Form()] = "",
     fecha_pago: Annotated[str, Form()] = "",
+    fecha_pago_quincena_2: Annotated[str, Form()] = "",
     conoce_porcentaje: Annotated[str, Form()] = "",
     porcentaje_quincena_1: Annotated[str, Form()] = "",
     porcentaje_quincena_2: Annotated[str, Form()] = "",
@@ -179,6 +180,7 @@ def crear_trabajo(
             fecha_fin=_fecha_opcional(fecha_fin),
             fecha_pago=_fecha_opcional(fecha_pago),
             conoce_porcentaje=conoce_porcentaje == "1",
+            fecha_pago_quincena_2=_fecha_opcional(fecha_pago_quincena_2),
             porcentaje_quincena_1=porcentaje_quincena_1,
             porcentaje_quincena_2=porcentaje_quincena_2,
             quincena_digitada=quincena_digitada or None,

@@ -8,12 +8,16 @@
   resolvió `app.servicios.capacidad`.
 #}
 
-{% macro panel_capacidad(capacidad, titulo, descripcion) -%}
+{% macro panel_capacidad(capacidad, titulo, descripcion, solo_trabajos=False) -%}
   <section class="panel capacidad" aria-labelledby="capacidad-titulo">
     <h2 class="panel__titulo" id="capacidad-titulo">{{ titulo }}</h2>
     <p class="ayuda">{{ descripcion }}</p>
 
-    {% if capacidad.ingreso <= 0 %}
+    {% if capacidad.ingreso <= 0 and solo_trabajos %}
+      <div class="alerta alerta--aviso" role="status">
+        Aún no hay pagos de Trabajos Extras este mes.
+      </div>
+    {% elif capacidad.ingreso <= 0 %}
       <div class="alerta alerta--aviso" role="status">
         Completa tu perfil financiero para ver cuánto de tu ingreso está
         comprometido con gastos y deudas.
@@ -52,9 +56,24 @@
           <li>
             Ingreso del mes: <strong>{{ capacidad.ingreso | cop }}</strong>
           </li>
+          {% if not solo_trabajos %}
+          <li>
+            Libre de tu salario: <strong>{{ capacidad.libre_salario | cop }}</strong>
+            ({{ ((capacidad.libre_salario / capacidad.ingreso) * 100) | round(1) }} %)
+          </li>
+          <li>
+            Libre de trabajos extras: <strong>{{ capacidad.libre_extras | cop }}</strong>
+            ({{ ((capacidad.libre_extras / capacidad.ingreso) * 100) | round(1) }} %)
+          </li>
+          <li>
+            Total libre: <strong>{{ capacidad.libre | cop }}</strong>
+            ({{ capacidad.porcentaje_libre }} %)
+          </li>
+          {% endif %}
         </ul>
       </div>
 
+      {% if not solo_trabajos %}
       <p class="capacidad__semaforo">
         <span class="semaforo semaforo--{{ capacidad.semaforo }}">
           {{ capacidad.porcentaje_deudas }} % en deudas
@@ -91,6 +110,7 @@
           No hay deudas con tres cuotas o menos. Cuando una se acerque al final,
           aparecerá aquí.
         </p>
+      {% endif %}
       {% endif %}
 
     {% endif %}

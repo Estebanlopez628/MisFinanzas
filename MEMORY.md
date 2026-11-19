@@ -427,6 +427,87 @@ Recálculo en tiempo real (<100 ms) sin recargar página. Se implementa con func
 
 ## Bitácora de Cambios
 
+### 2026-11-18 — Acceso por correo a OLB_BYTE e inicio con Gmail (ADR-48)
+
+**Decisión:** OLB_BYTE solo para los correos de `CORREOS_OLB_BYTE` (por defecto, dos cuentas de Gmail). La tarjeta del panel y las rutas `/olb-byte` usan `exigir_olb_byte`, no el rol. El inicio con Google usa OAuth 2.0 con la biblioteca estándar (`urllib`), sin dependencias nuevas, y crea la cuenta como `USER_FINANZAS`.
+
+**Cambios realizados**
+1. `core/config.py`: `correos_olb_byte`, `google_client_id`, `google_client_secret`, `google_redirect_uri` desde el entorno.
+2. `dependencias.py`: `UsuarioSesion.puede_ver_olb_byte` y `exigir_olb_byte` (403 si el correo no está autorizado).
+3. `routers/olb_byte.py`: las 18 comprobaciones pasan a `exigir_olb_byte`.
+4. `routers/vistas.py`: la tarjeta se filtra por correo (`solo_autorizados`).
+5. `servicios/acceso_google.py` (nuevo) y `routers/auth.py`: `/login/google` y `/login/google/callback` con cookie de `state`.
+6. `templates/login.html`: botón «Continuar con Gmail» solo si hay credenciales.
+
+**Verificación:** `pytest` en verde (518 pruebas, 8 nuevas en `tests/test_acceso_google_y_olb.py`).
+
+**Pendiente:** `Guia.md` no incluye aún las fichas del servicio nuevo; el verificador sigue bloqueado por el BOM de archivos de OLB_BYTE.
+
+### 2026-11-18 — Órdenes con iconos, ventanas centradas y campos de quincena iguales (SRS v1.8, ajuste 7)
+
+**Cambios realizados**
+1. OLB_BYTE, acciones de cada orden: iconos (documento para factura, WhatsApp y papelera para anular) en una fila de tres columnas iguales, también en celular. Cada icono tiene `aria-label` y `title`.
+2. Anular y Devolver usan `edicion-gasto--modal` y el formulario `edicion-gasto__formulario`: en celular se abren centrados sobre fondo oscuro.
+3. Trabajos Extras: el selector de la quincena y el campo de valor miden 44 px de alto en la misma fila.
+4. `sw.js` en `olb-finanzas-v24`.
+
+**Límite:** el calendario de fecha lo dibuja el sistema del celular; la ventana del formulario que lo contiene sí queda centrada.
+
+**Verificación:** `pytest` en verde (510). En celular: tres acciones de 91 × 38 px en una fila; Anular centrado (centro en 195 px de 390).
+
+### 2026-11-18 — Proyección con créditos, órdenes alineadas y medios de pago (SRS v1.8, ajuste 6)
+
+**Cambios realizados**
+1. `servicios/capacidad.proyeccion_capacidad` recibe `creditos`: cada mes de la proyección suma la cuota de créditos de deducción (no tienen fecha de fin).
+2. Órdenes registradas (OLB_BYTE): Factura, WhatsApp y Anular comparten alto, ancho de columna y grosor (`.acciones-orden` en tres columnas, `min-width: 0` para vencer el mínimo de `.boton`); la fecha se muestra como dd-mm-aaaa.
+3. Factura: el título «MEDIOS DE PAGO» queda encima de los recuadros, sin taparlos.
+4. `sw.js` en `olb-finanzas-v21`.
+
+**Verificación:** `pytest` en verde (510). En celular, los tres botones miden 91 × 38 px y la fecha sale corta.
+
+### 2026-11-18 — Dona de Gastos y Presupuesto: créditos como deuda y libre desglosado (SRS v1.8, ajuste 5)
+
+**Cambios realizados**
+1. `servicios/capacidad.es_credito`: una deducción fija cuya descripción contiene «crédito» o «créditos» (sin tildes ni mayúsculas) se suma a la cuota de deudas y sale de los gastos fijos. Por ejemplo, una libranza.
+2. La dona muestra el libre del salario y el libre de trabajos extras, con su valor y porcentaje, y el total libre. Los trabajos entran por su valor de pago y salen con sus gastos fijos.
+3. `sw.js` en `olb-finanzas-v20`: el service worker servía el CSS de la factura desde caché, por eso el recuadro de medios de pago se veía sin centrar aunque el código ya estaba centrado.
+
+**Limitación:** la proyección a doce meses solo cuenta las deudas registradas en «Resumen de Deudas»; los créditos de deducción no se proyectan.
+
+**Verificación:** `pytest` en verde (510 pruebas). En la aplicación, la dona muestra libre del salario $2.572.280 + libre de trabajos extras $1.429.000 = libre total $4.001.280.
+
+### 2026-11-18 — Trabajos Extras: formulario alineado, medios de pago centrados (SRS v1.8, ajuste 4)
+
+**Cambios realizados**
+1. Formulario de Trabajos Extras en rejilla de dos columnas (una en celular), con los campos de quincena en filas propias y sin textos de ayuda dentro de cada campo, para que todo quede alineado.
+2. `app.js`: cada campo quincenal se muestra según frecuencia y opción de porcentaje (corrige que el campo de la quincena se mostrara en mensual).
+3. Factura: el título «MEDIOS DE PAGO» centrado; el texto de las tarjetas dice «Recibimos todas las tarjetas».
+
+**Verificación:** `pytest` en verde (507). Capturas en escritorio y celular del formulario quincenal y de los medios de pago.
+
+### 2026-11-18 — Trabajos Extras: dona solo de trabajos y medios de pago en recuadros (SRS v1.8, ajuste 3)
+
+**Cambios realizados**
+1. La dona de Trabajos Extras usa `servicios/capacidad.capacidad_trabajos`: ingreso = pagos cobrados de trabajos; gastos = gastos fijos de trabajos. No cuenta sueldo, quincenas ni deudas. La macro `panel_capacidad` acepta `solo_trabajos=True` y oculta semáforo y deudas.
+2. Factura: los cuatro medios de pago (Bre-B, Nequi, datáfono y Mastercard/Visa) tienen el mismo recuadro cerrado por ambos lados; la caja exterior ya no dibuja marco.
+
+3. Regla única de saldo: el saldo, la dona y el diagnóstico usan el valor del pago (cobrado o no) menos los gastos fijos del trabajo. Un pago saltado con la × vale cero (ya no se espera).
+
+**Verificación:** `pytest` en verde (507 pruebas). En la aplicación, la tarjeta, el resultado del periodo y la dona muestran el mismo saldo.
+
+### 2026-11-18 — Trabajos Extras: fechas de pago, resumen por contrato y medios de pago (SRS v1.8, ajuste 2)
+
+**Cambios realizados**
+1. El formulario muestra los campos de quincena (conoce porcentaje, porcentajes, quincena y valor) solo con frecuencia quincenal. Están ocultos desde el servidor; el JavaScript los muestra al elegir quincenal.
+2. «Fecha del primer pago» pasa a «Fecha de pago»: mensual escoge una fecha; quincenal escoge dos (quincena 1 y quincena 2). Columna nueva `fecha_pago_quincena_2` con migración idempotente; los contratos anteriores conservan los días 15 y 30.
+3. «Pagos de noviembre» muestra por contrato el cuadro «Resultado del periodo» (mismas clases que Mis Finanzas): mes, saldo para el bolsillo (valor del pago menos gastos fijos), total de ingreso y total de gastos fijos.
+4. Factura: eslogan justo debajo del logo; medios de pago en cuatro módulos centrados (Bre-B, Nequi, datáfono y Mastercard/Visa).
+5. `sw.js` en `olb-finanzas-v19` para que el navegador descargue los CSS y JS nuevos.
+
+**Pendiente de decisión:** el cuadro «Resultado del periodo» calcula el saldo como valor del pago menos gastos fijos. El disponible que suma al diagnóstico y la tarjeta superior usan lo cobrado menos los gastos fijos, así que un pago sin cobrar resta gastos. Hay que alinear las dos reglas.
+
+**Verificación:** `pytest` en verde (505 pruebas). Capturas en la aplicación principal de la factura y de Trabajos Extras.
+
 ### 2026-11-18 — Trabajos Extras: quincenas propias, gastos fijos aislados y factura (SRS v1.8)
 
 **Cambios realizados**

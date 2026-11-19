@@ -98,7 +98,8 @@ def test_contrato_quincenal_genera_dos_pagos(bd) -> None:
         tipo_contrato=trabajos.CONTRATO_TERMINO_FIJO,
         frecuencia=trabajos.FRECUENCIA_QUINCENAL,
         fecha_fin=date(2026, 11, 30),
-        fecha_pago=date(2026, 11, 1),
+        fecha_pago=date(2026, 11, 15),
+        fecha_pago_quincena_2=date(2026, 11, 30),
         quincena_digitada=1,
         valor_quincena="250.000",
     )
@@ -119,6 +120,7 @@ def test_quincena_escrita_como_dos_calcula_la_uno(bd) -> None:
         "600.000",
         date(2026, 11, 1),
         frecuencia=trabajos.FRECUENCIA_QUINCENAL,
+        fecha_pago_quincena_2=date(2026, 11, 30),
         quincena_digitada="2",
         valor_quincena="250.000",
     )
@@ -136,6 +138,7 @@ def test_porcentajes_conocidos_reparten_el_total(bd) -> None:
         "600.000",
         date(2026, 11, 1),
         frecuencia=trabajos.FRECUENCIA_QUINCENAL,
+        fecha_pago_quincena_2=date(2026, 11, 30),
         conoce_porcentaje=True,
         porcentaje_quincena_1="40",
         porcentaje_quincena_2="60",
@@ -167,6 +170,7 @@ def test_quincenal_sin_quincena_escrita_se_rechaza(bd) -> None:
             "600.000",
             date(2026, 11, 1),
             frecuencia=trabajos.FRECUENCIA_QUINCENAL,
+            fecha_pago_quincena_2=date(2026, 11, 30),
             valor_quincena="250.000",
         )
 
@@ -181,6 +185,7 @@ def test_quincenal_con_porcentajes_incompletos_se_rechaza(bd) -> None:
             "600.000",
             date(2026, 11, 1),
             frecuencia=trabajos.FRECUENCIA_QUINCENAL,
+            fecha_pago_quincena_2=date(2026, 11, 30),
             conoce_porcentaje=True,
             porcentaje_quincena_1="40",
         )
@@ -198,7 +203,8 @@ def test_quincena_ajusta_al_ultimo_dia_del_mes(bd) -> None:
         tipo_contrato=trabajos.CONTRATO_TERMINO_FIJO,
         frecuencia=trabajos.FRECUENCIA_QUINCENAL,
         fecha_fin=date(2027, 2, 28),
-        fecha_pago=date(2027, 2, 1),
+        fecha_pago=date(2027, 2, 15),
+        fecha_pago_quincena_2=date(2027, 2, 28),
         quincena_digitada=1,
         valor_quincena="200.000",
     )
@@ -325,7 +331,7 @@ def test_check_del_pago_suma_al_diagnostico_del_mes(bd) -> None:
     )
 
 
-def test_desmarcar_el_pago_retira_el_neto_del_diagnostico(bd) -> None:
+def test_desmarcar_el_pago_no_cambia_el_valor_del_diagnostico(bd) -> None:
     """Quitar el ✔ devuelve el extra a pendiente."""
     id_usuario = _id_admin(bd)
     trabajo = trabajos.crear_trabajo(
@@ -342,7 +348,7 @@ def test_desmarcar_el_pago_retira_el_neto_del_diagnostico(bd) -> None:
     pagos_metas.marcar_pagado(bd, id_usuario, pago.id_gasto, date(2026, 11, 15))
     pagos_metas.desmarcar_pagado(bd, id_usuario, pago.id_gasto)
 
-    assert trabajos.extras_cobrados_mes(bd, id_usuario, 2026, 11) == Decimal("0.00")
+    assert trabajos.extras_cobrados_mes(bd, id_usuario, 2026, 11) == Decimal("800000.00")
 
 
 # ---------------------------------------------------------------------------
@@ -423,6 +429,7 @@ def test_http_crea_contrato_y_muestra_sus_pagos(cliente_admin: TestClient) -> No
             "tipo_contrato": "TERMINO_FIJO",
             "frecuencia": "QUINCENAL",
             "quincena_digitada": "1",
+            "fecha_pago_quincena_2": fin.isoformat(),
             "valor_quincena": "150.000",
             "fecha_fin": fin.isoformat(),
         },
@@ -493,6 +500,7 @@ def test_pagos_quincenales_muestran_dos_tablas(cliente_admin, bd) -> None:
         "300.000",
         HOY.replace(day=1),
         frecuencia=trabajos.FRECUENCIA_QUINCENAL,
+        fecha_pago_quincena_2=date(2026, 11, 30),
         quincena_digitada=1,
         valor_quincena="150.000",
     )
@@ -522,6 +530,7 @@ def test_gasto_fijo_de_trabajo_no_pasa_a_las_quincenas(bd) -> None:
         "600.000",
         date(2026, 11, 1),
         frecuencia=trabajos.FRECUENCIA_QUINCENAL,
+        fecha_pago_quincena_2=date(2026, 11, 30),
         quincena_digitada=1,
         valor_quincena="250.000",
     )
@@ -570,6 +579,7 @@ def test_caso_confirmado_por_la_usuaria(bd) -> None:
         "1.500.000",
         date(2026, 11, 1),
         frecuencia=trabajos.FRECUENCIA_QUINCENAL,
+        fecha_pago_quincena_2=date(2026, 11, 30),
         conoce_porcentaje=True,
         porcentaje_quincena_1="50",
         porcentaje_quincena_2="50",
@@ -581,6 +591,7 @@ def test_caso_confirmado_por_la_usuaria(bd) -> None:
         "1.500.000",
         date(2026, 11, 1),
         frecuencia=trabajos.FRECUENCIA_QUINCENAL,
+        fecha_pago_quincena_2=date(2026, 11, 30),
         quincena_digitada=1,
         valor_quincena="600.000",
     )
@@ -596,3 +607,14 @@ def test_caso_confirmado_por_la_usuaria(bd) -> None:
     )
     assert mensual.valor == Decimal("1500000.00")
     assert trabajos.porcentaje_del_total(por_valor.valor_quincena_2, por_valor.valor) == Decimal("60.0")
+
+
+def test_pago_saltado_no_suma_al_diagnostico(bd) -> None:
+    """Un pago saltado con la x ya no se espera: no suma al diagnostico."""
+    id_usuario = _id_admin(bd)
+    trabajo = trabajos.crear_trabajo(bd, id_usuario, "Asesoria", "500.000", date(2026, 11, 1))
+    trabajos.asegurar_pagos_trabajos(bd, id_usuario, 2026, 11)
+    pago = _pagos(bd, trabajo.id_trabajo)[0]
+    pagos_metas.quitar_gasto(bd, id_usuario, pago.id_gasto, hoy=HOY)
+
+    assert trabajos.extras_cobrados_mes(bd, id_usuario, 2026, 11) == Decimal("0.00")

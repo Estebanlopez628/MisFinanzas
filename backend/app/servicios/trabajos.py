@@ -344,6 +344,7 @@ def crear_trabajo(
     fecha_fin: date | None = None,
     fecha_pago: date | None = None,
     conoce_porcentaje: bool = False,
+    fecha_pago_quincena_2: date | None = None,
     porcentaje_quincena_1: str | None = None,
     porcentaje_quincena_2: str | None = None,
     quincena_digitada: int | str | None = None,
@@ -405,7 +406,13 @@ def crear_trabajo(
 
     quincena_1: Decimal | None = None
     quincena_2: Decimal | None = None
+    segunda_fecha: date | None = None
     if ritmo == FRECUENCIA_QUINCENAL:
+        if fecha_pago_quincena_2 is None:
+            raise ValueError("Escribe la fecha de pago de la quincena 2.")
+        if fecha_pago_quincena_2 < fecha:
+            raise ValueError("La fecha de pago de la quincena 2 no puede ser anterior al inicio.")
+        segunda_fecha = fecha_pago_quincena_2
         if conoce_porcentaje:
             porcentaje_1 = _porcentaje_opcional(porcentaje_quincena_1)
             porcentaje_2 = _porcentaje_opcional(porcentaje_quincena_2)
@@ -431,6 +438,7 @@ def crear_trabajo(
         fecha_pago=primer_pago,
         valor_quincena_1=quincena_1,
         valor_quincena_2=quincena_2,
+        fecha_pago_quincena_2=segunda_fecha,
         estado=ESTADO_PENDIENTE,
     )
     bd.add(trabajo)
@@ -672,9 +680,14 @@ def _crear_pagos_del_mes(
     """
     ancla = trabajo.fecha_pago or trabajo.fecha
     if trabajo.frecuencia == FRECUENCIA_QUINCENAL:
+        # Con las dos fechas escritas se usan sus días; un contrato anterior sin
+        # segunda fecha conserva los días 15 y 30.
+        dias = DIAS_QUINCENA
+        if trabajo.fecha_pago_quincena_2 is not None and trabajo.fecha_pago is not None:
+            dias = ((1, trabajo.fecha_pago.day), (2, trabajo.fecha_pago_quincena_2.day))
         partes = [
             (quincena, _fecha_con_dia(anio, mes, dia))
-            for quincena, dia in DIAS_QUINCENA
+            for quincena, dia in dias
         ]
     else:
         partes = [(None, _fecha_con_dia(anio, mes, ancla.day))]
@@ -763,6 +776,9 @@ def _periodos_del_trabajo(
         gastos_total = redondear_dinero(
             sum((valor_computable(gasto) for gasto in gastos_periodo), start=CERO)
         )
+        # El ingreso del periodo es el valor del pago, cobrado o no. Un pago saltado
+        # con la × vale cero porque ya no se espera (`valor_computable`).
+        ingreso = redondear_dinero(valor_computable(pago)) if pago is not None else redondear_dinero(valor)
         cobrado = (
             valor_computable(pago) if pago is not None and pago.pagado else CERO
         )
@@ -777,8 +793,9 @@ def _periodos_del_trabajo(
                 "pago": pago,
                 "gastos": gastos_periodo,
                 "gastos_total": gastos_total,
+                "ingreso": ingreso,
                 "cobrado": redondear_dinero(cobrado),
-                "disponible": redondear_dinero(cobrado - gastos_total),
+                "disponible": redondear_dinero(ingreso - gastos_total),
             }
         )
     return periodos
@@ -813,6 +830,8 @@ def pagos_del_mes(
             )
         )
         disponible = redondear_dinero(sum((periodo["disponible"] for periodo in periodos), start=CERO))
+        ingreso_total = redondear_dinero(sum((periodo["ingreso"] for periodo in periodos), start=CERO))
+        gastos_total = redondear_dinero(sum((periodo["gastos_total"] for periodo in periodos), start=CERO))
         bloques.append(
             {
                 "trabajo": trabajo,
@@ -820,6 +839,9 @@ def pagos_del_mes(
                 "cobrado": cobrado,
                 "pendiente": pendiente,
                 "disponible": disponible,
+                "ingreso": ingreso_total,
+                "gastos_total": gastos_total,
+                "saldo_bolsillo": redondear_dinero(ingreso_total - gastos_total),
             }
         )
     return bloques

@@ -187,6 +187,7 @@ def _migrar_columnas_trabajos() -> None:
             "fecha_pago": "DATE",
             "valor_quincena_1": "NUMERIC(14, 2)",
             "valor_quincena_2": "NUMERIC(14, 2)",
+            "fecha_pago_quincena_2": "DATE",
         }
         for columna, tipo in nuevas.items():
             if columna not in existentes:

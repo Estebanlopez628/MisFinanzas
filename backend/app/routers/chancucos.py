@@ -16,7 +16,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
 from app.core.base_datos import obtener_bd
-from app.dependencias import UsuarioSesion, exigir_administrador, obtener_usuario_actual
+from app.dependencias import UsuarioSesion, obtener_usuario_actual
 from app.routers.vistas import contexto_base, plantillas
 from app.servicios import auditoria, chancucos
 
@@ -46,7 +46,6 @@ def ver_chancucos(
     Raises:
         HTTPException: 403 si el usuario no es administrador.
     """
-    exigir_administrador(usuario)
     contexto = contexto_base(usuario)
     contexto.update(
         {
@@ -97,7 +96,6 @@ def crear_chancuco(
     Returns:
         Redirección al panel con el resultado.
     """
-    exigir_administrador(usuario)
     destino = (
         "/finanzas?guardado_chancuco=1#chancucos"
         if origen == "finanzas"
@@ -150,7 +148,6 @@ def alternar_favorito(
     Returns:
         Redirección al panel correspondiente.
     """
-    exigir_administrador(usuario)
     chancucos.alternar_favorito(bd, usuario.id_usuario, id_chancuco)
     destino = "/finanzas#chancucos" if origen == "finanzas" else "/chancucos"
     return RedirectResponse(url=destino, status_code=status.HTTP_303_SEE_OTHER)
@@ -174,7 +171,6 @@ def eliminar_chancuco(
     Returns:
         Redirección al panel correspondiente.
     """
-    exigir_administrador(usuario)
     if chancucos.eliminar_chancuco(bd, usuario.id_usuario, id_chancuco):
         auditoria.registrar(
             bd, usuario.id_usuario, "CHANCUCO_ELIMINADO", "chancucos", id_chancuco

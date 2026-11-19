@@ -164,17 +164,17 @@
     var sincronizarFrecuencia = function () {
       var quincenal = selectorFrecuencia.value === "QUINCENAL";
       var conoce = selectorConoce ? selectorConoce.value === "1" : false;
-      var solo = document.querySelectorAll("[data-solo-quincenal]");
-      for (var s = 0; s < solo.length; s += 1) {
-        solo[s].hidden = !quincenal;
-      }
-      var si = document.querySelectorAll("[data-conoce-si]");
-      for (var a = 0; a < si.length; a += 1) {
-        si[a].hidden = !conoce;
-      }
-      var no = document.querySelectorAll("[data-conoce-no]");
-      for (var b = 0; b < no.length; b += 1) {
-        no[b].hidden = conoce;
+      var campos = document.querySelectorAll("[data-solo-quincenal]");
+      for (var s = 0; s < campos.length; s += 1) {
+        var campo = campos[s];
+        var oculto = !quincenal;
+        if (campo.hasAttribute("data-conoce-si")) {
+          oculto = oculto || !conoce;
+        }
+        if (campo.hasAttribute("data-conoce-no")) {
+          oculto = oculto || conoce;
+        }
+        campo.hidden = oculto;
       }
     };
     selectorFrecuencia.addEventListener("change", sincronizarFrecuencia);

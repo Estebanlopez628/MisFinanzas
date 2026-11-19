@@ -708,6 +708,8 @@ class TrabajoExtra(Base):
     # una quincena y el sistema calcula la otra con el resto de su sueldo.
     valor_quincena_1: Mapped[Decimal | None] = mapped_column(Numeric(14, 2), nullable=True)
     valor_quincena_2: Mapped[Decimal | None] = mapped_column(Numeric(14, 2), nullable=True)
+    # Segunda fecha de pago de un contrato quincenal (la primera es `fecha_pago`).
+    fecha_pago_quincena_2: Mapped[date | None] = mapped_column(Date, nullable=True)
     estado: Mapped[str] = mapped_column(String(20), nullable=False, default="PENDIENTE")
 
 

@@ -135,18 +135,16 @@ def test_administrador_abre_los_modulos_privados(cliente_admin: TestClient) -> N
         assert respuesta.status_code == 200, ruta
 
 
-def test_usuario_publico_solo_queda_bloqueado_en_olb_byte_y_chancucos(
+def test_usuario_publico_bloqueado_solo_en_olb_byte(
     cliente_usuario: TestClient,
 ) -> None:
-    """El RBAC del servidor reserva OLB_BYTE y Chancucos al administrador.
+    """OLB_BYTE queda reservado a los correos autorizados (SRS v1.8).
 
-    Deudas y Trabajos Extras pasaron a ser de acceso general en el SRS v1.2.
+    Chancucos, Deudas y Trabajos Extras son de acceso general.
     """
-    for ruta in ("/olb-byte", "/chancucos"):
-        respuesta = cliente_usuario.get(ruta)
-        assert respuesta.status_code == 403, ruta
+    assert cliente_usuario.get("/olb-byte").status_code == 403
 
-    for ruta in ("/deudas", "/trabajos-extras"):
+    for ruta in ("/chancucos", "/deudas", "/trabajos-extras"):
         respuesta = cliente_usuario.get(ruta)
         assert respuesta.status_code == 200, ruta
 

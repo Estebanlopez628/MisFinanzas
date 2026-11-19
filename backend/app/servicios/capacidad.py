@@ -24,6 +24,8 @@ Este módulo no escribe en la base de datos: solo lee y calcula.
 from __future__ import annotations
 
 import math
+import re
+import unicodedata
 from dataclasses import dataclass, field
 from datetime import date
 from decimal import Decimal
@@ -32,6 +34,7 @@ from sqlalchemy.orm import Session
 
 from app.core.numeros import redondear_dinero
 from app.modelos import Deuda, PerfilFinanciero
+from app.servicios import deducciones_fijas as servicio_deducciones
 from app.servicios import deudas as servicio_deudas
 from app.servicios import quincenas as servicio_quincenas
 from app.servicios import trabajos as servicio_trabajos
@@ -40,6 +43,9 @@ CERO = Decimal("0")
 CIEN = Decimal("100")
 MESES_PROYECCION = 12
 CUOTAS_POR_TERMINAR = 3
+# Una deducción fija cuya descripción diga «crédito» o «créditos» (por ejemplo,
+# una libranza) se trata como deuda y no como gasto fijo.
+PATRON_CREDITO = re.compile(r"\bcreditos?\b")
 
 # Umbrales del semáforo, en porcentaje del ingreso mensual.
 UMBRAL_VERDE = Decimal("20")
@@ -97,6 +103,23 @@ class Capacidad:
     arcos: list[dict[str, object]] = field(default_factory=list)
     por_terminar: list[dict[str, object]] = field(default_factory=list)
     proyeccion: list[dict[str, object]] = field(default_factory=list)
+    libre_salario: Decimal = CERO
+    libre_extras: Decimal = CERO
+
+
+def es_credito(descripcion: str) -> bool:
+    """Indica si una deducción fija es un crédito (por ejemplo, una libranza).
+
+    Ignora tildes y mayúsculas: «Crédito», «CREDITOS» y «credito» cuentan.
+
+    Args:
+        descripcion: Texto que escribió la usuaria.
+
+    Returns:
+        `True` si la descripción contiene la palabra crédito o créditos.
+    """
+    normal = unicodedata.normalize("NFKD", descripcion or "").encode("ascii", "ignore").decode("ascii").lower()
+    return bool(PATRON_CREDITO.search(normal))
 
 
 def _porcentaje(valor: Decimal, total: Decimal) -> Decimal:
@@ -300,6 +323,7 @@ def proyeccion_capacidad(
     gastos: Decimal,
     deudas: list[Deuda],
     hoy: date | None = None,
+    creditos: Decimal = CERO,
 ) -> list[dict[str, object]]:
     """Estima doce meses de cuota de deuda y saldo libre.
 
@@ -308,6 +332,8 @@ def proyeccion_capacidad(
         gastos: Gastos fijos mensuales que se mantienen constantes.
         deudas: Deudas activas del usuario.
         hoy: Mes de partida; por defecto, el mes actual.
+        creditos: Deducciones fijas que son créditos; se cobran cada mes de la
+            proyección, porque una deducción no tiene fecha de fin.
 
     Returns:
         Lista de doce diccionarios con etiqueta, cuota, libre, porcentaje de
@@ -333,6 +359,7 @@ def proyeccion_capacidad(
                 ),
                 start=CERO,
             )
+            + creditos
         )
         libre = redondear_dinero(ingreso - gastos - cuota)
         porcentaje_deuda = _porcentaje(cuota, ingreso)
@@ -384,6 +411,45 @@ def _mensaje_semaforo(estado: str, porcentaje_deudas: Decimal) -> str:
     )
 
 
+def capacidad_trabajos(
+    bd: Session,
+    id_usuario: str,
+    anio: int,
+    mes: int,
+) -> Capacidad:
+    """Calcula la dona de Trabajos Extras con solo sus datos.
+
+    El ingreso son los valores de pago de trabajos extras del mes, cobrados o no; los gastos son los
+    gastos fijos puestos dentro de esos trabajos. No cuentan el sueldo, las quincenas
+    de Mis Finanzas ni las deudas.
+
+    Args:
+        bd: Sesión de base de datos.
+        id_usuario: Dueño de los trabajos.
+        anio: Año del mes.
+        mes: Mes (1–12).
+
+    Returns:
+        Un `Capacidad` con ingreso, gastos fijos, libre y arcos de la dona.
+    """
+    bloques = servicio_trabajos.pagos_del_mes(bd, id_usuario, anio, mes)
+    ingreso = redondear_dinero(sum((bloque["ingreso"] for bloque in bloques), start=CERO))
+    gastos = redondear_dinero(sum((bloque["gastos_total"] for bloque in bloques), start=CERO))
+    libre = redondear_dinero(ingreso - gastos)
+    return Capacidad(
+        ingreso=ingreso,
+        gastos=gastos,
+        deudas=CERO,
+        libre=libre,
+        porcentaje_gastos=_porcentaje(gastos, ingreso),
+        porcentaje_deudas=CERO,
+        porcentaje_libre=_porcentaje(libre, ingreso),
+        semaforo=ESTADO_VERDE,
+        mensaje="",
+        arcos=_repartir_arcos(gastos, CERO, libre, ingreso),
+    )
+
+
 def capacidad_endeudamiento(
     bd: Session,
     id_usuario: str,
@@ -408,20 +474,36 @@ def capacidad_endeudamiento(
     """
     resumen = servicio_quincenas.resumen_quincenas(bd, id_usuario, perfil, anio, mes)
     ingreso_base = redondear_dinero(sum((fila.ingreso for fila in resumen), start=CERO))
-    extras = servicio_trabajos.extras_cobrados_mes(bd, id_usuario, anio, mes)
-    ingreso = redondear_dinero(ingreso_base + extras)
 
-    gastos = redondear_dinero(
+    # Trabajos extras: entran por su valor de pago y salen con sus gastos fijos.
+    # Su libre se muestra aparte del libre del salario.
+    bloques = servicio_trabajos.pagos_del_mes(bd, id_usuario, anio, mes)
+    ingreso_extras = redondear_dinero(sum((bloque["ingreso"] for bloque in bloques), start=CERO))
+    gastos_extras = redondear_dinero(sum((bloque["gastos_total"] for bloque in bloques), start=CERO))
+    libre_extras = redondear_dinero(sum((bloque["disponible"] for bloque in bloques), start=CERO))
+    ingreso = redondear_dinero(ingreso_base + ingreso_extras)
+
+    # Las deducciones fijas que son créditos pasan a deuda; el resto es gasto fijo.
+    creditos = redondear_dinero(
         sum(
-            (fila.gastos + fila.deducciones + fila.deducciones_fijas for fila in resumen),
+            (fija.valor for fija in servicio_deducciones.listar_deducciones(bd, id_usuario) if es_credito(fija.descripcion)),
             start=CERO,
         )
     )
+    deducciones_fijas_total = redondear_dinero(
+        sum((fila.deducciones_fijas for fila in resumen), start=CERO)
+    )
+    gastos = redondear_dinero(
+        sum((fila.gastos + fila.deducciones for fila in resumen), start=CERO)
+        + (deducciones_fijas_total - creditos)
+        + gastos_extras
+    )
     deudas = list(servicio_deudas.listar_deudas(bd, id_usuario))
     cuota_deudas = redondear_dinero(
-        servicio_deudas.resumen_deudas(bd, id_usuario)["cuota_mensual"]
+        servicio_deudas.resumen_deudas(bd, id_usuario)["cuota_mensual"] + creditos
     )
     libre = redondear_dinero(ingreso - gastos - cuota_deudas)
+    libre_salario = redondear_dinero(libre - libre_extras)
 
     if ingreso <= CERO:
         estado = ESTADO_SIN_DATOS
@@ -447,5 +529,7 @@ def capacidad_endeudamiento(
         mensaje=_mensaje_semaforo(estado, porcentaje_deudas),
         arcos=_repartir_arcos(gastos, cuota_deudas, libre, ingreso),
         por_terminar=deudas_por_terminar(bd, id_usuario),
-        proyeccion=proyeccion_capacidad(ingreso, gastos, deudas, hoy),
+        proyeccion=proyeccion_capacidad(ingreso, gastos, deudas, hoy, creditos),
+        libre_salario=libre_salario,
+        libre_extras=libre_extras,
     )

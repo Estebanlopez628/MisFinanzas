@@ -34,6 +34,11 @@
         <button class="boton boton--primario" type="submit">Entrar</button>
       </form>
 
+      {% if google_activo %}
+      <p class="acceso__pie">o</p>
+      <a class="boton boton--secundario" href="/login/google">Continuar con Gmail</a>
+      {% endif %}
+
       <p class="acceso__pie">
         ¿No tienes cuenta?
         <a class="enlace" href="{{ url_for('ver_registro') }}">Crear una cuenta gratis</a>

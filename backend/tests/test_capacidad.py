@@ -250,5 +250,61 @@ def test_trabajos_extras_muestra_su_propia_instancia(cliente_admin) -> None:
     respuesta = cliente_admin.get("/trabajos-extras")
 
     assert respuesta.status_code == 200
-    assert "Capacidad con tus ingresos extras" in respuesta.text
+    assert "Ingresos extras" in respuesta.text
+    assert "Deudas por terminar" not in respuesta.text
     assert "Proyección a 12 meses" not in respuesta.text
+
+
+def test_dona_de_trabajos_solo_cuenta_cobrado_y_gastos_del_trabajo(bd) -> None:
+    """La dona de Trabajos Extras ignora el sueldo: solo lo cobrado y sus gastos fijos."""
+    from app.servicios import trabajos as servicio_trabajos
+
+    id_usuario = _id_admin(bd)
+    trabajo = servicio_trabajos.crear_trabajo(bd, id_usuario, "Diseño", "1.000.000", date(2026, 11, 1))
+    servicio_trabajos.asegurar_pagos_trabajos(bd, id_usuario, 2026, 11)
+    pago = servicio_trabajos._pagos_del_mes(bd, trabajo.id_trabajo, 2026, 11)[0]
+    pagos_metas.marcar_pagado(bd, id_usuario, pago.id_gasto, HOY)
+    servicio_trabajos.crear_gasto_trabajo(bd, id_usuario, trabajo.id_trabajo, "Hogar", "Internet", "200.000")
+
+    resultado = capacidad.capacidad_trabajos(bd, id_usuario, 2026, 11)
+
+    assert resultado.ingreso == Decimal("1000000.00")
+    assert resultado.gastos == Decimal("200000.00")
+    assert resultado.libre == Decimal("800000.00")
+    assert resultado.deudas == Decimal("0")
+
+
+def test_credito_como_deduccion_cuenta_como_deuda(bd) -> None:
+    """Una deducción que dice crédito pesa como deuda, no como gasto fijo."""
+    from app.servicios import deducciones_fijas
+
+    id_usuario = _id_admin(bd)
+    perfil = perfiles.obtener_perfil(bd, id_usuario)
+    antes = capacidad.capacidad_endeudamiento(bd, id_usuario, perfil, 2026, 11)
+
+    deducciones_fijas.crear_deduccion(bd, id_usuario, "Crédito libranza banco", "150.000", 1)
+    despues = capacidad.capacidad_endeudamiento(bd, id_usuario, perfil, 2026, 11)
+
+    assert despues.deudas - antes.deudas == Decimal("150000.00")
+    assert despues.gastos == antes.gastos
+
+
+def test_es_credito_ignora_tildes_y_mayusculas() -> None:
+    """«Crédito», «CREDITOS» y «credito» cuentan; «crediticio» y «seguro» no."""
+    assert capacidad.es_credito("Crédito libranza")
+    assert capacidad.es_credito("CREDITOS")
+    assert capacidad.es_credito("credito")
+    assert not capacidad.es_credito("Seguro de vida")
+    assert not capacidad.es_credito("Crediticio")
+
+
+def test_libre_se_desglosa_entre_salario_y_extras(bd) -> None:
+    """El libre total es la suma del libre del salario y el de trabajos extras."""
+    id_usuario = _id_admin(bd)
+    perfil = perfiles.obtener_perfil(bd, id_usuario)
+    trabajo = trabajos.crear_trabajo(bd, id_usuario, "Diseño", "600.000", HOY.replace(day=1))
+    trabajos.asegurar_pagos_trabajos(bd, id_usuario, HOY.year, HOY.month)
+    resultado = capacidad.capacidad_endeudamiento(bd, id_usuario, perfil, HOY.year, HOY.month)
+
+    assert resultado.libre_extras == Decimal("600000.00")
+    assert resultado.libre_salario + resultado.libre_extras == resultado.libre

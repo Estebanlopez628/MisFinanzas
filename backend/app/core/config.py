@@ -113,6 +113,29 @@ class ParametrosNomina:
         return Decimal("100") - self.porcentaje_pago_desde_dia_tres
 
 
+# Correos autorizados a OLB_BYTE (SRS v1.8). Se pueden cambiar con la variable
+# CORREOS_OLB_BYTE, separados por coma.
+CORREOS_OLB_BYTE_PREDETERMINADOS = (
+    "oscar.esteban.lopez.bedoya@gmail.com",
+    "oscaresteban.lopez93@gmail.com",
+)
+
+
+def _lista_desde_entorno(nombre: str, predeterminada: tuple[str, ...]) -> list[str]:
+    """Lee una lista separada por comas desde el entorno.
+
+    Args:
+        nombre: Variable de entorno.
+        predeterminada: Valores si la variable no existe o está vacía.
+
+    Returns:
+        Lista de textos sin espacios ni mayúsculas.
+    """
+    valor = os.getenv(nombre, "").strip()
+    elementos = valor.split(",") if valor else list(predeterminada)
+    return [elemento.strip().lower() for elemento in elementos if elemento.strip()]
+
+
 @dataclass(frozen=True)
 class ConfiguracionApp:
     """Metadatos generales de la aplicación web.
@@ -133,6 +156,21 @@ class ConfiguracionApp:
     entorno: str = field(default_factory=lambda: os.getenv("ENTORNO", "desarrollo"))
     clave_secreta: str = field(
         default_factory=lambda: os.getenv("CLAVE_SECRETA", "cambiar-en-produccion")
+    )
+
+    correos_olb_byte: frozenset[str] = field(
+        default_factory=lambda: frozenset(
+            _lista_desde_entorno("CORREOS_OLB_BYTE", CORREOS_OLB_BYTE_PREDETERMINADOS)
+        )
+    )
+    google_client_id: str = field(default_factory=lambda: os.getenv("GOOGLE_CLIENT_ID", "").strip())
+    google_client_secret: str = field(
+        default_factory=lambda: os.getenv("GOOGLE_CLIENT_SECRET", "").strip()
+    )
+    google_redirect_uri: str = field(
+        default_factory=lambda: os.getenv(
+            "GOOGLE_REDIRECT_URI", "http://127.0.0.1:8000/login/google/callback"
+        ).strip()
     )
 
     @property

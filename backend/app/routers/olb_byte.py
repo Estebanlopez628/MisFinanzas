@@ -24,7 +24,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.base_datos import obtener_bd
-from app.dependencias import UsuarioSesion, exigir_administrador, obtener_usuario_actual
+from app.dependencias import UsuarioSesion, exigir_olb_byte, obtener_usuario_actual
 from app.modelos import Cliente, Venta, VentaDetalle
 from app.routers.vistas import contexto_base, plantillas
 from app.servicios import analitica, auditoria, comercial, factura_pdf, recibo_imagen
@@ -306,7 +306,7 @@ def ver_olb_byte(
     Raises:
         HTTPException: 403 si el usuario no es administrador.
     """
-    exigir_administrador(usuario)
+    exigir_olb_byte(usuario)
     return plantillas.TemplateResponse(
         request, "olb_byte/index.html", _contexto(usuario, bd, guardado=bool(guardado))
     )
@@ -376,7 +376,7 @@ async def registrar_venta(
     Returns:
         Redirección al panel o vista con error y datos repoblados.
     """
-    exigir_administrador(usuario)
+    exigir_olb_byte(usuario)
     formulario = await request.form()
     cliente_nombre = str(formulario.get("cliente_nombre", "")).strip()
     cliente_telefono = str(formulario.get("cliente_telefono", "")).strip()
@@ -431,7 +431,7 @@ def registrar_abono(
     Returns:
         Redirección al recibo del abono, o la vista de pendientes con el error.
     """
-    exigir_administrador(usuario)
+    exigir_olb_byte(usuario)
     try:
         momento = (
             datetime.fromisoformat(fecha_abono).replace(tzinfo=comercial.ZONA_TIENDA)
@@ -523,7 +523,7 @@ def ver_cobro(
     Raises:
         HTTPException: 403 si el usuario no es administrador; 404 si la orden no existe.
     """
-    exigir_administrador(usuario)
+    exigir_olb_byte(usuario)
     venta = comercial.obtener_venta(bd, id_venta)
     if venta is None:
         raise HTTPException(status_code=404, detail="Venta no encontrada.")
@@ -550,7 +550,7 @@ def ver_pendientes(
     Returns:
         HTML de la vista de pendientes.
     """
-    exigir_administrador(usuario)
+    exigir_olb_byte(usuario)
     return plantillas.TemplateResponse(
         request, "olb_byte/pendientes.html", _contexto_pendientes(usuario, bd, q=q)
     )
@@ -577,7 +577,7 @@ def ver_recibo(
     Raises:
         HTTPException: 403 si el usuario no es administrador; 404 si el abono no existe.
     """
-    exigir_administrador(usuario)
+    exigir_olb_byte(usuario)
     abono = comercial.obtener_abono(bd, id_abono)
     if abono is None:
         raise HTTPException(status_code=404, detail="Recibo no encontrado.")
@@ -623,7 +623,7 @@ def ver_recibo_imagen(
     Raises:
         HTTPException: 403 si el usuario no es administrador; 404 si el abono no existe.
     """
-    exigir_administrador(usuario)
+    exigir_olb_byte(usuario)
     abono = comercial.obtener_abono(bd, id_abono)
     if abono is None:
         raise HTTPException(status_code=404, detail="Recibo no encontrado.")
@@ -670,7 +670,7 @@ def anular_venta(
     Returns:
         Redirección o vista con error.
     """
-    exigir_administrador(usuario)
+    exigir_olb_byte(usuario)
     try:
         comercial.anular_venta(
             bd, id_venta, motivo, monto_devuelto or "0", metodo_devolucion
@@ -703,7 +703,7 @@ def registrar_devolucion(
     Returns:
         Redirección o vista con error.
     """
-    exigir_administrador(usuario)
+    exigir_olb_byte(usuario)
     try:
         comercial.registrar_devolucion(bd, id_venta, monto, metodo_pago)
         auditoria.registrar(bd, usuario.id_usuario, "DEVOLUCION_REGISTRADA", "ventas", id_venta)
@@ -733,7 +733,7 @@ def ver_factura(
     Raises:
         HTTPException: 403 si el usuario no es administrador; 404 si la orden no existe.
     """
-    exigir_administrador(usuario)
+    exigir_olb_byte(usuario)
     venta: Venta | None = comercial.obtener_venta(bd, id_venta)
     if venta is None:
         raise HTTPException(status_code=404, detail="Venta no encontrada.")
@@ -794,7 +794,7 @@ def ver_cartera(
     Returns:
         HTML de la vista de cartera.
     """
-    exigir_administrador(usuario)
+    exigir_olb_byte(usuario)
     contexto = _contexto_cartera(usuario, bd)
     contexto["guardado"] = bool(guardado)
     return plantillas.TemplateResponse(request, "olb_byte/cartera.html", contexto)
@@ -820,7 +820,7 @@ def registrar_abono_proveedor(
     Returns:
         Redirección a la vista de cartera o la misma vista con el error.
     """
-    exigir_administrador(usuario)
+    exigir_olb_byte(usuario)
     try:
         movimiento = comercial.registrar_abono_proveedor(
             bd, monto, concepto.strip() or "Abono al proveedor"
@@ -883,7 +883,7 @@ def ver_factura_pdf(
     Raises:
         HTTPException: 403 si el usuario no es administrador; 404 si la orden no existe.
     """
-    exigir_administrador(usuario)
+    exigir_olb_byte(usuario)
     venta = comercial.obtener_venta(bd, id_venta)
     if venta is None:
         raise HTTPException(status_code=404, detail="Venta no encontrada.")
@@ -924,7 +924,7 @@ def ver_analitica(
     Returns:
         HTML de la vista de analítica.
     """
-    exigir_administrador(usuario)
+    exigir_olb_byte(usuario)
     anio_actual = datetime.now(comercial.ZONA_TIENDA).year
     anio_consultado = anio or anio_actual
     anios = sorted(set(analitica.anios_con_ventas(bd)) | {anio_actual, anio_consultado}, reverse=True)
@@ -999,7 +999,7 @@ def ver_garantias(
     Returns:
         HTML de la vista de garantías.
     """
-    exigir_administrador(usuario)
+    exigir_olb_byte(usuario)
     contexto = _contexto_garantias(usuario, bd)
     contexto["guardado"] = bool(guardado)
     return plantillas.TemplateResponse(request, "olb_byte/garantias.html", contexto)
@@ -1025,7 +1025,7 @@ def registrar_garantia(
     Returns:
         Redirección a la vista de garantías o la misma vista con el error.
     """
-    exigir_administrador(usuario)
+    exigir_olb_byte(usuario)
     try:
         if not id_detalle.strip():
             raise ValueError("Elige el producto con la falla.")
@@ -1064,7 +1064,7 @@ def actualizar_garantia(
     Returns:
         Redirección a la vista de garantías o la misma vista con el error.
     """
-    exigir_administrador(usuario)
+    exigir_olb_byte(usuario)
     try:
         comercial.actualizar_estado_garantia(bd, id_garantia, estado, observacion)
         auditoria.registrar(bd, usuario.id_usuario, "GARANTIA_ACTUALIZADA", "garantias_proveedor", id_garantia)

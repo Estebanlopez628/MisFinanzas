@@ -2997,3 +2997,112 @@ textarea.campo__control {
   text-align: center;
   box-sizing: border-box;
 }
+
+/* Formulario de Trabajos Extras: dos columnas iguales; en celular, una sola columna
+   para que los campos y los calendarios se vean alineados. */
+.rejilla-trabajo {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  align-items: start;
+}
+
+.rejilla-trabajo .campo--ancho {
+  grid-column: 1 / -1;
+}
+
+.rejilla-trabajo .campo__control {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 44px;
+}
+
+@media (max-width: 640px) {
+  .rejilla-trabajo {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Acciones de cada orden (OLB_BYTE): Factura, WhatsApp y Anular comparten alto,
+   ancho de columna y grosor. Se apilan en tres columnas iguales también en celular. */
+.acciones-orden {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  align-items: stretch;
+  min-width: 0;
+}
+
+.acciones-orden > a,
+.acciones-orden > button,
+.acciones-orden > details > summary {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 38px;
+  margin: 0;
+  padding: 8px 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 0.78rem;
+  line-height: 1.15;
+  white-space: normal;
+}
+
+.acciones-orden > details {
+  margin: 0;
+  min-width: 0;
+  width: 100%;
+}
+
+.acciones-orden > details > summary {
+  list-style: none;
+}
+
+.acciones-orden > details > summary::-webkit-details-marker {
+  display: none;
+}
+
+/* Acciones de cada orden: una sola fila de iconos del mismo tamaño, también en celular. */
+.acciones-orden {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  align-items: stretch;
+}
+
+.acciones-orden > a,
+.acciones-orden > button,
+.acciones-orden > details {
+  width: 100%;
+  min-width: 0;
+}
+
+.acciones-orden > details > summary {
+  width: 100%;
+}
+
+.edicion-gasto__formulario {
+  text-align: left;
+}
+
+.boton-icono {
+  min-height: 38px;
+  padding: 0;
+  gap: 0;
+}
+
+.boton-icono svg {
+  display: block;
+  flex: 0 0 auto;
+}
+
+/* Campos de la quincena escrita: mismo alto para texto y selector. */
+.rejilla-trabajo .campo__control,
+.rejilla-trabajo select.campo__control {
+  box-sizing: border-box;
+  height: 44px !important;
+  line-height: 1.2;
+}

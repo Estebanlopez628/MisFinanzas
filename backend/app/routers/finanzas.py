@@ -651,12 +651,8 @@ def _contexto_calculadora(
             "detalle_fijas_periodo": fijas_periodo,
             "deducciones_fijas_periodo": _total_fijas(fijas_periodo),
             "total_deducciones_ley": _total_deducciones_ley(resultado, fijas_periodo),
-            # Chancucos embebidos: solo el administrador los ve y administra.
-            "chancucos": (
-                servicio_chancucos.listar_chancucos(bd, usuario.id_usuario)
-                if usuario.es_administrador
-                else []
-            ),
+            # Chancucos (SRS v1.8): disponibles para todos los usuarios.
+            "chancucos": servicio_chancucos.listar_chancucos(bd, usuario.id_usuario),
             "seccion": "liquidacion",
             "quincenas": (
                 [0] if perfil is None or perfil.modalidad_pago == perfiles.MODALIDAD_MENSUAL else [0, 1, 2]

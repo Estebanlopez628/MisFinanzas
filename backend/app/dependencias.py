@@ -20,6 +20,7 @@ from fastapi import Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
 from app.core.base_datos import obtener_bd
+from app.core.config import obtener_configuracion
 from app.core.seguridad import TokenInvalido, decodificar_token
 from app.servicios import perfiles, usuarios
 
@@ -75,6 +76,15 @@ class UsuarioSesion:
             `True` si el rol es ``ADMIN_OLB``.
         """
         return self.rol == ROL_ADMIN
+
+    @property
+    def puede_ver_olb_byte(self) -> bool:
+        """Indica si el correo está autorizado para el módulo OLB_BYTE.
+
+        Returns:
+            `True` si el correo figura en `CORREOS_OLB_BYTE`.
+        """
+        return self.correo.strip().lower() in obtener_configuracion().correos_olb_byte
 
 
 def _usuario_desde_token(bd: Session, token: str) -> UsuarioSesion | None:
@@ -190,3 +200,23 @@ def exigir_administrador(usuario: UsuarioSesion) -> None:
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Acceso restringido al administrador OLB_BYTE.",
         )
+
+
+def exigir_olb_byte(usuario: UsuarioSesion) -> UsuarioSesion:
+    """Permite el módulo OLB_BYTE solo a los correos autorizados (SRS v1.8).
+
+    Args:
+        usuario: Usuario autenticado de la petición.
+
+    Returns:
+        El mismo usuario si puede entrar.
+
+    Raises:
+        HTTPException: 403 si su correo no está autorizado.
+    """
+    if not usuario.puede_ver_olb_byte:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Este módulo está disponible solo para los usuarios autorizados.",
+        )
+    return usuario

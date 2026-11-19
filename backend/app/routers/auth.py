@@ -12,6 +12,8 @@ No se registra la contraseña ni se devuelve en ningún mensaje de error.
 
 from __future__ import annotations
 
+import secrets
+
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Form, Request, status
@@ -19,11 +21,12 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
 from app.core.base_datos import obtener_bd
+from app.core.config import obtener_configuracion
 from app.core.limitador import limitador_login
 from app.core.seguridad import DURACION_SESION_MINUTOS, crear_token
 from app.dependencias import NOMBRE_COOKIE, UsuarioSesion, usuario_opcional
 from app.routers.vistas import contexto_base, plantillas
-from app.servicios import auditoria, usuarios
+from app.servicios import acceso_google, auditoria, usuarios
 
 router = APIRouter(tags=["Autenticación"])
 
@@ -261,3 +264,104 @@ def procesar_registro(
     return RedirectResponse(
         url="/login?registrado=1", status_code=status.HTTP_303_SEE_OTHER
     )
+
+
+NOMBRE_COOKIE_ESTADO = "estado_google"
+
+
+def _login_con_error(request: Request, mensaje: str) -> HTMLResponse:
+    """Muestra la pantalla de acceso con un mensaje de error de Google.
+
+    Args:
+        request: Petición HTTP.
+        mensaje: Texto que se muestra a la persona.
+
+    Returns:
+        Página de login con código 401.
+    """
+    contexto = contexto_base(None)
+    contexto.update(
+        {
+            "titulo_pagina": "Iniciar sesión",
+            "error": mensaje,
+            "registrado": False,
+            "cuentas_demo": CUENTAS_DEMO,
+            "correo_ingresado": "",
+        }
+    )
+    return plantillas.TemplateResponse(
+        request, "login.html", contexto, status_code=status.HTTP_401_UNAUTHORIZED
+    )
+
+
+@router.get("/login/google", name="iniciar_google", response_model=None)
+def iniciar_google() -> RedirectResponse:
+    """Envía a la persona a elegir su cuenta de Gmail.
+
+    Returns:
+        Redirección a Google con una cookie de `state`, o al login si no hay
+        credenciales configuradas.
+    """
+    if not acceso_google.google_activo():
+        return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
+    estado = secrets.token_urlsafe(24)
+    respuesta = RedirectResponse(
+        url=acceso_google.url_autorizacion(estado), status_code=status.HTTP_303_SEE_OTHER
+    )
+    respuesta.set_cookie(
+        NOMBRE_COOKIE_ESTADO,
+        estado,
+        max_age=600,
+        httponly=True,
+        samesite="lax",
+        secure=obtener_configuracion().cookie_segura,
+        path="/",
+    )
+    return respuesta
+
+
+@router.get("/login/google/callback", name="callback_google", response_model=None)
+def callback_google(
+    request: Request,
+    code: str = "",
+    state: str = "",
+    error: str = "",
+    bd: Session = Depends(obtener_bd),
+) -> HTMLResponse | RedirectResponse:
+    """Recibe la respuesta de Google, crea o busca la cuenta y abre la sesión.
+
+    Args:
+        request: Petición HTTP con la cookie de `state`.
+        code: Código de autorización.
+        state: Valor que debe coincidir con la cookie.
+        error: Motivo de error que informa Google, si lo hay.
+        bd: Sesión de base de datos.
+
+    Returns:
+        Redirección al tablero con la sesión abierta, o el login con el error.
+    """
+    esperado = request.cookies.get(NOMBRE_COOKIE_ESTADO, "")
+    if error or not code or not state or not esperado or not secrets.compare_digest(state, esperado):
+        return _login_con_error(request, "No se pudo iniciar sesión con Google. Intenta de nuevo.")
+    try:
+        perfil = acceso_google.intercambiar_codigo(code)
+    except acceso_google.AccesoGoogleError as fallo:
+        return _login_con_error(request, str(fallo))
+
+    correo = str(perfil["email"]).strip().lower()
+    cuenta = usuarios.buscar_por_correo(bd, correo)
+    if cuenta is None:
+        alias = str(perfil.get("given_name") or perfil.get("name") or correo.split("@")[0])
+        alias = alias.strip()[:40] or "Usuario"
+        # Las cuentas de Google no usan contraseña local; se guarda una aleatoria que
+        # nadie conoce y que cumple la política de contraseñas.
+        cuenta = usuarios.crear_usuario(bd, correo, f"Aa1*{secrets.token_urlsafe(24)}", alias)
+    if not cuenta.activo:
+        return _login_con_error(request, "Tu cuenta está desactivada. Escribe al administrador.")
+
+    auditoria.registrar(bd, cuenta.id_usuario, "LOGIN_GOOGLE", "usuarios", "Sesión iniciada con Google")
+    token = crear_token(cuenta.id_usuario, cuenta.rol, cuenta.alias)
+    respuesta = RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
+    _establecer_cookie(respuesta, token)
+    respuesta.delete_cookie(NOMBRE_COOKIE_ESTADO, path="/")
+    return respuesta

@@ -22,6 +22,7 @@ from sqlalchemy.orm import Session
 
 from app.core.base_datos import obtener_bd
 from app.core.config import obtener_configuracion, obtener_parametros
+from app.servicios import acceso_google
 from app.core.texto import (
     formatear_cop,
     formatear_fecha,
@@ -56,7 +57,7 @@ TARJETAS_DASHBOARD: list[dict[str, Any]] = [
         "descripcion": "Quincenas, liquidación de nómina, gastos, incapacidades y chancucos.",
         "icono": "💰",
         "url": "/finanzas",
-        "solo_admin": False,
+        "solo_autorizados": False,
         "disponible": True,
         "acento": "verde",
     },
@@ -66,7 +67,7 @@ TARJETAS_DASHBOARD: list[dict[str, Any]] = [
         "descripcion": "Inventario, ventas, cartera y abonos de la tienda.",
         "icono": "🛠️",
         "url": "/olb-byte",
-        "solo_admin": True,
+        "solo_autorizados": True,
         "disponible": True,
         "acento": "azul",
     },
@@ -76,7 +77,7 @@ TARJETAS_DASHBOARD: list[dict[str, Any]] = [
         "descripcion": "Control de pasivos, cuotas y fechas límite.",
         "icono": "📉",
         "url": "/deudas",
-        "solo_admin": False,
+        "solo_autorizados": False,
         "disponible": True,
         "acento": "rojo",
     },
@@ -86,7 +87,7 @@ TARJETAS_DASHBOARD: list[dict[str, Any]] = [
         "descripcion": "Ingresos independientes por fuera del salario base.",
         "icono": "🚀",
         "url": "/trabajos-extras",
-        "solo_admin": False,
+        "solo_autorizados": False,
         "disponible": True,
         "acento": "ambar",
     },
@@ -108,6 +109,7 @@ def contexto_base(usuario: UsuarioSesion | None) -> dict[str, Any]:
         "configuracion": obtener_configuracion(),
         "parametros": obtener_parametros(),
         "anio_actual": date.today().year,
+        "google_activo": acceso_google.google_activo(),
     }
 
 
@@ -142,7 +144,7 @@ def ver_dashboard(
     tarjetas_visibles = [
         tarjeta
         for tarjeta in TARJETAS_DASHBOARD
-        if usuario.es_administrador or not tarjeta["solo_admin"]
+        if usuario.puede_ver_olb_byte or not tarjeta["solo_autorizados"]
     ]
 
     contexto = contexto_base(usuario)
