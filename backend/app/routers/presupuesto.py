@@ -23,7 +23,15 @@ from sqlalchemy.orm import Session
 from app.core.base_datos import obtener_bd
 from app.dependencias import UsuarioSesion, obtener_usuario_actual
 from app.routers.vistas import contexto_base, plantillas
-from app.servicios import ahorro, auditoria, deducciones_fijas, pagos_metas, perfiles
+from app.servicios import (
+    ahorro,
+    auditoria,
+    capacidad,
+    consejero,
+    deducciones_fijas,
+    pagos_metas,
+    perfiles,
+)
 
 router = APIRouter(tags=["Presupuesto"])
 
@@ -89,15 +97,23 @@ def _contexto(
     hoy = date.today()
     pagos_metas.asegurar_gastos_de_metas(bd, usuario.id_usuario, hoy.year, hoy.month)
     perfil = perfiles.obtener_perfil(bd, usuario.id_usuario)
+    diagnostico = ahorro.diagnostico(bd, usuario.id_usuario, perfil, hoy.year, hoy.month)
     contexto = contexto_base(usuario)
     contexto.update(
         {
             "titulo_pagina": "Gastos y Presupuesto",
             "seccion": "gastos",
-            "diagnostico": ahorro.diagnostico(
-                bd, usuario.id_usuario, perfil, hoy.year, hoy.month
+            "diagnostico": diagnostico,
+            "consejo": consejero.consejo_financiero(
+                bd,
+                usuario.id_usuario,
+                usuario.alias,
+                diagnostico["disponible"],
             ),
             "metas": ahorro.resumen_metas(bd, usuario.id_usuario),
+            "capacidad": capacidad.capacidad_endeudamiento(
+                bd, usuario.id_usuario, perfil, hoy.year, hoy.month
+            ),
             "historial": ahorro.historial_metas(bd, usuario.id_usuario),
             "deducciones": deducciones_fijas.listar_deducciones(bd, usuario.id_usuario),
             "categorias": ahorro.CATEGORIAS_SUGERIDAS,

@@ -33,6 +33,8 @@ def _datos_venta(**extra: object) -> dict[str, object]:
         "costo_unitario": ["30000", "15000"],
         "precio_unitario": ["50.000", "25000"],
         "garantia_meses": ["3", ""],
+        "forma_pago": "CONTADO",
+        "metodo_pago": "EFECTIVO",
     }
     datos.update(extra)
     return datos
@@ -109,7 +111,9 @@ def test_cantidad_no_numerica_devuelve_error_claro(cliente_admin: TestClient, bd
 
 def test_abono_con_fecha_y_hora_y_metodo_invalido(cliente_admin: TestClient, bd) -> None:
     """El abono acepta fecha y hora del formulario y rechaza medios no permitidos."""
-    cliente_admin.post("/olb-byte/ventas", data=_datos_venta(), follow_redirects=False)
+    cliente_admin.post(
+        "/olb-byte/ventas", data=_datos_venta(forma_pago="CREDITO"), follow_redirects=False
+    )
     venta = comercial.listar_ventas(bd)[0]
 
     ok = cliente_admin.post(
@@ -133,7 +137,9 @@ def test_abono_con_fecha_y_hora_y_metodo_invalido(cliente_admin: TestClient, bd)
 
 def test_anulacion_con_motivo_y_devolucion(cliente_admin: TestClient, bd) -> None:
     """Anular exige motivo, registra la devolución y saca la orden de la cartera."""
-    cliente_admin.post("/olb-byte/ventas", data=_datos_venta(), follow_redirects=False)
+    cliente_admin.post(
+        "/olb-byte/ventas", data=_datos_venta(forma_pago="CREDITO"), follow_redirects=False
+    )
     venta = comercial.listar_ventas(bd)[0]
     comercial.registrar_abono(bd, venta.id_venta, "50000")
 
@@ -154,7 +160,9 @@ def test_anulacion_con_motivo_y_devolucion(cliente_admin: TestClient, bd) -> Non
 
 def test_devolucion_pendiente_desde_el_panel(cliente_admin: TestClient, bd) -> None:
     """La devolución que quedó pendiente se registra desde la orden anulada."""
-    cliente_admin.post("/olb-byte/ventas", data=_datos_venta(), follow_redirects=False)
+    cliente_admin.post(
+        "/olb-byte/ventas", data=_datos_venta(forma_pago="CREDITO"), follow_redirects=False
+    )
     venta = comercial.listar_ventas(bd)[0]
     comercial.registrar_abono(bd, venta.id_venta, "50000")
     comercial.anular_venta(bd, venta.id_venta, "Error")
@@ -175,18 +183,11 @@ def test_devolucion_pendiente_desde_el_panel(cliente_admin: TestClient, bd) -> N
     assert comercial.pendiente_devolver(bd, venta) == Decimal("0")
 
 
-def test_cliente_se_registra_desde_el_panel(cliente_admin: TestClient, bd) -> None:
-    """La agenda normaliza el celular y rechaza un nombre vacío."""
-    vacio = cliente_admin.post("/olb-byte/clientes", data={"nombre": " "})
-    ok = cliente_admin.post(
-        "/olb-byte/clientes",
-        data={"nombre": "Pedro", "telefono_whatsapp": "+57 310 987 6543"},
-        follow_redirects=False,
-    )
+def test_no_hay_ruta_de_nuevo_cliente(cliente_admin: TestClient) -> None:
+    """El alta manual de clientes se retiró: el cliente se guarda al vender."""
+    respuesta = cliente_admin.post("/olb-byte/clientes", data={"nombre": "Pedro"})
 
-    assert vacio.status_code == 400
-    assert ok.status_code == 303
-    assert comercial.listar_clientes(bd)[0].telefono_whatsapp == "3109876543"
+    assert respuesta.status_code in (404, 405)
 
 
 def test_factura_muestra_consecutivo_garantia_y_detalle(cliente_admin: TestClient, bd) -> None:
@@ -199,7 +200,7 @@ def test_factura_muestra_consecutivo_garantia_y_detalle(cliente_admin: TestClien
     respuesta = cliente_admin.get(f"/olb-byte/factura/{venta.id_venta}")
 
     assert respuesta.status_code == 200
-    assert "N.º 1" in respuesta.text
+    assert "Orden No." in respuesta.text
     assert "3 meses por defectos de fábrica" in respuesta.text
     assert "Sin garantía" in respuesta.text
     assert cliente_admin.get("/olb-byte/factura/no-existe").status_code == 404

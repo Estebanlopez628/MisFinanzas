@@ -319,14 +319,11 @@ def test_enlace_whatsapp_usa_el_celular_guardado_con_indicativo(bd) -> None:
     """El enlace de factura y de cobro apunta al número con 57 y lleva el saldo."""
     venta = _venta(bd)
 
-    factura = comercial.enlace_whatsapp_factura(
-        venta, [{"nombre": "Audífonos BT", "cantidad": 1, "subtotal": Decimal("50000")}]
-    )
+    factura = comercial.enlace_whatsapp_factura(venta)
     cobro = comercial.enlace_whatsapp_cobro(venta)
 
     assert factura.startswith("https://wa.me/573001234567?text=")
-    assert "Factura%20No.%201" in factura
-    assert "%2450.000" in factura or "%2450" in factura
+    assert "adjunto%20tu%20factura%20de%20compra" in factura
     assert cobro.startswith("https://wa.me/573001234567?text=")
     assert "saldo%20pendiente" in cobro
 

@@ -1,0 +1,258 @@
+{#
+  Hoja de la factura de OLB_BYTE. La usan la vista en pantalla (factura.html) y el PDF
+  (factura_pdf.html), así que lo que se ve en pantalla es lo que se descarga y se envía.
+  Los datos llegan desde `factura_pdf.datos_factura`. Para cambiar el diseño, edita
+  este archivo y `static/css/factura-olb.css` (ver Guía, sección 10).
+#}
+<article class="hoja-factura" id="factura-imprimible">
+
+  {% if anulada %}
+    <div class="sello-anulada">ANULADA</div>
+  {% endif %}
+
+  <!-- ENCABEZADO CON CURVA TECNOLÓGICA -->
+  <header class="factura-header">
+    <div class="factura-header__fondo-curvo">
+      <svg class="circuitos-svg" viewBox="0 0 600 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M0 40 H180 L210 70 H350" stroke="#00d2ff" stroke-width="1.5" stroke-opacity="0.35"/>
+        <circle cx="350" cy="70" r="4" fill="#00d2ff" fill-opacity="0.6"/>
+        <path d="M50 110 H240 L270 140 H420" stroke="#00d2ff" stroke-width="1.5" stroke-opacity="0.25"/>
+        <circle cx="420" cy="140" r="4" fill="#00d2ff" fill-opacity="0.5"/>
+        <path d="M380 0 V50 L410 80 V130" stroke="#00d2ff" stroke-width="1.5" stroke-opacity="0.3"/>
+        <circle cx="410" cy="130" r="4" fill="#00d2ff" fill-opacity="0.6"/>
+      </svg>
+
+      <div class="marca-contenedor">
+        {% if logos.olb %}
+          <img class="logo-ob-imagen" src="{{ logos.olb }}" alt="OLB BYTE · Alta Tecnología" />
+        {% else %}
+          <div class="logo-ob">
+            <span class="logo-ob__letras">OB</span>
+            <span class="logo-ob__texto">OLB BYTE</span>
+          </div>
+        {% endif %}
+        <p class="marca-eslogan">
+          Productos necesarios que no<br>
+          <span>sabías que necesitabas</span>
+        </p>
+      </div>
+    </div>
+
+    <div class="factura-header__responsable">
+      <div class="icono-factura-top">
+        <svg viewBox="0 0 24 24" width="46" height="46" fill="none" stroke="#16427d" stroke-width="1.8">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="8" y1="13" x2="12" y2="13"/>
+          <line x1="8" y1="17" x2="12" y2="17"/>
+          <text x="14" y="18" font-size="8" font-weight="bold" fill="#16427d" stroke="none">$</text>
+        </svg>
+      </div>
+      <div class="responsable-datos">
+        <span class="responsable-titulo">Responsable:</span>
+        <strong class="responsable-nombre">{{ responsable }}</strong>
+      </div>
+    </div>
+  </header>
+
+  <!-- TARJETAS DE INFORMACIÓN -->
+  <section class="factura-info-grid">
+    <div class="info-card">
+      <ul class="info-lista">
+        <li>
+          <span class="info-icono">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="#16427d"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+          </span>
+          <span><strong>NIT:</strong> {{ nit }}</span>
+        </li>
+        <li>
+          <span class="info-icono">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="#16427d"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+          </span>
+          <span><strong>Dirección:</strong> {{ direccion }}</span>
+        </li>
+        <li>
+          <span class="info-icono">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="#16427d"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+          </span>
+          <span><strong>Celular:</strong> {{ telefono }}</span>
+        </li>
+        <li class="info-bloque-cliente">
+          <span class="info-icono">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="#16427d"><path d="M21 16.5c0 .38-.21.71-.53.88l-7.9 4.44c-.16.12-.36.18-.57.18-.21 0-.41-.06-.57-.18l-7.9-4.44A.991.991 0 0 1 3 16.5v-9c0-.38.21-.71.53-.88l7.9-4.44c.16-.12.36-.18.57-.18.21 0 .41.06.57.18l7.9 4.44c.32.17.53.5.53.88v9zM12 4.15L6.04 7.5 12 10.85l5.96-3.35L12 4.15z"/></svg>
+          </span>
+          <div>
+            <strong>ENTREGADO A:</strong><br>
+            Nombre: {{ venta.cliente_nombre }}
+          </div>
+        </li>
+        <li>
+          <span class="info-icono">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="#16427d"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+          </span>
+          <span>Teléfono: {{ venta.cliente_telefono or '—' }}</span>
+        </li>
+      </ul>
+    </div>
+
+    <div class="info-card">
+      <div class="orden-fila">
+        <span class="info-icono">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="#16427d"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/></svg>
+        </span>
+        <span class="orden-etiqueta">FECHA:</span>
+        <span class="orden-valor">{{ venta.fecha_venta.strftime('%d-%m-%Y') }}</span>
+      </div>
+
+      <div class="orden-fila">
+        <span class="info-icono">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="#16427d"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+        </span>
+        <span class="orden-etiqueta">Orden No.</span>
+        <span class="orden-valor">{{ venta.numero_orden }}</span>
+      </div>
+
+      <hr class="info-divisor">
+
+      <div class="garantia-principal">
+        <span class="escudo-check">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="#1a65c7"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
+        </span>
+        <div>
+          <strong>Garantía:</strong><br>
+          <span class="garantia-texto-destacado">
+            {% if venta.garantia_fecha_fin %}
+              Hasta {{ venta.garantia_fecha_fin.strftime('%d-%m-%Y') }} (defectos de fábrica)
+            {% else %}
+              Sin garantía
+            {% endif %}
+          </span>
+        </div>
+      </div>
+
+      <hr class="info-divisor">
+
+      <div class="garantia-condiciones">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="#16427d"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
+        <div>
+          <strong>Para la garantía conservar:</strong>
+          <ol>
+            <li>Recibo de compra</li>
+            <li>Caja del producto</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TABLA DE PRODUCTOS -->
+  <section class="factura-tabla-seccion">
+    <div class="tabla-marco-redondeado">
+      <table class="tabla-corporativa">
+        <thead>
+          <tr>
+            <th class="col-desc"><span class="th-contenido">DESCRIPCIÓN</span></th>
+            <th class="col-ref"><span class="th-contenido">CATEGORÍA</span></th>
+            <th class="col-cant"><span class="th-contenido">CANTIDAD</span></th>
+            <th class="col-unit"><span class="th-contenido">VALOR UNITARIO</span></th>
+            <th class="col-tot"><span class="th-contenido">VALOR TOTAL</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for linea in lineas %}
+            <tr>
+              <td>
+                {{ linea.nombre }}
+                {% if linea.garantia %}
+                  <small class="linea-garantia">({{ linea.garantia }})</small>
+                {% endif %}
+              </td>
+              <td class="texto-centro">{{ linea.categoria or '—' }}</td>
+              <td class="texto-centro">{{ linea.cantidad }}</td>
+              <td class="texto-centro">{{ linea.precio | cop }}</td>
+              <td class="texto-centro"><strong>{{ linea.subtotal | cop }}</strong></td>
+            </tr>
+          {% endfor %}
+          {% for _ in filas_vacias %}
+            <tr class="fila-relleno">
+              <td>&nbsp;</td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="totales-wrapper">
+      <div class="totales-caja">
+        <div class="total-fila total-fila--subtotal">
+          <span class="total-etiqueta">SUBTOTAL</span>
+          <span class="total-valor">{{ venta.subtotal | cop }}</span>
+        </div>
+        <div class="total-fila total-fila--final">
+          <span class="total-etiqueta">TOTAL</span>
+          <span class="total-valor">{{ venta.total | cop }}</span>
+        </div>
+        {% if venta.saldo_pendiente and venta.saldo_pendiente > 0 %}
+          <div class="total-fila total-fila--abono">
+            <span class="total-etiqueta">ABONADO / SALDO</span>
+            <span class="total-valor">{{ venta.total_abonado | cop }} / {{ venta.saldo_pendiente | cop }}</span>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+
+  <!-- MEDIOS DE PAGO -->
+  <section class="medios-pago-seccion">
+    <div class="medios-pago-badge">MEDIOS DE PAGO</div>
+    <div class="medios-pago-caja">
+
+      <div class="pago-item">
+        {% if logos.bre_b %}<img src="{{ logos.bre_b }}" alt="Bre-B" class="pago-logo">{% endif %}
+        <span class="pago-dato">{{ telefono }}</span>
+      </div>
+
+      <div class="pago-item">
+        {% if logos.datafono %}<img src="{{ logos.datafono }}" alt="Datáfono" class="pago-logo pago-logo--datafono">{% endif %}
+        <span class="pago-dato">Datáfono</span>
+      </div>
+
+      <div class="pago-item">
+        <div class="logo-bbva-texto">{{ banco.nombre }}</div>
+        <span class="pago-subtitulo">{{ banco.tipo }}</span>
+        <span class="pago-dato">{{ banco.cuenta }}</span>
+        <span class="pago-dato">{{ banco.telefono }}</span>
+      </div>
+
+      <div class="pago-item">
+        {% if logos.nequi %}<img src="{{ logos.nequi }}" alt="Nequi" class="pago-logo">{% endif %}
+        <span class="pago-dato">{{ nequi }}</span>
+      </div>
+
+      <div class="pago-item">
+        {% if logos.visa_mastercard %}<img src="{{ logos.visa_mastercard }}" alt="Mastercard y Visa" class="pago-logo pago-logo--tarjetas">{% endif %}
+        <span class="pago-dato">Crédito / Débito</span>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- PIE DE PÁGINA -->
+  <footer class="factura-footer">
+    <div class="footer-contenido">
+      <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="#ffffff" stroke-width="1.6">
+        <path d="M11 17a1 1 0 0 1-1 1H6a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h3l4-3v11z"/>
+        <path d="M15 9h3a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-4"/>
+      </svg>
+      <span class="footer-gracias">GRACIAS POR SU CONFIANZA</span>
+      <span class="footer-linea"></span>
+    </div>
+    <div class="footer-legal">{{ pie_legal }}</div>
+    <div class="footer-franjas-azules"></div>
+  </footer>
+
+</article>

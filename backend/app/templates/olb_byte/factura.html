@@ -1,14 +1,14 @@
 {% extends "base.html" %}
 {% block titulo %}Factura No. {{ venta.numero_orden }}{% endblock %}
 
+{% block estilos %}
+  <link rel="stylesheet" href="{{ url_for('estaticos', path='css/factura-olb.css') }}" />
+{% endblock %}
+
 {% block contenido %}
-  <section class="heroe">
-    <h1 class="heroe__titulo">Factura de venta</h1>
-    <p class="heroe__subtitulo">
-      OLB_BYTE · {{ venta.fecha_venta | fecha_larga }} · N.º {{ venta.numero_orden }}
-      {% if venta.estado_orden == 'ANULADA' %} · ANULADA{% endif %}
-    </p>
+  <div class="barra-herramientas-factura no-imprimir">
     <div class="acciones-formulario">
+      <a class="boton boton--secundario boton--pequeno" href="{{ url_for('ver_olb_byte') }}">← Volver a Ventas</a>
       <button class="boton boton--secundario boton--pequeno" type="button" data-vista-pdf>Vista previa PDF</button>
       <a class="boton boton--primario boton--pequeno"
          href="{{ url_for('ver_factura_pdf', id_venta=venta.id_venta) }}">Descargar PDF</a>
@@ -16,14 +16,15 @@
               data-compartir
               data-pdf="{{ url_for('ver_factura_pdf', id_venta=venta.id_venta) }}"
               data-nombre="{{ nombre_archivo }}"
-              data-whatsapp="{{ enlace_whatsapp }}">Compartir</button>
+              data-texto="{{ texto_compartir }}"
+              data-whatsapp="{{ enlace_whatsapp }}">Enviar por WhatsApp</button>
       <button class="boton boton--secundario boton--pequeno" type="button" onclick="window.print()">
         Imprimir
       </button>
     </div>
-  </section>
+  </div>
 
-  <dialog class="vista-previa" data-dialogo-pdf aria-label="Vista previa de la factura">
+  <dialog class="vista-previa no-imprimir" data-dialogo-pdf aria-label="Vista previa de la factura">
     <div class="vista-previa__barra">
       <strong>Vista previa de la factura</strong>
       <button class="boton boton--secundario boton--pequeno" type="button" data-cerrar-pdf>Cerrar</button>
@@ -32,73 +33,9 @@
             data-src="{{ url_for('ver_factura_pdf', id_venta=venta.id_venta) }}?descargar=0"></iframe>
   </dialog>
 
-  <div class="rejilla-paneles">
-    <section class="panel">
-      <h2 class="panel__titulo">Cliente</h2>
-      <ul class="lista-parametros">
-        <li><span>Nombre</span><strong>{{ venta.cliente_nombre }}</strong></li>
-        <li><span>WhatsApp</span><strong>{{ venta.cliente_telefono or '—' }}</strong></li>
-        <li><span>Garantía vence</span><strong>{{ venta.garantia_fecha_fin.strftime('%d-%m-%Y') if venta.garantia_fecha_fin else '—' }}</strong></li>
-      </ul>
-    </section>
-
-    <section class="panel">
-      <h2 class="panel__titulo">Estado de la venta</h2>
-      <ul class="lista-parametros">
-        <li><span>Total</span><strong>{{ venta.total | cop }}</strong></li>
-        <li><span>Abonado</span><strong>{{ venta.total_abonado | cop }}</strong></li>
-        <li><span>Saldo pendiente</span><strong class="valor-negativo">{{ venta.saldo_pendiente | cop }}</strong></li>
-        <li><span>Estado</span><strong>{{ 'Anulada' if venta.estado_orden == 'ANULADA' else venta.estado_pago | capitalize }}</strong></li>
-      </ul>
-    </section>
-  </div>
-
-  <section class="panel panel--tabla">
-    <h2 class="panel__titulo">Detalle</h2>
-    {% if lineas %}
-      <div class="tabla-contenedor">
-        <table class="tabla">
-          <thead>
-            <tr>
-              <th scope="col">Producto</th>
-              <th scope="col">Categoría</th>
-              <th scope="col">Cantidad</th>
-              <th scope="col">Precio unitario</th>
-              <th scope="col">Subtotal</th>
-              <th scope="col">Garantía</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for linea in lineas %}
-              <tr>
-                <td>{{ linea.nombre }}</td>
-                <td>{{ linea.categoria or '—' }}</td>
-                <td class="tabla__numero">{{ linea.cantidad }}</td>
-                <td class="tabla__numero">{{ linea.precio_unitario | cop }}</td>
-                <td class="tabla__numero">{{ linea.subtotal | cop }}</td>
-                <td>{{ linea.garantia_texto or '—' }}</td>
-              </tr>
-            {% endfor %}
-          </tbody>
-          <tfoot>
-            <tr>
-              <th scope="row" colspan="4">Total</th>
-              <td class="tabla__numero">{{ venta.total | cop }}</td>
-              <td></td>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
-    {% else %}
-      <p class="tabla__vacia">La venta no tiene líneas registradas.</p>
-    {% endif %}
-    <p class="ayuda">
-      Documento generado por {{ configuracion.nombre }} v{{ configuracion.version }}.
-      No reemplaza la factura electrónica ante la DIAN.
-    </p>
-  </section>
+  {% include "olb_byte/_hoja_factura.html" %}
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('estaticos', path='js/factura.js') }}" defer></script>
+  <script src="{{ url_for('estaticos', path='js/factura.js') }}" defer></script>
 {% endblock %}

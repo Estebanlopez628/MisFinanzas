@@ -39,8 +39,8 @@ def test_clasificar_saldo_usa_signo_y_color_solo_en_deficit_y_superavit() -> Non
     assert comercial.clasificar_saldo(Decimal("0")) == ("$0", "")
 
 
-def test_tabla_balance_calcula_balance_y_efectivo_libre() -> None:
-    """Balance = cartera − deuda y efectivo libre = caja − deuda, con su signo."""
+def test_barras_balance_muestran_saldos_con_signo_y_color() -> None:
+    """Balance y efectivo libre llevan signo y color; los demás saldos, no."""
     resumen = {
         "cartera_clientes": Decimal("60000"),
         "deuda_proveedor": Decimal("50000"),
@@ -49,13 +49,51 @@ def test_tabla_balance_calcula_balance_y_efectivo_libre() -> None:
         "efectivo_libre": Decimal("-20000"),
     }
 
-    filas = {fila["etiqueta"]: fila for fila in comercial.tabla_balance(resumen)}
+    barras = {barra["etiqueta"]: barra for barra in comercial.barras_balance(resumen)}
 
-    assert filas["Balance de cartera"]["texto"] == "$10.000"
-    assert filas["Balance de cartera"]["clase"] == "valor-positivo"
-    assert filas["Efectivo libre real"]["texto"] == "−$20.000"
-    assert filas["Efectivo libre real"]["clase"] == "valor-negativo"
-    assert filas["Total adeudado al proveedor"]["clase"] == ""
+    assert barras["Balance de cartera"]["texto"] == "$10.000"
+    assert barras["Balance de cartera"]["clase"] == "valor-positivo"
+    assert barras["Efectivo libre real"]["texto"] == "−$20.000"
+    assert barras["Efectivo libre real"]["clase"] == "valor-negativo"
+    assert barras["Efectivo libre real"]["color"] == "var(--accent-red)"
+    assert barras["Total adeudado por clientes"]["clase"] == ""
+    assert barras["Efectivo libre real"]["hay_negativos"] is True
+
+
+def test_barras_con_deficit_salen_a_la_izquierda_del_cero() -> None:
+    """Con un déficit el cero queda al centro: el negativo crece hacia la izquierda."""
+    resumen = {
+        "cartera_clientes": Decimal("60000"),
+        "deuda_proveedor": Decimal("50000"),
+        "balance": Decimal("10000"),
+        "caja_recaudada": Decimal("30000"),
+        "efectivo_libre": Decimal("-20000"),
+    }
+
+    barras = {barra["etiqueta"]: barra for barra in comercial.barras_balance(resumen)}
+
+    assert barras["Total adeudado por clientes"]["izquierda"] == 50.0
+    assert barras["Total adeudado por clientes"]["ancho"] == 50.0
+    assert barras["Efectivo libre real"]["izquierda"] == 33.33
+    assert barras["Efectivo libre real"]["ancho"] == 16.67
+
+
+def test_barras_sin_deficit_crecen_desde_la_izquierda() -> None:
+    """Sin valores negativos la escala empieza en cero y la barra mayor llena la pista."""
+    resumen = {
+        "cartera_clientes": Decimal("60000"),
+        "deuda_proveedor": Decimal("30000"),
+        "balance": Decimal("30000"),
+        "caja_recaudada": Decimal("30000"),
+        "efectivo_libre": Decimal("0"),
+    }
+
+    barras = {barra["etiqueta"]: barra for barra in comercial.barras_balance(resumen)}
+
+    assert barras["Total adeudado por clientes"]["izquierda"] == 0.0
+    assert barras["Total adeudado por clientes"]["ancho"] == 100.0
+    assert barras["Total adeudado al proveedor"]["ancho"] == 50.0
+    assert barras["Efectivo libre real"]["ancho"] == 0.0
 
 
 def test_segmentos_dona_reparten_cien_unidades_entre_cartera_y_deuda() -> None:

@@ -1,13 +1,18 @@
 /**
- * Acciones de la factura de OLB_BYTE: vista previa, compartir y envío por WhatsApp.
+ * Acciones de la factura de OLB_BYTE: vista previa y envío por WhatsApp con el PDF.
  *
  * Responsabilidad
  * ---------------
  * - Abrir la vista previa del PDF en un diálogo nativo y cerrarla.
- * - Compartir el PDF con la Web Share API cuando el navegador puede enviar archivos.
- * - Si no puede compartir archivos, abrir el enlace de WhatsApp con el resumen.
+ * - Enviar la factura: se descarga el PDF desde el servidor y se comparte como
+ *   archivo con la hoja de compartir del navegador (Android, iPhone), con el mensaje
+ *   «Hola {cliente}, adjunto tu factura de compra.».
+ * - Si el navegador no puede compartir archivos (por ejemplo, en un PC), se descarga
+ *   el PDF y se abre WhatsApp con el mensaje; el PDF se adjunta desde la descarga.
  *
- * El PDF lo genera el servidor (Chromium headless). Este script no calcula nada.
+ * WhatsApp no permite que una página web adjunte un archivo a un chat sin la hoja de
+ * compartir, por eso el respaldo descarga el archivo y lo indica al usuario.
+ * El PDF lo genera el servidor. Este script no calcula nada.
  */
 
 (function () {
@@ -34,51 +39,92 @@
       marco.removeAttribute("src");
     });
   } else if (botonVista) {
-    // Sin <dialog> no hay vista previa dentro de la página; la descarga sigue disponible.
     botonVista.hidden = true;
   }
 
-  var botonCompartir = document.querySelector("[data-compartir]");
-  if (!botonCompartir) {
-    return;
+  /**
+   * Guarda un archivo en el equipo mediante un enlace temporal.
+   *
+   * @param {Blob} blob Contenido del archivo.
+   * @param {string} nombre Nombre con el que se descarga.
+   */
+  function descargar(blob, nombre) {
+    var url = URL.createObjectURL(blob);
+    var enlace = document.createElement("a");
+    enlace.href = url;
+    enlace.download = nombre;
+    document.body.appendChild(enlace);
+    enlace.click();
+    document.body.removeChild(enlace);
+    window.setTimeout(function () {
+      URL.revokeObjectURL(url);
+    }, 1000);
   }
 
   /**
-   * Intenta compartir el PDF como archivo; si no es posible abre WhatsApp.
+   * Envía la factura por WhatsApp con el PDF como archivo cuando es posible.
    *
-   * @param {Event} evento Clic en el botón de compartir.
+   * @param {Event} evento Clic en el botón de envío.
    */
-  function compartir(evento) {
-    evento.preventDefault();
-    var url = botonCompartir.getAttribute("data-pdf");
-    var nombre = botonCompartir.getAttribute("data-nombre");
-    var whatsapp = botonCompartir.getAttribute("data-whatsapp");
+  function enviarFactura(evento) {
+    var boton = evento.currentTarget;
+    var url = boton.getAttribute("data-pdf");
+    var nombre = boton.getAttribute("data-nombre");
+    var texto = boton.getAttribute("data-texto");
+    var whatsapp = boton.getAttribute("data-whatsapp");
 
-    if (!navigator.share || !navigator.canShare || typeof File !== "function") {
-      window.open(whatsapp, "_blank", "noopener");
-      return;
-    }
+    // La ventana se abre dentro del clic para que el navegador no la bloquee; el
+    // respaldo la dirige a WhatsApp cuando el PDF ya está listo.
+    var ventana = window.open("", "_blank");
+    var etiqueta = boton.textContent;
+    boton.disabled = true;
+    boton.textContent = "Preparando…";
 
     fetch(url, { credentials: "same-origin" })
       .then(function (respuesta) {
+        if (!respuesta.ok) {
+          throw new Error("No se pudo generar el PDF.");
+        }
         return respuesta.blob();
       })
       .then(function (blob) {
         var archivo = new File([blob], nombre, { type: "application/pdf" });
-        if (!navigator.canShare({ files: [archivo] })) {
-          window.open(whatsapp, "_blank", "noopener");
-          return null;
+        if (navigator.share && navigator.canShare && navigator.canShare({ files: [archivo] })) {
+          if (ventana) {
+            ventana.close();
+          }
+          return navigator.share({ files: [archivo], text: texto, title: nombre });
         }
-        return navigator.share({ files: [archivo], title: nombre, text: "Factura OLB_BYTE" });
+        descargar(blob, nombre);
+        if (ventana) {
+          ventana.location.href = whatsapp;
+        }
+        window.alert(
+          "La factura se descargó. En WhatsApp, toca el clip 📎 y adjúntala antes de enviar."
+        );
+        return null;
       })
       .catch(function (error) {
-        // El usuario cerró la hoja de compartir: no se abre WhatsApp por su cuenta.
+        if (ventana) {
+          ventana.close();
+        }
         if (error && error.name === "AbortError") {
+          // El usuario cerró la hoja de compartir: no se muestra nada.
           return;
         }
-        window.open(whatsapp, "_blank", "noopener");
+        window.alert(
+          (error && error.message) ||
+            "No se pudo preparar la factura. Revisa la instalación de Chromium (Guía, sección 13)."
+        );
+      })
+      .then(function () {
+        boton.disabled = false;
+        boton.textContent = etiqueta;
       });
   }
 
-  botonCompartir.addEventListener("click", compartir);
+  var botonesEnvio = document.querySelectorAll("[data-compartir], [data-compartir-factura]");
+  for (var i = 0; i < botonesEnvio.length; i += 1) {
+    botonesEnvio[i].addEventListener("click", enviarFactura);
+  }
 })();

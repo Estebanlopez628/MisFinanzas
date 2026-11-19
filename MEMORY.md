@@ -262,6 +262,55 @@ Recálculo en tiempo real (<100 ms) sin recargar página. Se implementa con func
 - **Decisión:** `trabajos_extras` gana `tipo_contrato` (`INDEFINIDO` | `TERMINO_FIJO`), `frecuencia` (`MENSUAL` | `QUINCENAL`), `fecha_fin` y `fecha_pago`. `valor` es el monto **de cada pago**. Los pagos se generan de forma idempotente como filas de `gastos` con `id_trabajo`: reutilizan la macro `fila_gasto` (lápiz, «Cancelar», ×, ✔ y abono manual) pero `gastos.listar_gastos` los excluye, así que no tocan el sueldo, las quincenas ni los totales de gastos. El ✔ registra el cobro y `trabajos.extras_cobrados_mes` lo suma al `disponible` del diagnóstico del mes. La frecuencia quincenal crea dos pagos (día 15 y día 30 ajustado al último día); la mensual, uno en el día de `fecha_pago`. Un contrato indefinido mantiene una ventana móvil de 12 meses desde el mes visible; un término fijo se detiene en `fecha_fin`. La × inhabilita el pago 15 días en lugar de borrarlo, para que la generación idempotente no lo recree. Los trabajos anteriores se migran como término fijo de un solo mes para no inventar ingresos recurrentes.
 - **Archivos:** `modelos.py` (`TrabajoExtra`, `Gasto.id_trabajo`), `core/base_datos.py` (`_migrar_columnas_trabajos`, `id_trabajo` en `_migrar_columnas_gastos`), `servicios/trabajos.py`, `servicios/gastos.py`, `servicios/pagos_metas.py` (`quitar_gasto`), `servicios/ahorro.py` (`diagnostico`), `routers/trabajos.py`, `routers/gastos.py` (`_volver`), `templates/trabajos/index.html`, `templates/finanzas/_gasto_fijo.html`, `templates/presupuesto/index.html`, `static/js/app.js`, `diccionario_datos.md` §7 y §12, `tests/test_trabajos_extras.py`.
 
+### ADR-46 — Diseño único de la factura para pantalla, PDF y WhatsApp (SRS OLB_BYTE v1.0, rediseño)
+- **Contexto:** el propietario entregó un diseño corporativo (cabecera con curva, tarjetas, tabla con relleno hasta nueve filas, totales, medios de pago y pie). Debe verse igual en la pantalla, en la vista previa, en la descarga y en el PDF enviado por WhatsApp.
+- **Decisión:**
+  - Una sola hoja compartida (`templates/olb_byte/_hoja_factura.html`) y un solo CSS (`static/css/factura-olb.css`). `factura.html` (pantalla) y `factura_pdf.html` (PDF) solo las incluyen; por eso no pueden divergir.
+  - Un solo contexto (`factura_pdf.datos_factura`) alimenta las dos salidas. La pantalla no aplica el límite de diez productos (`validar_maximo=False`); el PDF sí.
+  - El CSS se incrusta en el PDF como texto y los logos como data URI, para que Chromium no dependa de rutas ni de red.
+  - El PDF se dibuja con un cuerpo más ancho y se reduce con `ESCALA_PDF = 0.75`: a 100 % el diseño con diez productos ocupa dos hojas Carta. La prueba `test_pdf_con_diez_productos_cabe_en_una_ppagina` lo vigila.
+  - Columna «REFERENCIA» del diseño renombrada a «CATEGORÍA», para coincidir con el campo que se captura en la venta.
+  - La cuenta BBVA, la dirección y el teléfono se guardan como constantes en `factura_pdf.py`, no en el HTML, para editarlos en un solo lugar.
+  - En pantallas de 760 px o menos la hoja se reorganiza en una columna; el PDF no usa esas reglas porque se dibuja con ancho de hoja Carta.
+- **Verificación:** 479 pruebas en verde (incluye el PDF de 3 y de 10 productos en una hoja). Capturas en escritorio (850 px) y celular (390 px): sin desbordamiento horizontal.
+- **Archivos:** `servicios/factura_pdf.py`, `routers/olb_byte.py` (`ver_factura`), `templates/olb_byte/{_hoja_factura,factura,factura_pdf}.html`, `static/css/factura-olb.css`, `Guia.md` §10, `tests/test_factura_pdf.py`, `tests/test_olb_vistas.py`.
+
+### ADR-43 — Pago al vender, cobro en página propia, WhatsApp con PDF y límites de la web (SRS OLB_BYTE v1.0, ajustes 3)
+- **Contexto:** el usuario pidió registrar la forma de pago y el anticipo en la venta, un flujo de cobro completo, enviar la factura en PDF por WhatsApp desde la tabla de órdenes, quitar «Nuevo cliente», ocultar ganancia y saldo en órdenes, y que el botón de contactos abra la libreta.
+- **Decisiones:**
+  - **Pago al vender:** `registrar_venta` recibe un `PagoInicial` opcional. El contado cobra el total; el crédito registra el anticipo solo si el cliente lo hace. El pago se valida antes de crear la orden y se guarda en la misma transacción. Un anticipo por encima del total se rechaza. El campo «Valor del anticipo» no estaba en la especificación: se añadió porque el anticipo necesita un monto.
+  - **Cobro:** la gestión de cada orden vive en `/olb-byte/ventas/{id}/cobro` con dos opciones (registrar abono o pago total, y recordatorio por WhatsApp). Cancelar regresa a pendientes. Un error al cobrar vuelve a esa página (`desde_cobro`).
+  - **Órdenes:** solo muestran el total. La ganancia y el saldo se ocultan en la tabla del panel. Analítica y Cartera siguen mostrándolos: el propietario decidió que no requieren protección adicional, porque el módulo es de uso exclusivo del administrador.
+  - **WhatsApp con PDF:** la Web Share API comparte el PDF como archivo con el texto «Hola {cliente}, adjunto tu factura de compra.». Si el navegador no puede compartir archivos (por ejemplo, un PC), se descarga el PDF y se abre WhatsApp, y el usuario lo adjunta con el clip. Una página web no puede adjuntar un archivo a un chat sin pasar por la hoja de compartir.
+  - **Panel de producto:** «Guardar» agrega el producto a la tabla y bloquea el panel. «+ Agregar otro producto» lo desbloquea. Ambos botones de abajo comparten tamaño y color.
+  - **Contactos:** la Contact Picker API solo funciona en Android con Chrome y HTTPS, y solo selecciona contactos existentes; no crea contactos nuevos. Donde no existe, el botón guarda el número como tarjeta de contacto (.vcf), que el celular abre para guardarlo.
+  - **Balance:** la tabla de texto se cambia por barras horizontales. Con déficit, el cero queda al centro y el déficit sale a la izquierda, en rojo y con signo.
+  - **Submenú:** el borde superior se cortaba por `overflow-x: auto`; se agregó espacio interno.
+- **Archivos:** `servicios/comercial.py` (`PagoInicial`, `barras_balance`, `texto_compartir_factura`), `routers/olb_byte.py` (`ver_cobro`, `_datos_pago`, `_pago_desde_datos`, se retira `crear_cliente`), `templates/olb_byte/{index,cobro,pendientes,cartera}.html`, `static/js/{olb_byte,factura}.js`, `static/css/estilos.css`, `Guia.md` §10 (personalizar la factura), `tests/test_pago_y_cobro.py`.
+
+### ADR-44 — Capacidad de endeudamiento compartida y proyección a 12 meses (SRS v1.7, bloque F)
+- **Contexto:** el usuario necesita ver cuánto de su ingreso está comprometido con gastos y deudas, qué deudas están por terminar y cómo cambiaría su saldo libre en el próximo año.
+- **Decisión:** nuevo `servicios/capacidad.py` de solo lectura. El ingreso es el de las quincenas más los trabajos extras cobrados; los gastos fijos suman gastos, deducciones de ley y deducciones fijas; la cuota de deudas se calcula con `cuota_mensual_equivalente`. La dona reparte el ingreso en tres arcos (`_repartir_arcos`) que siempre suman 100: si los compromisos superan el ingreso, se escalan proporcionalmente y el libre queda en cero. El semáforo usa el porcentaje real de deuda sobre el ingreso: hasta 20 % verde, hasta 35 % ámbar, más rojo. `deudas_por_terminar` incluye las que tienen tres cuotas o menos y su fecha de cierre; `proyeccion_capacidad` simula doce meses y retira la cuota cuando cada deuda termina. El panel vive en `templates/finanzas/_capacidad.html` y se instancia de forma independiente en Gastos y Presupuesto y en Trabajos Extras.
+- **Archivos:** `servicios/capacidad.py`, `templates/finanzas/_capacidad.html`, `routers/presupuesto.py`, `routers/trabajos.py`, `templates/presupuesto/index.html`, `templates/trabajos/index.html`, `static/css/estilos.css`, `static/js/sw.js` (`olb-finanzas-v16`), `tests/test_capacidad.py`.
+
+### ADR-45 — Consejero financiero con bola de nieve, avalancha y metas (SRS v1.7, bloque G)
+- **Contexto:** con un excedente real el usuario debe decidir entre amortizar deudas o ahorrar, y no siempre sabe qué deuda atacar primero.
+- **Decisión:** `servicios/consejero.py` se activa solo si el disponible consolidado (quincenas + extras) supera $300.000. Con deudas simula doce meses de cuotas mínimas y dos escenarios que aplican todo el excedente: bola de nieve (saldo menor primero) y avalancha (tasa mayor primero). Recomienda el de menor interés total y muestra la deuda objetivo, el ahorro en intereses, el mes de liquidación y la deuda más grande. Sin deudas dirige el excedente a la primera meta activa y calcula en cuántos meses se completa; si no hay metas, sugiere crearlas. La gráfica compara doce meses de base contra optimizado: en modo deuda es saldo restante (más bajo es mejor) y en modo ahorro es dinero acumulado (más alto es mejor). Las tasas quincenales se convierten a mensuales con `(1 + r)² − 1`. Es una proyección educativa con ingreso y cuotas constantes.
+- **Archivos:** `servicios/consejero.py`, `routers/presupuesto.py`, `templates/presupuesto/index.html`, `static/css/estilos.css`, `tests/test_consejero.py`.
+
+### ADR-42 — Formulario de venta v2, categoría y submenú (SRS OLB_BYTE v1.0, ajustes de validación)
+- **Contexto:** el usuario validó la Fase 2 y pidió: que «Buscar en Contactos» funcione, mover las acciones de órdenes al submenú como en Gastos y Presupuesto, meter el detalle de productos dentro del formulario de venta, cambiar «referencia» por «categoría» y que la tabla no sea tan larga en el celular.
+- **Diagnóstico del botón de contactos:** la clase `.boton` fija `display: inline-flex`, y eso anula el atributo `hidden`. El botón siempre estaba visible, y en PC no hace nada porque el navegador no tiene la Contact Picker API (solo existe en Android con Chrome y en HTTPS). Se corrige con una regla global `[hidden] { display: none !important }`, y ahora se muestra una nota que explica cuándo funciona.
+- **Decisiones:**
+  - `venta_detalle.referencia` pasa a `categoria`. Es un `RENAME COLUMN` idempotente (`_renombrar_referencia_a_categoria`) que conserva los datos.
+  - El formulario tiene un panel de producto (nombre, categoría, cantidad, costo, precio, garantía) con subtotal y «+ Agregar otro producto» (o Enter). Los productos quedan en una tabla de detalle con Eliminar y Actualizar en la misma fila. Actualizar abre un cuadro de edición con Actualizar y Cancelar en horizontal.
+  - Los campos del panel no llevan `name`: solo viajan las filas de la tabla. Si el usuario escribió un producto y pulsa «Registrar venta», se agrega antes de enviar.
+  - En celular (≤ 640 px) la tabla se muestra como tarjetas. Se quitó el `min-width` heredado de `.tabla` solo en esa vista.
+  - El submenú de OLB_BYTE reutiliza `subnav-finanzas`. Los enlaces de «Órdenes registradas» pasan arriba, y las vistas de cobro y cartera dejan de tener botones «Volver al panel».
+- **Defecto encontrado en la verificación:** la página principal no marcaba «Ventas» como pestaña activa porque faltaba `seccion`. La prueba lo detectó y se corrigió.
+- **Verificación:** `pytest` en verde (434 pruebas, incluidas 10 nuevas en `tests/test_olb_ui.py` y 1 de migración). Recorrido real en Chromium con la aplicación levantada (19 comprobaciones: agregar con Enter, cancelar sin cambios, botones horizontales, totales, sin desplazamiento en celular, precio en pesos) y revisión visual de escritorio y celular.
+- **Archivos:** `modelos.py`, `core/base_datos.py`, `servicios/comercial.py`, `servicios/analitica.py`, `servicios/factura_pdf.py`, `routers/olb_byte.py`, `templates/olb_byte/index.html`, `templates/olb_byte/_subnav.html`, `templates/olb_byte/{pendientes,cartera,garantias,analitica,factura,factura_pdf}.html`, `static/js/olb_byte.js`, `static/css/estilos.css`, `diccionario_datos.md` §10.4, `tests/test_olb_ui.py`, `tests/test_migracion_olb.py`.
+
 ### ADR-41 — Factura PDF: arquitectura de render y límites (SRS OLB_BYTE v1.0, Fase 7)
 - **Contexto:** ADR-36 eligió Playwright. La factura debe salir en una sola página Carta con la paleta del SRS, logos de `assets/` y medios de pago.
 - **Decisión:**
@@ -378,6 +427,52 @@ Recálculo en tiempo real (<100 ms) sin recargar página. Se implementa con func
 
 ## Bitácora de Cambios
 
+### 2026-11-18 — Ajuste móvil: la edición de gastos se abre como ventana centrada (ADR-30)
+
+**Contexto:** en el celular el lápiz de cada gasto queda al final de la fila y el
+formulario de edición (`position: absolute; right: 0`) se salía de la pantalla:
+aparecía pegado a la derecha y cortado.
+
+**Cambios realizados**
+1. `templates/finanzas/_gasto_fijo.html` y `templates/presupuesto/index.html` — el `<details>` de edición lleva la clase `edicion-gasto--modal`.
+2. `static/css/estilos.css` — a 640 px o menos el formulario pasa a `position: fixed` centrado (`translate(-50%, -50%)`), con ancho `min(340px, 100vw - 32px)` y alto máximo `100vh - 48px` con scroll propio; el `<details>` dibuja un fondo oscuro con `::before`, la página no se desplaza (`body:has(...)`) y una fila de pago saltado recupera opacidad plena mientras se edita. En escritorio se conserva el desplegable anclado al lápiz.
+3. `static/js/app.js` — tocar el fondo o pulsar Escape cierra la ventana y descarta lo escrito, igual que «Cancelar» (ayudante `cerrarEdicion`).
+4. `static/js/sw.js` — caché `olb-finanzas-v17`.
+5. `tests/test_gastos_checks.py` — las dos pruebas del lápiz comprueban la clase `edicion-gasto--modal`.
+
+**Verificación**
+- Chromium real con base temporal y sesión de administrador: a 360 y 390 px la ventana queda `fixed`, centrada y completa dentro de la vista (328 y 340 px de ancho, sin desborde interno); a 768 y 1280 px sigue el desplegable absoluto. El fondo cubre la vista y se cierra al tocarlo y con Escape.
+- `pytest` de los módulos tocados (99 pruebas: gastos, quincenas, capacidad, consejero, trabajos, finanzas y presupuesto) en verde.
+
+
+### 2026-11-18 — Ajustes de validación 3: pago al vender, cobro, WhatsApp con PDF, barras y responsive (ADR-43)
+
+**Cambios realizados**
+1. Forma de pago y anticipo en el formulario de venta; `registrar_venta` con `PagoInicial` en la misma transacción.
+2. Página de cobro con dos opciones; abono con retorno a la página de cobro si falla.
+3. Pendientes con una acción por cliente («Añadir pago o gestionar cobro») y tabla compacta.
+4. Órdenes sin ganancia ni saldo; acciones Factura, WhatsApp y Anular en una fila; WhatsApp envía el PDF.
+5. Formulario: categoría antes del nombre, «Guardar» que bloquea el panel y «+ Agregar otro producto» y «Registrar venta» del mismo tamaño.
+6. Se retira «Nuevo cliente»; `/olb-byte/clientes` ya no existe.
+7. Cartera: barras horizontales del balance con la misma información de texto.
+8. Submenú de OLB_BYTE: se corrige el borde cortado al pasar el ratón.
+9. Contactos: en PC, guardar el número como tarjeta de contacto (.vcf); con la API del navegador, buscar en la libreta.
+10. `Guia.md` §10: cómo personalizar la factura (datos, colores, logos y medios de pago).
+
+**Verificación:** `pytest` en verde (453 pruebas). Recorrido en Chromium con 35 comprobaciones en verde, incluidas la alineación de botones, el bloqueo del panel, el desbordamiento en escritorio y celular en las cinco vistas, y el borde del submenú. `generar_guia.py --verificar` solo marca las dos plantillas heredadas de SRS v1.7.
+
+### 2026-11-18 — Ajustes de validación del usuario: contactos, submenú, formulario v2 y categoría (ADR-42)
+
+**Cambios realizados**
+1. Botón «Buscar en Contactos»: se oculta de verdad (regla global `[hidden]`); si no hay API se muestra una nota con las condiciones.
+2. Submenú de OLB_BYTE (`templates/olb_byte/_subnav.html`) arriba en Ventas, Pendientes, Cartera, Garantías y Analítica; se quitaron los botones de «Órdenes registradas» y «Volver al panel».
+3. Formulario de venta v2: panel de producto con subtotal, tabla de detalle con Eliminar y Actualizar, cuadro de edición con Actualizar y Cancelar horizontales; `static/js/olb_byte.js` reescrito.
+4. `referencia` → `categoria` en `venta_detalle`, LineaVenta, factura y ranking; migración `_renombrar_referencia_a_categoria` y diccionario §10.4.
+5. Celular: tabla de detalle y de órdenes como tarjetas, sin `min-width`; encabezado compacto.
+6. Página principal: `seccion = 'ventas'` para marcar la pestaña activa.
+
+**Verificación:** `pytest` en verde (434 pruebas). Recorrido en Chromium con la app levantada: 19 comprobaciones en verde, incluido el celular sin desplazamiento horizontal. `generar_guia.py --verificar` solo marca las dos plantillas heredadas de SRS v1.7.
+
 ### 2026-11-18 — SRS OLB_BYTE v1.0, Fase 7: factura PDF con Playwright
 
 **Cambios realizados**
@@ -467,6 +562,52 @@ Recálculo en tiempo real (<100 ms) sin recargar página. Se implementa con func
 
 **Verificación:** `pytest` en verde (345 pruebas). `generar_guia.py` regenerado; `--verificar` falla solo por dos plantillas sin ficha de un bloque anterior (ver AGENTS.md §9).
 
+### 2026-11-18 — SRS v1.7, bloques F y G: capacidad de endeudamiento y consejero
+
+**Cambios realizados**
+1. `servicios/capacidad.py` (nuevo) — reparto del ingreso en gastos fijos, deudas y libre; semáforo 20 %/35 %; deudas con tres cuotas o menos; proyección a doce meses que retira la cuota al terminar cada deuda (ADR-44).
+2. `templates/finanzas/_capacidad.html` (nuevo) — macro `panel_capacidad` con dona SVG, leyenda, semáforo, deudas por terminar y tabla de doce meses.
+3. `routers/presupuesto.py` y `routers/trabajos.py` — ambos contextos entregan `capacidad`; cada vista instancia el panel por separado.
+4. `servicios/consejero.py` (nuevo) — activación sobre $300.000, simulación mensual de bola de nieve y avalancha, recomendación con deuda objetivo, modo ahorro con metas y serie base/optimizado de doce meses (ADR-45).
+5. `routers/presupuesto.py` — el contexto entrega `consejo` calculado con el `disponible` del diagnóstico.
+6. `templates/presupuesto/index.html` — panel del consejero con saludo, pasos, tarjetas de intereses o ahorro y gráfica de barras comparativas; se oculta cuando el excedente no supera el umbral.
+7. `static/css/estilos.css` — estilos de capacidad, semáforo ámbar/sin datos, consejero y gráfica comparativa con adaptación a 640 px.
+8. `static/js/sw.js` — caché `olb-finanzas-v16`.
+9. Pruebas nuevas: `tests/test_capacidad.py` (13) y `tests/test_consejero.py` (11).
+10. `Guia.md` — fichas de los dos servicios y de la macro; `MEMORY.md` — ADR-44 y ADR-45.
+
+**Verificación**
+- `pytest -q` → **478 pruebas en verde** (454 previas + 24 netas).
+- `python -m compileall -q app scripts` sin errores.
+- `generar_guia.py --verificar` → 88 archivos con ficha y sin docstrings pendientes.
+
+**Pendiente**
+- Revisión visual en navegador de los bloques A a G (360/390/768/escritorio), incluida la gráfica del consejero en móvil.
+
+### 2026-11-17 — SRS v1.7, bloque E: Trabajos Extras como contratos con pagos propios
+
+**Cambios realizados**
+1. `modelos.py` — `TrabajoExtra` gana `tipo_contrato`, `frecuencia`, `fecha_fin` y `fecha_pago`; `Gasto.id_trabajo` enlaza los pagos generados (ADR-34).
+2. `core/base_datos.py` — `_migrar_columnas_trabajos` y la columna `id_trabajo` en `_migrar_columnas_gastos`, ambas idempotentes.
+3. `servicios/trabajos.py` — reescrito: generación idempotente de pagos (mensual o quincenal con día 15 y 30 ajustado), `pagos_del_mes`, `extras_cobrados_mes` y `resumen_trabajos` calculado sobre pagos reales.
+4. `servicios/gastos.py` — `listar_gastos` excluye `id_trabajo IS NOT NULL`, de modo que los cobros no alteran el sueldo, las quincenas ni los totales de gastos.
+5. `servicios/pagos_metas.py` — `quitar_gasto` inhabilita 15 días también los pagos de trabajo (no los borra, para no regenerarlos).
+6. `servicios/ahorro.py` — `diagnostico` suma `extras_mes` al `disponible`; el banner de `presupuesto/index.html` muestra el consolidado.
+7. `routers/trabajos.py` y `templates/trabajos/index.html` — formulario con Descripción, Cliente, Valor, Tipo de Contrato y Frecuencia; fechas según contrato; reutiliza la macro `fila_gasto` de `finanzas/_gasto_fijo.html`.
+8. `routers/gastos.py` — `_volver('trabajos')` para que las acciones regresen al módulo correcto.
+9. `static/js/app.js` — `fecha_fin` solo visible en término fijo.
+10. Pruebas: `tests/test_trabajos_extras.py` (15).
+11. `MEMORY.md` — ADR-34; `diccionario_datos.md` §7 y §12.
+
+**Verificación**
+- `pytest -q` → **333 pruebas en verde** al cerrar el bloque (454 tras integrar OLB_BYTE).
+- `python -m compileall -q app scripts` sin errores.
+- Migración probada sobre una copia de `datos/finanzas.db` y conversión del registro heredado a término fijo de un mes.
+
+**Pendiente**
+- Revisión visual en navegador (360/390/768/escritorio) de los bloques A a E.
+- Bloques F y G cerrados en la entrada del 2026-11-18.
+
 ### 2026-11-17 — SRS v1.7, bloques A a D: UI móvil, metas dividir/duplicar, checks corregibles y días de pago
 
 **Cambios realizados**
@@ -493,7 +634,7 @@ Recálculo en tiempo real (<100 ms) sin recargar página. Se implementa con func
 
 **Pendiente**
 - Revisión visual en navegador (360/390/768/escritorio) de las cuatro primeras entregas.
-- Bloques E a G del SRS v1.7.
+- Bloques E a G del SRS v1.7 (cerrados en las entradas siguientes).
 
 ### 2026-11-16 — SRS v1.6: montos sin centavos, metas como gastos con check, incapacidades
 

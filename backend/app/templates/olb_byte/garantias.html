@@ -7,6 +7,10 @@
     <p class="heroe__subtitulo">Fallas reportadas y su trámite con el proveedor.</p>
   </section>
 
+  <div class="acciones-formulario acciones-volver">
+    <a class="boton boton--secundario boton--pequeno" href="{{ url_for('ver_olb_byte') }}">← Volver a Ventas</a>
+  </div>
+
   {% set seccion = 'garantias' %}
   {% include "olb_byte/_subnav.html" with context %}
 

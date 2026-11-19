@@ -60,8 +60,8 @@ def test_pendientes_muestra_saldo_y_enlace_de_cobro(cliente_admin: TestClient, b
     assert respuesta.status_code == 200
     assert "Pendientes de pago" in respuesta.text
     assert "Ana Pérez" in respuesta.text
-    assert "https://wa.me/573001234567?text=" in respuesta.text
-    assert "Recordar cobro por WhatsApp" in respuesta.text
+    assert "Añadir pago o gestionar cobro" in respuesta.text
+    assert "https://wa.me/" not in respuesta.text
 
 
 def test_pendientes_filtra_y_avisa_cuando_no_hay_coincidencias(cliente_admin: TestClient, bd) -> None:

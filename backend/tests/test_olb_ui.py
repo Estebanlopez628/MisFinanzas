@@ -131,3 +131,28 @@ def test_pendientes_y_cartera_usan_el_submenu(cliente_admin: TestClient) -> None
         texto = cliente_admin.get(ruta).text
         assert "subnav-finanzas" in texto
         assert "Volver al panel" not in texto
+
+def test_cada_pantalla_de_olb_byte_tiene_boton_volver(cliente_admin: TestClient, bd) -> None:
+    """Cada pantalla del módulo ofrece un botón para regresar al menú anterior."""
+    from app.servicios import comercial
+
+    venta = comercial.registrar_venta(
+        bd,
+        "Ana",
+        None,
+        [comercial.LineaVenta(nombre="Cable", cantidad=1, precio_unitario="1000", costo_unitario="500")],
+    )
+    abono = comercial.registrar_abono(bd, venta.id_venta, "100")
+    rutas = [
+        "/olb-byte",
+        "/olb-byte/pendientes",
+        f"/olb-byte/ventas/{venta.id_venta}/cobro",
+        "/olb-byte/cartera",
+        "/olb-byte/garantias",
+        "/olb-byte/analitica",
+        f"/olb-byte/factura/{venta.id_venta}",
+        f"/olb-byte/recibos/{abono.id_abono}",
+    ]
+    for ruta in rutas:
+        texto = cliente_admin.get(ruta).text
+        assert "Volver" in texto, ruta

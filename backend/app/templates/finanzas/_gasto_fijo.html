@@ -48,7 +48,9 @@
     </span>
     <span class="lista-gastos__valor">{{ gasto.valor | cop }}</span>
     <div class="lista-gastos__acciones">
-      <details class="edicion-gasto">
+      {# Ajuste móvil (SRS v1.7): «--modal» abre la edición como ventana centrada
+         con fondo oscuro, porque el desplegable absoluto se cortaba a la derecha. #}
+      <details class="edicion-gasto edicion-gasto--modal">
         {{ boton_editar(gasto.descripcion) }}
         <form
           class="formulario formulario--compacto edicion-gasto__formulario"

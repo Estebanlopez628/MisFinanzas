@@ -1,4 +1,4 @@
-# Diccionario de Datos — OLB_BYTE & Finanzas Personales
+﻿# Diccionario de Datos — OLB_BYTE & Finanzas Personales
 
 > **Fuente única de verdad** para el diseño de la base de datos (ver `AGENTS.md`, §5.6).
 > Cualquier tabla, columna o regla nueva debe registrarse aquí **antes** de crear el modelo SQLAlchemy o la migración.
@@ -397,7 +397,7 @@ en `devoluciones_clientes` (§10.8); los abonos originales se conservan como his
 | `id_venta` | `UUID` (FK) | No | Orden padre. `ON DELETE CASCADE`. |
 | `id_producto` | `UUID` (FK) | Sí | Solo ventas anteriores a ADR-35. `NULL` en ventas nuevas. |
 | `producto_nombre` | `VARCHAR(120)` | No | Nombre del producto. |
-| `referencia` | `VARCHAR(60)` | Sí | Referencia o modelo. |
+| `categoria` | `VARCHAR(60)` | Sí | Categoría del producto (por ejemplo, Audio). Antes se llamaba `referencia`; se renombró sin perder datos. |
 | `cantidad` | `INTEGER` | No | `CHECK (cantidad > 0)`. |
 | `costo_unitario` | `NUMERIC(14,2)` | No | Precio proveedor, congelado. `CHECK (>= 0)`. |
 | `precio_unitario` | `NUMERIC(14,2)` | No | Precio al cliente. `CHECK (>= 0)`. |

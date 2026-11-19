@@ -1,16 +1,18 @@
-"""Factura PDF de OLB_BYTE: datos, logos y conversión a PDF con Chromium (ADR-36).
+﻿"""Factura de OLB_BYTE: datos, logos, diseño compartido y conversión a PDF (ADR-36).
 
 Responsabilidad
 ---------------
-- Reunir los datos de la factura de una orden: líneas, totales, saldo, garantía,
-  nota del vendedor y medios de pago (RF-18 y sección 4 del SRS).
-- Embeber los logos de `assets/` como data URI para que el PDF no dependa de rutas
-  externas ni de la red.
+- Reunir los datos de la factura de una orden. La misma información alimenta la vista
+  en pantalla, la vista previa, la descarga y el envío por WhatsApp, para que todas
+  muestren exactamente la misma factura.
+- Embeber los logos de `assets/` y el CSS del diseño como texto, para que el PDF no
+  dependa de rutas ni de la red.
 - Dar el nombre de archivo `Factura_OLB_BYTE_No_{numero}_{cliente}.pdf`.
 - Convertir el HTML ya renderizado en PDF tamaño Carta con Playwright.
 
-El HTML lo renderiza el router con la plantilla `olb_byte/factura_pdf.html`; este
-módulo no conoce HTTP.
+Los datos fijos de la empresa (dirección, teléfono, cuenta bancaria, NIT) están en las
+constantes de este módulo. El diseño visual vive en `static/css/factura-olb.css` y en
+`templates/olb_byte/_hoja_factura.html`; ver `Guia.md` §10 para personalizarlos.
 """
 
 from __future__ import annotations
@@ -18,6 +20,7 @@ from __future__ import annotations
 import base64
 import re
 import unicodedata
+from functools import lru_cache
 from pathlib import Path
 
 from sqlalchemy import select
@@ -27,17 +30,29 @@ from app.modelos import Venta, VentaDetalle
 from app.servicios.comercial import ESTADO_ANULADA
 
 RUTA_ASSETS = Path(__file__).resolve().parents[3] / "assets"
+RUTA_CSS_FACTURA = Path(__file__).resolve().parents[1] / "static" / "css" / "factura-olb.css"
 
-# La plantilla de Carta tiene diez filas de producto; con más líneas la factura no
-# cabe en una sola página, que es un requisito del SRS (RF-18).
+# La hoja Carta admite hasta diez productos; el diseño completa hasta nueve filas.
 MAX_LINEAS_PDF = 10
-NOTA_VENDEDOR = "Gracias por apoyar nuestro emprendimiento tecnológico"
-NEQUI = "316 382 63 66"
+FILAS_MINIMAS_TABLA = 9
+# Escala del PDF: con diez productos el diseño solo cabe en una hoja a 75 %.
+ESCALA_PDF = 0.75
+
 NIT = "1151949473-3"
 RESPONSABLE = "Esteban Lopez"
+DIRECCION = "Calle 14F # 35-205"
+TELEFONO = "316 382 63 66"
+NEQUI = "316 382 63 66"
+BANCO = {
+    "nombre": "BBVA",
+    "tipo": "Cuenta de ahorros",
+    "cuenta": "0234307957",
+    "telefono": "316 382 63 66",
+}
+PIE_LEGAL = "Documento generado por OLB BYTE. No reemplaza la factura electrónica ante la DIAN."
 
-# Patrones de búsqueda de los logos. Se usan globs y no nombres exactos porque los
-# nombres de `assets/` tienen tildes que cambian según el sistema de archivos.
+# Patrones de búsqueda de los logos. Se usan globs porque los nombres de `assets/`
+# tienen tildes que cambian según el sistema de archivos.
 PATRONES_LOGO = {
     "olb": "*Logotipo OLB*",
     "visa_mastercard": "*Mastercard*",
@@ -62,8 +77,13 @@ def nombre_archivo(numero_orden: int, cliente: str) -> str:
     return f"Factura_OLB_BYTE_No_{numero_orden}_{cliente_limpio[:60]}.pdf"
 
 
+@lru_cache(maxsize=None)
 def logo_como_data_uri(clave: str) -> str:
     """Lee un logo de `assets/` y lo devuelve como data URI.
+
+    El resultado se guarda en caché: los logos no cambian durante la ejecución, y así
+    no se vuelve a leer ni a codificar un PNG pesado en cada factura. Tras cambiar un
+    logo, reinicia el servidor.
 
     Args:
         clave: Clave de `PATRONES_LOGO`.
@@ -79,16 +99,17 @@ def logo_como_data_uri(clave: str) -> str:
     return f"data:image/png;base64,{datos}"
 
 
-def datos_factura(bd: Session, venta: Venta) -> dict[str, object]:
-    """Reúne los datos que muestra la factura PDF.
+def datos_factura(bd: Session, venta: Venta, validar_maximo: bool = True) -> dict[str, object]:
+    """Reúne los datos que muestran la factura en pantalla y en el PDF.
 
     Args:
         bd: Sesión de base de datos.
         venta: Orden facturada.
+        validar_maximo: Si es verdadero, rechaza órdenes que no caben en una página PDF.
 
     Returns:
-        Contexto para la plantilla: líneas, filas vacías para completar la tabla,
-        totales, garantía, logos, nota, medios de pago y nombre del archivo.
+        Contexto compartido: líneas, filas de relleno, totales, datos de la empresa,
+        logos, CSS del diseño y nombre del archivo.
 
     Raises:
         ValueError: Si la orden tiene más líneas de las que caben en una página.
@@ -96,19 +117,19 @@ def datos_factura(bd: Session, venta: Venta) -> dict[str, object]:
     detalles = list(
         bd.scalars(select(VentaDetalle).where(VentaDetalle.id_venta == venta.id_venta))
     )
-    if len(detalles) > MAX_LINEAS_PDF:
+    if validar_maximo and len(detalles) > MAX_LINEAS_PDF:
         raise ValueError(
-            f"La factura en PDF admite hasta {MAX_LINEAS_PDF} productos. "
+            f"La factura admite hasta {MAX_LINEAS_PDF} productos. "
             "Divide la venta en dos órdenes para imprimirla."
         )
     lineas = [
         {
             "nombre": detalle.producto_nombre,
-            "categoria": detalle.categoria or "—",
+            "categoria": detalle.categoria or "",
             "cantidad": detalle.cantidad,
             "precio": detalle.precio_unitario,
             "subtotal": detalle.subtotal_item,
-            "garantia": detalle.garantia_texto or "—",
+            "garantia": detalle.garantia_texto or "",
         }
         for detalle in detalles
     ]
@@ -116,13 +137,16 @@ def datos_factura(bd: Session, venta: Venta) -> dict[str, object]:
         "venta": venta,
         "anulada": venta.estado_orden == ESTADO_ANULADA,
         "lineas": lineas,
-        "filas_vacias": range(MAX_LINEAS_PDF - len(lineas)),
-        "garantia_vence": venta.garantia_fecha_fin,
-        "nota": NOTA_VENDEDOR,
+        "filas_vacias": range(max(FILAS_MINIMAS_TABLA - len(lineas), 0)),
         "nit": NIT,
         "responsable": RESPONSABLE,
+        "direccion": DIRECCION,
+        "telefono": TELEFONO,
         "nequi": NEQUI,
+        "banco": BANCO,
+        "pie_legal": PIE_LEGAL,
         "logos": {clave: logo_como_data_uri(clave) for clave in PATRONES_LOGO},
+        "css": RUTA_CSS_FACTURA.read_text(encoding="utf-8"),
         "nombre_archivo": nombre_archivo(venta.numero_orden, venta.cliente_nombre),
     }
 
@@ -135,8 +159,8 @@ def generar_pdf(html: str) -> bytes:
     """Convierte HTML en un PDF tamaño Carta con una sola página por factura.
 
     Usa `printBackground=True` para que se vean la cabecera, el efecto cebra y los
-    logos (RF-18). Abre un navegador por petición: es lento, pero sencillo y sin
-    estado compartido entre peticiones.
+    logos. Abre un navegador por petición: es lento, pero sencillo y sin estado
+    compartido entre peticiones.
 
     Args:
         html: Documento HTML completo con estilos y logos embebidos.
@@ -150,6 +174,11 @@ def generar_pdf(html: str) -> bytes:
     from playwright.sync_api import Error as ErrorPlaywright
     from playwright.sync_api import sync_playwright
 
+    # El diseño completo mide más que una hoja Carta a 100 %. Se dibuja en un cuerpo más
+    # ancho y se reduce con `scale`: el papel sigue siendo Carta y cabe en una página.
+    ancho_cuerpo = f"{8.5 / ESCALA_PDF:.4f}in"
+    html = html.replace("</head>", f"<style>body {{ width: {ancho_cuerpo} !important; }}</style></head>", 1)
+
     try:
         with sync_playwright() as playwright:
             navegador = playwright.chromium.launch()
@@ -159,6 +188,7 @@ def generar_pdf(html: str) -> bytes:
                 return pagina.pdf(
                     format="Letter",
                     print_background=True,
+                    scale=ESCALA_PDF,
                     margin={"top": "0", "right": "0", "bottom": "0", "left": "0"},
                     prefer_css_page_size=True,
                 )

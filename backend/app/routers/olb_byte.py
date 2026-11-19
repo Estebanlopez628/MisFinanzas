@@ -185,17 +185,9 @@ def _contexto(
             {
                 "venta": venta,
                 "lineas": lineas,
-                "enlace_whatsapp": comercial.enlace_whatsapp_factura(
-                    venta,
-                    [
-                        {
-                            "nombre": linea.nombre,
-                            "cantidad": linea.cantidad,
-                            "subtotal": linea.subtotal,
-                        }
-                        for linea in lineas
-                    ],
-                ),
+                "enlace_whatsapp": comercial.enlace_whatsapp_factura(venta),
+                "texto_compartir": comercial.texto_compartir_factura(venta),
+                "nombre_archivo": factura_pdf.nombre_archivo(venta.numero_orden, venta.cliente_nombre),
                 "semaforo": semaforo,
                 "dias_garantia": dias,
                 "pendiente_devolver": comercial.pendiente_devolver(bd, venta),
@@ -320,39 +312,52 @@ def ver_olb_byte(
     )
 
 
-@router.post("/olb-byte/clientes", name="crear_cliente", response_model=None)
-def crear_cliente(
-    request: Request,
-    usuario: UsuarioSesion = Depends(obtener_usuario_actual),
-    bd: Session = Depends(obtener_bd),
-    nombre: Annotated[str, Form()] = "",
-    telefono_whatsapp: Annotated[str, Form()] = "",
-    correo: Annotated[str, Form()] = "",
-    direccion: Annotated[str, Form()] = "",
-) -> HTMLResponse | RedirectResponse:
-    """Registra un cliente desde la agenda de administración.
+def _datos_pago(formulario) -> dict[str, str]:
+    """Lee los campos de forma de pago, método y anticipo tal como se escribieron.
 
     Args:
-        request: Petición HTTP.
-        usuario: Administrador autenticado.
-        bd: Sesión de base de datos.
-        nombre: Nombre del cliente.
-        telefono_whatsapp: Celular de 10 dígitos.
-        correo: Correo.
-        direccion: Dirección.
+        formulario: Datos del formulario ya leídos.
 
     Returns:
-        Redirección o vista con error.
+        Diccionario con los valores en mayúsculas para repoblar el formulario.
     """
-    exigir_administrador(usuario)
-    try:
-        cliente = comercial.registrar_cliente(
-            bd, nombre, telefono_whatsapp or None, correo or None, direccion or None
-        )
-        auditoria.registrar(bd, usuario.id_usuario, "CLIENTE_CREADO", "clientes", cliente.nombre)
-    except ValueError as error:
-        return _pagina_con_error(request, bd, usuario, str(error))
-    return RedirectResponse(url="/olb-byte?guardado=1", status_code=status.HTTP_303_SEE_OTHER)
+    return {
+        "forma_pago": str(formulario.get("forma_pago", "CONTADO")).strip().upper(),
+        "metodo_pago": str(formulario.get("metodo_pago", "")).strip().upper(),
+        "anticipo": str(formulario.get("anticipo", "NO")).strip().upper(),
+        "monto_anticipo": str(formulario.get("monto_anticipo", "")).strip(),
+        "metodo_anticipo": str(formulario.get("metodo_anticipo", "")).strip().upper(),
+    }
+
+
+def _pago_desde_datos(datos: dict[str, str]) -> comercial.PagoInicial | None:
+    """Convierte la forma de pago en el pago inicial que registra el servicio.
+
+    Pago de contado: se cobra el total en el momento. Pago a crédito: solo hay pago
+    inicial si el cliente deja un anticipo. Sin anticipo no se registra ningún pago.
+
+    Args:
+        datos: Valores leídos con `_datos_pago`.
+
+    Returns:
+        Pago inicial, o `None` si la venta queda totalmente a crédito.
+
+    Raises:
+        ValueError: Si falta la forma de pago, el método o el valor del anticipo.
+    """
+    if datos["forma_pago"] == "CONTADO":
+        if datos["metodo_pago"] not in comercial.METODOS_PAGO:
+            raise ValueError("Elige el método de pago: Transferencia o Efectivo.")
+        return comercial.PagoInicial(None, datos["metodo_pago"])
+    if datos["forma_pago"] != "CREDITO":
+        raise ValueError("Elige la forma de pago: de contado o a crédito.")
+    if datos["anticipo"] != "SI":
+        return None
+    if not datos["monto_anticipo"]:
+        raise ValueError("Escribe el valor del anticipo.")
+    if datos["metodo_anticipo"] not in comercial.METODOS_PAGO:
+        raise ValueError("Elige el método de pago del anticipo: Transferencia o Efectivo.")
+    return comercial.PagoInicial(datos["monto_anticipo"], datos["metodo_anticipo"])
 
 
 @router.post("/olb-byte/ventas", name="registrar_venta", response_model=None)
@@ -361,7 +366,7 @@ async def registrar_venta(
     usuario: UsuarioSesion = Depends(obtener_usuario_actual),
     bd: Session = Depends(obtener_bd),
 ) -> HTMLResponse | RedirectResponse:
-    """Registra una orden de venta con una o varias líneas.
+    """Registra una orden con sus productos, su forma de pago y su anticipo.
 
     Args:
         request: Petición HTTP con el formulario.
@@ -375,15 +380,22 @@ async def registrar_venta(
     formulario = await request.form()
     cliente_nombre = str(formulario.get("cliente_nombre", "")).strip()
     cliente_telefono = str(formulario.get("cliente_telefono", "")).strip()
+    filas = _filas_del_formulario(formulario)
+    datos_pago = _datos_pago(formulario)
     borrador: dict[str, object] = {
         "cliente_nombre": cliente_nombre,
         "cliente_telefono": cliente_telefono,
+        "filas": filas,
+        "pago": datos_pago,
     }
-    filas = _filas_del_formulario(formulario)
-    borrador["filas"] = filas
     try:
         lineas = _lineas_desde_filas(filas)
-        venta = comercial.registrar_venta(bd, cliente_nombre, cliente_telefono or None, lineas)
+        if not lineas:
+            raise ValueError("La venta debe tener al menos un producto.")
+        pago = _pago_desde_datos(datos_pago)
+        venta = comercial.registrar_venta(
+            bd, cliente_nombre, cliente_telefono or None, lineas, pago_inicial=pago
+        )
         auditoria.registrar(
             bd, usuario.id_usuario, "VENTA_REGISTRADA", "ventas", f"No. {venta.numero_orden}"
         )
@@ -402,6 +414,7 @@ def registrar_abono(
     metodo_pago: Annotated[str, Form()] = "EFECTIVO",
     fecha_abono: Annotated[str, Form()] = "",
     q: Annotated[str, Form()] = "",
+    desde_cobro: Annotated[str, Form()] = "",
 ) -> HTMLResponse | RedirectResponse:
     """Aplica un abono a una orden activa y muestra su recibo.
 
@@ -429,6 +442,16 @@ def registrar_abono(
         auditoria.registrar(bd, usuario.id_usuario, "ABONO_REGISTRADO", "abonos", abono.id_abono)
     except (ValueError, ArithmeticError) as error:
         bd.rollback()
+        if desde_cobro == "1":
+            venta = comercial.obtener_venta(bd, id_venta)
+            if venta is None:
+                raise HTTPException(status_code=404, detail="La venta no existe.")
+            return plantillas.TemplateResponse(
+                request,
+                "olb_byte/cobro.html",
+                _contexto_cobro(usuario, venta, error=str(error), monto=monto, metodo=metodo_pago),
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
         return plantillas.TemplateResponse(
             request,
             "olb_byte/pendientes.html",
@@ -437,6 +460,75 @@ def registrar_abono(
         )
     return RedirectResponse(
         url=f"/olb-byte/recibos/{abono.id_abono}", status_code=status.HTTP_303_SEE_OTHER
+    )
+
+
+def _contexto_cobro(
+    usuario: UsuarioSesion,
+    venta: Venta,
+    *,
+    error: str | None = None,
+    monto: str | None = None,
+    metodo: str = "EFECTIVO",
+) -> dict[str, object]:
+    """Prepara la página de gestión de cobro de una orden (RF-06).
+
+    Args:
+        usuario: Administrador autenticado.
+        venta: Orden que se cobra.
+        error: Mensaje de error opcional.
+        monto: Monto escrito, para repoblarlo tras un error; por defecto el saldo.
+        metodo: Método de pago seleccionado.
+
+    Returns:
+        Diccionario para la plantilla.
+    """
+    cobrable = venta.estado_orden == comercial.ESTADO_ACTIVA and venta.saldo_pendiente > 0
+    contexto = contexto_base(usuario)
+    contexto.update(
+        {
+            "titulo_pagina": f"Cobro · Factura No. {venta.numero_orden}",
+            "venta": venta,
+            "abonado": venta.total_abonado,
+            "saldo": venta.saldo_pendiente,
+            "monto": monto if monto is not None else f"{venta.saldo_pendiente:,.0f}".replace(",", "."),
+            "metodo": metodo,
+            "metodos": comercial.METODOS_PAGO,
+            "enlace_cobro": comercial.enlace_whatsapp_cobro(venta),
+            "cobrable": cobrable,
+            "error": error,
+        }
+    )
+    return contexto
+
+
+@router.get("/olb-byte/ventas/{id_venta}/cobro", response_class=HTMLResponse, name="ver_cobro")
+def ver_cobro(
+    request: Request,
+    id_venta: str,
+    usuario: UsuarioSesion = Depends(obtener_usuario_actual),
+    bd: Session = Depends(obtener_bd),
+) -> HTMLResponse:
+    """Muestra la gestión de cobro: registrar el pago o enviar el recordatorio.
+
+    Args:
+        request: Petición HTTP.
+        id_venta: Orden a cobrar.
+        usuario: Administrador autenticado.
+        bd: Sesión de base de datos.
+
+    Returns:
+        HTML de la página de cobro.
+
+    Raises:
+        HTTPException: 403 si el usuario no es administrador; 404 si la orden no existe.
+    """
+    exigir_administrador(usuario)
+    venta = comercial.obtener_venta(bd, id_venta)
+    if venta is None:
+        raise HTTPException(status_code=404, detail="Venta no encontrada.")
+    return plantillas.TemplateResponse(
+        request, "olb_byte/cobro.html", _contexto_cobro(usuario, venta)
     )
 
 
@@ -600,28 +692,13 @@ def ver_factura(
     if venta is None:
         raise HTTPException(status_code=404, detail="Venta no encontrada.")
 
-    cliente: Cliente | None = bd.get(Cliente, venta.id_cliente)
-    lineas = _detalle_de_venta(bd, id_venta)
     contexto = contexto_base(usuario)
+    contexto.update(factura_pdf.datos_factura(bd, venta, validar_maximo=False))
     contexto.update(
         {
             "titulo_pagina": f"Factura No. {venta.numero_orden}",
-            "venta": venta,
-            "nombre_archivo": factura_pdf.nombre_archivo(venta.numero_orden, venta.cliente_nombre),
-            "cliente": cliente,
-            "lineas": lineas,
-            "total": venta.total,
-            "enlace_whatsapp": comercial.enlace_whatsapp_factura(
-                venta,
-                [
-                    {
-                        "nombre": linea.nombre,
-                        "cantidad": linea.cantidad,
-                        "subtotal": linea.subtotal,
-                    }
-                    for linea in lineas
-                ],
-            ),
+            "enlace_whatsapp": comercial.enlace_whatsapp_factura(venta),
+            "texto_compartir": comercial.texto_compartir_factura(venta),
         }
     )
     return plantillas.TemplateResponse(request, "olb_byte/factura.html", contexto)
@@ -643,7 +720,7 @@ def _contexto_cartera(usuario: UsuarioSesion, bd: Session, *, error: str | None 
     contexto.update(
         {
             "titulo_pagina": "Cartera y liquidez · OLB_BYTE",
-            "filas_balance": comercial.tabla_balance(resumen),
+            "barras": comercial.barras_balance(resumen),
             "segmentos": comercial.segmentos_dona(resumen["cartera_clientes"], resumen["deuda_proveedor"]),
             "movimientos": comercial.listar_movimientos_proveedor(bd),
             "deuda": resumen["deuda_proveedor"],

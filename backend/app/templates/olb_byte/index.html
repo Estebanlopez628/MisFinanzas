@@ -31,6 +31,10 @@
     <p class="heroe__subtitulo">Ventas, cobros y garantías de la tienda.</p>
   </section>
 
+  <div class="acciones-formulario acciones-volver">
+    <a class="boton boton--secundario boton--pequeno" href="/">← Volver al inicio</a>
+  </div>
+
   {% set seccion = 'ventas' %}
   {% include "olb_byte/_subnav.html" with context %}
 
@@ -60,6 +64,9 @@
   </div>
 
   {# ------------------------------ Registrar venta ------------------------------ #}
+  {% set pago = borrador.pago if borrador and borrador.pago else {} %}
+  {% set forma = pago.forma_pago or 'CONTADO' %}
+  {% set anticipo = pago.anticipo or 'NO' %}
   <section class="panel">
     <h2 class="panel__titulo">Registrar venta</h2>
 
@@ -80,9 +87,7 @@
                    data-cliente-telefono />
             <button class="boton boton--secundario boton--pequeno" type="button" data-contactos hidden>Buscar en Contactos</button>
           </span>
-          <span class="ayuda" data-nota-contactos hidden>
-            Importar desde Contactos funciona en Android con Chrome, con la página abierta en HTTPS.
-          </span>
+          <span class="ayuda" data-nota-contactos hidden></span>
         </label>
       </div>
 
@@ -92,17 +97,62 @@
         {% endfor %}
       </datalist>
 
-      <fieldset class="bloque-producto">
+      <fieldset class="bloque-pago">
+        <legend class="bloque-producto__titulo">Pago</legend>
+        <div class="fila-campos">
+          <label class="campo">
+            <span class="campo__etiqueta">Forma de pago</span>
+            <select class="campo__control" name="forma_pago" data-forma-pago>
+              <option value="CONTADO" {% if forma == 'CONTADO' %}selected{% endif %}>Pago de contado</option>
+              <option value="CREDITO" {% if forma == 'CREDITO' %}selected{% endif %}>Pago a crédito</option>
+            </select>
+          </label>
+          <label class="campo" data-bloque="contado">
+            <span class="campo__etiqueta">Método de pago</span>
+            <select class="campo__control" name="metodo_pago" data-metodo-pago>
+              <option value="TRANSFERENCIA" {% if pago.metodo_pago == 'TRANSFERENCIA' %}selected{% endif %}>Transferencia</option>
+              <option value="EFECTIVO" {% if pago.metodo_pago != 'TRANSFERENCIA' %}selected{% endif %}>Efectivo</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="fila-campos" data-bloque="credito">
+          <label class="campo">
+            <span class="campo__etiqueta">Anticipo de compra</span>
+            <select class="campo__control" name="anticipo" data-anticipo>
+              <option value="NO" {% if anticipo == 'NO' %}selected{% endif %}>No realiza anticipo</option>
+              <option value="SI" {% if anticipo == 'SI' %}selected{% endif %}>Sí realiza anticipo</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="fila-campos" data-bloque="anticipo">
+          <label class="campo">
+            <span class="campo__etiqueta">Valor del anticipo (COP)</span>
+            <input class="campo__control" type="text" name="monto_anticipo" inputmode="decimal"
+                   placeholder="50.000" value="{{ pago.monto_anticipo or '' }}" data-monto-anticipo />
+          </label>
+          <label class="campo">
+            <span class="campo__etiqueta">Método de pago del anticipo</span>
+            <select class="campo__control" name="metodo_anticipo" data-metodo-anticipo>
+              <option value="TRANSFERENCIA" {% if pago.metodo_anticipo == 'TRANSFERENCIA' %}selected{% endif %}>Transferencia</option>
+              <option value="EFECTIVO" {% if pago.metodo_anticipo != 'TRANSFERENCIA' %}selected{% endif %}>Efectivo</option>
+            </select>
+          </label>
+        </div>
+      </fieldset>
+
+      <fieldset class="bloque-producto" data-panel-producto>
         <legend class="bloque-producto__titulo">Producto</legend>
         <div class="fila-campos">
+          <label class="campo">
+            <span class="campo__etiqueta">Categoría</span>
+            <input class="campo__control" type="text" placeholder="Audio" data-campo-panel="categoria" />
+          </label>
           <label class="campo">
             <span class="campo__etiqueta">Nombre del producto</span>
             <input class="campo__control" type="text" placeholder="Audífonos Bluetooth"
                    data-campo-panel="producto_nombre" />
-          </label>
-          <label class="campo">
-            <span class="campo__etiqueta">Categoría</span>
-            <input class="campo__control" type="text" placeholder="Audio" data-campo-panel="categoria" />
           </label>
         </div>
         <div class="fila-campos">
@@ -128,8 +178,9 @@
           <strong data-subtotal-panel>$0</strong>
         </div>
         <p class="alerta alerta--error" role="alert" data-error-panel hidden></p>
-        <div class="acciones-formulario">
-          <button class="boton boton--secundario" type="button" data-agregar-producto>+ Agregar otro producto</button>
+        <div class="acciones-formulario acciones-formulario--izquierda">
+          <button class="boton boton--secundario" type="button" data-guardar-producto>Guardar</button>
+          <span class="ayuda" data-estado-panel>Escribe el producto y pulsa Guardar.</span>
         </div>
       </fieldset>
 
@@ -154,7 +205,7 @@
           </tbody>
         </table>
         <p class="tabla__vacia" data-lista-vacia {% if borrador and borrador.filas %}hidden{% endif %}>
-          Aún no agregas productos. Escríbelos arriba y pulsa «+ Agregar otro producto».
+          Aún no agregas productos. Escríbelos arriba y pulsa «Guardar».
         </p>
       </div>
 
@@ -164,8 +215,9 @@
         <div><span>Ganancia neta estimada</span><strong data-ganancia>$0</strong></div>
       </div>
 
-      <div class="acciones-formulario">
-        <button class="boton boton--primario" type="submit" data-registrar>Registrar venta</button>
+      <div class="acciones-venta">
+        <button class="boton boton--primario boton--venta" type="button" data-agregar-producto>+ Agregar otro producto</button>
+        <button class="boton boton--primario boton--venta" type="submit" data-registrar>Registrar venta</button>
       </div>
     </form>
 
@@ -177,12 +229,12 @@
       <h2 class="panel__titulo" id="titulo-edicion">Actualizar producto</h2>
       <div class="fila-campos">
         <label class="campo">
-          <span class="campo__etiqueta">Nombre del producto</span>
-          <input class="campo__control" type="text" data-campo-edicion="producto_nombre" />
-        </label>
-        <label class="campo">
           <span class="campo__etiqueta">Categoría</span>
           <input class="campo__control" type="text" data-campo-edicion="categoria" />
+        </label>
+        <label class="campo">
+          <span class="campo__etiqueta">Nombre del producto</span>
+          <input class="campo__control" type="text" data-campo-edicion="producto_nombre" />
         </label>
       </div>
       <div class="fila-campos">
@@ -211,31 +263,12 @@
     </dialog>
   </section>
 
-  <div class="rejilla-paneles">
-    {# ------------------------------- Clientes ------------------------------ #}
-    <section class="panel">
-      <h2 class="panel__titulo">Nuevo cliente</h2>
-      <form class="formulario" method="post" action="{{ url_for('crear_cliente') }}">
-        <label class="campo">
-          <span class="campo__etiqueta">Nombre</span>
-          <input class="campo__control" type="text" name="nombre" required />
-        </label>
-        <label class="campo">
-          <span class="campo__etiqueta">WhatsApp</span>
-          <input class="campo__control" type="tel" name="telefono_whatsapp" placeholder="3001234567" />
-          <span class="ayuda">Se usa para enviar la factura por WhatsApp.</span>
-        </label>
-        <button class="boton boton--primario" type="submit">Agregar cliente</button>
-      </form>
-    </section>
-  </div>
-
   {# ------------------------------ Órdenes ---------------------------------- #}
   <section class="panel panel--tabla">
     <h2 class="panel__titulo">Órdenes registradas</h2>
     {% if ventas %}
       <div class="tabla-contenedor">
-        <table class="tabla">
+        <table class="tabla tabla--tarjetas tabla--compacta">
           <thead>
             <tr>
               <th scope="col">No.</th>
@@ -243,8 +276,6 @@
               <th scope="col">Fecha</th>
               <th scope="col">Productos</th>
               <th scope="col">Total</th>
-              <th scope="col">Ganancia</th>
-              <th scope="col">Saldo</th>
               <th scope="col">Estado</th>
               <th scope="col">Garantía</th>
               <th scope="col">Acciones</th>
@@ -255,95 +286,95 @@
               {% set venta = fila.venta %}
               {% set anulada = venta.estado_orden == 'ANULADA' %}
               <tr{% if anulada %} class="fila-anulada"{% endif %}>
-                <td>{{ venta.numero_orden }}</td>
-                <td>{{ venta.cliente_nombre }}</td>
-                <td>{{ venta.fecha_venta | fecha_larga }}</td>
-                <td>
+                <td data-etiqueta="No.">{{ venta.numero_orden }}</td>
+                <td data-etiqueta="Cliente">{{ venta.cliente_nombre }}</td>
+                <td data-etiqueta="Fecha">{{ venta.fecha_venta | fecha_larga }}</td>
+                <td data-etiqueta="Productos">
                   {% for linea in fila.lineas %}
                     {{ linea.nombre }}{% if linea.categoria %} ({{ linea.categoria }}){% endif %} × {{ linea.cantidad }}{% if not loop.last %}, {% endif %}
                   {% endfor %}
                 </td>
-                <td class="tabla__numero">{{ venta.total | cop }}</td>
-                <td class="tabla__numero">{{ venta.ganancia_neta | cop }}</td>
-                <td class="tabla__numero">{{ venta.saldo_pendiente | cop }}</td>
-                <td>
+                <td class="tabla__numero" data-etiqueta="Total">{{ venta.total | cop }}</td>
+                <td data-etiqueta="Estado">
                   {% if anulada %}
                     <span class="insignia insignia--anulada">Anulada</span>
                     <small class="ayuda">{{ venta.motivo_anulacion }}</small>
                     {% if fila.pendiente_devolver > 0 %}
-                      <small class="ayuda valor-negativo">Por devolver: {{ fila.pendiente_devolver | cop }}</small>
+                      <small class="ayuda">Por devolver: {{ fila.pendiente_devolver | cop }}</small>
                     {% endif %}
                   {% else %}
                     {{ venta.estado_pago | capitalize }}
                   {% endif %}
                 </td>
-                <td>
+                <td data-etiqueta="Garantía">
                   {% if not anulada %}
                     <span class="semaforo semaforo--{{ 'verde' if fila.semaforo == 'VERDE' else 'rojo' }}">
-                      {% if fila.semaforo == 'VERDE' %}
-                        Vigente · {{ fila.dias_garantia }} día(s)
-                      {% else %}
-                        Vencida hace {{ -fila.dias_garantia }} día(s)
-                      {% endif %}
+                      {{ 'Vigente' if fila.semaforo == 'VERDE' else 'Vencida' }}
                     </span>
                     <small class="ayuda">Hasta {{ venta.garantia_fecha_fin.strftime('%d-%m-%Y') if venta.garantia_fecha_fin else '—' }}</small>
                   {% else %}
                     —
                   {% endif %}
                 </td>
-                <td class="tabla__acciones">
-                  <a class="boton boton--secundario boton--pequeno"
-                     href="{{ url_for('ver_factura', id_venta=venta.id_venta) }}">Factura</a>
-                  {% if not anulada %}
-                    <a class="boton boton--primario boton--pequeno" href="{{ fila.enlace_whatsapp }}"
-                       target="_blank" rel="noopener">WhatsApp</a>
-                    <details class="edicion-gasto">
-                      <summary class="boton boton--peligro boton--pequeno">Anular</summary>
-                      <form class="formulario formulario--compacto" method="post"
-                            action="{{ url_for('anular_venta', id_venta=venta.id_venta) }}"
-                            data-confirmar="¿Anular la orden No. {{ venta.numero_orden }}? La deuda con el proveedor no se revierte.">
-                        <label class="campo">
-                          <span class="campo__etiqueta">Motivo</span>
-                          <input class="campo__control" type="text" name="motivo" required />
-                        </label>
-                        <label class="campo">
-                          <span class="campo__etiqueta">Devolver al cliente (COP)</span>
-                          <input class="campo__control" type="text" name="monto_devuelto" inputmode="decimal"
-                                 placeholder="0" />
-                          <span class="ayuda">Abonado: {{ venta.total_abonado | cop }}</span>
-                        </label>
-                        <label class="campo">
-                          <span class="campo__etiqueta">Medio de devolución</span>
-                          <select class="campo__control" name="metodo_devolucion">
-                            {% for metodo in metodos_pago %}
-                              <option value="{{ metodo }}">{{ metodo | capitalize }}</option>
-                            {% endfor %}
-                          </select>
-                        </label>
-                        <button class="boton boton--peligro boton--pequeno" type="submit">Confirmar anulación</button>
-                      </form>
-                    </details>
-                  {% elif fila.pendiente_devolver > 0 %}
-                    <details class="edicion-gasto">
-                      <summary class="boton boton--secundario boton--pequeno">Devolver</summary>
-                      <form class="formulario formulario--compacto" method="post"
-                            action="{{ url_for('registrar_devolucion', id_venta=venta.id_venta) }}">
-                        <label class="campo">
-                          <span class="campo__etiqueta">Monto devuelto (COP)</span>
-                          <input class="campo__control" type="text" name="monto" inputmode="decimal" required />
-                        </label>
-                        <label class="campo">
-                          <span class="campo__etiqueta">Medio</span>
-                          <select class="campo__control" name="metodo_pago">
-                            {% for metodo in metodos_pago %}
-                              <option value="{{ metodo }}">{{ metodo | capitalize }}</option>
-                            {% endfor %}
-                          </select>
-                        </label>
-                        <button class="boton boton--primario boton--pequeno" type="submit">Registrar devolución</button>
-                      </form>
-                    </details>
-                  {% endif %}
+                <td class="celda-acciones-orden" data-etiqueta="Acciones">
+                  <div class="acciones-orden">
+                    <a class="boton boton--secundario boton--pequeno"
+                       href="{{ url_for('ver_factura', id_venta=venta.id_venta) }}">Factura</a>
+                    {% if not anulada %}
+                      <button class="boton boton--primario boton--pequeno" type="button"
+                              data-compartir-factura
+                              data-pdf="{{ url_for('ver_factura_pdf', id_venta=venta.id_venta) }}"
+                              data-nombre="{{ fila.nombre_archivo }}"
+                              data-texto="{{ fila.texto_compartir }}"
+                              data-whatsapp="{{ fila.enlace_whatsapp }}">WhatsApp</button>
+                      <details class="edicion-gasto">
+                        <summary class="boton boton--peligro boton--pequeno">Anular</summary>
+                        <form class="formulario formulario--compacto" method="post"
+                              action="{{ url_for('anular_venta', id_venta=venta.id_venta) }}"
+                              data-confirmar="¿Anular la orden No. {{ venta.numero_orden }}? La deuda con el proveedor no se revierte.">
+                          <label class="campo">
+                            <span class="campo__etiqueta">Motivo</span>
+                            <input class="campo__control" type="text" name="motivo" required />
+                          </label>
+                          <label class="campo">
+                            <span class="campo__etiqueta">Devolver al cliente (COP)</span>
+                            <input class="campo__control" type="text" name="monto_devuelto" inputmode="decimal"
+                                   placeholder="0" />
+                            <span class="ayuda">Abonado: {{ venta.total_abonado | cop }}</span>
+                          </label>
+                          <label class="campo">
+                            <span class="campo__etiqueta">Medio de devolución</span>
+                            <select class="campo__control" name="metodo_devolucion">
+                              {% for metodo in metodos_pago %}
+                                <option value="{{ metodo }}">{{ metodo | capitalize }}</option>
+                              {% endfor %}
+                            </select>
+                          </label>
+                          <button class="boton boton--peligro boton--pequeno" type="submit">Confirmar anulación</button>
+                        </form>
+                      </details>
+                    {% elif fila.pendiente_devolver > 0 %}
+                      <details class="edicion-gasto">
+                        <summary class="boton boton--secundario boton--pequeno">Devolver</summary>
+                        <form class="formulario formulario--compacto" method="post"
+                              action="{{ url_for('registrar_devolucion', id_venta=venta.id_venta) }}">
+                          <label class="campo">
+                            <span class="campo__etiqueta">Monto devuelto (COP)</span>
+                            <input class="campo__control" type="text" name="monto" inputmode="decimal" required />
+                          </label>
+                          <label class="campo">
+                            <span class="campo__etiqueta">Medio</span>
+                            <select class="campo__control" name="metodo_pago">
+                              {% for metodo in metodos_pago %}
+                                <option value="{{ metodo }}">{{ metodo | capitalize }}</option>
+                              {% endfor %}
+                            </select>
+                          </label>
+                          <button class="boton boton--primario boton--pequeno" type="submit">Registrar devolución</button>
+                        </form>
+                      </details>
+                    {% endif %}
+                  </div>
                 </td>
               </tr>
             {% endfor %}
@@ -358,4 +389,5 @@
 
 {% block scripts %}
 <script src="{{ url_for('estaticos', path='js/olb_byte.js') }}" defer></script>
+<script src="{{ url_for('estaticos', path='js/factura.js') }}" defer></script>
 {% endblock %}

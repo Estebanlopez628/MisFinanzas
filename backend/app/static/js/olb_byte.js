@@ -1,19 +1,18 @@
 /**
- * Formulario de venta de OLB_BYTE: producto por producto, con detalle y edición.
+ * Formulario de venta de OLB_BYTE: forma de pago, productos guardados y totales.
  *
  * Responsabilidad
  * ---------------
- * - Calcular el subtotal del producto que se está escribiendo.
- * - Agregar el producto a la tabla de detalle («+ Agregar otro producto» o Enter).
- * - Eliminar un producto de la tabla o corregirlo en el cuadro «Actualizar producto»,
- *   que se cierra con Cancelar sin cambiar nada.
- * - Mostrar totales de la orden: venta, costo al proveedor y ganancia.
+ * - Mostrar los campos de pago según la forma (contado o crédito) y el anticipo.
+ * - Guardar un producto en la tabla y bloquear el panel hasta «+ Agregar otro producto».
+ * - Editar un producto en el cuadro «Actualizar» y cerrarlo con «Cancelar» sin cambios.
+ * - Calcular totales: venta, costo al proveedor y ganancia.
  * - Completar el celular al elegir un cliente existente.
- * - Usar la Contact Picker API cuando el navegador la ofrece; si no, explicar por qué
- *   no está disponible en lugar de mostrar un botón que no responde.
+ * - Buscar un contacto en la libreta (Contact Picker) cuando el navegador lo permite;
+ *   si no, guardar el número como contacto con una tarjeta de contacto (.vcf).
  *
  * Los productos viajan al servidor en campos ocultos de cada fila. Ninguna regla de
- * negocio vive aquí: el servidor recalcula y valida todo al registrar la venta.
+ * negocio vive aquí: el servidor valida y calcula todo al registrar la venta.
  */
 
 (function () {
@@ -27,9 +26,12 @@
   var tablaFilas = formulario.querySelector("[data-lista-productos]");
   var mensajeVacia = formulario.querySelector("[data-lista-vacia]");
   var plantilla = document.querySelector("[data-plantilla-fila]");
-  var panel = formulario.querySelector(".bloque-producto");
+  var panel = formulario.querySelector("[data-panel-producto]");
   var errorPanel = formulario.querySelector("[data-error-panel]");
   var subtotalPanel = formulario.querySelector("[data-subtotal-panel]");
+  var estadoPanel = formulario.querySelector("[data-estado-panel]");
+  var botonGuardar = formulario.querySelector("[data-guardar-producto]");
+  var botonAgregar = formulario.querySelector("[data-agregar-producto]");
   var dialogo = document.querySelector("[data-dialogo-edicion]");
   var errorEdicion = document.querySelector("[data-error-edicion]");
   var filaEditando = null;
@@ -37,6 +39,12 @@
   var campoNombre = formulario.querySelector("[data-cliente-nombre]");
   var campoTelefono = formulario.querySelector("[data-cliente-telefono]");
   var listaClientes = document.getElementById("clientes-lista");
+
+  var formaPago = formulario.querySelector("[data-forma-pago]");
+  var metodoPago = formulario.querySelector("[data-metodo-pago]");
+  var anticipo = formulario.querySelector("[data-anticipo]");
+  var montoAnticipo = formulario.querySelector("[data-monto-anticipo]");
+  var metodoAnticipo = formulario.querySelector("[data-metodo-anticipo]");
 
   /**
    * Convierte un monto escrito en formato colombiano («50.000») a número.
@@ -75,24 +83,6 @@
   }
 
   /**
-   * Lee los campos del panel de producto.
-   *
-   * @returns {Object} Valores tal como se escriben.
-   */
-  function valoresPanel() {
-    return leerCampos(panel, "data-campo-panel");
-  }
-
-  /**
-   * Lee los campos del cuadro de edición.
-   *
-   * @returns {Object} Valores tal como se escriben.
-   */
-  function valoresEdicion() {
-    return leerCampos(dialogo, "data-campo-edicion");
-  }
-
-  /**
    * Lee todos los campos que llevan el atributo indicado dentro de un contenedor.
    *
    * @param {HTMLElement} contenedor Elemento donde buscar.
@@ -109,9 +99,9 @@
   }
 
   /**
-   * Escribe los valores en el panel de producto.
+   * Escribe los valores en el panel de producto; los faltantes vuelven a su valor por defecto.
    *
-   * @param {Object} valores Valores a mostrar; los faltantes se dejan en su valor por defecto.
+   * @param {Object} valores Valores a mostrar.
    */
   function escribirPanel(valores) {
     var campos = panel.querySelectorAll("[data-campo-panel]");
@@ -134,7 +124,7 @@
   }
 
   /**
-   * Revisa un producto antes de agregarlo o actualizarlo.
+   * Revisa un producto antes de guardarlo o actualizarlo.
    *
    * @param {Object} valores Valores escritos.
    * @returns {string} Mensaje de error, o cadena vacía si el producto es válido.
@@ -157,7 +147,7 @@
   }
 
   /**
-   * Muestra u oculta un mensaje de error de un bloque.
+   * Muestra u oculta un mensaje de error.
    *
    * @param {HTMLElement} elemento Contenedor del mensaje.
    * @param {string} mensaje Texto del error; vacío lo oculta.
@@ -171,11 +161,27 @@
   }
 
   /**
-   * Calcula el subtotal del producto que se está escribiendo.
+   * Muestra el subtotal del producto que se está escribiendo.
    */
   function actualizarSubtotalPanel() {
-    var valores = valoresPanel();
-    subtotalPanel.textContent = pesos(numero(valores.precio_unitario) * Math.max(parseInt(valores.cantidad, 10) || 0, 0));
+    var valores = leerCampos(panel, "data-campo-panel");
+    var cantidad = Math.max(parseInt(valores.cantidad, 10) || 0, 0);
+    subtotalPanel.textContent = pesos(numero(valores.precio_unitario) * cantidad);
+  }
+
+  /**
+   * Indica si el usuario escribió algo en el panel de producto.
+   *
+   * @returns {boolean} `true` si hay nombre, categoría, costo o precio escritos.
+   */
+  function hayDatosEnPanel() {
+    var valores = leerCampos(panel, "data-campo-panel");
+    return Boolean(
+      (valores.producto_nombre || "").trim() ||
+        (valores.categoria || "").trim() ||
+        (valores.costo_unitario || "").trim() ||
+        (valores.precio_unitario || "").trim()
+    );
   }
 
   /**
@@ -211,16 +217,18 @@
       if (clave === "garantia_meses") {
         texto = (valores.garantia_meses || "0") + " mes(es)";
       }
+      if (clave === "precio_unitario") {
+        texto = pesos(numero(valores.precio_unitario));
+      }
       vistas[j].textContent = texto || "";
     }
   }
 
   /**
-   * Cuenta las filas de producto y muestra el aviso de tabla vacía si corresponde.
+   * Muestra el aviso de tabla vacía solo cuando no hay productos.
    */
   function actualizarVacia() {
-    var filas = tablaFilas.querySelectorAll("[data-fila-producto]");
-    mensajeVacia.hidden = filas.length > 0;
+    mensajeVacia.hidden = tablaFilas.querySelectorAll("[data-fila-producto]").length > 0;
   }
 
   /**
@@ -258,74 +266,114 @@
   }
 
   /**
-   * Reinicia el panel de producto a sus valores por defecto.
-   */
-  function limpiarPanel() {
-    escribirPanel({});
-    actualizarSubtotalPanel();
-  }
-
-  /**
-   * Agrega el producto del panel a la tabla si es válido.
+   * Valida y guarda el producto del panel en la tabla, y bloquea el panel.
    *
-   * @returns {boolean} `true` si se agregó; `false` si hay un error que mostrar.
+   * @returns {boolean} `true` si se guardó; `false` si hay un error que mostrar.
    */
-  function agregarDesdePanel() {
-    var valores = valoresPanel();
+  function guardarProducto() {
+    var valores = leerCampos(panel, "data-campo-panel");
     var error = validarProducto(valores);
     mostrarError(errorPanel, error);
     if (error) {
       return false;
     }
     agregarFila(valores);
-    limpiarPanel();
     mostrarError(errorPanel, "");
+    panel.disabled = true;
+    estadoPanel.textContent = "Producto guardado. Pulsa «+ Agregar otro producto» para escribir el siguiente.";
     recalcular();
     return true;
   }
 
   /**
-   * Indica si el usuario empezó a escribir un producto en el panel.
-   *
-   * @returns {boolean} `true` si hay texto en el nombre, la categoría, el costo o el precio.
+   * Habilita el panel con los campos en blanco para escribir el siguiente producto.
    */
-  function hayDatosEnPanel() {
-    var valores = valoresPanel();
-    return Boolean(
-      (valores.producto_nombre || "").trim() ||
-        (valores.categoria || "").trim() ||
-        (valores.costo_unitario || "").trim() ||
-        (valores.precio_unitario || "").trim()
-    );
+  function habilitarPanel() {
+    panel.disabled = false;
+    escribirPanel({});
+    actualizarSubtotalPanel();
+    mostrarError(errorPanel, "");
+    estadoPanel.textContent = "Escribe el siguiente producto y pulsa Guardar.";
+    panel.scrollIntoView({ behavior: "smooth", block: "center" });
   }
 
-  // --------------------------- Panel de producto -------------------------------
+  // ------------------------------ Panel de producto ------------------------------
 
   panel.addEventListener("input", actualizarSubtotalPanel);
 
   panel.addEventListener("keydown", function (evento) {
-    if (evento.key === "Enter") {
-      // Enter agrega el producto en lugar de enviar la venta a medio escribir.
+    if (evento.key === "Enter" && !panel.disabled) {
       evento.preventDefault();
-      agregarDesdePanel();
+      guardarProducto();
     }
   });
 
-  var botonAgregar = formulario.querySelector("[data-agregar-producto]");
-  if (botonAgregar) {
-    botonAgregar.addEventListener("click", agregarDesdePanel);
+  if (botonGuardar) {
+    botonGuardar.addEventListener("click", guardarProducto);
   }
 
-  // Si el usuario escribió un producto y pulsó «Registrar venta» sin agregarlo,
-  // se agrega antes de enviar; si el producto no es válido, no se envía la venta.
+  if (botonAgregar) {
+    botonAgregar.addEventListener("click", function () {
+      // Si hay un producto escrito y sin guardar, primero se guarda; si no se puede, no avanza.
+      if (!panel.disabled && hayDatosEnPanel() && !guardarProducto()) {
+        return;
+      }
+      habilitarPanel();
+    });
+  }
+
+  // Si queda un producto escrito y sin guardar al registrar la venta, se guarda antes.
   formulario.addEventListener("submit", function (evento) {
-    if (hayDatosEnPanel() && !agregarDesdePanel()) {
+    if (!panel.disabled && hayDatosEnPanel() && !guardarProducto()) {
       evento.preventDefault();
       panel.scrollIntoView({ behavior: "smooth", block: "center" });
     }
   });
 
-  // ----------------------------- Tabla de productos ----------------------------
+  // ------------------------------ Forma de pago ---------------------------------
+
+  /**
+   * Muestra solo los campos de pago que aplican y deshabilita los ocultos.
+   *
+   * Un campo deshabilitado no se envía: así el servidor no recibe un método de pago
+   * de contado mientras la venta es a crédito.
+   */
+  function sincronizarPago() {
+    var credito = formaPago && formaPago.value === "CREDITO";
+    var conAnticipo = credito && anticipo && anticipo.value === "SI";
+
+    formulario.querySelectorAll("[data-bloque='contado']").forEach(function (bloque) {
+      bloque.hidden = credito;
+    });
+    formulario.querySelectorAll("[data-bloque='credito']").forEach(function (bloque) {
+      bloque.hidden = !credito;
+    });
+    formulario.querySelectorAll("[data-bloque='anticipo']").forEach(function (bloque) {
+      bloque.hidden = !conAnticipo;
+    });
+
+    if (metodoPago) {
+      metodoPago.disabled = credito;
+    }
+    if (anticipo) {
+      anticipo.disabled = !credito;
+    }
+    if (montoAnticipo) {
+      montoAnticipo.disabled = !conAnticipo;
+    }
+    if (metodoAnticipo) {
+      metodoAnticipo.disabled = !conAnticipo;
+    }
+  }
+
+  if (formaPago) {
+    formaPago.addEventListener("change", sincronizarPago);
+  }
+  if (anticipo) {
+    anticipo.addEventListener("change", sincronizarPago);
+  }
+
+  // ----------------------------- Tabla de productos ------------------------------
 
   tablaFilas.addEventListener("click", function (evento) {
     var objetivo = evento.target;
@@ -345,7 +393,8 @@
 
     if (objetivo.closest("[data-editar-fila]")) {
       filaEditando = fila;
-      escribirEdicion(leerFila(fila));
+      var valores = leerFila(fila);
+      escribirEdicion(valores);
       mostrarError(errorEdicion, "");
       if (typeof dialogo.showModal === "function") {
         dialogo.showModal();
@@ -353,14 +402,14 @@
     }
   });
 
-  // ------------------------------- Cuadro de edición ---------------------------
+  // ------------------------------ Cuadro de edición ------------------------------
 
   var botonGuardarEdicion = dialogo.querySelector("[data-guardar-edicion]");
   var botonCancelarEdicion = dialogo.querySelector("[data-cancelar-edicion]");
 
   if (botonGuardarEdicion) {
     botonGuardarEdicion.addEventListener("click", function () {
-      var valores = valoresEdicion();
+      var valores = leerCampos(dialogo, "data-campo-edicion");
       var error = validarProducto(valores);
       mostrarError(errorEdicion, error);
       if (error || !filaEditando) {
@@ -381,7 +430,7 @@
     });
   }
 
-  // ------------------------------- Cliente y celular ---------------------------
+  // --------------------------- Cliente y celular --------------------------------
 
   if (campoNombre && listaClientes && campoTelefono) {
     campoNombre.addEventListener("input", function () {
@@ -404,28 +453,12 @@
     });
   }
 
-  // La Contact Picker API solo existe en Android con Chrome y en una conexión segura.
-  // En otros casos se explica por qué no está disponible en lugar de dejar un botón mudo.
+  var botonContactos = formulario.querySelector("[data-contactos]");
   var nota = formulario.querySelector("[data-nota-contactos]");
   var soportaContactos = "contacts" in navigator && "ContactsManager" in window;
-  if (botonContactos() && soportaContactos) {
-    botonContactos().hidden = false;
-    botonContactos().addEventListener("click", importarContacto);
-  } else if (nota) {
-    nota.hidden = false;
-  }
 
   /**
-   * Devuelve el botón de contactos del formulario.
-   *
-   * @returns {HTMLElement|null} Botón o `null` si no existe.
-   */
-  function botonContactos() {
-    return formulario.querySelector("[data-contactos]");
-  }
-
-  /**
-   * Abre la agenda del celular y copia el nombre y el número elegidos.
+   * Abre la libreta del celular y copia el nombre y el número elegidos.
    */
   function importarContacto() {
     navigator.contacts
@@ -447,17 +480,72 @@
           return;
         }
         if (nota) {
-          nota.textContent = "No se pudo abrir Contactos. Escribe el número a mano.";
+          nota.textContent = "No se pudo abrir tu libreta. Escribe el número a mano.";
           nota.hidden = false;
         }
       });
   }
 
-  // ------------------------------- Arranque ------------------------------------
+  /**
+   * Descarga una tarjeta de contacto (.vcf) con el cliente. Al abrirla, el celular
+   * muestra la pantalla para guardarlo en la libreta.
+   */
+  function guardarEnLibreta() {
+    var nombre = campoNombre ? campoNombre.value.trim() : "";
+    var telefono = campoTelefono ? normalizarTelefono(campoTelefono.value) : "";
+    if (!nombre) {
+      window.alert("Escribe el nombre del cliente.");
+      return;
+    }
+    if (telefono.length !== 10) {
+      window.alert("Escribe el celular de 10 dígitos para guardarlo.");
+      return;
+    }
+    var contenido = [
+      "BEGIN:VCARD",
+      "VERSION:3.0",
+      "FN:" + nombre,
+      "TEL;TYPE=CELL:+57" + telefono,
+      "END:VCARD",
+    ].join("\r\n");
+    var blob = new Blob([contenido], { type: "text/vcard" });
+    var url = URL.createObjectURL(blob);
+    var enlace = document.createElement("a");
+    enlace.href = url;
+    enlace.download = nombre.replace(/[^A-Za-z0-9]+/g, "_") + ".vcf";
+    document.body.appendChild(enlace);
+    enlace.click();
+    document.body.removeChild(enlace);
+    window.setTimeout(function () {
+      URL.revokeObjectURL(url);
+    }, 1000);
+  }
+
+  if (botonContactos) {
+    if (soportaContactos) {
+      botonContactos.textContent = "Buscar en Contactos";
+      botonContactos.hidden = false;
+      botonContactos.addEventListener("click", importarContacto);
+    } else {
+      botonContactos.textContent = "Guardar en contactos";
+      botonContactos.hidden = false;
+      botonContactos.addEventListener("click", guardarEnLibreta);
+      if (nota) {
+        nota.textContent =
+          "Descarga el contacto y ábrelo en tu celular para guardarlo en tu libreta.";
+        nota.hidden = false;
+      }
+    }
+  }
+
+  // ----------------------------------- Arranque ---------------------------------
 
   var filasIniciales = tablaFilas.querySelectorAll("[data-fila-producto]");
   for (var k = 0; k < filasIniciales.length; k += 1) {
     escribirFila(filasIniciales[k], leerFila(filasIniciales[k]));
+  }
+  if (formaPago) {
+    sincronizarPago();
   }
   actualizarSubtotalPanel();
   recalcular();

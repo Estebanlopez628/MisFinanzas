@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "finanzas/_gasto_fijo.html" import boton_editar with context %}
+{% from "finanzas/_capacidad.html" import panel_capacidad with context %}
 {% block titulo %}Gastos y Presupuesto{% endblock %}
 
 {% block contenido %}
@@ -65,6 +66,102 @@
       trabajos extras. Esos ingresos no alteran el sueldo ni las quincenas.
     </p>
   </section>
+
+  {{ panel_capacidad(
+    capacidad,
+    "Capacidad de endeudamiento",
+    "Así se reparte el ingreso del mes entre tus gastos fijos, la cuota de tus deudas y el dinero que queda libre."
+  ) }}
+
+  {# ---------------------- Consejero financiero (SRS v1.7) ---------------------- #}
+  {% if consejo.activo %}
+    <section class="panel consejero">
+      <h2 class="panel__titulo">🧭 Consejero financiero</h2>
+      <p class="consejero__saludo">{{ consejo.titulo }}</p>
+      <p class="diagnostico__mensaje">{{ consejo.mensaje }}</p>
+      <p class="ayuda">
+        Excedente consolidado: <strong>{{ consejo.excedente | cop }}</strong>.
+        El consejero se activa por encima de {{ consejo.umbral | cop }}.
+      </p>
+
+      <ul class="consejero__pasos">
+        {% for paso in consejo.pasos %}
+          <li>{{ paso }}</li>
+        {% endfor %}
+      </ul>
+
+      <div class="rejilla-tarjetas consejero__cifras">
+        {% if consejo.modo == 'DEUDA' %}
+          <article class="tarjeta">
+            <span class="tarjeta__icono" aria-hidden="true">💸</span>
+            <h3 class="tarjeta__titulo">{{ consejo.interes_base | cop }}</h3>
+            <p class="tarjeta__descripcion">
+              Intereses en 12 meses pagando solo lo mínimo.
+            </p>
+          </article>
+          <article class="tarjeta tarjeta--verde">
+            <span class="tarjeta__icono" aria-hidden="true">🏔️</span>
+            <h3 class="tarjeta__titulo">{{ consejo.interes_optimizado | cop }}</h3>
+            <p class="tarjeta__descripcion">
+              Intereses con la estrategia
+              {{ 'avalancha' if consejo.estrategia == 'AVALANCHA' else 'bola de nieve' }}.
+            </p>
+          </article>
+        {% else %}
+          <article class="tarjeta">
+            <span class="tarjeta__icono" aria-hidden="true">🐖</span>
+            <h3 class="tarjeta__titulo">{{ consejo.ahorro_base | cop }}</h3>
+            <p class="tarjeta__descripcion">
+              Ahorro en 12 meses con lo que ya tenías planeado.
+            </p>
+          </article>
+          <article class="tarjeta tarjeta--verde">
+            <span class="tarjeta__icono" aria-hidden="true">🌱</span>
+            <h3 class="tarjeta__titulo">{{ consejo.ahorro_optimizado | cop }}</h3>
+            <p class="tarjeta__descripcion">
+              Ahorro en 12 meses si le sumas el excedente.
+            </p>
+          </article>
+        {% endif %}
+      </div>
+
+      <h3 class="capacidad__subtitulo">Base frente a optimizado (12 meses)</h3>
+      <p class="ayuda">
+        {% if consejo.modo == 'DEUDA' %}
+          Saldo de deuda restante: mientras más baja la barra, mejor.
+        {% else %}
+          Ahorro acumulado: mientras más alta la barra, mejor.
+        {% endif %}
+        Azul: solo lo mínimo o lo ya planeado. Verde: con tu excedente.
+      </p>
+      <div class="comparativa">
+        <div class="comparativa__grafica" role="img"
+             aria-label="Comparación mes a mes entre el escenario base y el optimizado">
+          {% for fila in consejo.serie %}
+            <div class="comparativa__mes">
+              <div class="comparativa__barras">
+                <span class="comparativa__barra comparativa__barra--base"
+                      style="height: {{ fila.base_pct }}%"
+                      title="Base: {{ fila.base | cop }}"></span>
+                <span class="comparativa__barra comparativa__barra--optimizado"
+                      style="height: {{ fila.optimizado_pct }}%"
+                      title="Optimizado: {{ fila.optimizado | cop }}"></span>
+              </div>
+              <span class="comparativa__etiqueta">{{ fila.etiqueta }}</span>
+            </div>
+          {% endfor %}
+        </div>
+        <ul class="comparativa__leyenda">
+          <li><span class="dona__muestra comparativa__muestra--base"></span> Base</li>
+          <li><span class="dona__muestra comparativa__muestra--optimizado"></span> Optimizado</li>
+        </ul>
+      </div>
+      <p class="ayuda">
+        Proyección educativa: supone el mismo ingreso, los mismos gastos fijos y
+        las mismas cuotas. No reemplaza una asesoría financiera.
+      </p>
+    </section>
+  {% endif %}
 
   {# ---------------------- Nueva proyección de ahorro --------------------- #}
   <section class="panel">
@@ -195,7 +292,7 @@
             </span>
             <span class="lista-gastos__valor">Valor: {{ deduccion.valor | cop }}</span>
             <div class="lista-gastos__acciones">
-              <details class="edicion-gasto">
+              <details class="edicion-gasto edicion-gasto--modal">
                 {{ boton_editar(deduccion.descripcion) }}
                 <form class="formulario formulario--compacto edicion-gasto__formulario" method="post"
                       action="{{ url_for('editar_deduccion_fija', id_deduccion=deduccion.id_deduccion) }}"

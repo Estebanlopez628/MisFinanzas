@@ -23,7 +23,7 @@ from app.core.base_datos import obtener_bd
 from app.core.texto import formatear_mes_anio
 from app.dependencias import UsuarioSesion, obtener_usuario_actual
 from app.routers.vistas import contexto_base, plantillas
-from app.servicios import auditoria, trabajos
+from app.servicios import auditoria, capacidad, perfiles, trabajos
 
 router = APIRouter(tags=["Trabajos Extras"])
 
@@ -67,6 +67,7 @@ def _contexto(
     """
     hoy = date.today()
     trabajos.asegurar_pagos_trabajos(bd, usuario.id_usuario, hoy.year, hoy.month)
+    perfil = perfiles.obtener_perfil(bd, usuario.id_usuario)
     contexto = contexto_base(usuario)
     contexto.update(
         {
@@ -78,6 +79,9 @@ def _contexto(
             ),
             "extras_mes": trabajos.extras_cobrados_mes(
                 bd, usuario.id_usuario, hoy.year, hoy.month
+            ),
+            "capacidad": capacidad.capacidad_endeudamiento(
+                bd, usuario.id_usuario, perfil, hoy.year, hoy.month
             ),
             "mes_visible": formatear_mes_anio(hoy.year, hoy.month),
             "hoy": hoy,

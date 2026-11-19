@@ -1,0 +1,138 @@
+{#
+  Panel compartido de capacidad de endeudamiento (SRS v1.7, bloque F).
+
+  Se incluye en «Gastos y Presupuesto» y en «Trabajos Extras» para que ambas
+  vistas muestren exactamente la misma gráfica: dona del ingreso repartido entre
+  gastos fijos, cuota de deudas y dinero libre, semáforo, deudas por terminar y
+  proyección a doce meses. La macro no calcula nada: pinta el `Capacidad` que ya
+  resolvió `app.servicios.capacidad`.
+#}
+
+{% macro panel_capacidad(capacidad, titulo, descripcion) -%}
+  <section class="panel capacidad" aria-labelledby="capacidad-titulo">
+    <h2 class="panel__titulo" id="capacidad-titulo">{{ titulo }}</h2>
+    <p class="ayuda">{{ descripcion }}</p>
+
+    {% if capacidad.ingreso <= 0 %}
+      <div class="alerta alerta--aviso" role="status">
+        Completa tu perfil financiero para ver cuánto de tu ingreso está
+        comprometido con gastos y deudas.
+      </div>
+    {% else %}
+      <div class="dona-contenedor capacidad__resumen">
+        <div class="dona">
+          <svg viewBox="0 0 42 42" class="dona__svg" role="img"
+               aria-label="Reparto del ingreso entre gastos fijos, deudas y dinero libre">
+            <circle cx="21" cy="21" r="15.9155" fill="transparent" class="dona__fondo" stroke-width="6" />
+            {% for arco in capacidad.arcos %}
+              <circle cx="21" cy="21" r="15.9155" fill="transparent" stroke-width="6"
+                      style="stroke: {{ arco.color }}"
+                      stroke-dasharray="{{ arco.longitud }} {{ 100 - arco.longitud }}"
+                      stroke-dashoffset="{{ arco.desplazamiento }}"
+                      transform="rotate(-90 21 21)">
+                <title>{{ arco.etiqueta }}: {{ arco.valor | cop }} ({{ arco.porcentaje }} %)</title>
+              </circle>
+            {% endfor %}
+          </svg>
+          <div class="dona__centro">
+            <strong class="capacidad__centro-valor">{{ capacidad.porcentaje_libre }} %</strong>
+            <span class="dona__centro-etiqueta">libre</span>
+          </div>
+        </div>
+
+        <ul class="dona__leyenda">
+          {% for arco in capacidad.arcos %}
+            <li>
+              <span class="dona__muestra" style="background: {{ arco.color }}"></span>
+              {{ arco.etiqueta }}:
+              <strong>{{ arco.valor | cop }}</strong>
+              ({{ arco.porcentaje }} %)
+            </li>
+          {% endfor %}
+          <li>
+            Ingreso del mes: <strong>{{ capacidad.ingreso | cop }}</strong>
+          </li>
+        </ul>
+      </div>
+
+      <p class="capacidad__semaforo">
+        <span class="semaforo semaforo--{{ capacidad.semaforo }}">
+          {{ capacidad.porcentaje_deudas }} % en deudas
+        </span>
+        {{ capacidad.mensaje }}
+      </p>
+
+      {% if capacidad.libre < 0 %}
+        <div class="alerta alerta--critica" role="alert">
+          Tus obligaciones superan el ingreso del mes en
+          {{ (capacidad.libre * -1) | cop }}. Antes de asumir una deuda nueva,
+          revisa gastos fijos y cuotas.
+        </div>
+      {% endif %}
+
+      <h3 class="capacidad__subtitulo">Deudas por terminar ({{ capacidad.por_terminar | length }})</h3>
+      {% if capacidad.por_terminar %}
+        <ul class="capacidad__lista">
+          {% for deuda in capacidad.por_terminar %}
+            <li class="capacidad__deuda">
+              <span class="capacidad__deuda-nombre">
+                {{ deuda.acreedor }}{% if deuda.descripcion %} · {{ deuda.descripcion }}{% endif %}
+              </span>
+              <span class="insignia">{{ deuda.cuotas_pendientes }} cuota(s)</span>
+              <span class="ayuda">
+                Saldo {{ deuda.saldo | cop }} · cuota {{ deuda.cuota | cop }}/mes
+                {%- if deuda.fecha_fin %} · última el {{ deuda.fecha_fin.strftime('%d/%m/%Y') }}{% endif %}
+              </span>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="ayuda">
+          No hay deudas con tres cuotas o menos. Cuando una se acerque al final,
+          aparecerá aquí.
+        </p>
+      {% endif %}
+
+      <h3 class="capacidad__subtitulo">Proyección a 12 meses</h3>
+      <p class="ayuda">
+        Supone tu ingreso y tus gastos fijos actuales: la cuota de deuda baja
+        cuando cada obligación termina.
+      </p>
+      <div class="tabla-contenedor">
+        <table class="tabla capacidad__tabla">
+          <thead>
+            <tr>
+              <th scope="col">Mes</th>
+              <th scope="col">Cuota de deudas</th>
+              <th scope="col">Libre</th>
+              <th scope="col">Termina</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for fila in capacidad.proyeccion %}
+              <tr>
+                <td>{{ fila.etiqueta }}</td>
+                <td>{{ fila.deuda | cop }}</td>
+                <td>
+                  <span class="capacidad__libre{% if fila.libre < 0 %} valor-negativo{% endif %}">
+                    {{ fila.libre | cop }}
+                  </span>
+                  <span class="barra capacidad__barra" aria-hidden="true">
+                    <span style="width: {{ fila.porcentaje_libre }}%"></span>
+                  </span>
+                </td>
+                <td>
+                  {% if fila.terminan %}
+                    {{ fila.terminan | join(', ') }}
+                  {% else %}
+                    —
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% endif %}
+  </section>
+{%- endmacro %}

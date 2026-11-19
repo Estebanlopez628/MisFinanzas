@@ -58,7 +58,7 @@ Plataforma web/móvil híbrida (PWA) con backend y frontend **100% Python**, arq
     ├── datos/finanzas.db               # Base SQLite local (no versionar)
     ├── scripts/respaldo.py             # Respaldo consistente y rotación
     ├── scripts/generar_guia.py        # Inventario de Guia.md + --verificar
-    ├── tests/                          # Suite completa (289 pruebas)
+    ├── tests/                          # Suite completa (478 pruebas)
     └── app/
         ├── main.py                     # Punto de entrada FastAPI (fábrica de app)
         ├── dependencias.py             # Sesión, `SesionRequerida` y RBAC por rol
@@ -98,6 +98,8 @@ Plataforma web/móvil híbrida (PWA) con backend y frontend **100% Python**, arq
         │   ├── chancucos.py
         │   ├── deudas.py
         │   ├── trabajos.py
+        │   ├── capacidad.py            # Dona y proyección de endeudamiento (v1.7)
+        │   ├── consejero.py            # Bola de nieve, avalancha y metas (v1.7)
         │   ├── comercial.py            # Inventario, ventas y cartera
         │   ├── auditoria.py
         │   └── usuarios.py             # Repositorio de usuarios sobre BD
@@ -114,6 +116,8 @@ Plataforma web/móvil híbrida (PWA) con backend y frontend **100% Python**, arq
         │   ├── incapacidades/index.html
         │   ├── finanzas/index.html     # Layout de dos columnas + Chancucos
         │   ├── finanzas/_subnav.html   # Subnavegación interna del módulo
+        │   ├── finanzas/_gasto_fijo.html # Fila de gasto y check compartida
+        │   ├── finanzas/_capacidad.html # Dona de endeudamiento compartida
         │   ├── chancucos/index.html
         │   ├── deudas/index.html
         │   ├── trabajos/index.html
@@ -158,6 +162,7 @@ Plataforma web/móvil híbrida (PWA) con backend y frontend **100% Python**, arq
 - **Incapacidades (origen común):** días 1–2 al 100% (empleador); días 3+ al 66.67% (descuento del 33.33% a cargo de EPS). Los días son **calendario** (`fin − inicio + 1`) y no se digitan; la regla 100 %/66,67 % se aplica una sola vez sobre la incapacidad completa. Si el rango cruza de mes, cada mes descuenta **solo su tramo** (`registro_incapacidades.tramos_del_mes`); **no hay rollover** (ADR-20). La incapacidad entra en la caja única de deducciones de ley.
 - **Deudas (SRS v1.5, ADR-21):** seis datos (acreedor, descripción, saldo, cuota, cuotas pendientes y periodicidad quincenal/mensual). Sin tasa capturada ni fecha límite: la tasa se deriva por bisección de `saldo = cuota × (1 − (1+r)^−n) / r` con 10 decimales. Al abrir el módulo se aplican las cuotas vencidas en `pagos_deuda` (idempotente por `UNIQUE(id_deuda, numero_cuota)`) y la última cuota deja el saldo exacto en cero. No existe abono manual.
 - **Metas con «Ambas quincenas» (ADR-22):** `quincena = 3` guarda la cuota mensual y la reparte entre los dos pagos (`valor_por_pago`). Sigue siendo planificación: no se resta del saldo libre.
+- **Capacidad de endeudamiento y consejero (SRS v1.7, ADR-44 y ADR-45):** el ingreso del mes (quincenas + extras cobrados) se reparte entre gastos fijos, cuota mensual de deudas y libre; el semáforo usa el porcentaje de deuda (≤ 20 % verde, ≤ 35 % ámbar, más rojo). El consejero solo se activa con un excedente **mayor** que $300.000 y compara bola de nieve (saldo menor) contra avalancha (tasa mayor) a 12 meses; sin deudas dirige el excedente a las metas.
 - **Onboarding obligatorio (SRS v1.2):** ninguna ruta de negocio se abre sin perfil financiero; `UsuarioSesion.perfil_configurado` se calcula por petición y `OnboardingRequerido` redirige a `/perfil?bienvenida=1` (303 HTML / 409 JSON).
 - **Quincenas independientes:** en modalidad `QUINCENAL`, `porcentaje_quincena_1 + porcentaje_quincena_2 = 100 %`. Las deducciones de ley se aplican **solo** a la quincena indicada en `quincena_deducciones`. Si el usuario no conoce los porcentajes, informa el neto de la quincena sin descuentos y el sistema deriva ambos porcentajes por descarte.
 - **Obligaciones fijas por quincena:** `gastos.quincena` (`1`, `2` o `NULL`) decide de qué pago se resta el gasto fijo. Los gastos sin quincena se muestran en la quincena 1 como «todo el mes» para conservar el total.
@@ -192,7 +197,7 @@ python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 
 ```bash
 cd backend
-.\.venv\Scripts\python -m pytest -q          # suite completa (289 pruebas)
+.\.venv\Scripts\python -m pytest -q          # suite completa (478 pruebas)
 .\.venv\Scripts\python scripts\respaldo.py   # copia consistente en backend/respaldos
 .\.venv\Scripts\python scripts\generar_guia.py --verificar  # docstrings y fichas de Guia.md
 ```
@@ -285,6 +290,16 @@ La configuración vive en `.vscode/launch.json`. También existe **Pruebas (pyte
 - [x] **SRS v1.6 — Montos sin centavos (ADR-23)** e **incapacidades: Enter y «Limpiar» (ADR-26).**
 - [x] Verificación SRS v1.6: `python -m compileall` OK, **289 pruebas** con `pytest` en verde, `generar_guia.py --verificar` sin problemas (71 archivos con ficha) y migración de `gastos` probada sobre una base con el esquema anterior.
 - [ ] **SRS v1.6 — Revisión visual pendiente:** botones ✔/× del mismo tamaño, meses centrados en «Gastos y Presupuesto» y «Valor:» retirado en el celular; verificar en navegador.
+- [x] **SRS v1.7 — Bloque A (UI móvil):** rejillas con `minmax(min(...),100%)`, `min-width:0`, fechas sin desborde y alturas homologadas (ADR-30).
+- [x] **SRS v1.7 — Bloque B (metas):** selector Quincena 1 / Quincena 2 / Ambas y modo `DIVIDIR`/`DUPLICAR` para «Ambas» (ADR-31).
+- [x] **SRS v1.7 — Bloque C (checks):** desmarcar revierte pago y abono; la limpieza masiva solo oculta los ✔; lápiz, «Cancelar» y × en la fila compartida (ADR-32).
+- [x] **SRS v1.7 — Bloque D (atajos):** pregunta «¿Es un único pago mensual?», uno o dos días (1–31) y distintivo «Día 15 · Día 30» (ADR-33).
+- [x] **SRS v1.7 — Bloque E (Trabajos Extras):** contratos indefinidos o a término fijo, frecuencia mensual/quincenal, pagos con check reutilizado y neto al diagnóstico del mes (ADR-34).
+- [x] **SRS v1.7 — Bloque F (capacidad):** dona de gastos fijos, deudas y libre con semáforo, deudas con tres cuotas o menos y proyección a 12 meses, instanciada en Gastos y Presupuesto y en Trabajos Extras (ADR-44).
+- [x] **SRS v1.7 — Bloque G (consejero):** se activa sobre $300.000, recomienda bola de nieve o avalancha, sugiere metas cuando no hay deudas y compara base frente a optimizado a 12 meses (ADR-45).
+- [x] Verificación SRS v1.7: `python -m compileall` OK, **478 pruebas** con `pytest` en verde, `generar_guia.py --verificar` sin problemas (88 archivos con ficha). `sw.js` en `olb-finanzas-v16`.
+- [x] **Ajuste móvil de la edición de gastos (ADR-30):** en pantallas de 640 px o menos el lápiz abre la edición como **ventana centrada** (fondo oscuro, scroll propio, cierre al tocar el fondo o con Escape) en vez del desplegable pegado a la derecha que se cortaba; `edicion-gasto--modal` en la macro `fila_gasto` y en las deducciones fijas, `sw.js` en `olb-finanzas-v17`. Medido en Chromium a 360/390/768/1280 px.
+- [ ] **SRS v1.7 — Revisión visual pendiente:** bloques A a G en 360/390/768/escritorio, incluida la gráfica del consejero en celular.
 - [x] **SRS OLB_BYTE v1.0 — Fase 0 (decisiones):** modelo sin inventario, anulación con devolución y sin reversa de deuda con proveedor, consecutivo desde 1, productos escritos a mano y motor PDF Playwright (ADR-35 y ADR-36, `diccionario_datos.md` §10).
 - [x] **SRS OLB_BYTE v1.0 — Fase 1 (modelo y servicio):** tablas `ventas`, `venta_detalle`, `movimientos_proveedor`, `garantias_proveedor` y `devoluciones_clientes`; `productos` sin `stock`; reconstrucción `_reconstruir_comercial_sin_stock` que se detiene si hay datos; `servicios/comercial.py` reescrito (consecutivo, deuda con proveedor, abonos con fecha y hora, anulación con devolución, cartera y caja).
 - [x] Verificación Fase 1: `pytest` en verde (**345 pruebas**, incluidas 3 de migración en `tests/test_migracion_olb.py`).
@@ -303,8 +318,18 @@ La configuración vive en `.vscode/launch.json`. También existe **Pruebas (pyte
 - [ ] **OLB_BYTE Fase 4 — revisión visual pendiente:** la dona en móvil y el contraste de «−» en rojo sobre fondo oscuro.
 - [ ] **OLB_BYTE Fase 3 — revisión visual pendiente:** recibo en celular y su impresión (`no-imprimir`), y el orden de los campos de abono en la vista de pendientes.
 - [ ] **OLB_BYTE Fase 2 — revisión visual pendiente:** mini-tabla en móvil, Contact Picker en un celular con HTTPS, y comportamiento de Cancelar en filas nuevas y guardadas; verificar en navegador.
-- [ ] **Deuda previa de documentación:** `Guia.md` no tiene ficha para `templates/chancucos/_dias.html` ni `templates/finanzas/_gasto_fijo.html` (`generar_guia.py --verificar` falla por ello desde SRS v1.7).
+- [x] **Deuda de documentación resuelta:** `Guia.md` incorpora las fichas de `templates/chancucos/_dias.html` y `templates/finanzas/_gasto_fijo.html`; `generar_guia.py --verificar` queda en verde (85 archivos con ficha).
 - [x] **SRS OLB_BYTE v1.0 — Fase 7 (factura PDF, RF-18 y RF-19):** PDF Carta de una página con Playwright y Chromium (ADR-36 y ADR-41), logos de `assets/`, medios de pago, vista previa, descarga y compartir. Límite de diez productos por factura. Instalación del navegador en `DESPLIEGUE.md` §13.
 - [x] Verificación Fase 7: `pytest` en verde (**425 pruebas**, incluidas 14 en `tests/test_factura_pdf.py`); revisión visual de la factura de muestra.
-- [ ] **OLB_BYTE Fase 7 — revisión visual pendiente:** vista previa dentro del diálogo y el botón Compartir en un celular.
+- [x] **Ajustes de validación (ADR-42):** botón de contactos corregido (regla global `[hidden]` y nota explicativa), submenú de OLB_BYTE arriba, formulario de venta v2 con panel de producto, tabla de detalle y cuadro de edición, `referencia` renombrada a `categoria`, vista de tarjetas en celular.
+- [x] Verificación ADR-42: `pytest` en verde (**434 pruebas**); recorrido en Chromium con 19 comprobaciones en verde (escritorio y celular).
+- [x] **Ajustes de validación 3 (ADR-43):** pago de contado o a crédito con anticipo en la venta; página de cobro con dos opciones; pendientes con una acción por cliente; órdenes sin ganancia ni saldo; WhatsApp envía el PDF adjunto; barras del balance; submenú sin borde cortado; «Nuevo cliente» retirado; factura personalizable (`Guia.md` §10).
+- [x] Verificación ajustes 3: `pytest` en verde (**453 pruebas**); recorrido en Chromium con 35 comprobaciones en verde.
+- [x] **Diseño de la factura (ADR-46):** la pantalla, la vista previa, la descarga y el PDF enviado por WhatsApp usan el mismo diseño (`_hoja_factura.html` + `factura-olb.css`). PDF de una hoja Carta con escala 0,75. Datos de empresa y cuenta en `factura_pdf.py`. Personalización en `Guia.md` §10.
+- [x] Verificación diseño de factura: `pytest` en verde (**479 pruebas**); capturas en escritorio y celular sin desbordamiento.
+- [x] **Logo oficial en la factura:** la cabecera usa `assets/Logotipo OLB Byte de Alta Tecnología.png` (modo de mezcla `screen` para quitar su fondo negro). `base.html` tiene el bloque `estilos` y la factura carga su CSS ahí. Los logos se cachean en memoria (`logo_como_data_uri`). Prueba en `tests/test_factura_pdf.py` (480 pruebas en verde).
+- [ ] **Pendiente de revisión:** el PDF impreso con el modo de mezcla del logo; conviene una prueba de descarga en tu equipo.
+- [x] **Botones de regreso en OLB_BYTE:** cada pantalla tiene «← Volver» (Ventas vuelve al inicio; Pendientes, Cartera, Garantías, Analítica y Factura vuelven a Ventas; Cobro vuelve a Pendientes). Prueba en `tests/test_olb_ui.py` (454 pruebas en verde).
+- [x] **Decisión (propietario):** Analítica y Cartera muestran ganancia y saldos sin protección adicional; el módulo es de uso exclusivo del administrador, por lo que no se requiere ocultarlos. La tabla de órdenes del panel sí oculta ganancia y saldo (ADR-43).
+- [ ] **OLB_BYTE — revisión visual pendiente:** Android con Chrome en HTTPS (contactos y compartir PDF) y la impresión de la factura.
 - [ ] **Fase 3 (opcional)** — Migración a PostgreSQL con Alembic y despliegue multi-instancia (ver `DESPLIEGUE.md` §11).

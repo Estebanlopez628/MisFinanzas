@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "finanzas/_gasto_fijo.html" import fila_gasto with context %}
+{% from "finanzas/_capacidad.html" import panel_capacidad with context %}
 {% block titulo %}Trabajos Extras{% endblock %}
 
 {% block contenido %}
@@ -43,6 +44,12 @@
       </p>
     </article>
   </div>
+
+  {{ panel_capacidad(
+    capacidad,
+    "Capacidad con tus ingresos extras",
+    "La dona suma el sueldo del mes y los trabajos extras cobrados, para que veas cuánto pesan tus deudas cuando esos ingresos entran a la caja."
+  ) }}
 
   <div class="rejilla-paneles">
     <section class="panel">

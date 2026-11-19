@@ -10,6 +10,7 @@
   <link rel="apple-touch-icon" href="{{ url_for('estaticos', path='img/icono-192.svg') }}" />
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="stylesheet" href="{{ url_for('estaticos', path='css/estilos.css') }}" />
+  {% block estilos %}{% endblock %}
 </head>
 <body>
   <div class="contenedor-app">

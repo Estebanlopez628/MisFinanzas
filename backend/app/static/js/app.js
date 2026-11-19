@@ -72,6 +72,19 @@
 
   // ------------------- Ediciones en línea y confirmaciones ----------------
 
+  /**
+   * Cierra un desplegable de edición en línea y descarta lo escrito.
+   *
+   * @param {HTMLDetailsElement} detalles Desplegable de edición abierto.
+   */
+  function cerrarEdicion(detalles) {
+    var formulario = detalles.querySelector("form");
+    if (formulario) {
+      formulario.reset();
+    }
+    detalles.open = false;
+  }
+
   // SRS v1.7: «Cancelar» cierra el desplegable de edición y descarta lo escrito.
   document.addEventListener("click", function (evento) {
     var objetivo = evento.target;
@@ -83,13 +96,35 @@
       return;
     }
     evento.preventDefault();
-    var formulario = cancelar.closest("form");
     var detalles = cancelar.closest("details");
-    if (formulario) {
-      formulario.reset();
-    }
     if (detalles) {
-      detalles.open = false;
+      cerrarEdicion(detalles);
+    }
+  });
+
+  // Ajuste móvil (SRS v1.7): el fondo oscuro de la ventana de edición se dibuja
+  // con `::before` sobre el propio <details>, de modo que tocarlo llega aquí
+  // como un clic en el desplegable. Se cierra sin guardar. El resumen y los
+  // campos detienen el evento en sí mismos, así que no entran en este caso.
+  document.addEventListener("click", function (evento) {
+    var objetivo = evento.target;
+    if (!(objetivo instanceof Element)) {
+      return;
+    }
+    if (!objetivo.classList.contains("edicion-gasto--modal") || !objetivo.open) {
+      return;
+    }
+    cerrarEdicion(objetivo);
+  });
+
+  // La tecla Escape también descarta la edición, útil con el teclado abierto.
+  document.addEventListener("keydown", function (evento) {
+    if (evento.key !== "Escape") {
+      return;
+    }
+    var abiertos = document.querySelectorAll("details.edicion-gasto--modal[open]");
+    for (var k = 0; k < abiertos.length; k += 1) {
+      cerrarEdicion(abiertos[k]);
     }
   });
 

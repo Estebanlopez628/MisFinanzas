@@ -359,12 +359,26 @@ def buscar_clientes(bd: Session, texto: str, limite: int = 8) -> list[Cliente]:
     return list(bd.scalars(consulta))
 
 
+@dataclass(frozen=True)
+class PagoInicial:
+    """Pago recibido al registrar la venta: pago de contado o anticipo.
+
+    Attributes:
+        monto: Dinero recibido; `None` significa el total de la orden (pago de contado).
+        metodo_pago: `EFECTIVO` o `TRANSFERENCIA`.
+    """
+
+    monto: Decimal | str | int | float | None
+    metodo_pago: str
+
+
 def registrar_venta(
     bd: Session,
     cliente_nombre: str,
     cliente_telefono: str | None,
     lineas: list[LineaVenta],
     fecha_venta: datetime | None = None,
+    pago_inicial: PagoInicial | None = None,
 ) -> Venta:
     """Registra una orden de venta a crédito y la compra al proveedor.
 
@@ -403,6 +417,21 @@ def registrar_venta(
         if precio < CERO or costo < CERO:
             raise ValueError("Los precios y costos no pueden ser negativos.")
         valores.append((linea, precio, costo))
+
+    total_previsto = sum(
+        (redondear_dinero(precio * linea.cantidad) for linea, precio, _ in valores), start=CERO
+    )
+    monto_inicial: Decimal | None = None
+    metodo_inicial = ""
+    if pago_inicial is not None:
+        monto_inicial = (
+            total_previsto if pago_inicial.monto is None else _dinero(pago_inicial.monto)
+        )
+        if monto_inicial <= CERO:
+            raise ValueError("El pago inicial debe ser mayor que cero.")
+        if monto_inicial > total_previsto:
+            raise ValueError("El anticipo no puede superar el total de la venta.")
+        metodo_inicial = _validar_metodo(pago_inicial.metodo_pago)
 
     ahora = fecha_venta or ahora_tienda()
     fecha_local = ahora.astimezone(ZONA_TIENDA).date()
@@ -458,6 +487,21 @@ def registrar_venta(
     venta.estado_pago = ESTADO_PAGO_PAGADA if total == CERO else ESTADO_PAGO_PENDIENTE
     venta.garantia_texto = texto_orden
     venta.garantia_fecha_fin = vencimiento_orden
+
+    if monto_inicial is not None:
+        # El pago inicial entra en la misma transacción que la venta: si algo falla,
+        # no queda una orden sin su pago ni un pago sin orden.
+        bd.add(
+            Abono(
+                id_venta=venta.id_venta,
+                monto=monto_inicial,
+                metodo_pago=metodo_inicial,
+                fecha_abono=ahora,
+            )
+        )
+        venta.total_abonado = monto_inicial
+        venta.saldo_pendiente = redondear_dinero(total - monto_inicial)
+        _recalcular_estado_pago(venta)
 
     if venta.total_costo > CERO:
         _registrar_movimiento_proveedor(
@@ -943,29 +987,57 @@ def clasificar_saldo(valor: Decimal) -> tuple[str, str]:
     return formatear_pesos(valor), "valor-positivo"
 
 
-def tabla_balance(resumen: dict[str, Decimal]) -> list[dict[str, str]]:
-    """Arma las filas de la tabla de balance de cartera (RF-09 y RF-10).
+def barras_balance(resumen: dict[str, Decimal]) -> list[dict[str, object]]:
+    """Calcula las barras horizontales del balance de cartera (RF-09 y RF-10).
+
+    Cada barra es proporcional al mayor valor absoluto. Si hay déficits, el cero se
+    dibuja en el centro: los valores positivos crecen a la derecha y los negativos a
+    la izquierda. Los saldos de balance y efectivo llevan signo y color (RF-10).
 
     Args:
         resumen: Indicadores de `resumen_cartera`.
 
     Returns:
-        Filas con etiqueta, texto del valor, clase CSS y explicación breve.
+        Filas con etiqueta, texto del valor, clase, color y la posición de la barra
+        en porcentaje (`izquierda` y `ancho`).
     """
     definiciones = [
-        ("Total adeudado por clientes", resumen["cartera_clientes"], "Órdenes activas con saldo.", False),
-        ("Total adeudado al proveedor", resumen["deuda_proveedor"], "Compras a crédito menos abonos.", False),
-        ("Balance de cartera", resumen["balance"], "Cartera de clientes − deuda con el proveedor.", True),
-        ("Caja recaudada", resumen["caja_recaudada"], "Abonos de clientes − devoluciones − pagos al proveedor.", False),
-        ("Efectivo libre real", resumen["efectivo_libre"], "Caja recaudada − deuda con el proveedor.", True),
+        ("Total adeudado por clientes", resumen["cartera_clientes"], "var(--accent-blue)", False),
+        ("Total adeudado al proveedor", resumen["deuda_proveedor"], "var(--accent-amber)", False),
+        ("Balance de cartera", resumen["balance"], None, True),
+        ("Caja recaudada", resumen["caja_recaudada"], "var(--accent-blue)", False),
+        ("Efectivo libre real", resumen["efectivo_libre"], None, True),
     ]
-    filas = []
-    for etiqueta, valor, explicacion, con_signo in definiciones:
+    maximo = max((abs(valor) for _, valor, _, _ in definiciones), default=CERO)
+    hay_negativos = any(valor < CERO for _, valor, _, _ in definiciones)
+
+    filas: list[dict[str, object]] = []
+    for etiqueta, valor, color, con_signo in definiciones:
         if con_signo:
-            texto, clase = clasificar_saldo(valor)
+            texto_valor, clase = clasificar_saldo(valor)
+            color = color or ("var(--accent-green)" if valor >= CERO else "var(--accent-red)")
         else:
-            texto, clase = formatear_pesos(valor), ""
-        filas.append({"etiqueta": etiqueta, "texto": texto, "clase": clase, "explicacion": explicacion})
+            texto_valor, clase = formatear_pesos(valor), ""
+
+        if maximo == CERO:
+            izquierda, ancho = 0.0, 0.0
+        elif hay_negativos:
+            mitad = float(abs(valor) / maximo * 50)
+            izquierda, ancho = (50.0, mitad) if valor >= CERO else (50.0 - mitad, mitad)
+        else:
+            izquierda, ancho = 0.0, float(abs(valor) / maximo * 100)
+
+        filas.append(
+            {
+                "etiqueta": etiqueta,
+                "texto": texto_valor,
+                "clase": clase,
+                "color": color,
+                "izquierda": round(izquierda, 2),
+                "ancho": round(ancho, 2),
+                "hay_negativos": hay_negativos,
+            }
+        )
     return filas
 
 
@@ -1224,28 +1296,33 @@ def formatear_pesos(valor: Decimal | int | float) -> str:
     return f"${valor:,.0f}".replace(",", ".")
 
 
-def enlace_whatsapp_factura(venta: Venta, lineas: list[dict[str, object]]) -> str:
-    """Construye el enlace de WhatsApp con el resumen de la factura.
+def texto_compartir_factura(venta: Venta) -> str:
+    """Redacta el mensaje que acompaña a la factura enviada por WhatsApp.
+
+    El PDF viaja como archivo adjunto; el texto solo saluda y anuncia el adjunto.
+
+    Args:
+        venta: Orden facturada.
+
+    Returns:
+        Texto como «Hola Ana Pérez, adjunto tu factura de compra.».
+    """
+    return f"Hola {venta.cliente_nombre}, adjunto tu factura de compra."
+
+
+def enlace_whatsapp_factura(venta: Venta) -> str:
+    """Construye el enlace de WhatsApp con el mensaje de la factura.
+
+    Es el respaldo cuando el navegador no puede adjuntar el PDF: abre el chat del
+    cliente con el texto listo y el PDF se adjunta desde la descarga.
 
     Args:
         venta: Orden facturada; usa el celular guardado en la orden.
-        lineas: Filas con nombre, cantidad y subtotal.
 
     Returns:
         URL de `wa.me`. Sin celular se devuelve un enlace sin destinatario.
     """
-    detalle = "\n".join(
-        f"• {fila['nombre']} x{fila['cantidad']} = {formatear_pesos(fila['subtotal'])}"
-        for fila in lineas
-    )
-    texto = (
-        f"Hola {venta.cliente_nombre}, gracias por tu compra en OLB_BYTE.\n"
-        f"Factura No. {venta.numero_orden} del {venta.fecha_venta:%d/%m/%Y}\n"
-        f"{detalle}\n"
-        f"Total: {formatear_pesos(venta.total)}\n"
-        f"Saldo pendiente: {formatear_pesos(venta.saldo_pendiente)}"
-    )
-    return _enlace_wa(venta.cliente_telefono, texto)
+    return _enlace_wa(venta.cliente_telefono, texto_compartir_factura(venta))
 
 
 def enlace_whatsapp_recibo(venta: Venta, abono: Abono) -> str:

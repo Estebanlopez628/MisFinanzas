@@ -1,4 +1,4 @@
-# Guía del proyecto — Finanzas y OLB_BYTE
+﻿# Guía del proyecto — Finanzas y OLB_BYTE
 
 > **Documento vivo.** Se reescribe completo en cada cambio relevante del código
 > (ver `AGENTS.md` §5 y `MEMORY.md`). El inventario de §4 es automático y no debe
@@ -96,8 +96,8 @@ Principios que explican el resto del código:
 
 ### Resumen del inventario
 
-- **83 archivos** documentados: 46 Python, 27 plantillas Jinja2 y 10 recursos estáticos.
-- **52 clases**, **398 funciones** y **25 métodos** de clase.
+- **90 archivos** documentados: 48 Python, 31 plantillas Jinja2 y 11 recursos estáticos.
+- **56 clases**, **432 funciones** y **25 métodos** de clase.
 
 ### Detalle por archivo
 
@@ -116,9 +116,9 @@ Principios que explican el resto del código:
 #### `backend/app/core/`
 
 - **`__init__.py`** · 11 líneas — Núcleo de la aplicación: parámetros de negocio y utilidades transversales.
-- **`base_datos.py`** · 585 líneas — Conexión a la base de datos y sesión por petición.
+- **`base_datos.py`** · 607 líneas — Conexión a la base de datos y sesión por petición.
   - Clases: `Base`
-  - Funciones: `obtener_bd`, `crear_esquema`, `_reconstruir_comercial_sin_stock`, `_migrar_columnas_trabajos`, `_migrar_columnas_chancucos`, `_migrar_columnas_metas`, `_migrar_columnas_perfil`, `_migrar_columnas_gastos`, `_migrar_chancucos`, `_migrar_columnas_deudas`, `_migrar_proyeccion_quincena`, `_migrar_saldos_incapacidad`, `inicializar_base_datos`
+  - Funciones: `obtener_bd`, `crear_esquema`, `_renombrar_referencia_a_categoria`, `_reconstruir_comercial_sin_stock`, `_migrar_columnas_trabajos`, `_migrar_columnas_chancucos`, `_migrar_columnas_metas`, `_migrar_columnas_perfil`, `_migrar_columnas_gastos`, `_migrar_chancucos`, `_migrar_columnas_deudas`, `_migrar_proyeccion_quincena`, `_migrar_saldos_incapacidad`, `inicializar_base_datos`
 - **`config.py`** · 264 líneas — Parámetros de negocio y configuración de la plataforma.
   - Clases: `ParametrosNomina`, `ConfiguracionApp`
   - Funciones: `_decimal_desde_entorno`, `obtener_parametros`, `obtener_configuracion`
@@ -152,16 +152,16 @@ Principios que explican el resto del código:
   - Funciones: `_parsear_fecha`, `ver_gastos`, `crear_gasto`, `editar_gasto`, `_volver`, `eliminar_gasto`, `marcar_pagado_gasto`, `desmarcar_pagado_gasto`, `registrar_abono_gasto`, `limpiar_pagos_gastos`
 - **`incapacidades.py`** · 310 líneas — Rutas del módulo de incapacidades.
   - Funciones: `_valores_del_formulario`, `_parsear_fecha`, `_validar`, `_contexto`, `ver_incapacidades`, `calcular_incapacidad_formulario`, `guardar_incapacidad`, `eliminar_incapacidad`
-- **`olb_byte.py`** · 957 líneas — Módulo comercial OLB_BYTE: ventas a crédito, cobros, anulaciones y factura.
+- **`olb_byte.py`** · 1034 líneas — Módulo comercial OLB_BYTE: ventas a crédito, cobros, anulaciones y factura.
   - Clases: `DetalleVenta`
-  - Funciones: `_detalle_de_venta`, `_filas_del_formulario`, `_lineas_desde_filas`, `_contexto`, `_contexto_pendientes`, `_pagina_con_error`, `ver_olb_byte`, `crear_cliente`, `registrar_venta`, `registrar_abono`, `ver_pendientes`, `ver_recibo`, `anular_venta`, `registrar_devolucion`, `ver_factura`, `_contexto_cartera`, `ver_cartera`, `registrar_abono_proveedor`, `_pagina_error_pdf`, `ver_factura_pdf`, `ver_analitica`, `_contexto_garantias`, `ver_garantias`, `registrar_garantia`, `actualizar_garantia`
+  - Funciones: `_detalle_de_venta`, `_filas_del_formulario`, `_lineas_desde_filas`, `_contexto`, `_contexto_pendientes`, `_pagina_con_error`, `ver_olb_byte`, `_datos_pago`, `_pago_desde_datos`, `registrar_venta`, `registrar_abono`, `_contexto_cobro`, `ver_cobro`, `ver_pendientes`, `ver_recibo`, `anular_venta`, `registrar_devolucion`, `ver_factura`, `_contexto_cartera`, `ver_cartera`, `registrar_abono_proveedor`, `_pagina_error_pdf`, `ver_factura_pdf`, `ver_analitica`, `_contexto_garantias`, `ver_garantias`, `registrar_garantia`, `actualizar_garantia`
 - **`perfil.py`** · 289 líneas — Rutas del perfil financiero y del cambio de contraseña.
   - Funciones: `_formatear_porcentaje`, `_contexto_perfil`, `ver_perfil`, `guardar_perfil`, `cambiar_contrasena`
-- **`presupuesto.py`** · 401 líneas — Rutas del planificador de ahorro y metas (SRS v1.3, bloque 3).
+- **`presupuesto.py`** · 417 líneas — Rutas del planificador de ahorro y metas (SRS v1.3, bloque 3).
   - Funciones: `_fecha_del_formulario`, `_meses_del_formulario`, `_contexto`, `ver_presupuesto`, `crear_proyeccion`, `eliminar_proyeccion`, `extender_meta`, `crear_deduccion_fija`, `editar_deduccion_fija`, `eliminar_deduccion_fija`
 - **`pwa.py`** · 56 líneas — Recursos PWA: manifiesto, service worker y favicon.
   - Funciones: `manifiesto`, `service_worker`, `favicon`
-- **`trabajos.py`** · 237 líneas — Rutas del módulo "Trabajos Extras".
+- **`trabajos.py`** · 241 líneas — Rutas del módulo "Trabajos Extras".
   - Funciones: `_fecha_opcional`, `_contexto`, `ver_trabajos_extras`, `crear_trabajo`, `cambiar_estado`, `eliminar_trabajo`
 - **`vistas.py`** · 157 líneas — Rutas de navegación principal y endpoint de salud.
   - Funciones: `contexto_base`, `verificar_salud`, `ver_dashboard`
@@ -180,17 +180,23 @@ Principios que explican el resto del código:
 - **`auxilio.py`** · 146 líneas — Evaluación del derecho al auxilio de transporte (SRS RF-07).
   - Clases: `EvaluacionAuxilio`
   - Funciones: `evaluar_auxilio_transporte`, `evaluar_auxilio_salarial`
+- **`capacidad.py`** · 452 líneas — Capacidad de endeudamiento y proyección a doce meses (SRS v1.7, bloque F).
+  - Clases: `Capacidad`
+  - Funciones: `_porcentaje`, `_repartir_arcos`, `_meses_equivalentes`, `_etiqueta_mes`, `_mover_mes`, `meses_siguientes`, `deudas_por_terminar`, `proyeccion_capacidad`, `_mensaje_semaforo`, `capacidad_endeudamiento`
 - **`chancucos.py`** · 202 líneas — Referencias de pago rápido ("Chancucos").
   - Funciones: `_normalizar_dia`, `_normalizar_dias`, `_validar_url`, `crear_chancuco`, `listar_chancucos`, `alternar_favorito`, `eliminar_chancuco`
-- **`comercial.py`** · 1308 líneas — Operación comercial de OLB_BYTE: ventas a crédito, cartera y deuda con proveedor.
-  - Clases: `LineaVenta`
-  - Funciones: `ahora_tienda`, `normalizar_telefono`, `_dinero`, `_sumar_meses`, `_texto_garantia`, `_validar_linea`, `_cliente_para_venta`, `_siguiente_numero_orden`, `deuda_proveedor`, `_registrar_movimiento_proveedor`, `registrar_cliente`, `listar_clientes`, `buscar_clientes`, `registrar_venta`, `obtener_venta`, `_venta_activa`, `_recalcular_estado_pago`, `_validar_metodo`, `registrar_abono`, `_devuelto`, `_registrar_devolucion`, `anular_venta`, `registrar_devolucion`, `pendiente_devolver`, `obtener_abono`, `abonos_de_venta`, `buscar_cartera`, `registrar_abono_proveedor`, `listar_movimientos_proveedor`, `listar_ventas`, `cartera`, `resumen_cartera`, `estado_garantia`, `clasificar_saldo`, `tabla_balance`, `segmentos_dona`, `etiqueta_producto`, `opciones_garantia`, `registrar_garantia`, `actualizar_estado_garantia`, `listar_garantias`, `garantia_vigente_al_reclamo`, `ranking_fallas`, `formatear_pesos`, `enlace_whatsapp_factura`, `enlace_whatsapp_recibo`, `enlace_whatsapp_cobro`, `_enlace_wa`
+- **`comercial.py`** · 1385 líneas — Operación comercial de OLB_BYTE: ventas a crédito, cartera y deuda con proveedor.
+  - Clases: `LineaVenta`, `PagoInicial`
+  - Funciones: `ahora_tienda`, `normalizar_telefono`, `_dinero`, `_sumar_meses`, `_texto_garantia`, `_validar_linea`, `_cliente_para_venta`, `_siguiente_numero_orden`, `deuda_proveedor`, `_registrar_movimiento_proveedor`, `registrar_cliente`, `listar_clientes`, `buscar_clientes`, `registrar_venta`, `obtener_venta`, `_venta_activa`, `_recalcular_estado_pago`, `_validar_metodo`, `registrar_abono`, `_devuelto`, `_registrar_devolucion`, `anular_venta`, `registrar_devolucion`, `pendiente_devolver`, `obtener_abono`, `abonos_de_venta`, `buscar_cartera`, `registrar_abono_proveedor`, `listar_movimientos_proveedor`, `listar_ventas`, `cartera`, `resumen_cartera`, `estado_garantia`, `clasificar_saldo`, `barras_balance`, `segmentos_dona`, `etiqueta_producto`, `opciones_garantia`, `registrar_garantia`, `actualizar_estado_garantia`, `listar_garantias`, `garantia_vigente_al_reclamo`, `ranking_fallas`, `formatear_pesos`, `texto_compartir_factura`, `enlace_whatsapp_factura`, `enlace_whatsapp_recibo`, `enlace_whatsapp_cobro`, `_enlace_wa`
+- **`consejero.py`** · 526 líneas — Consejero financiero del excedente mensual (SRS v1.7, bloque G).
+  - Clases: `Consejo`, `_EstadoDeuda`
+  - Funciones: `_tasa_mensual`, `_estados`, `_ordenar`, `_simular`, `_altura`, `_serie_comparada`, `_consejo_deuda`, `_consejo_ahorro`, `consejo_financiero`
 - **`deducciones_fijas.py`** · 187 líneas — Deducciones fijas del salario (SRS v1.4, REQ-08).
   - Funciones: `_validar`, `crear_deduccion`, `actualizar_deduccion`, `eliminar_deduccion`, `listar_deducciones`, `total_por_quincena`
 - **`deudas.py`** · 549 líneas — Pasivos del usuario y amortización automática ("Resumen de Deudas").
   - Clases: `CuotaProyectada`
   - Funciones: `_limpiar_periodicidad`, `_sumar_periodo`, `_periodos_transcurridos`, `tasa_implicita`, `crear_deuda`, `listar_deudas`, `listar_pagos`, `_aplicar_pago`, `aplicar_cuotas_vencidas`, `proyeccion_deuda`, `cuota_mensual_equivalente`, `eliminar_deuda`, `resumen_deudas`
-- **`factura_pdf.py`** · 172 líneas — Factura PDF de OLB_BYTE: datos, logos y conversión a PDF con Chromium (ADR-36).
+- **`factura_pdf.py`** · 196 líneas — Factura de OLB_BYTE: datos, logos, diseño compartido y conversión a PDF (ADR-36).
   - Clases: `ChromiumNoDisponible`
   - Funciones: `nombre_archivo`, `logo_como_data_uri`, `datos_factura`, `generar_pdf`
 - **`gastos.py`** · 333 líneas — Gastos y presupuesto del usuario.
@@ -223,20 +229,21 @@ Principios que explican el resto del código:
 
 #### `backend/app/static/css/`
 
-- **`estilos.css`** · 2345 líneas — Fondo y superficies
+- **`estilos.css`** · 2976 líneas — Fondo y superficies
+- **`factura-olb.css`** · 635 líneas — Sello de Anulada si aplica
 
 #### `backend/app/static/js/`
 
-- **`app.js`** · 176 líneas — Mejoras progresivas globales.
-  - Funciones: `copiar`, `seleccionarManual`
-- **`factura.js`** · 85 líneas — Acciones de la factura de OLB_BYTE: vista previa, compartir y envío por WhatsApp.
-  - Funciones: `compartir`
+- **`app.js`** · 211 líneas — Mejoras progresivas globales.
+  - Funciones: `copiar`, `seleccionarManual`, `cerrarEdicion`
+- **`factura.js`** · 131 líneas — Acciones de la factura de OLB_BYTE: vista previa y envío por WhatsApp con el PDF.
+  - Funciones: `descargar`, `enviarFactura`
 - **`finanzas.js`** · 598 líneas — Mejora progresiva de "Mis Finanzas".
   - Funciones: `leerFormulario`, `pintarCampo`, `pintarDeduccion`, `pintarValorAuxilio`, `pintarErrores`, `pintarDetalle`, `pintarAuxilio`, `aplicarResultado`, `pintarTramos`, `pintarIncapacidad`, `pintarQuincenas`, `pintarTexto`, `calcular`, `programarCalculo`, `marcarCambios`, `aplicarPlantilla`, `copiarAlPortapapeles`, `prepararCopiadoRapido`
 - **`incapacidades.js`** · 129 líneas — Cálculo automático del módulo de incapacidades (SRS v1.5).
   - Funciones: `fechasListas`, `reemplazar`, `actualizar`, `programar`
-- **`olb_byte.js`** · 329 líneas — Formulario de venta de OLB_BYTE: mini-tabla de productos en tiempo real.
-  - Funciones: `numero`, `pesos`, `normalizarTelefono`, `valoresDeFila`, `pintarVista`, `fijarModo`, `guardarCopia`, `restaurarCopia`, `recalcular`, `agregarFila`, `quitarFila`, `quitarFilasVacias`
+- **`olb_byte.js`** · 553 líneas — Formulario de venta de OLB_BYTE: forma de pago, productos guardados y totales.
+  - Funciones: `numero`, `pesos`, `normalizarTelefono`, `leerCampos`, `escribirPanel`, `escribirEdicion`, `validarProducto`, `mostrarError`, `actualizarSubtotalPanel`, `hayDatosEnPanel`, `leerFila`, `escribirFila`, `actualizarVacia`, `recalcular`, `agregarFila`, `guardarProducto`, `habilitarPanel`, `sincronizarPago`, `importarContacto`, `guardarEnLibreta`
 - **`perfil.js`** · 99 líneas — Mejora progresiva del perfil financiero (SRS v1.2).
   - Funciones: `alternarSubgrupo`, `conocePorcentajes`, `actualizar`
 - **`presupuesto.js`** · 170 líneas — Mejora progresiva de "Gastos y Presupuesto" (SRS v1.3, bloque 3).
@@ -265,7 +272,8 @@ Principios que explican el resto del código:
 
 #### `backend/app/templates/finanzas/`
 
-- **`_gasto_fijo.html`** · 186 líneas
+- **`_capacidad.html`** · 139 líneas
+- **`_gasto_fijo.html`** · 188 líneas
 - **`_subnav.html`** · 29 líneas — Subnavegación interna del módulo "Mis Finanzas" (SRS v1.3, bloque 1).
 - **`index.html`** · 722 líneas — Plantilla: Mis Finanzas
 
@@ -284,13 +292,16 @@ Principios que explican el resto del código:
 
 #### `backend/app/templates/olb_byte/`
 
-- **`analitica.html`** · 211 líneas — Plantilla: Analítica
-- **`cartera.html`** · 135 líneas — Plantilla: Cartera y liquidez
-- **`factura.html`** · 105 líneas — Plantilla: Factura No.
-- **`factura_pdf.html`** · 268 líneas — Plantilla Jinja2
-- **`garantias.html`** · 147 líneas — Plantilla: Garantías
-- **`index.html`** · 338 líneas — Plantilla: OLB_BYTE
-- **`pendientes.html`** · 107 líneas — Plantilla: Pendientes de pago
+- **`_hoja_factura.html`** · 255 líneas
+- **`_subnav.html`** · 30 líneas — Subnavegación de OLB_BYTE con el mismo componente que Mis Finanzas (subnav-finanzas).
+- **`analitica.html`** · 212 líneas — Plantilla: Analítica
+- **`cartera.html`** · 133 líneas — Plantilla: Cartera y liquidez
+- **`cobro.html`** · 93 líneas — Plantilla: Gestionar cobro
+- **`factura.html`** · 40 líneas — Plantilla: Factura No.
+- **`factura_pdf.html`** · 19 líneas — El mismo diseño que se ve en pantalla (static/css/factura-olb.css), incrustado en el PDF.
+- **`garantias.html`** · 148 líneas — Plantilla: Garantías
+- **`index.html`** · 394 líneas — Plantilla: OLB_BYTE
+- **`pendientes.html`** · 81 líneas — Plantilla: Pendientes de pago
 - **`recibo.html`** · 56 líneas — Plantilla: Recibo de abono · No.
 
 #### `backend/app/templates/perfil/`
@@ -299,7 +310,7 @@ Principios que explican el resto del código:
 
 #### `backend/app/templates/presupuesto/`
 
-- **`index.html`** · 422 líneas — Plantilla: Gastos y Presupuesto
+- **`index.html`** · 519 líneas — Plantilla: Gastos y Presupuesto
 
 #### `backend/app/templates/privado/`
 
@@ -307,7 +318,7 @@ Principios que explican el resto del código:
 
 #### `backend/app/templates/trabajos/`
 
-- **`index.html`** · 188 líneas — Plantilla: Trabajos Extras
+- **`index.html`** · 195 líneas — Plantilla: Trabajos Extras
 
 <!-- INVENTARIO:FIN -->
 
@@ -614,7 +625,9 @@ de incapacidades: el descuento se recalcula por tramo (ADR-20).
 Planificador de metas. `crear_proyeccion` valida duración (`_validar_duracion`),
 meses (1–600, SRS v1.6) y quincena (`QUINCENAS_VALIDAS = (1, 2, 3)`);
 `etiqueta_quincena` y `valor_por_pago` traducen `3` a «Ambas quincenas» y a la
-mitad de la cuota. SRS v1.6: el abono ya no se digita; `resumen_metas` lo lee de
+mitad de la cuota. SRS v1.7: `valor_por_pago` respeta `modo_ambas` (`DIVIDIR` o
+`DUPLICAR`) y `diagnostico` suma `extras_mes` de Trabajos Extras al `disponible`.
+SRS v1.6: el abono ya no se digita; `resumen_metas` lo lee de
 los pagos y clasifica cada mes (`MesMeta.estado`: `registrado`, `no_pagado` o
 `pendiente`) con `_estado_mes`. `saldo_libre_total` y `diagnostico` disparan la
 alerta de liquidez (`UMBRAL_ALERTA = 300000`) y devuelven `metas_mes` para el
@@ -644,6 +657,27 @@ cada cuota en `PagoDeuda` mediante `_aplicar_pago`, donde la última absorbe el
 redondeo y deja el saldo en cero. `proyeccion_deuda` lista las cuotas futuras,
 `cuota_mensual_equivalente` mensualiza la quincenal y `resumen_deudas` totaliza la
 cartera.
+
+### `backend/app/servicios/capacidad.py`
+
+Capacidad de endeudamiento y proyección a doce meses (SRS v1.7, bloque F).
+`capacidad_endeudamiento` suma el ingreso de las quincenas y los extras cobrados,
+resta gastos fijos, deducciones y cuota mensual de deudas, y reparte el resultado
+en tres arcos (`_repartir_arcos`) que siempre cierran en 100. El semáforo usa el
+porcentaje de deuda sobre el ingreso (`UMBRAL_VERDE = 20`, `UMBRAL_AMBAR = 35`).
+`deudas_por_terminar` lista las deudas con tres cuotas o menos y su fecha de
+cierre; `proyeccion_capacidad` simula doce meses en los que la cuota baja cuando
+cada deuda termina. No escribe en la base de datos.
+
+### `backend/app/servicios/consejero.py`
+
+Consejero del excedente (SRS v1.7, bloque G). Solo se activa si el disponible
+supera `UMBRAL_ACTIVACION = 300000`. Con deudas simula doce meses de cuotas
+mínimas frente a un escenario que aplica todo el excedente, compara bola de nieve
+(`_ordenar` por saldo) y avalancha (por tasa) y recomienda la de menor interés,
+con la deuda objetivo y los pasos a seguir. Sin deudas dirige el excedente a las
+metas (`ahorro.resumen_metas`) o sugiere crear una. `_serie_comparada` entrega
+las doce filas de la gráfica base frente a optimizado. No escribe en la base.
 
 ### `backend/app/servicios/comercial.py`
 
@@ -696,14 +730,18 @@ routers tras cada cambio relevante.
 (tarjetas, paneles, tablas, botones, formularios), las dos rejillas de Mis
 Finanzas (`rejilla-finanzas` y `--5050`), la tabla compacta del desglose y las
 reglas móviles: submenú 2 × 2 a 640 px, `.fila-campos` a una columna, paneles a
-16 px y botones a ancho completo. Incluye estilos de impresión de la factura y
+16 px y botones a ancho completo; a 640 px o menos la edición de un gasto
+(`edicion-gasto--modal`) se abre centrada, con fondo oscuro y scroll propio.
+Incluye estilos de impresión de la factura y
 del historial.
 
 ### `backend/app/static/js/app.js`
 
 Mejoras globales: `copiar` usa la API de portapapeles con respaldo
 (`seleccionarManual`), la delegación `data-copiar` pinta «¡Copiado!», las filas
-plegables y el registro del service worker. Sin dependencias.
+plegables y el registro del service worker. `cerrarEdicion` descarta la edición
+en línea desde «Cancelar», el fondo oscuro móvil o la tecla Escape. Sin
+dependencias.
 
 ### `backend/app/static/js/finanzas.js`
 
@@ -729,9 +767,10 @@ modalidad y `conocePorcentajes` alterna entre el caso A (porcentajes) y el caso 
 
 ### `backend/app/templates/olb_byte/pendientes.html`
 
-Vista filtrada de clientes con saldo (RF-06). Muestra total, abonado y saldo por
-orden, el formulario de abono con fecha y hora, el enlace de cobro por WhatsApp y el
-acceso al último recibo. El filtro `q` busca por cliente, celular o número de orden.
+Clientes con saldo por cobrar (RF-06). Tabla compacta con número, cliente, celular,
+fecha, total, abonado y saldo, y un único botón por fila: «Añadir pago o gestionar
+cobro», que abre la página de cobro. En celular cada cliente se muestra como tarjeta.
+El filtro `q` busca por cliente, celular o número de orden.
 
 ### `backend/app/servicios/factura_pdf.py`
 
@@ -751,9 +790,11 @@ de pago y pie institucional. Una sola página Carta; la marca «ANULADA» aparec
 
 ### `backend/app/static/js/factura.js`
 
-Acciones de la factura: vista previa del PDF en un diálogo nativo y compartir con la Web
-Share API (archivo PDF). Si el navegador no puede compartir archivos, abre el enlace de
-WhatsApp.
+Acciones de la factura. La vista previa abre el PDF en un diálogo nativo. «Enviar por
+WhatsApp» (en la factura y en la tabla de órdenes) descarga el PDF desde el servidor y lo
+comparte como archivo con la hoja de compartir del navegador, con el mensaje «Hola
+{cliente}, adjunto tu factura de compra.». Si el navegador no puede compartir archivos,
+descarga el PDF y abre WhatsApp; el usuario lo adjunta con el clip desde la descarga.
 
 ### `backend/app/servicios/analitica.py`
 
@@ -774,11 +815,10 @@ ni color, porque el signo de RF-10 aplica solo al módulo de cartera.
 
 ### `backend/app/templates/olb_byte/cartera.html`
 
-Balance de cartera y liquidez (RF-08 a RF-11). La tabla de balance muestra cartera,
-deuda, balance, caja y efectivo libre; el balance y el efectivo libre llevan signo y
-color según `clasificar_saldo`. La dona es un SVG de dos arcos (cartera y deuda) cuyo
-centro muestra el balance. Incluye el formulario de pago al proveedor y el libro de
-movimientos.
+Cartera y liquidez (RF-08 a RF-11). Balance de cartera en barras horizontales: cada
+barra muestra su valor en pesos; los déficits salen a la izquierda del cero, en rojo, con
+signo menos (`barras_balance`). La dona compara cartera y deuda con el proveedor. Incluye
+el pago al proveedor y el libro de movimientos.
 
 ### `backend/app/templates/olb_byte/garantias.html`
 
@@ -786,6 +826,15 @@ Garantías en trámite y ranking de fallas (RF-05). Incluye el formulario para a
 reclamo sobre una línea de una orden activa, el ranking con la tasa de fallas y la
 lista de reclamos con su vigencia y su avance con el proveedor. Un reclamo cerrado
 muestra su resultado sin formulario.
+
+### `backend/app/templates/olb_byte/cobro.html`
+
+Gestión de cobro de una orden (RF-06 y RF-07). Muestra los datos de la venta (número de
+factura, cliente, celular, fecha, total, abonado y saldo por pagar) y dos opciones. La
+opción 1 registra un abono o el pago total con su monto y método; «Registrar pago» va al
+final, junto a «Cancelar», que regresa a pendientes de pago. La opción 2 abre WhatsApp con
+el recordatorio de cobro ya escrito. Si la orden está anulada o pagada, no muestra
+formulario.
 
 ### `backend/app/templates/olb_byte/recibo.html`
 
@@ -796,12 +845,21 @@ de compartir por WhatsApp, imprimir y volver.
 
 ### `backend/app/static/js/olb_byte.js`
 
-Formulario de venta de OLB_BYTE. `recalcular` actualiza subtotal, total, costo y
-ganancia por fila; `fijarModo` alterna vista y edición con `guardarCopia` y
-`restaurarCopia` para que «Cancelar» descarte los cambios; `quitarFilasVacias` evita
-que una fila en blanco bloquee el envío; `normalizarTelefono` deja 10 dígitos y el
-autocompletado completa el celular. La Contact Picker solo se activa si el
-navegador la ofrece.
+Formulario de venta de OLB_BYTE. El bloque de pago muestra u oculta los campos según
+la forma de pago y el anticipo, y deshabilita los ocultos para que no se envíen
+(`sincronizarPago`). «Guardar» valida el producto del panel, lo agrega a la tabla y
+bloquea el panel (`guardarProducto`); «+ Agregar otro producto» lo desbloquea con los
+campos en blanco (`habilitarPanel`). Si queda un producto escrito y sin guardar al
+registrar la venta, se guarda antes. Cada fila guarda sus datos en campos ocultos
+(`leerFila`, `escribirFila`). «Actualizar» abre el cuadro de edición y «Cancelar» lo
+cierra sin cambios. `recalcular` actualiza total, costo y ganancia. Si el navegador no
+tiene la API de contactos, el botón guarda el número como tarjeta de contacto (.vcf).
+
+### `backend/app/templates/olb_byte/_subnav.html`
+
+Submenú de OLB_BYTE con el mismo componente de Mis Finanzas (`subnav-finanzas`):
+Ventas, Pendientes de pago, Cartera y liquidez, Garantías y Analítica. La pestaña
+activa se marca con `seccion`, que cada vista define antes de incluirlo.
 
 ### `backend/app/static/js/presupuesto.js`
 
@@ -869,6 +927,27 @@ Subnavegación de cuatro pestañas de Mis Finanzas: Calculadora y Nómina, Gasto
 Fijos, Incapacidades y Configurar Atajos de Pago. Marca la activa con
 `subnav-finanzas__enlace--activo`.
 
+### `backend/app/templates/finanzas/_gasto_fijo.html`
+
+Componente compartido (DRY) de una fila de gasto fijo con su check de pago
+(SRS v1.7, bloques C y E). Expone dos macros: `boton_editar(etiqueta)` pinta el
+lápiz del tamaño del check y `fila_gasto(gasto, hoy, origen, id_trabajo)`
+compone nombre, valor, edición en línea con «Actualizar»/«Cancelar», × de
+eliminación o salto y ✔ de pago reversible. El desplegable lleva la clase
+`edicion-gasto--modal`, que en el celular lo convierte en una ventana centrada
+con fondo oscuro. No aplica reglas de negocio: solo
+pinta el estado que calculó el servidor. Lo consumen `finanzas/index.html` y
+`trabajos/index.html` para que ambas vistas sean idénticas.
+
+### `backend/app/templates/finanzas/_capacidad.html`
+
+Panel compartido de capacidad de endeudamiento (SRS v1.7, bloque F). La macro
+`panel_capacidad(capacidad, titulo, descripcion)` dibuja la dona del ingreso
+repartido entre gastos fijos, cuota de deudas y libre, la leyenda con montos y
+porcentajes, el semáforo, las deudas con tres cuotas o menos y la tabla de doce
+meses con su barra de saldo libre. Se incluye una vez en `presupuesto/index.html`
+y otra en `trabajos/index.html`, cada una con su propio título.
+
 ### `backend/app/templates/gastos/index.html`
 
 Registro de gastos: formulario, lista con acciones de edición en línea
@@ -902,10 +981,19 @@ Cuatro tarjetas de resumen, formulario de seis campos y tabla de deudas con tasa
 implícita. Cada fila despliega «Ver amortización»: cuotas aplicadas y próximas
 cuotas con interés, capital y saldo.
 
+### `backend/app/templates/chancucos/_dias.html`
+
+Distintivo de los días de pago de un atajo (SRS v1.7, bloque D). La macro
+`dias_pago(item, clase)` imprime «Día 15» o «Día 15 · Día 30» a partir de
+`dia_pago_1`/`dia_pago_2`, con clase CSS configurable. Se reutiliza en la tarjeta
+de atajos de Mis Finanzas y en la tabla de «Configurar Atajos de Pago» para
+mostrar exactamente el mismo texto.
+
 ### `backend/app/templates/chancucos/index.html`
 
-Configuración de atajos: formulario de tres campos y lista con referencia,
-enlace, favorito, copiar y eliminar.
+Configuración de atajos: formulario de tres campos con la pregunta «¿Es un único
+pago mensual?» (una o dos fechas), y lista con referencia, días de pago, enlace,
+favorito, copiar y eliminar.
 
 ### `backend/app/templates/olb_byte/index.html`
 
@@ -1043,7 +1131,80 @@ python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 
 ---
 
-## 10. Lista de verificación antes de cerrar un bloque
+## 10. Personalizar la factura (pantalla, PDF y WhatsApp)
+
+La factura se ve igual en la pantalla, en la vista previa, en la descarga y en el PDF que
+se envía por WhatsApp. Para que eso sea así, todas las salidas comparten tres piezas:
+
+| Pieza | Archivo | Qué controla |
+| --- | --- | --- |
+| Hoja de la factura | `backend/app/templates/olb_byte/_hoja_factura.html` | Estructura, textos fijos y tablas |
+| Diseño | `backend/app/static/css/factura-olb.css` | Colores, tamaños, fondos y sellos |
+| Datos | `backend/app/servicios/factura_pdf.py` | Empresa, cuenta bancaria, logos y reglas |
+
+`factura.html` (pantalla) y `factura_pdf.html` (PDF) solo incluyen la hoja y el CSS. Por eso
+un cambio en la hoja o en el CSS se refleja en las cuatro salidas al mismo tiempo.
+
+### 10.1 Datos de la empresa y de pago
+
+En `factura_pdf.py`, constantes al inicio del archivo:
+
+- `NIT`, `RESPONSABLE`, `DIRECCION`, `TELEFONO`.
+- `NEQUI`: número que aparece bajo el logo de Nequi.
+- `BANCO`: nombre, tipo de cuenta, número de cuenta y teléfono de la cuenta de ahorros.
+- `PIE_LEGAL`: el texto pequeño al final de la factura.
+
+### 10.2 Colores y tamaños
+
+En `factura-olb.css`, los colores de la paleta:
+
+- `#041e42` y `#051937`: cabecera y encabezados oscuros.
+- `#0066cc`, `#0b4fa3`, `#1468c9`: azules de tablas y totales.
+- `#00d2ff`, `#00a8ff`: líneas de circuito y franjas.
+- `#dcebfa`: filas pares de la tabla.
+
+Las filas de relleno de la tabla salen de `FILAS_MINIMAS_TABLA` (9). El máximo de productos
+por factura es `MAX_LINEAS_PDF` (10), porque el PDF debe caber en una sola hoja Carta.
+
+### 10.3 Escala del PDF
+
+El PDF se genera con `ESCALA_PDF = 0.75` (en `factura_pdf.py`). Con diez productos el diseño
+solo cabe en una hoja a esa escala. Si subes el tamaño de letra o agregas bloques, prueba
+con `python -m pytest tests/test_factura_pdf.py`: la prueba de diez productos falla si la
+factura pasa a dos hojas. En ese caso baja `ESCALA_PDF` o reduce espacios en el CSS.
+
+### 10.4 Logos
+
+Los logos están en la carpeta `assets/` de la raíz del proyecto (no dentro de `backend/`).
+Python encuentra cada uno por una palabra de su nombre de archivo (`PATRONES_LOGO`):
+
+| Clave | Palabra que busca | Dónde se ve en la hoja |
+| --- | --- | --- |
+| `bre_b` | `bre-b` | Medios de pago, primera tarjeta |
+| `datafono` | `Datafono` | Medios de pago, segunda tarjeta |
+| `nequi` | `Nequi` | Medios de pago, cuarta tarjeta |
+| `visa_mastercard` | `Mastercard` | Medios de pago, última tarjeta |
+| `olb` | `Logotipo OLB` | Disponible en el contexto; el diseño actual usa el texto «OB / OLB BYTE» |
+
+Para reemplazar un logo, guarda el PNG nuevo en `assets/` con la misma palabra en el nombre y
+borra el archivo viejo (si hay dos archivos con la misma palabra, gana el primero que encuentre
+Python). Para quitar un medio de pago, borra su bloque `<div class="pago-item">` en
+`_hoja_factura.html`.
+
+Si quieres usar el logo como imagen en lugar del texto «OB / OLB BYTE», reemplaza el bloque
+`<div class="logo-ob">` de `_hoja_factura.html` por `<img src="{{ logos.olb }}" alt="OLB BYTE">`.
+
+### 10.5 Probar los cambios
+
+1. Reinicia el servidor (`python -m uvicorn app.main:app --reload`).
+2. Abre una factura desde OLB_BYTE: la pantalla ya muestra el diseño nuevo.
+3. Pulsa **Vista previa PDF** o entra a `/olb-byte/factura/{id}/pdf?descargar=0`.
+4. Ejecuta `python -m pytest tests/test_factura_pdf.py`.
+
+Si el PDF no se genera, revisa que Chromium esté instalado (`python -m playwright install
+chromium`, sección 13 de `DESPLIEGUE.md`).
+
+## 11. Lista de verificación antes de cerrar un bloque
 
 1. `python -m compileall -q app` sin errores.
 2. `pytest -q` en verde (hoy: 260).

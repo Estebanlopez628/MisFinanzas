@@ -1,0 +1,661 @@
+/* =========================================================
+   DISEÑO CORPORATIVO TECNOLÓGICO - OLB BYTE
+   Este archivo se usa en la pantalla y se incrusta en el PDF.
+   ========================================================= */
+
+.barra-herramientas-factura {
+  max-width: 850px;
+  margin: 0 auto 1.25rem auto;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.hoja-factura {
+  position: relative;
+  width: 100%;
+  max-width: 850px;
+  margin: 0 auto 2rem auto;
+  background: linear-gradient(180deg, #f7fbff 0%, #eef5fc 55%, #f8fbff 100%);
+  color: #102542;
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  box-shadow: 0 12px 35px rgba(8, 28, 58, 0.16);
+  border-radius: 6px;
+  overflow: hidden;
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
+
+/* Sello de Anulada si aplica */
+.sello-anulada {
+  position: absolute;
+  top: 42%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-22deg);
+  font-size: 5rem;
+  font-weight: 900;
+  color: rgba(211, 47, 47, 0.18);
+  border: 6px solid rgba(211, 47, 47, 0.25);
+  padding: 0.5rem 2.5rem;
+  border-radius: 12px;
+  pointer-events: none;
+  z-index: 20;
+  letter-spacing: 6px;
+}
+
+/* --- ENCABEZADO --- */
+.factura-header {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  min-height: 225px;
+}
+
+.factura-header__fondo-curvo {
+  position: relative;
+  width: 64%;
+  min-height: 220px;
+  background: radial-gradient(circle at 25% 40%, #0b4a99 0%, #051937 65%, #020c1b 100%);
+  border-bottom-right-radius: 100% 75%;
+  padding: 24px 36px 32px 36px;
+  color: #ffffff;
+  box-shadow: 10px 6px 0px #00a8ff, 18px 10px 0px #d4e3f5;
+  overflow: hidden;
+}
+
+.circuitos-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.marca-contenedor {
+  position: relative;
+  z-index: 2;
+  max-width: 320px;
+  text-align: center;
+}
+
+.logo-ob {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.logo-ob__letras {
+  font-size: 5.2rem;
+  font-weight: 900;
+  line-height: 0.9;
+  letter-spacing: -4px;
+  background: linear-gradient(180deg, #5ce1e6 0%, #0077ff 50%, #a8e6ff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 12px rgba(0, 210, 255, 0.45));
+}
+
+.logo-ob__texto {
+  background: #04132a;
+  color: #ffffff;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 7px;
+  padding: 2px 14px;
+  margin-top: -38px;
+  margin-bottom: 24px;
+  border-top: 1px solid rgba(0, 210, 255, 0.5);
+  border-bottom: 1px solid rgba(0, 210, 255, 0.5);
+}
+
+.marca-eslogan {
+  margin: 8px 0 0 0;
+  font-size: 0.92rem;
+  line-height: 1.3;
+  color: #e2f1ff;
+}
+
+.marca-eslogan span {
+  color: #38d6ff;
+  font-weight: 600;
+}
+
+.factura-header__responsable {
+  width: 36%;
+  padding: 28px 32px 0 16px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.icono-factura-top {
+  margin-bottom: 8px;
+}
+
+.responsable-titulo {
+  display: block;
+  font-size: 1.45rem;
+  font-weight: 700;
+  color: #0b2240;
+  line-height: 1.15;
+}
+
+.responsable-nombre {
+  display: block;
+  font-size: 1.55rem;
+  font-weight: 800;
+  color: #0b2240;
+  line-height: 1.15;
+}
+
+/* --- TARJETAS DE INFORMACIÓN --- */
+.factura-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  padding: 16px 28px;
+}
+
+.info-card {
+  background: rgba(255, 255, 255, 0.72);
+  border: 1.5px solid #63a4e8;
+  border-radius: 14px;
+  padding: 14px 18px;
+  font-size: 0.92rem;
+  color: #0f294a;
+}
+
+.info-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.info-lista li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  line-height: 1.3;
+}
+
+.info-icono {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  margin-top: 1px;
+}
+
+.info-bloque-cliente {
+  margin-top: 4px;
+}
+
+/* Tarjeta derecha: Orden y Garantía */
+.orden-fila {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.orden-etiqueta {
+  font-weight: 700;
+  min-width: 105px;
+}
+
+.orden-valor {
+  font-weight: 600;
+}
+
+.info-divisor {
+  border: 0;
+  border-top: 1px solid #b8d6f5;
+  margin: 8px 0;
+}
+
+.garantia-principal {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.garantia-texto-destacado {
+  font-weight: 700;
+  color: #0b2240;
+}
+
+.garantia-condiciones {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.82rem;
+}
+
+.garantia-condiciones ol {
+  margin: 2px 0 0 0;
+  padding-left: 16px;
+}
+
+/* --- TABLA DE PRODUCTOS --- */
+.factura-tabla-seccion {
+  padding: 4px 28px 14px 28px;
+}
+
+.tabla-marco-redondeado {
+  border: 1.5px solid #4c93de;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.tabla-corporativa {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.tabla-corporativa thead tr {
+  background: linear-gradient(90deg, #041938 0%, #0b4fa3 50%, #062b61 100%);
+  color: #ffffff;
+}
+
+.tabla-corporativa th {
+  padding: 11px 10px;
+  font-weight: 700;
+  font-size: 0.78rem;
+  letter-spacing: 0.4px;
+  border-right: 1px solid rgba(255, 255, 255, 0.35);
+}
+
+.tabla-corporativa th:last-child {
+  border-right: none;
+}
+
+.th-contenido {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.col-desc .th-contenido {
+  justify-content: flex-start;
+  padding-left: 6px;
+}
+
+.tabla-corporativa td {
+  padding: 7px 12px;
+  border-right: 1.5px solid #599be0;
+  height: 29px;
+  color: #0d213d;
+}
+
+.tabla-corporativa td:last-child {
+  border-right: none;
+}
+
+.tabla-corporativa tbody tr:nth-child(odd) {
+  background-color: #ffffff;
+}
+
+.tabla-corporativa tbody tr:nth-child(even) {
+  background-color: #dcebfa;
+}
+
+.texto-centro {
+  text-align: center;
+}
+
+.linea-garantia {
+  display: block;
+  font-size: 0.75rem;
+  color: #3b5c85;
+}
+
+/* --- TOTALES --- */
+.totales-wrapper {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.totales-caja {
+  width: 280px;
+  border: 1.5px solid #4c93de;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.total-fila {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+}
+
+.total-etiqueta {
+  padding: 6px 12px;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 0.84rem;
+  text-align: center;
+}
+
+.total-fila--subtotal .total-etiqueta {
+  background: #062552;
+  border-bottom: 1px solid #3c7ac4;
+}
+
+.total-fila--final .total-etiqueta {
+  background: linear-gradient(90deg, #094594 0%, #1468c9 100%);
+  font-size: 1rem;
+}
+
+.total-fila--abono .total-etiqueta {
+  background: #1d3557;
+  font-size: 0.72rem;
+  border-top: 1px solid #3c7ac4;
+}
+
+.total-valor {
+  padding: 6px 12px;
+  text-align: center;
+  font-weight: 700;
+  color: #0b2240;
+}
+
+.total-fila--subtotal .total-valor {
+  border-bottom: 1px solid #b8d6f5;
+  font-size: 0.95rem;
+}
+
+.total-fila--final .total-valor {
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+/* --- MEDIOS DE PAGO --- */
+.medios-pago-seccion {
+  position: relative;
+  padding: 12px 28px 20px 28px;
+}
+
+.medios-pago-badge {
+  display: inline-block;
+  background: linear-gradient(90deg, #05204a 0%, #0e5bb5 50%, #05204a 100%);
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 0.82rem;
+  padding: 5px 28px;
+  border-radius: 20px;
+  margin-left: 140px;
+  margin-bottom: -14px;
+  position: relative;
+  z-index: 2;
+  letter-spacing: 0.5px;
+}
+
+.medios-pago-caja {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  align-items: center;
+  border: 1.5px solid #63a4e8;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.85);
+  padding: 18px 8px 12px 8px;
+}
+
+.pago-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0 6px;
+  border-right: 1px solid #8ebdf0;
+  min-height: 68px;
+}
+
+.pago-item:last-child {
+  border-right: none;
+}
+
+.pago-logo {
+  max-height: 30px;
+  max-width: 105px;
+  object-fit: contain;
+  margin-bottom: 5px;
+}
+
+.pago-logo--datafono {
+  max-height: 38px;
+}
+
+.pago-logo--tarjetas {
+  max-height: 36px;
+}
+
+.logo-bbva-texto {
+  font-size: 1.35rem;
+  font-weight: 900;
+  color: #072146;
+  letter-spacing: 1px;
+  line-height: 1;
+  margin-bottom: 2px;
+}
+
+.pago-subtitulo {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #0b2240;
+  line-height: 1.1;
+}
+
+.pago-dato {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #0b2240;
+  line-height: 1.2;
+}
+
+/* --- PIE DE PÁGINA --- */
+.factura-footer {
+  position: relative;
+  background: linear-gradient(90deg, #031229 0%, #072754 70%, #0b4896 100%);
+  color: #ffffff;
+  padding: 16px 32px 12px 32px;
+  overflow: hidden;
+}
+
+.footer-contenido {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  position: relative;
+  z-index: 2;
+}
+
+.footer-gracias {
+  font-size: 0.92rem;
+  font-weight: 600;
+  letter-spacing: 3.5px;
+  white-space: nowrap;
+}
+
+.footer-linea {
+  flex: 1;
+  height: 1.5px;
+  background: linear-gradient(90deg, #38b6ff 0%, transparent 100%);
+  max-width: 320px;
+}
+
+.footer-legal {
+  position: relative;
+  z-index: 2;
+  font-size: 0.68rem;
+  color: #9ec5f0;
+  margin-top: 6px;
+}
+
+.footer-franjas-azules {
+  position: absolute;
+  right: -20px;
+  top: 0;
+  bottom: 0;
+  width: 190px;
+  background: linear-gradient(135deg, transparent 25%, #0099ff 25%, #0099ff 48%, #041d42 48%, #041d42 62%, #0066cc 62%);
+  opacity: 0.9;
+}
+
+/* --- IMPRESIÓN DESDE EL NAVEGADOR --- */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .no-imprimir {
+    display: none !important;
+  }
+  #factura-imprimible,
+  #factura-imprimible * {
+    visibility: visible;
+  }
+  #factura-imprimible {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    box-shadow: none;
+    border-radius: 0;
+  }
+}
+
+/* --- PANTALLAS PEQUEÑAS (solo la vista en pantalla; el PDF usa ancho de hoja Carta) --- */
+@media (max-width: 760px) {
+  .hoja-factura {
+    font-size: 13px;
+  }
+
+  .factura-header {
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .factura-header__fondo-curvo {
+    width: 100%;
+    min-height: 180px;
+    padding: 20px;
+    border-bottom-right-radius: 0;
+  }
+
+  .logo-ob__letras {
+    font-size: 3.6rem;
+  }
+
+  .factura-header__responsable {
+    width: 100%;
+    padding: 16px;
+  }
+
+  .factura-info-grid {
+    grid-template-columns: 1fr;
+    padding: 12px;
+  }
+
+  .factura-tabla-seccion {
+    padding: 4px 12px 12px 12px;
+  }
+
+  .th-contenido {
+    flex-wrap: wrap;
+    text-align: center;
+  }
+
+  .tabla-corporativa {
+    font-size: 0.74rem;
+  }
+
+  .tabla-corporativa th {
+    font-size: 0.64rem;
+    letter-spacing: 0;
+    padding: 8px 4px;
+  }
+
+  .tabla-corporativa td {
+    padding: 5px 5px;
+  }
+
+  .totales-caja {
+    width: 100%;
+  }
+
+  .totales-wrapper {
+    justify-content: stretch;
+  }
+
+  .medios-pago-seccion {
+    padding: 12px 12px 16px 12px;
+  }
+
+  .medios-pago-badge {
+    margin-left: 0;
+  }
+
+  .medios-pago-caja {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .pago-item {
+    border-right: none;
+    border-bottom: 1px solid #8ebdf0;
+    padding: 8px 4px;
+  }
+
+  .factura-footer {
+    padding: 14px 16px;
+  }
+
+  .footer-gracias {
+    font-size: 0.7rem;
+    letter-spacing: 1.5px;
+  }
+
+  .footer-franjas-azules {
+    display: none;
+  }
+}
+
+/* Logo oficial OLB BYTE (imagen de assets/) en la cabecera */
+.logo-ob-imagen {
+  display: block;
+  width: 260px;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
+  filter: drop-shadow(0 6px 18px rgba(0, 210, 255, 0.35));
+}
+
+@media (max-width: 760px) {
+  .logo-ob-imagen {
+    width: 190px;
+  }
+}
+
+/* El PNG del logo trae fondo negro: el modo "screen" lo vuelve transparente sobre la cabecera azul. */
+.logo-ob-imagen {
+  mix-blend-mode: screen;
+}
+
+/* Sin capa propia en la marca, para que el modo "screen" del logo se mezcle con la cabecera. */
+.marca-contenedor {
+  z-index: auto;
+  isolation: auto;
+}

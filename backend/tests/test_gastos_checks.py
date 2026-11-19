@@ -207,6 +207,8 @@ def test_panel_ofrece_lapiz_cancelar_y_limpieza_visible(cliente_admin, bd) -> No
     assert "boton--cancelar" in html
     assert "boton--advertencia" in html
     assert "data-confirmar=" in html
+    # En móvil la edición se abre como ventana centrada (SRS v1.7).
+    assert "edicion-gasto edicion-gasto--modal" in html
 
 
 def test_presupuesto_hereda_lapiz_y_cancelar(cliente_admin, bd) -> None:
@@ -219,3 +221,4 @@ def test_presupuesto_hereda_lapiz_y_cancelar(cliente_admin, bd) -> None:
     assert "boton-circular--editar" in html
     assert "data-cancelar-edicion" in html
     assert "boton--cancelar" in html
+    assert "edicion-gasto--modal" in html

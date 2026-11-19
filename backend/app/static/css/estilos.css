@@ -863,8 +863,8 @@ a.tarjeta:focus-visible {
   display: flex;
   flex-wrap: nowrap;
   gap: 10px;
-  margin: 0 0 18px;
-  padding: 2px 2px 8px;
+  margin: -6px 0 12px;
+  padding: 8px 4px 10px;
   overflow-x: auto;
   scrollbar-width: thin;
   -webkit-overflow-scrolling: touch;
@@ -1154,6 +1154,46 @@ a.tarjeta:focus-visible {
   gap: 10px;
   padding-top: 12px;
   border-top: 1px solid var(--borde-suave);
+}
+
+/* Ajuste móvil (SRS v1.7): el lápiz vive al final de la fila, así que el
+   formulario absoluto (anclado a la derecha) se salía de la pantalla y se veía
+   cortado. En pantallas angostas se abre como ventana centrada sobre un fondo
+   oscuro, con scroll propio por si el teclado del celular reduce el alto. */
+@media (max-width: 640px) {
+  .edicion-gasto--modal[open]::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 55;
+    background: rgba(15, 23, 42, 0.72);
+  }
+
+  .edicion-gasto--modal .edicion-gasto__formulario {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    right: auto;
+    transform: translate(-50%, -50%);
+    z-index: 60;
+    width: min(340px, calc(100vw - 32px));
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 16px;
+  }
+
+  /* Mientras la ventana está abierta no se desplaza la página de fondo. Si el
+     navegador no admite `:has`, el fondo oscuro sigue cubriendo la vista. */
+  body:has(.edicion-gasto--modal[open]) {
+    overflow: hidden;
+  }
+
+  /* Un pago saltado deja la fila atenuada: al abrir su edición, la ventana y el
+     fondo recuperan opacidad plena y se pintan por encima del resto. */
+  .lista-gastos__item--inhabilitado:has(.edicion-gasto--modal[open]) {
+    opacity: 1;
+  }
 }
 
 .panel--chancucos {
@@ -2321,6 +2361,190 @@ textarea.campo__control {
   vertical-align: middle;
 }
 
+/* ---------------------- Capacidad de endeudamiento (SRS v1.7) ---------------------- */
+
+.semaforo--ambar {
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--accent-amber);
+}
+
+.semaforo--sin-datos {
+  background: rgba(148, 163, 184, 0.15);
+  color: var(--text-muted);
+}
+
+.capacidad__resumen {
+  justify-content: flex-start;
+}
+
+.capacidad__centro-valor {
+  font-size: 1.3rem;
+}
+
+.capacidad__semaforo {
+  margin: 16px 0 0;
+  line-height: 1.6;
+}
+
+.capacidad__subtitulo {
+  margin: 22px 0 8px;
+  font-size: 1rem;
+}
+
+.capacidad__lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.capacidad__deuda {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(148, 163, 184, 0.08);
+}
+
+.capacidad__deuda-nombre {
+  font-weight: 600;
+}
+
+.capacidad__tabla td {
+  vertical-align: middle;
+}
+
+.capacidad__libre {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.capacidad__barra {
+  display: block;
+  max-width: 180px;
+}
+
+@media (max-width: 640px) {
+  .capacidad__deuda {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .capacidad__barra {
+    max-width: 100%;
+  }
+}
+
+/* ----------------------- Consejero financiero (SRS v1.7) ----------------------- */
+
+.consejero__saludo {
+  margin: 0 0 8px;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.consejero__pasos {
+  margin: 12px 0 18px;
+  padding-left: 20px;
+  display: grid;
+  gap: 6px;
+}
+
+.consejero__cifras {
+  margin-bottom: 8px;
+}
+
+.comparativa__grafica {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  min-height: 200px;
+  padding: 12px 10px 6px;
+  border-radius: 12px;
+  background: rgba(148, 163, 184, 0.08);
+  overflow-x: auto;
+}
+
+.comparativa__mes {
+  flex: 1 0 38px;
+  min-width: 38px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.comparativa__barras {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 3px;
+  height: 150px;
+  width: 100%;
+}
+
+.comparativa__barra {
+  display: block;
+  width: 12px;
+  min-height: 2px;
+  border-radius: 4px 4px 0 0;
+}
+
+.comparativa__barra--base {
+  background: var(--accent-blue);
+}
+
+.comparativa__barra--optimizado {
+  background: var(--accent-green);
+}
+
+.comparativa__etiqueta {
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  white-space: nowrap;
+}
+
+.comparativa__leyenda {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 10px 0 0;
+  padding: 0;
+}
+
+.comparativa__muestra--base {
+  background: var(--accent-blue);
+}
+
+.comparativa__muestra--optimizado {
+  background: var(--accent-green);
+}
+
+@media (max-width: 640px) {
+  .comparativa__grafica {
+    gap: 2px;
+    padding: 10px 6px 4px;
+  }
+
+  .comparativa__mes {
+    flex-basis: 30px;
+    min-width: 30px;
+  }
+
+  .comparativa__barra {
+    width: 9px;
+  }
+
+  .comparativa__etiqueta {
+    font-size: 0.62rem;
+  }
+}
+
 /* ------------------------- OLB_BYTE: formulario de venta v2 ------------------------- */
 
 /* El atributo hidden debe ocultar siempre; algunas clases de botón fijan display. */
@@ -2454,6 +2678,10 @@ textarea.campo__control {
     width: 100%;
   }
 
+  .tabla--tarjetas {
+    min-width: 0;
+  }
+
   .tabla--tarjetas tr {
     border: 1px solid var(--borde-suave, rgba(255, 255, 255, 0.12));
     border-radius: 12px;
@@ -2499,4 +2727,249 @@ textarea.campo__control {
   .resumen-venta {
     grid-template-columns: 1fr;
   }
+}
+
+
+/* ------------------------- OLB_BYTE: ajustes de validación 3 ------------------------- */
+
+.bloque-pago {
+  border: 1px solid var(--borde-suave, rgba(255, 255, 255, 0.12));
+  border-radius: 12px;
+  padding: 14px 16px 16px;
+  margin: 8px 0 16px;
+  display: grid;
+  gap: 12px;
+}
+
+.bloque-producto:disabled {
+  opacity: 0.6;
+}
+
+.bloque-producto:disabled input,
+.bloque-producto:disabled select,
+.bloque-producto:disabled button {
+  cursor: not-allowed;
+}
+
+.acciones-formulario--izquierda {
+  justify-content: flex-start;
+  align-items: center;
+  gap: 12px;
+}
+
+.acciones-venta {
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.boton--venta {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 46px;
+  justify-content: center;
+  text-align: center;
+  font-size: 0.95rem;
+}
+
+.acciones-orden {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.acciones-orden .boton {
+  white-space: nowrap;
+}
+
+/* Solo cuando se abre «Anular» el bloque necesita una línea propia. */
+.acciones-orden:has(details[open]) {
+  flex-wrap: wrap;
+}
+
+.fila-entrada .boton {
+  white-space: nowrap;
+}
+
+.acciones-orden > details[open] {
+  flex: 1 1 100%;
+}
+
+.celda-acciones-orden {
+  min-width: 340px;
+}
+
+.tabla--compacta th,
+.tabla--compacta td {
+  padding: 6px 8px;
+}
+
+.tabla--compacta th {
+  white-space: nowrap;
+}
+
+.tabla--compacta td {
+  min-width: 110px;
+}
+
+.celda-cobro {
+  min-width: 230px;
+}
+
+.datos-venta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+
+.datos-venta > div {
+  border: 1px solid var(--borde-suave, rgba(255, 255, 255, 0.12));
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.datos-venta dt {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.datos-venta dd {
+  margin: 2px 0 0;
+  font-weight: 600;
+  font-size: 1.02rem;
+}
+
+.datos-venta__saldo dd {
+  font-size: 1.2rem;
+}
+
+.cobro-opciones {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.cobro-opciones__tarjeta {
+  min-width: 0;
+}
+
+.acciones-cobro {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.acciones-cobro .boton {
+  flex: 1 1 160px;
+  justify-content: center;
+  text-align: center;
+}
+
+.barras-balance {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 14px;
+}
+
+.barra-balance__cabecera {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 6px;
+  font-size: 0.92rem;
+}
+
+.barra-balance__cabecera strong {
+  font-size: 1rem;
+  white-space: nowrap;
+}
+
+.barra-balance__pista {
+  position: relative;
+  height: 16px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.15);
+  overflow: hidden;
+}
+
+.barra-balance__barra {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  min-width: 2px;
+  border-radius: 999px;
+}
+
+.barra-balance__pista--centro::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  background: rgba(248, 250, 252, 0.6);
+}
+
+@media (max-width: 760px) {
+  .cobro-opciones {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .acciones-venta {
+    flex-direction: row;
+    gap: 8px;
+  }
+
+  .boton--venta {
+    font-size: 0.85rem;
+    height: 46px;
+    padding: 6px 8px;
+    white-space: normal;
+    line-height: 1.15;
+  }
+
+  .tabla--tarjetas td.celda-cobro,
+  .tabla--tarjetas td.celda-acciones-orden {
+    display: block;
+    width: 100%;
+  }
+
+  .tabla--tarjetas td.celda-acciones-orden::before,
+  .tabla--tarjetas td.celda-cobro::before {
+    display: block;
+    margin-bottom: 6px;
+  }
+
+  .celda-acciones-orden {
+    min-width: 0;
+  }
+
+  .acciones-orden {
+    justify-content: flex-start;
+    flex-wrap: nowrap;
+  }
+
+  .acciones-orden > details[open] {
+    flex-basis: 100%;
+  }
+
+  .celda-cobro .boton {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+
+.formulario--buscar .boton {
+  width: auto;
+  align-self: flex-start;
 }

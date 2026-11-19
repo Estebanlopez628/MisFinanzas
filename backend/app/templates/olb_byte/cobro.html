@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block titulo %}Gestionar cobro{% endblock %}
+
+{% block contenido %}
+  <section class="heroe heroe--compacto">
+    <h1 class="heroe__titulo">💳 Gestionar cobro</h1>
+    <p class="heroe__subtitulo">Factura No. {{ venta.numero_orden }} · {{ venta.cliente_nombre }}</p>
+  </section>
+
+  <div class="acciones-formulario acciones-volver">
+    <a class="boton boton--secundario boton--pequeno" href="{{ url_for('ver_pendientes') }}">← Volver a pendientes</a>
+  </div>
+
+  {% set seccion = 'pendientes' %}
+  {% include "olb_byte/_subnav.html" with context %}
+
+  {% if error %}
+    <div class="alerta alerta--error" role="alert">{{ error }}</div>
+  {% endif %}
+
+  <section class="panel">
+    <h2 class="panel__titulo">Datos de la venta</h2>
+    <dl class="datos-venta">
+      <div><dt>Número de factura</dt><dd>No. {{ venta.numero_orden }}</dd></div>
+      <div><dt>Nombre del cliente</dt><dd>{{ venta.cliente_nombre }}</dd></div>
+      <div><dt>Celular</dt><dd>{{ venta.cliente_telefono or '—' }}</dd></div>
+      <div><dt>Fecha de la venta</dt><dd>{{ venta.fecha_venta.strftime('%d-%m-%Y') }}</dd></div>
+      <div><dt>Total de la venta</dt><dd>{{ venta.total | cop }}</dd></div>
+      <div><dt>Abonado</dt><dd>{{ abonado | cop }}</dd></div>
+      <div class="datos-venta__saldo"><dt>Saldo por pagar</dt><dd>{{ saldo | cop }}</dd></div>
+    </dl>
+  </section>
+
+  <div class="cobro-opciones">
+    <section class="panel cobro-opciones__tarjeta">
+      <h2 class="panel__titulo">Opción 1 · Registrar abono o pago total</h2>
+      {% if cobrable %}
+        <form class="formulario" method="post" action="{{ url_for('registrar_abono', id_venta=venta.id_venta) }}">
+          <input type="hidden" name="desde_cobro" value="1" />
+          <label class="campo">
+            <span class="campo__etiqueta">Monto a pagar (COP)</span>
+            <input class="campo__control" type="text" name="monto" inputmode="decimal" value="{{ monto }}" required />
+            <span class="ayuda">Puede ser un abono parcial o el saldo completo.</span>
+          </label>
+          <label class="campo">
+            <span class="campo__etiqueta">Método de pago</span>
+            <select class="campo__control" name="metodo_pago">
+              {% for opcion in metodos %}
+                <option value="{{ opcion }}"{% if opcion == metodo %} selected{% endif %}>{{ opcion | capitalize }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <div class="acciones-cobro">
+            <button class="boton boton--primario" type="submit">Registrar pago</button>
+            <a class="boton boton--cancelar" href="{{ url_for('ver_pendientes') }}">Cancelar</a>
+          </div>
+        </form>
+      {% else %}
+        <p class="tabla__vacia">
+          {% if venta.estado_orden == 'ANULADA' %}
+            La orden está anulada: no admite pagos.
+          {% else %}
+            Esta factura ya está pagada: no hay saldo por cobrar.
+          {% endif %}
+        </p>
+        <div class="acciones-cobro">
+          <a class="boton boton--cancelar" href="{{ url_for('ver_pendientes') }}">Volver a pendientes</a>
+        </div>
+      {% endif %}
+    </section>
+
+    <section class="panel cobro-opciones__tarjeta">
+      <h2 class="panel__titulo">Opción 2 · Recordatorio por WhatsApp</h2>
+      <p class="panel__descripcion">
+        Abre WhatsApp con el mensaje de cobro ya escrito para recordarle al cliente el saldo pendiente.
+      </p>
+      {% if venta.cliente_telefono and cobrable %}
+        <a class="boton boton--primario" href="{{ enlace_cobro }}" target="_blank" rel="noopener">
+          Enviar recordatorio por WhatsApp
+        </a>
+      {% else %}
+        <p class="tabla__vacia">
+          {% if not venta.cliente_telefono %}
+            Esta venta no tiene celular registrado.
+          {% else %}
+            No hay saldo pendiente que recordar.
+          {% endif %}
+        </p>
+      {% endif %}
+    </section>
+  </div>
+{% endblock %}

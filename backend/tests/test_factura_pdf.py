@@ -1,4 +1,4 @@
-"""Pruebas de la factura PDF de OLB_BYTE (Fase 7, ADR-36).
+﻿"""Pruebas de la factura PDF de OLB_BYTE (Fase 7, ADR-36).
 
 Las pruebas que generan PDF usan Chromium real de Playwright; por eso son las
 únicas que tardan más. Cubren el nombre del archivo, los logos, la capacidad de una
@@ -74,8 +74,8 @@ def test_datos_factura_completa_la_tabla_hasta_diez_filas(bd) -> None:
     contexto = factura_pdf.datos_factura(bd, venta)
 
     assert len(contexto["lineas"]) == 2
-    assert len(contexto["filas_vacias"]) == 8
-    assert contexto["nota"] == "Gracias por apoyar nuestro emprendimiento tecnológico"
+    assert len(contexto["filas_vacias"]) == 7
+    assert contexto["pie_legal"].startswith("Documento generado por OLB BYTE")
     assert contexto["nombre_archivo"] == "Factura_OLB_BYTE_No_1_Ana_Perez.pdf"
 
 
@@ -96,11 +96,11 @@ def test_plantilla_muestra_datos_medios_y_nota(bd) -> None:
 
     assert "Ana Pérez" in html
     assert "Producto 0" in html
-    assert "Gracias por apoyar nuestro emprendimiento tecnológico" in html
+    assert "GRACIAS POR SU CONFIANZA" in html
     assert "316 382 63 66" in html
     assert "1151949473-3" in html
-    assert "Saldo pendiente" in html
-    assert "ANULADA" not in html
+    assert "ABONADO / SALDO" in html
+    assert '<div class="sello-anulada">' not in html
 
 
 def test_plantilla_marca_las_ordenes_anuladas(bd) -> None:
@@ -112,7 +112,7 @@ def test_plantilla_marca_las_ordenes_anuladas(bd) -> None:
         factura_pdf.datos_factura(bd, venta)
     )
 
-    assert "marca-anulada" in html
+    assert "sello-anulada" in html
 
 
 def test_pdf_real_tiene_una_sola_pagina(bd) -> None:
@@ -200,3 +200,25 @@ def test_vista_de_factura_ofrece_vista_previa_descarga_y_compartir(cliente_admin
     assert f"/olb-byte/factura/{venta.id_venta}/pdf" in respuesta.text
     assert "data-compartir" in respuesta.text
     assert "Factura_OLB_BYTE_No_1_Ana_Perez.pdf" in respuesta.text
+
+
+def test_pdf_con_diez_productos_cabe_en_una_pagina(bd) -> None:
+    """La factura con el máximo de productos sigue en una sola hoja Carta."""
+    venta = _venta(bd, lineas=10)
+    html = plantillas.get_template("olb_byte/factura_pdf.html").render(
+        factura_pdf.datos_factura(bd, venta)
+    )
+
+    pdf = factura_pdf.generar_pdf(html)
+
+    assert _paginas(pdf) == 1
+
+def test_factura_usa_el_logo_oficial_y_carga_su_css_en_la_cabecera(cliente_admin: TestClient, bd) -> None:
+    """La factura muestra el logo de assets/ y su CSS se carga dentro de <head>."""
+    venta = _venta(bd, lineas=1)
+
+    texto = cliente_admin.get(f"/olb-byte/factura/{venta.id_venta}").text
+
+    assert 'alt="OLB BYTE · Alta Tecnología"' in texto
+    assert "data:image/png;base64," in texto
+    assert texto.index("factura-olb.css") < texto.index("</head>")
