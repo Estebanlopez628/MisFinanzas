@@ -465,7 +465,7 @@ Recálculo en tiempo real (<100 ms) sin recargar página. Se implementa con func
 
 **Verificación:** en Chromium a 390 px, la descarga produce PNG completo con logos y el chat abre `api.whatsapp.com/send?phone=573163826366`. `pytest` en verde.
 
-**Pendiente:** confirmar en Render si el aviso «No se encontró el logo» aparece en los logs. Si aparece, `assets/` no llegó al servidor.
+**Confirmado por el propietario:** la descarga sale con todos los logos. Queda pendiente solo la prueba del botón de WhatsApp en un celular real.
 
 ### 2026-11-19 — PostgreSQL en Neon y despliegue en Render (ADR-52)
 
