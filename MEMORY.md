@@ -453,6 +453,15 @@ Recálculo en tiempo real (<100 ms) sin recargar página. Se implementa con func
 
 ## Bitácora de Cambios
 
+### 2026-11-20 — Vista previa de WhatsApp reducida a JPEG de 71 KB
+
+**Cambios realizados**
+1. `static/img/vista-previa.png` (1,4 MB) reemplazado por `static/img/vista-previa.jpg`: 1200×588 px, JPEG calidad 85, 71 KB. Se hizo desde `assets/Nuevo Logo2.png`, que no se modificó.
+2. `templates/base.html`: `og:image` y `twitter:image` apuntan a `vista-previa.jpg?v=5`.
+3. `tests/test_vista_previa.py` espera el `.jpg` con `image/jpeg` y `?v=5`.
+
+**Verificación:** `pytest` en verde con **621 pruebas**.
+
 ### 2026-11-20 — Imagen de vista previa de WhatsApp actualizada
 
 **Causa:** la vista previa usa `static/img/vista-previa.png`, una copia separada de `assets/Nuevo Logo2.png`. Al cambiar solo `assets/`, la app seguía sirviendo la copia anterior. Además, WhatsApp guarda la imagen por su dirección (`?v=2`).

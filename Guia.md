@@ -1064,7 +1064,7 @@ Manifiesto PWA: nombre, colores de la paleta, `display: standalone`, íconos y
 
 El `<head>` declara las etiquetas Open Graph y Twitter Card para la vista previa al compartir
 el enlace: título «Mis Finanzas», descripción comercial, `og:url`, `twitter:card` tipo
-`summary_large_image` y la imagen `/estaticos/img/vista-previa.png` con URL absoluta. La base
+`summary_large_image` y la imagen `/estaticos/img/vista-previa.jpg?v=5` con URL absoluta (JPEG de 1200×588 px, 71 KB). La base
 es `APP_URL`; sin esa variable usa `https://misfinanzas-odbc.onrender.com` (SRS v1.8).
 
 El pie muestra solo «Finanzas · v1.0.0 | © año», sin el entorno (SRS v1.8). El `body` acepta
