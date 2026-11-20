@@ -63,8 +63,8 @@
           <span class="campo__etiqueta">¿A qué quincena se descuenta?</span>
           <select class="campo__control" name="quincena">
             <option value="">Mes completo (no se imputa a una quincena)</option>
-            <option value="1">Quincena 1 · día 15</option>
-            <option value="2">Quincena 2 · día 30</option>
+            <option value="1">{{ etiquetas_quincena[1] }}</option>
+            <option value="2">{{ etiquetas_quincena[2] }}</option>
           </select>
           <span class="ayuda">
             Solo aplica a gastos fijos que se pagan con una quincena concreta.
@@ -119,8 +119,8 @@
                 <td>{{ gasto.descripcion }}</td>
                 <td>{{ 'Fijo' if gasto.es_fijo else 'Variable' }}</td>
                 <td>
-                  {%- if gasto.quincena == 1 -%}Q1 · día 15
-                  {%- elif gasto.quincena == 2 -%}Q2 · día 30
+                  {%- if gasto.quincena == 1 -%}{{ etiquetas_quincena[1] }}
+                  {%- elif gasto.quincena == 2 -%}{{ etiquetas_quincena[2] }}
                   {%- else -%}Mes completo{%- endif -%}
                 </td>
                 <td class="tabla__numero">{{ gasto.valor | cop }}</td>

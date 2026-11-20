@@ -743,6 +743,30 @@ a.tarjeta:focus-visible {
   list-style: none;
 }
 
+/* SRS v1.8: la lista de abonos se desplaza dentro de su propia caja. Con una
+   meta de 24 meses la página ya no crece: se ven unas cinco filas y el resto
+   aparece al mover el mouse o el dedo sobre la lista. */
+.abonos-scroll {
+  max-height: 420px;
+  overflow-y: auto;
+  padding-right: 6px;
+  border-radius: var(--radio-md, 10px);
+  scrollbar-gutter: stable;
+}
+
+.abonos-scroll:focus-visible {
+  outline: 2px solid var(--accent-blue);
+  outline-offset: 2px;
+}
+
+.abonos-scroll .cuadricula-abonos {
+  grid-template-columns: repeat(auto-fill, minmax(min(190px, 100%), 1fr));
+}
+
+.abonos-scroll__ayuda {
+  margin-top: 6px;
+}
+
 /* SRS v1.6: cada mes es de solo lectura; su contenido va centrado con el mismo
    margen interior en todos los lados. */
 .mes-abono {
@@ -2019,6 +2043,16 @@ textarea.campo__control {
   align-items: start;
 }
 
+/* SRS v1.8: el modo de «Ambas quincenas» ocupa su propia fila y se alinea con
+   los campos de arriba; así no queda descolgado bajo el selector de quincena. */
+.fila-campos--modo {
+  margin-top: 12px;
+}
+
+.fila-campos--modo .campo {
+  width: 100%;
+}
+
 /* SRS v1.7: cada celda de la rejilla puede encogerse por debajo de su ancho
    intrínseco; sin esto, un `input[type="date"]` empuja la columna. */
 .fila-campos > *,
@@ -2529,6 +2563,56 @@ textarea.campo__control {
 .dona__centro-etiqueta {
   color: var(--text-muted);
   font-size: 0.8rem;
+}
+
+.dona__centro-valor {
+  font-size: 0.95rem;
+  line-height: 1.15;
+}
+
+/* ---------------------- Analítica con filtros (SRS v1.9) ---------------------- */
+
+.panel__cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.panel__cabecera .panel__titulo {
+  margin: 0;
+}
+
+.fila-enlace {
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px dotted rgba(148, 163, 184, 0.6);
+}
+
+.fila-enlace:hover,
+.fila-enlace:focus-visible {
+  color: var(--accent-blue);
+  border-bottom-color: var(--accent-blue);
+}
+
+.fila--activa > td {
+  background: rgba(2, 132, 199, 0.18);
+}
+
+.filtros-activos {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.filtros-activos__chip {
+  text-decoration: none;
+  cursor: pointer;
 }
 
 .dona__leyenda {

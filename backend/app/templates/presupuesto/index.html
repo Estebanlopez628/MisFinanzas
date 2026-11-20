@@ -77,15 +77,15 @@
     "Así se reparte el ingreso del mes entre tus gastos fijos, la cuota de tus deudas y el dinero que queda libre."
   ) }}
 
-  {# ---------------------- Consejero financiero (SRS v1.7) ---------------------- #}
+  {# ---------------------- Consejero financiero (SRS v1.8) ---------------------- #}
   {% if consejo.activo %}
     <section class="panel consejero">
       <h2 class="panel__titulo">🧭 Consejero financiero</h2>
       <p class="consejero__saludo">{{ consejo.titulo }}</p>
       <p class="diagnostico__mensaje">{{ consejo.mensaje }}</p>
       <p class="ayuda">
-        Excedente consolidado: <strong>{{ consejo.excedente | cop }}</strong>.
-        El consejero se activa por encima de {{ consejo.umbral | cop }}.
+        Dinero libre disponible para abonar: <strong>{{ consejo.excedente | cop }}</strong>.
+        Ya se reservaron {{ consejo.umbral | cop }} de base mínima de liquidez.
       </p>
 
       <ul class="consejero__pasos">
@@ -98,17 +98,22 @@
         {% if consejo.modo == 'DEUDA' %}
           <article class="tarjeta">
             <span class="tarjeta__icono" aria-hidden="true">💸</span>
-            <h3 class="tarjeta__titulo">{{ consejo.interes_base | cop }}</h3>
+            <h3 class="tarjeta__titulo">
+              {%- if consejo.meses_base is not none -%}
+                {{ consejo.meses_base }} mes(es)
+              {%- else -%}
+                Más de 12 meses
+              {%- endif -%}
+            </h3>
             <p class="tarjeta__descripcion">
-              Intereses en 12 meses pagando solo lo mínimo.
+              Para quedar libre de deudas pagando solo lo mínimo.
             </p>
           </article>
           <article class="tarjeta tarjeta--verde">
             <span class="tarjeta__icono" aria-hidden="true">🏔️</span>
-            <h3 class="tarjeta__titulo">{{ consejo.interes_optimizado | cop }}</h3>
+            <h3 class="tarjeta__titulo">{{ consejo.cuota_liberada | cop }}</h3>
             <p class="tarjeta__descripcion">
-              Intereses con la estrategia
-              {{ 'avalancha' if consejo.estrategia == 'AVALANCHA' else 'bola de nieve' }}.
+              Cuota mensual que liberas al cerrar deudas con tu excedente.
             </p>
           </article>
         {% else %}
@@ -163,6 +168,19 @@
       <p class="ayuda">
         Proyección educativa: supone el mismo ingreso, los mismos gastos fijos y
         las mismas cuotas. No reemplaza una asesoría financiera.
+      </p>
+    </section>
+  {% else %}
+    {# SRS v1.8: por debajo de la base mínima de liquidez el consejo se apaga
+       con una invitación a crear una meta de emergencia. #}
+    <section class="panel consejero consejero--inactivo">
+      <h2 class="panel__titulo">🧭 Consejero financiero</h2>
+      <p class="consejero__saludo">{{ consejo.titulo }}</p>
+      <div class="alerta alerta--aviso" role="status">{{ consejo.mensaje }}</div>
+      <p class="ayuda">
+        Base mínima de liquidez: {{ consejo.umbral | cop }}. Cuando tu dinero
+        libre supere ese monto, el consejero te dirá a qué deuda dirigir el
+        remanente.
       </p>
     </section>
   {% endif %}
@@ -221,16 +239,21 @@
           <input class="campo__control" type="date" name="fecha_inicio" value="{{ fecha_hoy }}" />
         </label>
         <label class="campo">
-          <span class="campo__etiqueta">Quincena de descuento</span>
+          <span class="campo__etiqueta">Quincena donde aplicaremos los pagos</span>
           <select class="campo__control" name="quincena" data-quincena>
-            <option value="1">Quincena 1 · día 15</option>
-            <option value="2">Quincena 2 · día 30</option>
+            <option value="1">{{ etiquetas_quincena[1] }}</option>
+            <option value="2">{{ etiquetas_quincena[2] }}</option>
             <option value="3">Ambas quincenas</option>
           </select>
         </label>
-        {# SRS v1.7: con «Ambas quincenas» el usuario decide si la cuota se
-           reparte entre los dos pagos o se cobra completa en cada uno. #}
-        <label class="campo" data-modo-ambas hidden>
+      </div>
+
+      {# SRS v1.7: con «Ambas quincenas» el usuario decide si la cuota se
+         reparte entre los dos pagos o se cobra completa en cada uno.
+         SRS v1.8: el bloque va en su propia fila, alineado con los campos de
+         arriba, para que no quede descolgado debajo del selector. #}
+      <div class="fila-campos fila-campos--modo" data-modo-ambas hidden>
+        <label class="campo">
           <span class="campo__etiqueta">¿Cómo aplicar el monto en cada quincena?</span>
           <select class="campo__control" name="modo_ambas" data-modo>
             <option value="DIVIDIR">Dividir la cuota entre los dos pagos</option>
@@ -274,10 +297,10 @@
                  inputmode="decimal" placeholder="120.000" required />
         </label>
         <label class="campo">
-          <span class="campo__etiqueta">Quincena de descuento</span>
+          <span class="campo__etiqueta">Quincena donde aplicaremos los pagos</span>
           <select class="campo__control" name="quincena">
-            <option value="1">Quincena 1 · día 15</option>
-            <option value="2">Quincena 2 · día 30</option>
+            <option value="1">{{ etiquetas_quincena[1] }}</option>
+            <option value="2">{{ etiquetas_quincena[2] }}</option>
           </select>
         </label>
       </div>
@@ -292,7 +315,7 @@
         {% for deduccion in deducciones %}
           <li class="lista-gastos__item">
             <span class="lista-gastos__nombre">
-              {{ deduccion.descripcion }} - Quincena {{ deduccion.quincena }}
+              {{ deduccion.descripcion }} - {{ etiquetas_quincena[deduccion.quincena] }}
             </span>
             <span class="lista-gastos__valor">Valor: {{ deduccion.valor | cop }}</span>
             <div class="lista-gastos__acciones">
@@ -314,8 +337,8 @@
                   <label class="campo">
                     <span class="campo__etiqueta">Quincena</span>
                     <select class="campo__control" name="quincena">
-                      <option value="1" {% if deduccion.quincena == 1 %}selected{% endif %}>Quincena 1</option>
-                      <option value="2" {% if deduccion.quincena == 2 %}selected{% endif %}>Quincena 2</option>
+                      <option value="1" {% if deduccion.quincena == 1 %}selected{% endif %}>{{ etiquetas_quincena[1] }}</option>
+                      <option value="2" {% if deduccion.quincena == 2 %}selected{% endif %}>{{ etiquetas_quincena[2] }}</option>
                     </select>
                   </label>
                   <div class="acciones-formulario acciones-formulario--edicion">
@@ -416,23 +439,34 @@
 
             <h4 class="bloque-gastos__subtitulo">Abonos mensuales</h4>
             <p class="ayuda">Se registran al marcar el ✔ del gasto fijo en Mis Finanzas.</p>
-            <ul class="cuadricula-abonos">
-              {% for mes in meta.meses %}
-                <li class="mes-abono mes-abono--{{ mes.estado }}">
-                  <span class="mes-abono__etiqueta">{{ mes.etiqueta }}</span>
-                  {% if mes.estado == 'registrado' %}
-                    <strong class="mes-abono__valor">{{ mes.abono | cop }}</strong>
-                    <span class="mes-abono__estado">✓ Abonado</span>
-                  {% elif mes.estado == 'no_pagado' %}
-                    <strong class="mes-abono__valor">{{ mes.planeado | cop }}</strong>
-                    <span class="mes-abono__estado mes-abono__estado--no-pagado">No pagado</span>
-                  {% else %}
-                    <strong class="mes-abono__valor">{{ mes.planeado | cop }}</strong>
-                    <span class="mes-abono__estado mes-abono__estado--pendiente">Pendiente</span>
-                  {% endif %}
-                </li>
-              {% endfor %}
-            </ul>
+            {# SRS v1.8: la lista muestra cinco filas y se desplaza dentro de su
+               propia caja para que una meta larga no alargue la página. #}
+            <div class="abonos-scroll" tabindex="0"
+                 aria-label="Abonos mensuales de {{ meta.proyeccion.descripcion }}">
+              <ul class="cuadricula-abonos">
+                {% for mes in meta.meses %}
+                  <li class="mes-abono mes-abono--{{ mes.estado }}">
+                    <span class="mes-abono__etiqueta">{{ mes.etiqueta }}</span>
+                    {% if mes.estado == 'registrado' %}
+                      <strong class="mes-abono__valor">{{ mes.abono | cop }}</strong>
+                      <span class="mes-abono__estado">✓ Abonado</span>
+                    {% elif mes.estado == 'no_pagado' %}
+                      <strong class="mes-abono__valor">{{ mes.planeado | cop }}</strong>
+                      <span class="mes-abono__estado mes-abono__estado--no-pagado">No pagado</span>
+                    {% else %}
+                      <strong class="mes-abono__valor">{{ mes.planeado | cop }}</strong>
+                      <span class="mes-abono__estado mes-abono__estado--pendiente">Pendiente</span>
+                    {% endif %}
+                  </li>
+                {% endfor %}
+              </ul>
+            </div>
+            {% if meta.meses | length > 5 %}
+              <p class="ayuda abonos-scroll__ayuda">
+                Se ven 5 abonos a la vez; desplázate dentro de la lista para ver
+                los demás.
+              </p>
+            {% endif %}
           </article>
         {% endfor %}
       </div>

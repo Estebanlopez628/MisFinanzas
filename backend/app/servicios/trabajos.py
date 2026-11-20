@@ -41,7 +41,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.numeros import redondear_dinero
-from app.core.texto import parsear_monto
+from app.core.texto import parsear_monto, parsear_porcentaje
 from app.modelos import Gasto, TrabajoExtra
 from app.servicios.gastos import crear_gasto, valor_computable
 
@@ -221,8 +221,8 @@ def _porcentaje_opcional(valor: str | None) -> Decimal | None:
     """Convierte un porcentaje escrito por la usuaria.
 
     Args:
-        valor: Texto del formulario (acepta coma o punto decimal); vacío significa
-            «no escrito».
+        valor: Texto del formulario (acepta «60», «60 %» y «60,5»); vacío
+            significa «no escrito».
 
     Returns:
         Porcentaje entre 0 y 100, o `None` si no se escribió.
@@ -232,10 +232,7 @@ def _porcentaje_opcional(valor: str | None) -> Decimal | None:
     """
     if valor is None or str(valor).strip() == "":
         return None
-    try:
-        numero = Decimal(str(valor).strip().replace(",", "."))
-    except InvalidOperation as error:
-        raise ValueError("El porcentaje debe ser un número.") from error
+    numero = parsear_porcentaje(valor, "El porcentaje")
     if numero < CERO or numero > CIEN:
         raise ValueError("El porcentaje debe estar entre 0 y 100.")
     return numero

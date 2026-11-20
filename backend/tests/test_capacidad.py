@@ -65,9 +65,9 @@ def test_sin_deudas_el_arco_libre_domina_y_el_semaforo_es_verde(bd) -> None:
 
 
 def test_los_porcentajes_de_la_dona_suman_cien(bd) -> None:
-    """Los tres arcos de la dona siempre cierran la circunferencia."""
+    """Los arcos de la dona siempre cierran la circunferencia."""
     id_usuario = _id_admin(bd)
-    deudas.crear_deuda(bd, id_usuario, "Banco", "2000000", "800000", 3)
+    deudas.crear_deuda(bd, id_usuario, "Banco", "2400000", "800000", 3)
 
     resultado = capacidad.capacidad_endeudamiento(
         bd, id_usuario, _perfil(bd, id_usuario), HOY.year, HOY.month
@@ -78,14 +78,42 @@ def test_los_porcentajes_de_la_dona_suman_cien(bd) -> None:
     assert [arco["etiqueta"] for arco in resultado.arcos] == [
         "Gastos fijos",
         "Cuota de deudas",
-        "Libre",
+        "Base mínima de liquidez",
+        "Disponible para abonar",
     ]
+
+
+def test_el_libre_se_parte_entre_la_base_y_lo_disponible(bd) -> None:
+    """SRS v1.8: del libre, $300.000 son base mínima y el resto es abonable."""
+    id_usuario = _id_admin(bd)
+    resultado = capacidad.capacidad_endeudamiento(
+        bd, id_usuario, _perfil(bd, id_usuario), HOY.year, HOY.month
+    )
+
+    assert resultado.base_minima == capacidad.BASE_MINIMA_LIQUIDEZ
+    assert resultado.disponible_abono == resultado.libre - capacidad.BASE_MINIMA_LIQUIDEZ
+
+
+def test_las_cifras_de_la_dona_usan_verde_y_rojo(bd) -> None:
+    """Gastos y deudas salen en rojo; base y disponible, en verde (SRS v1.8)."""
+    id_usuario = _id_admin(bd)
+    deudas.crear_deuda(bd, id_usuario, "Banco", "2400000", "800000", 3)
+
+    resultado = capacidad.capacidad_endeudamiento(
+        bd, id_usuario, _perfil(bd, id_usuario), HOY.year, HOY.month
+    )
+
+    clases = {arco["etiqueta"]: arco["clase"] for arco in resultado.arcos}
+    assert clases["Gastos fijos"] == "valor-negativo"
+    assert clases["Cuota de deudas"] == "valor-negativo"
+    assert clases["Base mínima de liquidez"] == "valor-positivo"
+    assert clases["Disponible para abonar"] == "valor-positivo"
 
 
 def test_una_deuda_alta_pone_el_semaforo_en_rojo(bd) -> None:
     """Una cuota que supera el 35 % del ingreso enciende el semáforo rojo."""
     id_usuario = _id_admin(bd)
-    deudas.crear_deuda(bd, id_usuario, "Banco", "5000000", "2800000", 2)
+    deudas.crear_deuda(bd, id_usuario, "Banco", "5600000", "2800000", 2)
 
     resultado = capacidad.capacidad_endeudamiento(
         bd, id_usuario, _perfil(bd, id_usuario), HOY.year, HOY.month
@@ -99,7 +127,7 @@ def test_una_deuda_alta_pone_el_semaforo_en_rojo(bd) -> None:
 def test_una_deuda_media_pone_el_semaforo_en_ambar(bd) -> None:
     """Entre 20 % y 35 % el semáforo avisa con ámbar."""
     id_usuario = _id_admin(bd)
-    deudas.crear_deuda(bd, id_usuario, "Banco", "2000000", "800000", 3)
+    deudas.crear_deuda(bd, id_usuario, "Banco", "2400000", "800000", 3)
 
     resultado = capacidad.capacidad_endeudamiento(
         bd, id_usuario, _perfil(bd, id_usuario), HOY.year, HOY.month
@@ -243,6 +271,8 @@ def test_presupuesto_muestra_el_panel_de_capacidad(cliente_admin) -> None:
     assert "Capacidad de endeudamiento" in respuesta.text
     assert "Proyección a 12 meses" not in respuesta.text
     assert "Deudas por terminar" in respuesta.text
+    # SRS v1.8: las cifras de la dona llevan verde/rojo según el signo.
+    assert "valor-positivo" in respuesta.text
 
 
 def test_trabajos_extras_muestra_su_propia_instancia(cliente_admin) -> None:

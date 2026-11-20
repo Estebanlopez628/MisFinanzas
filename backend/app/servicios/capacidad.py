@@ -43,6 +43,10 @@ CERO = Decimal("0")
 CIEN = Decimal("100")
 MESES_PROYECCION = 12
 CUOTAS_POR_TERMINAR = 3
+# SRS v1.8: reserva mensual de supervivencia. El dinero libre que no supere este
+# monto no se ofrece para abonos ni metas; solo el remanente se considera
+# capacidad real de abono.
+BASE_MINIMA_LIQUIDEZ = Decimal("300000")
 # Una deducción fija cuya descripción diga «crédito» o «créditos» (por ejemplo,
 # una libranza) se trata como deuda y no como gasto fijo.
 PATRON_CREDITO = re.compile(r"\bcreditos?\b")
@@ -89,6 +93,8 @@ class Capacidad:
         arcos: Segmentos de la dona, normalizados para que sumen 100.
         por_terminar: Deudas con tres cuotas o menos por pagar.
         proyeccion: Doce meses de cuota y saldo libre estimados.
+        base_minima: Parte del libre reservada como base mínima de liquidez.
+        disponible_abono: Remanente del libre que sí puede abonarse o ahorrarse.
     """
 
     ingreso: Decimal
@@ -105,6 +111,27 @@ class Capacidad:
     proyeccion: list[dict[str, object]] = field(default_factory=list)
     libre_salario: Decimal = CERO
     libre_extras: Decimal = CERO
+    base_minima: Decimal = CERO
+    disponible_abono: Decimal = CERO
+
+
+def repartir_libre(libre: Decimal) -> tuple[Decimal, Decimal]:
+    """Separa el dinero libre entre la base mínima y el disponible para abonar.
+
+    SRS v1.8: la base mínima de liquidez ($300.000) se reserva completa en cuanto
+    el libre la alcance; si el libre es menor, todo él queda como base y no hay
+    disponible. Un libre negativo no reserva nada.
+
+    Args:
+        libre: Dinero que queda después de gastos y cuotas (puede ser negativo).
+
+    Returns:
+        Tupla `(base_minima, disponible_abono)` con ambos montos redondeados.
+    """
+    positivo = max(redondear_dinero(libre), CERO)
+    base = min(positivo, BASE_MINIMA_LIQUIDEZ)
+    disponible = max(redondear_dinero(positivo - BASE_MINIMA_LIQUIDEZ), CERO)
+    return redondear_dinero(base), redondear_dinero(disponible)
 
 
 def es_credito(descripcion: str) -> bool:
@@ -143,11 +170,15 @@ def _repartir_arcos(
     libre: Decimal,
     ingreso: Decimal,
 ) -> list[dict[str, object]]:
-    """Construye los tres arcos de la dona de capacidad.
+    """Construye los arcos de la dona de capacidad.
 
     Cuando gastos y deudas superan el ingreso, el dibujo se escala de forma
     proporcional para que la circunferencia cierre y el segmento libre quede en
     cero; así el gráfico no muestra arcos mayores que la vuelta completa.
+
+    SRS v1.8: el dinero libre se parte en «Base mínima de liquidez» (hasta
+    $300.000) y «Disponible para abonar» (el remanente). Si el libre no alcanza
+    la base, solo se dibuja el arco de la base.
 
     Args:
         gastos: Gastos fijos del mes.
@@ -157,47 +188,71 @@ def _repartir_arcos(
 
     Returns:
         Lista de diccionarios con etiqueta, valor, porcentaje, longitud,
-        desplazamiento y color para el SVG.
+        desplazamiento, color para el SVG y `clase` de color de la cifra
+        (verde para el dinero a favor, rojo para gastos y deudas).
     """
     if ingreso <= CERO:
         return []
 
-    porcentaje_gastos = _porcentaje(gastos, ingreso)
-    porcentaje_deudas = _porcentaje(deudas, ingreso)
-    # `_porcentaje` devuelve cero con montos negativos: un saldo libre negativo
-    # no dibuja arco, pero se conserva en `libre` para el texto de alerta.
-    porcentaje_libre = _porcentaje(libre, ingreso)
+    base, disponible = repartir_libre(libre)
+    gastos_positivos = max(gastos, CERO)
+    deudas_positivas = max(deudas, CERO)
 
-    if porcentaje_gastos + porcentaje_deudas + porcentaje_libre > CIEN:
+    # La decisión de escalar se toma con dinero, no con porcentajes redondeados:
+    # dos decimales pueden sumar 100,01 y dibujar un arco libre inexistente.
+    if gastos_positivos + deudas_positivas + base + disponible > ingreso:
         # El ingreso no alcanza: se reparte la vuelta completa entre gastos y
         # deudas sin dibujar un segmento libre que no existe.
-        total_comprometido = porcentaje_gastos + porcentaje_deudas
-        if total_comprometido > CERO:
-            porcentaje_gastos = porcentaje_gastos / total_comprometido * CIEN
+        comprometido = gastos_positivos + deudas_positivas
+        if comprometido > CERO:
+            porcentaje_gastos = gastos_positivos / comprometido * CIEN
             porcentaje_deudas = CIEN - porcentaje_gastos
         else:
             porcentaje_gastos = CERO
             porcentaje_deudas = CERO
-        porcentaje_libre = CERO
+        porcentaje_base = CERO
+        porcentaje_disponible = CERO
+    else:
+        porcentaje_gastos = _porcentaje(gastos_positivos, ingreso)
+        porcentaje_deudas = _porcentaje(deudas_positivas, ingreso)
+        porcentaje_base = _porcentaje(base, ingreso)
+        porcentaje_disponible = _porcentaje(disponible, ingreso)
+
+    # `clase` pinta la cifra de la leyenda con la paleta de referencia: rojo para
+    # lo que sale del bolsillo (gastos y deudas) y verde para lo que queda a favor
+    # (base mínima y disponible). El color del arco se conserva como guía visual.
+    candidatos = [
+        ("Gastos fijos", gastos_positivos, porcentaje_gastos, "var(--accent-blue)", "valor-negativo"),
+        ("Cuota de deudas", deudas_positivas, porcentaje_deudas, "var(--accent-red)", "valor-negativo"),
+        ("Base mínima de liquidez", base, porcentaje_base, "var(--accent-green)", "valor-positivo"),
+        ("Disponible para abonar", disponible, porcentaje_disponible, "var(--accent-amber)", "valor-positivo"),
+    ]
+
+    # Los porcentajes se muestran con un decimal; el redondeo de cada uno puede
+    # dejar la suma en 99,9 o 100,1. El ajuste va al arco mayor para que la dona
+    # cierre exactamente en 100 % sin mover los montos.
+    visibles = [fila for fila in candidatos if fila[2] > CERO]
+    if visibles:
+        redondeados = [fila[2].quantize(Decimal("0.1")) for fila in visibles]
+        diferencia = CIEN - sum(redondeados, start=CERO)
+        mayor = max(range(len(visibles)), key=lambda indice: visibles[indice][2])
+        redondeados[mayor] += diferencia
+    else:
+        redondeados = []
 
     arcos: list[dict[str, object]] = []
     avance = CERO
-    for etiqueta, valor, porcentaje, color in (
-        ("Gastos fijos", gastos, porcentaje_gastos, "var(--accent-blue)"),
-        ("Cuota de deudas", deudas, porcentaje_deudas, "var(--accent-red)"),
-        ("Libre", max(libre, CERO), porcentaje_libre, "var(--accent-green)"),
-    ):
-        if porcentaje <= CERO:
-            continue
+    for (etiqueta, valor, _pct, color, clase), porcentaje in zip(visibles, redondeados):
         longitud = redondear_dinero(porcentaje)
         arcos.append(
             {
                 "etiqueta": etiqueta,
                 "valor": redondear_dinero(valor),
-                "porcentaje": (porcentaje.quantize(Decimal("0.1"))),
+                "porcentaje": porcentaje,
                 "longitud": longitud,
                 "desplazamiento": redondear_dinero(-avance),
                 "color": color,
+                "clase": clase,
             }
         )
         avance += porcentaje
@@ -436,6 +491,7 @@ def capacidad_trabajos(
     ingreso = redondear_dinero(sum((bloque["ingreso"] for bloque in bloques), start=CERO))
     gastos = redondear_dinero(sum((bloque["gastos_total"] for bloque in bloques), start=CERO))
     libre = redondear_dinero(ingreso - gastos)
+    base, disponible = repartir_libre(libre)
     return Capacidad(
         ingreso=ingreso,
         gastos=gastos,
@@ -447,6 +503,8 @@ def capacidad_trabajos(
         semaforo=ESTADO_VERDE,
         mensaje="",
         arcos=_repartir_arcos(gastos, CERO, libre, ingreso),
+        base_minima=base,
+        disponible_abono=disponible,
     )
 
 
@@ -504,6 +562,7 @@ def capacidad_endeudamiento(
     )
     libre = redondear_dinero(ingreso - gastos - cuota_deudas)
     libre_salario = redondear_dinero(libre - libre_extras)
+    base, disponible = repartir_libre(libre)
 
     if ingreso <= CERO:
         estado = ESTADO_SIN_DATOS
@@ -532,4 +591,6 @@ def capacidad_endeudamiento(
         proyeccion=proyeccion_capacidad(ingreso, gastos, deudas, hoy, creditos),
         libre_salario=libre_salario,
         libre_extras=libre_extras,
+        base_minima=base,
+        disponible_abono=disponible,
     )

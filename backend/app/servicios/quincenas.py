@@ -46,7 +46,8 @@ class ResumenQuincena:
 
     Attributes:
         numero: `0` mes completo, `1` primera quincena, `2` segunda quincena.
-        etiqueta: Texto visible («Mes», «Quincena 1 (día 15)»).
+        etiqueta: Texto visible («Mes», «Quincena 1 · día 5»), con el día que
+            el usuario configuró en su perfil.
         porcentaje: Porcentaje del sueldo que se paga en este bloque.
         ingreso: Sueldo proyectado del bloque, ajustado por incapacidad y con
             recargos cuando corresponde.
@@ -73,19 +74,21 @@ class ResumenQuincena:
     deducciones_fijas_detalle: list[DeduccionFija] = field(default_factory=list)
 
 
-def _etiqueta(numero: int) -> str:
+def _etiqueta(numero: int, perfil: PerfilFinanciero | None) -> str:
     """Devuelve el nombre visible de un bloque de pago.
+
+    SRS v1.9: el día de cada quincena sale del perfil del usuario, no de un valor
+    fijo, para que la etiqueta coincida con lo que el usuario configuró.
 
     Args:
         numero: `0`, `1` o `2`.
+        perfil: Perfil del usuario; `None` usa los días predeterminados.
 
     Returns:
         Texto listo para la interfaz.
     """
-    if numero == 1:
-        return "Quincena 1 · día 15"
-    if numero == 2:
-        return "Quincena 2 · día 30"
+    if numero in (1, 2):
+        return perfiles.etiquetas_quincena(perfil)[numero]
     return "Mes completo"
 
 
@@ -125,7 +128,7 @@ def resumen_quincenas(
         return [
             ResumenQuincena(
                 numero=0,
-                etiqueta=_etiqueta(0),
+                etiqueta=_etiqueta(0, perfil),
                 porcentaje=CERO,
                 ingreso=CERO,
                 gastos=total,
@@ -153,7 +156,7 @@ def resumen_quincenas(
         return [
             ResumenQuincena(
                 numero=0,
-                etiqueta=_etiqueta(0),
+                etiqueta=_etiqueta(0, perfil),
                 porcentaje=Decimal("100"),
                 ingreso=redondear_dinero(sueldo_ajustado + recargos_periodo),
                 gastos=total,
@@ -194,7 +197,7 @@ def resumen_quincenas(
         resumen.append(
             ResumenQuincena(
                 numero=numero,
-                etiqueta=_etiqueta(numero),
+                etiqueta=_etiqueta(numero, perfil),
                 porcentaje=porcentaje,
                 ingreso=ingreso,
                 gastos=total_gastos,

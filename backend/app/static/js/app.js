@@ -268,6 +268,51 @@
     sincronizarDias();
   }
 
+  // ------------------ Blindaje de datos escritos por el usuario -------------
+  //
+  // SRS v1.8: antes de enviar, los campos numéricos se revisan en el navegador.
+  // Si alguien escribe una letra donde va un número (o al contrario), el envío
+  // se detiene y el campo se marca. El servidor vuelve a validar siempre, así
+  // que apagar JavaScript no abre un hueco: solo se pierde el aviso temprano.
+  document.addEventListener(
+    "submit",
+    function (evento) {
+      var formulario = evento.target;
+      if (!(formulario instanceof HTMLFormElement)) {
+        return;
+      }
+      var controles = formulario.querySelectorAll(
+        'input[inputmode="decimal"], input[inputmode="numeric"], input[type="number"]'
+      );
+      for (var c = 0; c < controles.length; c += 1) {
+        var control = controles[c];
+        if (control.disabled || control.value === "") {
+          continue;
+        }
+        var decimal = control.getAttribute("inputmode") === "decimal";
+        var patron = decimal ? /^-?[\d.,\s$%]*$/ : /^-?[\d.,\s]*$/;
+        if (!patron.test(control.value)) {
+          evento.preventDefault();
+          control.setCustomValidity(
+            "Escribe solo números" +
+              (decimal ? " (puedes usar puntos de miles y coma decimal)." : ".")
+          );
+          control.reportValidity();
+          control.focus();
+          control.addEventListener(
+            "input",
+            function () {
+              this.setCustomValidity("");
+            },
+            { once: true }
+          );
+          return;
+        }
+      }
+    },
+    true
+  );
+
   // ------------------------- Service worker (PWA) -------------------------
 
   if ("serviceWorker" in navigator) {

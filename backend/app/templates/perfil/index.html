@@ -84,8 +84,28 @@
                   {% if valores.modalidad_pago != 'QUINCENAL' %}hidden{% endif %}>
           <legend>Configuración de las quincenas</legend>
           <p class="ayuda">
-            La quincena 1 corresponde al día 15 y la quincena 2 al día 30. Esta
-            configuración solo aplica a la modalidad quincenal.
+            Indica en qué día del mes te pagan cada quincena. Esta configuración
+            solo aplica a la modalidad quincenal.
+          </p>
+
+          {# SRS v1.9: no se asume 15 y 30; cada usuario escribe sus días. #}
+          <div class="fila-campos">
+            <label class="campo">
+              <span class="campo__etiqueta">Día de la quincena 1</span>
+              <input class="campo__control" type="text" inputmode="numeric" name="dia_quincena_1"
+                     value="{{ valores.dia_quincena_1 }}" placeholder="15" maxlength="2"
+                     data-dia-quincena="1" />
+            </label>
+            <label class="campo">
+              <span class="campo__etiqueta">Día de la quincena 2</span>
+              <input class="campo__control" type="text" inputmode="numeric" name="dia_quincena_2"
+                     value="{{ valores.dia_quincena_2 }}" placeholder="30" maxlength="2"
+                     data-dia-quincena="2" />
+            </label>
+          </div>
+          <p class="ayuda">
+            Ejemplo: si te pagan el 5 y el 20, escribe 5 y 20. Si un mes no tiene
+            ese día (por ejemplo el 30 en febrero), se usa su último día.
           </p>
 
           <div class="opciones" role="radiogroup" aria-label="¿Conoces tus porcentajes?">
@@ -108,17 +128,19 @@
                {% if valores.conoce_porcentajes == 'NO' %}hidden{% endif %}>
             <div class="fila-campos">
               <label class="campo">
-                <span class="campo__etiqueta">Quincena 1 (%)</span>
-                <input class="campo__control" type="number" name="porcentaje_quincena_1"
-                       min="0.01" max="99.99" step="0.01"
+                <span class="campo__etiqueta">Quincena 1</span>
+                <input class="campo__control" type="text" inputmode="decimal"
+                       name="porcentaje_quincena_1"
                        value="{{ valores.porcentaje_quincena_1 }}"
+                       placeholder="60 %"
                        data-porcentaje-1 />
               </label>
               <label class="campo">
-                <span class="campo__etiqueta">Quincena 2 (%)</span>
-                <input class="campo__control" type="number" name="porcentaje_quincena_2"
-                       min="0.01" max="99.99" step="0.01"
+                <span class="campo__etiqueta">Quincena 2</span>
+                <input class="campo__control" type="text" inputmode="decimal"
+                       name="porcentaje_quincena_2"
                        value="{{ valores.porcentaje_quincena_2 }}"
+                       placeholder="40 %"
                        data-porcentaje-2 />
               </label>
             </div>
@@ -129,11 +151,11 @@
               </span>
               <select class="campo__control" name="quincena_deducciones"
                       data-quincena-deducciones>
-                <option value="1" {% if valores.quincena_deducciones == '1' %}selected{% endif %}>
-                  Quincena 1 (día 15)
+                <option value="1" data-etiqueta-quincena="1" {% if valores.quincena_deducciones == '1' %}selected{% endif %}>
+                  Quincena 1 (día {{ valores.dia_quincena_1 }})
                 </option>
-                <option value="2" {% if valores.quincena_deducciones == '2' %}selected{% endif %}>
-                  Quincena 2 (día 30)
+                <option value="2" data-etiqueta-quincena="2" {% if valores.quincena_deducciones == '2' %}selected{% endif %}>
+                  Quincena 2 (día {{ valores.dia_quincena_2 }})
                 </option>
               </select>
               <span class="ayuda">Los porcentajes deben sumar 100 %.</span>
@@ -160,11 +182,11 @@
             <label class="campo">
               <span class="campo__etiqueta">¿En qué quincena recibes ese valor neto?</span>
               <select class="campo__control" name="quincena_sin_deducciones">
-                <option value="1" {% if valores.quincena_sin_deducciones == '1' %}selected{% endif %}>
-                  Quincena 1 (día 15)
+                <option value="1" data-etiqueta-quincena="1" {% if valores.quincena_sin_deducciones == '1' %}selected{% endif %}>
+                  Quincena 1 (día {{ valores.dia_quincena_1 }})
                 </option>
-                <option value="2" {% if valores.quincena_sin_deducciones == '2' %}selected{% endif %}>
-                  Quincena 2 (día 30)
+                <option value="2" data-etiqueta-quincena="2" {% if valores.quincena_sin_deducciones == '2' %}selected{% endif %}>
+                  Quincena 2 (día {{ valores.dia_quincena_2 }})
                 </option>
               </select>
               <span class="ayuda">

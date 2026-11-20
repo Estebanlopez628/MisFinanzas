@@ -5,8 +5,8 @@
   <section class="heroe">
     <h1 class="heroe__titulo">📉 Resumen de Deudas</h1>
     <p class="heroe__subtitulo">
-      Registra el saldo, la cuota y cuántos pagos faltan. El sistema deriva la
-      tasa de interés implícita y descuenta cada cuota cuando vence.
+      Registra el total adeudado, la cuota y cuántos pagos faltan. El sistema
+      descuenta cada cuota cuando vence, sin simular intereses.
     </p>
   </section>
 
@@ -53,42 +53,48 @@
     <section class="panel">
       <h2 class="panel__titulo">Nueva deuda</h2>
       <p class="panel__descripcion">
-        No necesitas conocer la tasa de interés: se calcula con el saldo, la cuota
-        y el número de pagos.
+        Escribe el total adeudado, la cuota y las cuotas que faltan. La cuota por
+        las cuotas debe coincidir con el total: si no cuadra, te avisamos para
+        que corrijas los datos.
       </p>
       <form class="formulario" method="post" action="{{ url_for('crear_deuda') }}">
         <div class="fila-campos">
           <label class="campo">
             <span class="campo__etiqueta">Acreedor</span>
             <input class="campo__control" type="text" name="acreedor"
+                   value="{{ valores.acreedor if valores else '' }}"
                    placeholder="Banco, tienda, persona…" required />
           </label>
           <label class="campo">
             <span class="campo__etiqueta">Descripción</span>
             <input class="campo__control" type="text" name="descripcion"
+                   value="{{ valores.descripcion if valores else '' }}"
                    placeholder="Tarjeta, crédito de consumo…" />
           </label>
           <label class="campo">
-            <span class="campo__etiqueta">Saldo total (COP)</span>
+            <span class="campo__etiqueta">Total adeudado (COP)</span>
             <input class="campo__control" type="text" name="saldo_total"
-                   inputmode="decimal" placeholder="3.500.000" required />
+                   inputmode="decimal" value="{{ valores.saldo_total if valores else '' }}"
+                   placeholder="23.000.000" required />
           </label>
           <label class="campo">
             <span class="campo__etiqueta">Cuota (COP)</span>
             <input class="campo__control" type="text" name="cuota"
-                   inputmode="decimal" placeholder="100.000" required />
+                   inputmode="decimal" value="{{ valores.cuota if valores else '' }}"
+                   placeholder="383.333" required />
           </label>
           <label class="campo">
             <span class="campo__etiqueta">Cuotas pendientes</span>
-            <input class="campo__control" type="number" name="cuotas_pendientes"
-                   min="1" max="600" step="1" placeholder="48" required />
+            <input class="campo__control" type="text" name="cuotas_pendientes"
+                   inputmode="numeric" value="{{ valores.cuotas_pendientes if valores else '' }}"
+                   placeholder="60" required />
           </label>
           <label class="campo">
             <span class="campo__etiqueta">Periodicidad</span>
             <select class="campo__control" name="periodicidad">
               {% for opcion in periodicidades %}
                 <option value="{{ opcion }}"
-                        {% if opcion == 'MENSUAL' %}selected{% endif %}>
+                        {% if opcion == (valores.periodicidad if valores else 'MENSUAL') %}selected{% endif %}>
                   {{ opcion | capitalize }}
                 </option>
               {% endfor %}
@@ -107,11 +113,10 @@
             <thead>
               <tr>
                 <th scope="col">Acreedor</th>
-                <th scope="col">Saldo</th>
+                <th scope="col">Total adeudado</th>
                 <th scope="col">Cuota</th>
                 <th scope="col">Pendientes</th>
                 <th scope="col">Periodicidad</th>
-                <th scope="col">Tasa implícita</th>
                 <th scope="col">Estado</th>
                 <th scope="col"></th>
               </tr>
@@ -131,11 +136,6 @@
                   </td>
                   <td class="tabla__numero">{{ deuda.cuotas_pendientes }}</td>
                   <td>{{ deuda.periodicidad | capitalize }}</td>
-                  <td class="tabla__numero">
-                    {%- if deuda.tasa_interes is not none -%}
-                      {{ (deuda.tasa_interes * 100) | porcentaje(4) }}
-                    {%- else -%}—{%- endif -%}
-                  </td>
                   <td>{{ deuda.estado | capitalize }}</td>
                   <td>
                     <form method="post"
@@ -148,10 +148,10 @@
                   </td>
                 </tr>
                 <tr class="fila-detalle-deuda">
-                  <td colspan="8">
+                  <td colspan="7">
                     <details class="edicion-gasto">
                       <summary class="boton boton--secundario boton--pequeno">
-                        Ver amortización
+                        Ver cuotas
                       </summary>
 
                       {% if pagos.get(deuda.id_deuda) %}
@@ -163,8 +163,7 @@
                                 <th scope="col">#</th>
                                 <th scope="col">Fecha</th>
                                 <th scope="col">Cuota</th>
-                                <th scope="col">Interés</th>
-                                <th scope="col">Capital</th>
+                                <th scope="col">Abono a capital</th>
                                 <th scope="col">Saldo</th>
                               </tr>
                             </thead>
@@ -174,7 +173,6 @@
                                   <td>{{ pago.numero_cuota }}</td>
                                   <td>{{ pago.fecha_aplicacion | fecha_larga }}</td>
                                   <td class="tabla__numero">{{ pago.valor_cuota | cop }}</td>
-                                  <td class="tabla__numero">{{ pago.interes | cop }}</td>
                                   <td class="tabla__numero">{{ pago.abono_capital | cop }}</td>
                                   <td class="tabla__numero">{{ pago.saldo_despues | cop }}</td>
                                 </tr>
@@ -192,8 +190,7 @@
                               <tr>
                                 <th scope="col">Fecha</th>
                                 <th scope="col">Cuota</th>
-                                <th scope="col">Interés</th>
-                                <th scope="col">Capital</th>
+                                <th scope="col">Abono a capital</th>
                                 <th scope="col">Saldo</th>
                               </tr>
                             </thead>
@@ -202,7 +199,6 @@
                                 <tr {% if cuota.ultima %}class="fila-periodo"{% endif %}>
                                   <td>{{ cuota.fecha | fecha_larga }}</td>
                                   <td class="tabla__numero">{{ cuota.valor | cop }}</td>
-                                  <td class="tabla__numero">{{ cuota.interes | cop }}</td>
                                   <td class="tabla__numero">{{ cuota.abono_capital | cop }}</td>
                                   <td class="tabla__numero">{{ cuota.saldo_despues | cop }}</td>
                                 </tr>

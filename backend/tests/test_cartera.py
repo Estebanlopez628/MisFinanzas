@@ -119,6 +119,14 @@ def test_segmentos_dona_vacios_sin_cartera_ni_deuda() -> None:
     assert comercial.segmentos_dona(Decimal("0"), Decimal("0")) == []
 
 
+def test_segmentos_dona_marcan_cartera_en_verde_y_deuda_en_rojo() -> None:
+    """SRS v1.8: la leyenda de la dona usa verde a favor y rojo en contra."""
+    arcos = comercial.segmentos_dona(Decimal("60000"), Decimal("40000"))
+
+    assert arcos[0]["clase"] == "valor-positivo"
+    assert arcos[1]["clase"] == "valor-negativo"
+
+
 def test_panel_de_cartera_muestra_balance_y_dona(cliente_admin: TestClient, bd) -> None:
     """La vista presenta el balance, la gráfica y el libro del proveedor."""
     _venta(bd, precio="50000", costo="20000")
@@ -130,6 +138,8 @@ def test_panel_de_cartera_muestra_balance_y_dona(cliente_admin: TestClient, bd) 
     assert "dona__svg" in respuesta.text
     assert "Compra a crédito" in respuesta.text
     assert "$50.000" in respuesta.text
+    # El balance del centro de la dona lleva clase de color según su signo.
+    assert "dona__centro-valor" in respuesta.text
 
 
 def test_deficit_se_muestra_en_rojo_con_signo_menos(cliente_admin: TestClient, bd) -> None:

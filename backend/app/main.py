@@ -14,10 +14,11 @@ Ejecución local:
 
 from __future__ import annotations
 
+import html
 from pathlib import Path
 
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.core.base_datos import inicializar_base_datos
@@ -105,6 +106,54 @@ def _manejar_onboarding(
     return RedirectResponse(url="/perfil?bienvenida=1", status_code=303)
 
 
+def _pagina_dato_invalido(mensaje: str) -> str:
+    """Arma una página mínima para un dato rechazado en el servidor.
+
+    SRS v1.8: la red de seguridad del blindaje de formularios. Si un valor
+    inesperado llega hasta una vista que no lo esperaba, se muestra este aviso en
+    lugar de una página de error sin explicación.
+
+    Args:
+        mensaje: Explicación legible para el usuario.
+
+    Returns:
+        Documento HTML completo con el aviso y un enlace de regreso.
+    """
+    seguro = html.escape(mensaje)
+    return (
+        '<!DOCTYPE html><html lang="es"><head><meta charset="utf-8" />'
+        '<meta name="viewport" content="width=device-width, initial-scale=1" />'
+        "<title>Datos por corregir</title>"
+        '<link rel="stylesheet" href="/estaticos/css/estilos.css" /></head>'
+        '<body class="pagina"><main class="contenedor">'
+        '<section class="panel">'
+        '<h1 class="panel__titulo">Datos por corregir</h1>'
+        f'<div class="alerta alerta--error" role="alert">{seguro}</div>'
+        '<p class="ayuda">Corrige el dato e inténtalo de nuevo.</p>'
+        '<div class="acciones-formulario">'
+        '<a class="boton boton--secundario" href="javascript:history.back()">'
+        "← Volver al formulario</a></div>"
+        "</section></main></body></html>"
+    )
+
+
+def _manejar_dato_invalido(request: Request, error: ValueError) -> HTMLResponse | JSONResponse:
+    """Responde a un `ValueError` no controlado con un aviso en pantalla.
+
+    Args:
+        request: Petición que disparó la excepción.
+        error: Excepción con el mensaje para el usuario.
+
+    Returns:
+        400 con JSON para clientes de datos o con una página HTML para el
+        navegador.
+    """
+    mensaje = str(error) or "Revisa los datos e ingrésalos de nuevo."
+    if _pide_json(request):
+        return JSONResponse({"ok": False, "errores": [mensaje]}, status_code=400)
+    return HTMLResponse(_pagina_dato_invalido(mensaje), status_code=400)
+
+
 def crear_aplicacion() -> FastAPI:
     """Crea y configura la instancia principal de FastAPI.
 
@@ -142,6 +191,9 @@ def crear_aplicacion() -> FastAPI:
     aplicacion.add_exception_handler(SesionRequerida, _manejar_sesion_requerida)
     # Perfil incompleto: ninguna ruta de negocio se abre antes del onboarding.
     aplicacion.add_exception_handler(OnboardingRequerido, _manejar_onboarding)
+    # SRS v1.8: un dato inválido que se escape de una vista se explica en
+    # pantalla; nunca se rompe la aplicación con una página de error muda.
+    aplicacion.add_exception_handler(ValueError, _manejar_dato_invalido)
 
     # La base de datos se prepara antes de atender la primera petición.
     inicializar_base_datos()

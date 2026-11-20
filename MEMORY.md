@@ -298,6 +298,27 @@ Recálculo en tiempo real (<100 ms) sin recargar página. Se implementa con func
 - **Decisión:** `servicios/consejero.py` se activa solo si el disponible consolidado (quincenas + extras) supera $300.000. Con deudas simula doce meses de cuotas mínimas y dos escenarios que aplican todo el excedente: bola de nieve (saldo menor primero) y avalancha (tasa mayor primero). Recomienda el de menor interés total y muestra la deuda objetivo, el ahorro en intereses, el mes de liquidación y la deuda más grande. Sin deudas dirige el excedente a la primera meta activa y calcula en cuántos meses se completa; si no hay metas, sugiere crearlas. La gráfica compara doce meses de base contra optimizado: en modo deuda es saldo restante (más bajo es mejor) y en modo ahorro es dinero acumulado (más alto es mejor). Las tasas quincenales se convierten a mensuales con `(1 + r)² − 1`. Es una proyección educativa con ingreso y cuotas constantes.
 - **Archivos:** `servicios/consejero.py`, `routers/presupuesto.py`, `templates/presupuesto/index.html`, `static/css/estilos.css`, `tests/test_consejero.py`.
 
+### ADR-55 — Filtros compartidos, saldo por producto y garantía por línea (SRS v1.9, bloque 3)
+- **Contexto:** la analítica tenía tablas separadas sin filtros y no se podía descargar lo que se veía. El propietario pidió una fila por producto en el CSV, con saldo, abonos, ganancia y garantía. El saldo y los abonos pertenecen a la orden, no a cada producto, y la garantía de la orden es la más cercana de sus productos.
+- **Decisión:** un `Filtro` (año, mes, cliente, producto) lo usan todas las tablas y sus CSV. Saldo y abonos se reparten entre líneas en proporción a su total, con la última línea absorbiendo el redondeo, para que las sumas cuadren al centavo. Cada línea guarda su propia fecha de garantía (`venta_detalle.garantia_fecha_fin`).
+- **Consecuencias:** las garantías antiguas heredan la fecha de su orden, así que un producto con más meses puede aparecer vencido antes de tiempo en ventas anteriores a este bloque. La garantía de reclamos (RF-05) sigue usando la fecha de la orden; no se tocó.
+
+### ADR-54 — Día de cada quincena lo define el usuario (SRS v1.9, bloque 2)
+- **Contexto:** la app suponía que todas las quincenas caen el 15 y el 30. Hay usuarios que cobran el 5 y el 20, y las metas, deducciones y gastos mostraban fechas que no eran las suyas.
+- **Decisión:** el perfil quincenal guarda `dia_quincena_1` y `dia_quincena_2` (1 a 31). Son obligatorios en modalidad quincenal, la quincena 2 debe caer después de la 1, y los perfiles anteriores quedan con 15 y 30. Todas las etiquetas salen de `perfiles.etiquetas_quincena`. Un día que no existe en el mes se entiende como el último día del mes; el valor guardado no cambia.
+- **Consecuencias:** en PostgreSQL la columna se agrega con `ADD COLUMN IF NOT EXISTS` al arrancar. Trabajos Extras queda pendiente porque sus fechas las digita cada contrato.
+
+### ADR-53 — Base mínima de liquidez, deudas sin intereses y blindaje de entradas (SRS v1.8)
+- **Contexto:** el consejero ofrecía abonos con dinero que el usuario necesita para vivir, las deudas se registraban con una tasa implícita que nadie podía comprobar y un dato mal digitado rompía la vista. Además, el orden de pago de las deudas priorizaba la tasa, un dato que ya no existe.
+- **Decisiones:**
+  - **Base mínima de liquidez:** `BASE_MINIMA_LIQUIDEZ = Decimal("300000")` en `servicios/capacidad.py`, reutilizada por `ahorro.py` y `consejero.py`. El excedente real es `libre − base`; solo ese remanente alimenta el consejo y el arco «Disponible para abonar». Si el libre no supera la base, el consejo se apaga con un mensaje fijo que invita a crear una meta de emergencia «con lo mínimo que puedas ahorrar». Nunca se llama «colchón de liquidez».
+  - **Deudas sin intereses:** se elimina `tasa_implicita()` y la columna `tasa_interes` del modelo. `validar_plan()` exige que `cuota × cuotas` coincida con el total adeudado con tolerancia de **$1 por cuota** (60 cuotas → $60); un exceso o defecto mayor pide revisar y reingresar. Cada cuota abona capital completo y la última absorbe el redondeo.
+  - **Orden por flujo de caja:** si el excedente puede cancelar una deuda completa, se elige la que deja más cuotas por delante (12 meses antes que 5); si no alcanza para ninguna, la de menor saldo. La estrategia se llama `FLUJO_DE_CAJA`; desaparecen avalancha y bola de nieve como conceptos de tasa.
+  - **Blindaje de entradas:** `parsear_porcentaje()` acepta «60», «60 %» y «60,5», y rechaza el punto decimal ambiguo; el perfil muestra «60 %» y autocompleta el complemento igual. `main.py` registra un manejador global de `ValueError` que responde 400 con una página mínima, y `app.js` revisa los campos numéricos antes de enviar. El abono de OLB_BYTE muestra el saldo pendiente cuando el monto se pasa.
+  - **Metas:** el selector de modo de «Ambas quincenas» va en su propia fila; la lista de abonos muestra cinco y se desplaza dentro de su caja.
+- **Archivos:** `servicios/capacidad.py`, `servicios/consejero.py`, `servicios/deudas.py`, `servicios/ahorro.py`, `servicios/perfiles.py`, `servicios/trabajos.py`, `servicios/comercial.py`, `core/texto.py`, `main.py`, `modelos.py`, `routers/{deudas,perfil}.py`, `templates/{deudas,presupuesto,perfil}/index.html`, `templates/finanzas/_capacidad.html`, `static/js/{app,perfil}.js`, `static/css/estilos.css`, `diccionario_datos.md` §8 y §8.1, `tests/{test_capacidad,test_consejero,test_gastos_deudas}.py`.
+- **Verificación:** `compileall` OK y **559 pruebas** en verde.
+
 ### ADR-42 — Formulario de venta v2, categoría y submenú (SRS OLB_BYTE v1.0, ajustes de validación)
 - **Contexto:** el usuario validó la Fase 2 y pidió: que «Buscar en Contactos» funcione, mover las acciones de órdenes al submenú como en Gastos y Presupuesto, meter el detalle de productos dentro del formulario de venta, cambiar «referencia» por «categoría» y que la tabla no sea tan larga en el celular.
 - **Diagnóstico del botón de contactos:** la clase `.boton` fija `display: inline-flex`, y eso anula el atributo `hidden`. El botón siempre estaba visible, y en PC no hace nada porque el navegador no tiene la Contact Picker API (solo existe en Android con Chrome y en HTTPS). Se corrige con una regla global `[hidden] { display: none !important }`, y ahora se muestra una nota que explica cuándo funciona.
@@ -426,6 +447,70 @@ Recálculo en tiempo real (<100 ms) sin recargar página. Se implementa con func
 ---
 
 ## Bitácora de Cambios
+
+### 2026-11-19 — Analítica con filtros, ventas por producto y CSV (Bloque 3, ADR-55)
+
+**Cambios realizados**
+1. `servicios/analitica.py` reescrito sobre líneas de venta. `Filtro` (año, mes, cliente y producto) lo comparten todas las tablas. Las funciones existentes conservan su firma y, sin filtro, dan los mismos resultados (las 13 pruebas previas pasan sin cambios).
+2. Nueva tabla «Ventas por producto»: una fila por producto con No. de orden, cliente, categoría, producto, costo, total, saldo pendiente, abonos, ganancia y garantía (Activa / Vencida / Sin garantía, medida por producto).
+3. `olb_byte/analitica.html`: filtros de año y mes, chips para quitarlos, clic en una fila (mes, cliente o producto) que activa o desactiva el filtro, y «Descargar CSV» en cada tabla.
+4. `routers/olb_byte.py`: `GET /olb-byte/analitica` acepta `anio`, `mes`, `cliente` y `producto` como texto y descarta valores inválidos sin error. `GET /olb-byte/analitica/exportar/{tabla}.csv` devuelve el CSV con `;` y BOM, con la misma selección de la pantalla. Tabla desconocida: 404.
+5. `modelos.py`, `comercial.py` y `core/base_datos.py`: `venta_detalle.garantia_fecha_fin`, guardada en cada venta nueva. La migración la rellena con la fecha de la orden en las líneas antiguas (en SQLite y en PostgreSQL).
+6. `static/css/estilos.css`: estilos de filas enlazadas, filas activas y chips de filtro.
+7. `sw.js` en `olb-finanzas-v38`.
+
+**Decisiones**
+- Saldo y abonos de una orden con varios productos se reparten en proporción al total de cada línea; la última línea absorbe el redondeo (ADR-55).
+- El mes filtra las tablas de datos (VIP, alertas, costos, anual y ventas). La tabla mensual siempre muestra los doce meses y solo marca el elegido.
+- El CSV sale de las mismas funciones que la pantalla: lo que se descarga es lo que se ve.
+
+**Verificación:** `compileall` OK; `pytest` en verde con **604 pruebas** (15 nuevas en `tests/test_analitica_filtros.py`). `generar_guia.py --verificar` sin problemas.
+
+**Pendiente:** la migración de `venta_detalle` sobre una copia de `finanzas.db` antigua y sobre Neon; revisión visual de la analítica en 360/390/1280 px.
+
+### 2026-11-19 — Día de cada quincena según el usuario (Bloque 2, ADR-54)
+
+**Cambios realizados**
+1. `modelos.py` y `diccionario_datos.md`: `perfiles_financieros.dia_quincena_1` y `dia_quincena_2` (`SMALLINT`, `CHECK 1..31`). El modelo y el diccionario ya no dan por hecho el día 15 y el 30.
+2. `core/base_datos.py`: migración idempotente. En SQLite se agregan las columnas y se rellenan con 15 y 30. En PostgreSQL (Neon, producción) `_migrar_dias_quincena_postgres` ejecuta `ADD COLUMN IF NOT EXISTS`, porque las migraciones de SQLite no corren allí.
+3. `servicios/perfiles.py`: `parsear_dia_quincena` (solo dígitos, 1 a 31, mensaje en español), `validar_dias_quincena` (la quincena 2 debe ser posterior a la 1), `dias_quincena`, `etiquetas_quincena`. `guardar_perfil` recibe los días; sin ellos usa 15 y 30. En modalidad mensual no se tocan.
+4. `routers/perfil.py` y `templates/perfil/index.html`: dos campos «Día de la quincena 1» y «Día de la quincena 2». Los rótulos de «¿En qué quincena…?» muestran el día escrito. `static/js/perfil.js` los actualiza al teclear.
+5. `servicios/quincenas.py`: el panel de Mis Finanzas toma su etiqueta del perfil.
+6. Metas (`presupuesto`), deducciones fijas, edición de deducciones y gastos (`gastos`): usan `etiquetas_quincena` del perfil en lugar de «día 15» y «día 30».
+7. `sw.js` en `olb-finanzas-v37`.
+
+**Decisiones**
+- El día de la quincena 2 debe ser mayor que el de la quincena 1 (por ejemplo, 5 y 20). Así las etiquetas se leen en orden. Si un caso real necesita un cierre de mes entre quincenas, se revisa en otro bloque.
+- Un día que no existe en el mes (30 en febrero) se usa como último día del mes. El valor guardado sigue siendo 30. En este bloque los días solo cambian etiquetas, porque ninguna pantalla calcula fechas por quincena; el cálculo de fechas de Trabajos Extras no se tocó (ver pendientes).
+
+**Pendiente, fuera de este bloque**
+- Trabajos Extras conserva sus rótulos «día 15» y «día 30» y sus fechas de pago. Esas fechas las digita cada contrato, así que se decide en un bloque aparte.
+
+**Verificación:** `compileall` OK; `pytest` en verde con **589 pruebas** (46 nuevas en `tests/test_dias_quincena.py` y dos casos de `test_perfiles.py` actualizados para enviar los días). La migración sobre una base SQLite antigua y sobre Neon **no se ha ejecutado** todavía; queda como verificación manual antes de desplegar.
+
+### 2026-11-19 — Colores de la dona: verde a favor, rojo en contra (Bloque 1)
+
+**Cambios realizados**
+1. `servicios/capacidad.py`: cada arco incluye `clase`. Gastos fijos y cuota de deudas son `valor-negativo`; base mínima y disponible para abonar son `valor-positivo`. El color del trazo no cambia.
+2. `templates/finanzas/_capacidad.html`: las cifras de la leyenda y el porcentaje libre del centro usan verde o rojo según el signo. «Ingreso del mes» va en verde. Sirve para Gastos y Presupuesto y para Trabajos Extras, porque ambas vistas comparten la macro.
+3. `servicios/comercial.py` (`segmentos_dona`): cartera por cobrar en verde y deuda con proveedor en rojo.
+4. `templates/olb_byte/cartera.html`: la dona muestra el balance en el centro con su color (`balance_clase`, vía `clasificar_saldo`), y la leyenda usa los mismos colores. `routers/olb_byte.py` pasa `balance_texto` y `balance_clase`.
+5. `static/css/estilos.css`: clase `.dona__centro-valor` para el balance dentro de la dona.
+6. `static/js/sw.js` en `olb-finanzas-v36`.
+
+**Verificación:** `compileall` OK, pruebas nuevas en `test_capacidad.py` (clases de arcos y verde/rojo en la vista) y en `test_cartera.py` (clases de la dona de cartera). `pytest` completo: **561 pruebas** en verde.
+
+### 2026-11-19 — Base mínima de liquidez, deudas sin intereses y blindaje de formularios (SRS v1.8, ADR-53)
+
+**Cambios realizados**
+1. `servicios/capacidad.py`: constante `BASE_MINIMA_LIQUIDEZ = Decimal("300000")` y helper `repartir_libre()`. La dona pasa de tres a cuatro arcos («Gastos fijos», «Cuota de deudas», «Base mínima de liquidez», «Disponible para abonar»); si el libre no alcanza la base, solo se dibuja la base. Los porcentajes se cierran a 100,0 % ajustando el arco mayor.
+2. `servicios/consejero.py`: reescrito sin intereses. Estrategia única `FLUJO_DE_CAJA`: si el excedente puede cancelar una deuda completa, ataca la de más cuotas por delante (12 meses antes que 5); si no, la de menor saldo. Solo trabaja con el remanente sobre la base mínima y, por debajo, muestra el mensaje de «base mínima de liquidez» invitando a crear una meta de emergencia.
+3. `servicios/deudas.py`: se elimina `tasa_implicita()` y toda simulación de intereses. `validar_plan()` exige que `cuota × cuotas` reconstruya el total adeudado con tolerancia de $1 por cuota; la cuota abona capital completo y la última cierra el saldo. `modelos.py` deja de mapear `tasa_interes`.
+4. `core/texto.py`: `parsear_porcentaje()` acepta «60», «60 %» y «60,5»; rechaza el punto decimal ambiguo con un mensaje en español. `perfiles.py` y `trabajos.py` lo usan. El perfil muestra y autocompleta «60 %» con coma decimal.
+5. Blindaje de entradas: `main.py` registra un manejador global de `ValueError` que responde 400 con una página mínima (o JSON) en lugar de romper; `static/js/app.js` valida en el navegador los campos `inputmode` y `type="number"` antes de enviar. El abono de OLB_BYTE rechaza texto, cero, negativos y montos sobre el saldo con el saldo pendiente en el mensaje.
+6. Metas: «Quincena de descuento» pasa a «Quincena donde aplicaremos los pagos»; el selector de modo de «Ambas quincenas» vive en su propia fila alineada; la lista de abonos muestra cinco filas y se desplaza dentro de una caja (`.abonos-scroll`). `sw.js` en `olb-finanzas-v35`.
+
+**Verificación:** `python -m compileall app` sin errores, `pytest` en verde (559 pruebas) y `generar_guia.py --verificar` sin problemas.
 
 ### 2026-11-19 — Buscador y orden de «Órdenes registradas» (SRS v1.8, bloque 6)
 

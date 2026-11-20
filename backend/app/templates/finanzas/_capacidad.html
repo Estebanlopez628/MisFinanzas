@@ -9,6 +9,9 @@
 #}
 
 {% macro panel_capacidad(capacidad, titulo, descripcion, solo_trabajos=False) -%}
+  {# SRS v1.8: las cifras del panel usan la paleta de referencia: verde para el
+     dinero a favor y rojo para lo que sale del bolsillo o deja saldo negativo. #}
+  {%- set clase_libre = 'valor-negativo' if capacidad.libre < 0 else 'valor-positivo' -%}
   <section class="panel capacidad" aria-labelledby="capacidad-titulo">
     <h2 class="panel__titulo" id="capacidad-titulo">{{ titulo }}</h2>
     <p class="ayuda">{{ descripcion }}</p>
@@ -34,12 +37,12 @@
                       stroke-dasharray="{{ arco.longitud }} {{ 100 - arco.longitud }}"
                       stroke-dashoffset="{{ arco.desplazamiento }}"
                       transform="rotate(-90 21 21)">
-                <title>{{ arco.etiqueta }}: {{ arco.valor | cop }} ({{ arco.porcentaje }} %)</title>
+                <title>{{ arco.etiqueta }}: {{ arco.valor | cop }} ({{ arco.porcentaje | porcentaje(1) }})</title>
               </circle>
             {% endfor %}
           </svg>
           <div class="dona__centro">
-            <strong class="capacidad__centro-valor">{{ capacidad.porcentaje_libre }} %</strong>
+            <strong class="capacidad__centro-valor {{ clase_libre }}">{{ capacidad.porcentaje_libre | porcentaje(1) }}</strong>
             <span class="dona__centro-etiqueta">libre</span>
           </div>
         </div>
@@ -49,25 +52,28 @@
             <li>
               <span class="dona__muestra" style="background: {{ arco.color }}"></span>
               {{ arco.etiqueta }}:
-              <strong>{{ arco.valor | cop }}</strong>
-              ({{ arco.porcentaje }} %)
+              <strong class="{{ arco.clase }}">{{ arco.valor | cop }}</strong>
+              ({{ arco.porcentaje | porcentaje(1) }})
             </li>
           {% endfor %}
           <li>
-            Ingreso del mes: <strong>{{ capacidad.ingreso | cop }}</strong>
+            Ingreso del mes: <strong class="valor-positivo">{{ capacidad.ingreso | cop }}</strong>
           </li>
           {% if not solo_trabajos %}
           <li>
-            Libre de tu salario: <strong>{{ capacidad.libre_salario | cop }}</strong>
-            ({{ ((capacidad.libre_salario / capacidad.ingreso) * 100) | round(1) }} %)
+            Libre de tu salario:
+            <strong class="{{ 'valor-negativo' if capacidad.libre_salario < 0 else 'valor-positivo' }}">{{ capacidad.libre_salario | cop }}</strong>
+            ({{ ((capacidad.libre_salario / capacidad.ingreso) * 100) | porcentaje(1) }})
           </li>
           <li>
-            Libre de trabajos extras: <strong>{{ capacidad.libre_extras | cop }}</strong>
-            ({{ ((capacidad.libre_extras / capacidad.ingreso) * 100) | round(1) }} %)
+            Libre de trabajos extras:
+            <strong class="{{ 'valor-negativo' if capacidad.libre_extras < 0 else 'valor-positivo' }}">{{ capacidad.libre_extras | cop }}</strong>
+            ({{ ((capacidad.libre_extras / capacidad.ingreso) * 100) | porcentaje(1) }})
           </li>
           <li>
-            Total libre: <strong>{{ capacidad.libre | cop }}</strong>
-            ({{ capacidad.porcentaje_libre }} %)
+            Total libre:
+            <strong class="{{ clase_libre }}">{{ capacidad.libre | cop }}</strong>
+            ({{ capacidad.porcentaje_libre | porcentaje(1) }})
           </li>
           {% endif %}
         </ul>

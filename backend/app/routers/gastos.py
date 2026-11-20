@@ -20,9 +20,22 @@ from sqlalchemy.orm import Session
 from app.core.base_datos import obtener_bd
 from app.dependencias import UsuarioSesion, obtener_usuario_actual
 from app.routers.vistas import contexto_base, plantillas
-from app.servicios import auditoria, gastos, pagos_metas
+from app.servicios import auditoria, gastos, pagos_metas, perfiles
 
 router = APIRouter(tags=["Gastos"])
+
+
+def _etiquetas_quincena(bd: Session, id_usuario: str) -> dict[int, str]:
+    """Obtiene los rótulos «Quincena N · día X» del perfil del usuario.
+
+    Args:
+        bd: Sesión de base de datos.
+        id_usuario: Dueño del perfil.
+
+    Returns:
+        Diccionario con la etiqueta de la quincena 1 y de la quincena 2.
+    """
+    return perfiles.etiquetas_quincena(perfiles.obtener_perfil(bd, id_usuario))
 
 
 def _parsear_fecha(texto: str) -> date:
@@ -73,6 +86,7 @@ def ver_gastos(
             "fecha_hoy": hoy.isoformat(),
             "guardado": bool(guardado),
             "seccion": "gastos",
+            "etiquetas_quincena": _etiquetas_quincena(bd, usuario.id_usuario),
         }
     )
     return plantillas.TemplateResponse(request, "gastos/index.html", contexto)
@@ -148,6 +162,7 @@ def crear_gasto(
                 "guardado": False,
                 "seccion": "gastos",
                 "error": str(error),
+                "etiquetas_quincena": _etiquetas_quincena(bd, usuario.id_usuario),
             }
         )
         return plantillas.TemplateResponse(
@@ -234,6 +249,7 @@ def editar_gasto(
                 "guardado": False,
                 "seccion": "gastos",
                 "error": str(error),
+                "etiquetas_quincena": _etiquetas_quincena(bd, usuario.id_usuario),
             }
         )
         return plantillas.TemplateResponse(

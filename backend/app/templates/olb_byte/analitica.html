@@ -4,7 +4,7 @@
 {% block contenido %}
   <section class="heroe heroe--compacto">
     <h1 class="heroe__titulo">📈 Analítica</h1>
-    <p class="heroe__subtitulo">Reportes, clientes VIP y alertas de costo.</p>
+    <p class="heroe__subtitulo">Reportes, clientes VIP, costos y ventas por producto.</p>
   </section>
 
   <div class="acciones-formulario acciones-volver">
@@ -14,22 +14,56 @@
   {% set seccion = 'analitica' %}
   {% include "olb_byte/_subnav.html" with context %}
 
+  {# SRS v1.9: los filtros valen para todas las tablas y para sus descargas CSV.
+     Tocar una fila activa o quita su filtro. #}
   <section class="panel">
     <form class="formulario formulario--compacto" method="get" action="{{ url_for('ver_analitica') }}">
       <label class="campo">
-        <span class="campo__etiqueta">Año del reporte mensual</span>
+        <span class="campo__etiqueta">Año</span>
         <select class="campo__control" name="anio">
           {% for opcion in anios %}
             <option value="{{ opcion }}"{% if opcion == anio %} selected{% endif %}>{{ opcion }}</option>
           {% endfor %}
         </select>
       </label>
-      <button class="boton boton--secundario boton--pequeno" type="submit">Ver año</button>
+      <label class="campo">
+        <span class="campo__etiqueta">Mes</span>
+        <select class="campo__control" name="mes">
+          <option value="">Todos los meses</option>
+          {% for numero, nombre in meses %}
+            <option value="{{ numero }}"{% if numero == mes %} selected{% endif %}>{{ nombre }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      {% for filtro_fila in filtros_ocultos %}
+        <input type="hidden" name="{{ filtro_fila.nombre }}" value="{{ filtro_fila.valor }}" />
+      {% endfor %}
+      <button class="boton boton--secundario boton--pequeno" type="submit">Aplicar</button>
     </form>
+
+    {% if filtros_activos %}
+      <ul class="filtros-activos" aria-label="Filtros activos">
+        {% for filtro in filtros_activos %}
+          <li>
+            <a class="insignia filtros-activos__chip" href="{{ filtro.url }}" title="Quitar este filtro">
+              {{ filtro.etiqueta }} ✕
+            </a>
+          </li>
+        {% endfor %}
+        <li>
+          <a class="enlace" href="{{ url_limpiar }}">Quitar todos los filtros</a>
+        </li>
+      </ul>
+    {% else %}
+      <p class="ayuda">Toca una fila de cualquier tabla para filtrar todas las demás por ese mes, cliente o producto.</p>
+    {% endif %}
   </section>
 
   <section class="panel panel--tabla">
-    <h2 class="panel__titulo">Mes a mes · {{ anio }}</h2>
+    <div class="panel__cabecera">
+      <h2 class="panel__titulo">Mes a mes · {{ anio }}</h2>
+      <a class="boton boton--secundario boton--pequeno" href="{{ url_csv.mensual }}">Descargar CSV</a>
+    </div>
     <div class="tabla-contenedor">
       <table class="tabla">
         <thead>
@@ -45,8 +79,8 @@
         </thead>
         <tbody>
           {% for fila in mensual %}
-            <tr>
-              <td>{{ fila.mes }}</td>
+            <tr class="{{ 'fila--activa' if fila.activa }}">
+              <td><a class="fila-enlace" href="{{ fila.url }}"{% if fila.activa %} aria-current="true"{% endif %}>{{ fila.mes }}</a></td>
               <td class="tabla__numero">{{ fila.ventas }}</td>
               <td class="tabla__numero">{{ fila.ingresos | cop }}</td>
               <td class="tabla__numero">{{ fila.costos | cop }}</td>
@@ -63,7 +97,58 @@
   </section>
 
   <section class="panel panel--tabla">
-    <h2 class="panel__titulo">Año tras año</h2>
+    <div class="panel__cabecera">
+      <h2 class="panel__titulo">Ventas por producto{% if nombre_mes %} · {{ nombre_mes }} {{ anio }}{% else %} · {{ anio }}{% endif %}</h2>
+      <a class="boton boton--secundario boton--pequeno" href="{{ url_csv.ventas }}">Descargar CSV</a>
+    </div>
+    <p class="ayuda">Una fila por producto vendido. El saldo y los abonos de cada orden se reparten entre sus productos en proporción a su total.</p>
+    {% if ventas %}
+      <div class="tabla-contenedor">
+        <table class="tabla">
+          <thead>
+            <tr>
+              <th scope="col">No. orden</th>
+              <th scope="col">Cliente</th>
+              <th scope="col">Categoría</th>
+              <th scope="col">Producto</th>
+              <th scope="col">Costo</th>
+              <th scope="col">Total</th>
+              <th scope="col">Saldo pendiente</th>
+              <th scope="col">Abonos realizados</th>
+              <th scope="col">Ganancia</th>
+              <th scope="col">Garantía</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for fila in ventas %}
+              <tr class="{{ 'fila--activa' if fila.activa }}">
+                <td class="tabla__numero">{{ fila.numero_orden }}</td>
+                <td><a class="fila-enlace" href="{{ fila.url }}">{{ fila.cliente }}</a></td>
+                <td>{{ fila.categoria or '—' }}</td>
+                <td>{{ fila.producto }}</td>
+                <td class="tabla__numero">{{ fila.costo | cop }}</td>
+                <td class="tabla__numero">{{ fila.total | cop }}</td>
+                <td class="tabla__numero">{{ fila.saldo | cop }}</td>
+                <td class="tabla__numero">{{ fila.abonado | cop }}</td>
+                <td class="tabla__numero">{{ fila.ganancia | cop }}</td>
+                <td>
+                  <span class="insignia{{ ' insignia--anulada' if fila.garantia == 'Vencida' }}">{{ fila.garantia }}</span>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="tabla__vacia">No hay ventas activas para este periodo y filtro.</p>
+    {% endif %}
+  </section>
+
+  <section class="panel panel--tabla">
+    <div class="panel__cabecera">
+      <h2 class="panel__titulo">Año tras año</h2>
+      <a class="boton boton--secundario boton--pequeno" href="{{ url_csv.anual }}">Descargar CSV</a>
+    </div>
     {% if anual %}
       <div class="tabla-contenedor">
         <table class="tabla">
@@ -101,7 +186,10 @@
 
   <div class="rejilla-paneles">
     <section class="panel panel--tabla">
-      <h2 class="panel__titulo">Clientes VIP</h2>
+      <div class="panel__cabecera">
+        <h2 class="panel__titulo">Clientes VIP</h2>
+        <a class="boton boton--secundario boton--pequeno" href="{{ url_csv.vip }}">Descargar CSV</a>
+      </div>
       {% if vip %}
         <div class="tabla-contenedor">
           <table class="tabla">
@@ -115,9 +203,9 @@
             </thead>
             <tbody>
               {% for fila in vip %}
-                <tr>
+                <tr class="{{ 'fila--activa' if fila.activa }}">
                   <td>
-                    {{ fila.cliente }}
+                    <a class="fila-enlace" href="{{ fila.url }}">{{ fila.cliente }}</a>
                     {% if fila.telefono %}<small class="ayuda">{{ fila.telefono }}</small>{% endif %}
                   </td>
                   <td class="tabla__numero">{{ fila.compras }}</td>
@@ -129,12 +217,15 @@
           </table>
         </div>
       {% else %}
-        <p class="tabla__vacia">Aún no hay clientes con compras activas.</p>
+        <p class="tabla__vacia">Aún no hay clientes con compras activas para este filtro.</p>
       {% endif %}
     </section>
 
     <section class="panel panel--tabla">
-      <h2 class="panel__titulo">Alertas de costo</h2>
+      <div class="panel__cabecera">
+        <h2 class="panel__titulo">Alertas de costo</h2>
+        <a class="boton boton--secundario boton--pequeno" href="{{ url_csv.alertas }}">Descargar CSV</a>
+      </div>
       <p class="panel__descripcion">
         Productos cuyo costo con el proveedor subió frente a la compra anterior. Revisa si
         el precio de venta todavía protege el margen.
@@ -154,8 +245,8 @@
             </thead>
             <tbody>
               {% for fila in alertas.subidas %}
-                <tr>
-                  <td>{{ fila.producto }}</td>
+                <tr class="{{ 'fila--activa' if fila.activa }}">
+                  <td><a class="fila-enlace" href="{{ fila.url }}">{{ fila.producto }}</a></td>
                   <td class="tabla__numero">{{ fila.costo_anterior | cop }}</td>
                   <td class="tabla__numero">{{ fila.costo_actual | cop }}</td>
                   <td class="tabla__numero">{{ fila.variacion ~ ' %' if fila.variacion is not none else '—' }}</td>
@@ -172,13 +263,16 @@
           </table>
         </div>
       {% else %}
-        <p class="tabla__vacia">No hay subidas de costo registradas.</p>
+        <p class="tabla__vacia">No hay subidas de costo para este filtro.</p>
       {% endif %}
     </section>
   </div>
 
   <section class="panel panel--tabla">
-    <h2 class="panel__titulo">Último costo y margen por producto</h2>
+    <div class="panel__cabecera">
+      <h2 class="panel__titulo">Último costo y margen por producto</h2>
+      <a class="boton boton--secundario boton--pequeno" href="{{ url_csv.costos }}">Descargar CSV</a>
+    </div>
     {% if alertas.costos %}
       <div class="tabla-contenedor">
         <table class="tabla">
@@ -193,8 +287,8 @@
           </thead>
           <tbody>
             {% for fila in alertas.costos %}
-              <tr>
-                <td>{{ fila.producto }}</td>
+              <tr class="{{ 'fila--activa' if fila.activa }}">
+                <td><a class="fila-enlace" href="{{ fila.url }}">{{ fila.producto }}</a></td>
                 <td class="tabla__numero">{{ fila.costo | cop }}</td>
                 <td class="tabla__numero">{{ fila.precio | cop }}</td>
                 <td class="tabla__numero">{{ fila.margen ~ ' %' if fila.margen is not none else '—' }}</td>
@@ -205,7 +299,7 @@
         </table>
       </div>
     {% else %}
-      <p class="tabla__vacia">Aún no hay compras registradas.</p>
+      <p class="tabla__vacia">Aún no hay compras registradas para este filtro.</p>
     {% endif %}
   </section>
 {% endblock %}

@@ -116,6 +116,7 @@ def _contexto(
             ),
             "historial": ahorro.historial_metas(bd, usuario.id_usuario),
             "deducciones": deducciones_fijas.listar_deducciones(bd, usuario.id_usuario),
+            "etiquetas_quincena": perfiles.etiquetas_quincena(perfil),
             "categorias": ahorro.CATEGORIAS_SUGERIDAS,
             "fecha_hoy": hoy.isoformat(),
             "guardado": guardado,

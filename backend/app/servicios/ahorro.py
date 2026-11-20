@@ -33,6 +33,7 @@ from sqlalchemy.orm import Session
 from app.core.numeros import redondear_dinero
 from app.core.texto import parsear_monto
 from app.modelos import AbonoProyeccion, Gasto, PerfilFinanciero, ProyeccionAhorro
+from app.servicios import capacidad as servicio_capacidad
 from app.servicios import quincenas as servicio_quincenas
 from app.servicios import trabajos as servicio_trabajos
 from app.servicios.gastos import valor_computable
@@ -56,7 +57,9 @@ MODO_DUPLICAR = "DUPLICAR"
 MODOS_AMBAS = (MODO_DIVIDIR, MODO_DUPLICAR)
 # Ventana de comparación para los gastos fijos indefinidos, que no tienen final.
 MESES_VENTANA_FIJA = 12
-UMBRAL_ALERTA = Decimal("300000")
+# SRS v1.8: la alerta de liquidez comparte la base mínima del consejero, de modo
+# que ambos módulos hablan del mismo monto.
+UMBRAL_ALERTA = servicio_capacidad.BASE_MINIMA_LIQUIDEZ
 # SRS v1.6: estado con el que queda archivada una meta en el historial.
 ESTADO_CUMPLIDA = "CUMPLIDA"
 ESTADO_ELIMINADA = "ELIMINADA"

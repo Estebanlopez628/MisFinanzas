@@ -35,6 +35,7 @@ def _contexto(
     error: str | None = None,
     guardado: bool = False,
     aplicadas: int = 0,
+    valores: dict[str, str] | None = None,
 ) -> dict[str, object]:
     """Prepara el contexto de la vista de deudas.
 
@@ -44,6 +45,8 @@ def _contexto(
         error: Mensaje de error opcional.
         guardado: Bandera de éxito al registrar una deuda.
         aplicadas: Cuotas descontadas automáticamente en esta visita.
+        valores: Datos ya escritos en el formulario, para no perderlos al
+            corregir un error.
 
     Returns:
         Diccionario para la plantilla.
@@ -71,6 +74,7 @@ def _contexto(
             "error": error,
             "guardado": guardado,
             "aplicadas": aplicadas,
+            "valores": valores or {},
         }
     )
     return contexto
@@ -151,7 +155,19 @@ def crear_deuda(
         return plantillas.TemplateResponse(
             request,
             "deudas/index.html",
-            _contexto(usuario, bd, error=str(error)),
+            _contexto(
+                usuario,
+                bd,
+                error=str(error),
+                valores={
+                    "acreedor": acreedor,
+                    "descripcion": descripcion,
+                    "saldo_total": saldo_total,
+                    "cuota": cuota,
+                    "cuotas_pendientes": cuotas_pendientes,
+                    "periodicidad": periodicidad,
+                },
+            ),
             status_code=status.HTTP_400_BAD_REQUEST,
         )
 

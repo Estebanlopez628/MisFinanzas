@@ -13,10 +13,11 @@ producto se escribe en la venta.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from datetime import datetime
+from dataclasses import dataclass, replace
+from datetime import date, datetime
 from html import escape
 from typing import Annotated
+from urllib.parse import urlencode
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request, Response, status
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -776,12 +777,15 @@ def _contexto_cartera(usuario: UsuarioSesion, bd: Session, *, error: str | None 
         Diccionario para la plantilla.
     """
     resumen = comercial.resumen_cartera(bd)
+    balance_texto, balance_clase = comercial.clasificar_saldo(resumen["balance"])
     contexto = contexto_base(usuario)
     contexto.update(
         {
             "titulo_pagina": "Cartera y liquidez · OLB_BYTE",
             "barras": comercial.barras_balance(resumen),
             "segmentos": comercial.segmentos_dona(resumen["cartera_clientes"], resumen["deuda_proveedor"]),
+            "balance_texto": balance_texto,
+            "balance_clase": balance_clase,
             "movimientos": comercial.listar_movimientos_proveedor(bd),
             "deuda": resumen["deuda_proveedor"],
             "error": error,
@@ -876,41 +880,255 @@ def _pagina_error_pdf(id_venta: str, mensaje: str, codigo: int) -> HTMLResponse:
     return HTMLResponse(cuerpo, status_code=codigo)
 
 
+def _entero_opcional(texto: str) -> int | None:
+    """Convierte un parámetro de la URL en entero, o `None` si no es válido.
+
+    Args:
+        texto: Valor recibido, por ejemplo `2026` o `abc`.
+
+    Returns:
+        El entero, o `None` si está vacío o no son solo dígitos.
+    """
+    limpio = texto.strip()
+    return int(limpio) if limpio.isdigit() else None
+
+
+def _filtro_desde_url(anio: str, mes: str, cliente: str, producto: str, hoy: date) -> analitica.Filtro:
+    """Arma el filtro de la analítica a partir de los parámetros de la URL.
+
+    Los valores no válidos se ignoran en vez de provocar un error: el año cae al
+    actual y el mes, si está fuera de 1 a 12, se descarta.
+
+    Args:
+        anio: Año escrito en la URL.
+        mes: Mes escrito en la URL.
+        cliente: Identificador del cliente elegido.
+        producto: Etiqueta del producto elegido.
+        hoy: Fecha de la tienda, para el año por defecto.
+
+    Returns:
+        Filtro listo para el servicio de analítica.
+    """
+    anio_elegido = _entero_opcional(anio) or hoy.year
+    mes_elegido = _entero_opcional(mes)
+    if mes_elegido is not None and not 1 <= mes_elegido <= 12:
+        mes_elegido = None
+    return analitica.Filtro(
+        anio=anio_elegido,
+        mes=mes_elegido,
+        id_cliente=cliente.strip() or None,
+        producto=producto.strip() or None,
+    )
+
+
+def _parametros_filtro(filtro: analitica.Filtro) -> dict[str, str]:
+    """Convierte un filtro en los parámetros que se escriben en la URL.
+
+    Args:
+        filtro: Selección activa.
+
+    Returns:
+        Diccionario con solo los parámetros que tienen valor.
+    """
+    parametros = {"anio": str(filtro.anio)} if filtro.anio else {}
+    if filtro.mes:
+        parametros["mes"] = str(filtro.mes)
+    if filtro.id_cliente:
+        parametros["cliente"] = filtro.id_cliente
+    if filtro.producto:
+        parametros["producto"] = filtro.producto
+    return parametros
+
+
+def _url_analitica(request: Request, filtro: analitica.Filtro) -> str:
+    """Construye el enlace de la analítica con una selección dada.
+
+    Args:
+        request: Petición, para resolver la ruta.
+        filtro: Selección que debe quedar en la URL.
+
+    Returns:
+        URL absoluta de la vista con su query.
+    """
+    base = str(request.url_for("ver_analitica"))
+    parametros = _parametros_filtro(filtro)
+    return f"{base}?{urlencode(parametros)}" if parametros else base
+
+
 @router.get("/olb-byte/analitica", response_class=HTMLResponse, name="ver_analitica")
 def ver_analitica(
     request: Request,
     usuario: UsuarioSesion = Depends(obtener_usuario_actual),
     bd: Session = Depends(obtener_bd),
-    anio: int = 0,
+    anio: str = "",
+    mes: str = "",
+    cliente: str = "",
+    producto: str = "",
 ) -> HTMLResponse:
-    """Muestra los reportes mensuales y anuales, los clientes VIP y las alertas de costo.
+    """Muestra los reportes, los clientes VIP, las alertas y las ventas por producto.
+
+    Cada fila de las tablas es un enlace que activa o quita un filtro (mes, cliente
+    o producto). Los filtros se aplican a todas las tablas y a sus descargas CSV.
 
     Args:
         request: Petición HTTP.
         usuario: Administrador autenticado.
         bd: Sesión de base de datos.
-        anio: Año del reporte mensual; cero usa el año actual.
+        anio: Año de la tabla mensual; vacío usa el año actual.
+        mes: Mes elegido (1 a 12); vacío usa todo el histórico.
+        cliente: Identificador del cliente elegido.
+        producto: Etiqueta del producto elegido.
 
     Returns:
         HTML de la vista de analítica.
     """
     exigir_olb_byte(usuario)
-    anio_actual = datetime.now(comercial.ZONA_TIENDA).year
-    anio_consultado = anio or anio_actual
-    anios = sorted(set(analitica.anios_con_ventas(bd)) | {anio_actual, anio_consultado}, reverse=True)
+    hoy = datetime.now(comercial.ZONA_TIENDA).date()
+    filtro = _filtro_desde_url(anio, mes, cliente, producto, hoy)
+    anios = sorted(
+        set(analitica.anios_con_ventas(bd)) | {hoy.year, filtro.anio or hoy.year}, reverse=True
+    )
+
+    mensual = analitica.reporte_mensual(bd, filtro.anio or hoy.year, filtro)
+    for indice, fila in enumerate(mensual, start=1):
+        fila["url"] = _url_analitica(
+            request, replace(filtro, mes=None if filtro.mes == indice else indice)
+        )
+        fila["activa"] = filtro.mes == indice
+
+    vip = analitica.ranking_vip(bd, filtro=filtro)
+    for fila in vip:
+        id_cliente = str(fila["id_cliente"])
+        fila["url"] = _url_analitica(
+            request,
+            replace(filtro, id_cliente=None if filtro.id_cliente == id_cliente else id_cliente),
+        )
+        fila["activa"] = filtro.id_cliente == id_cliente
+
+    alertas = analitica.alertas_costos(bd, filtro)
+    for seccion in ("subidas", "costos"):
+        for fila in alertas[seccion]:
+            producto_fila = str(fila["producto"])
+            fila["url"] = _url_analitica(
+                request,
+                replace(filtro, producto=None if filtro.producto == producto_fila else producto_fila),
+            )
+            fila["activa"] = filtro.producto == producto_fila
+
+    ventas = analitica.tabla_ventas(bd, filtro, hoy)
+    for fila in ventas:
+        id_cliente = str(fila["id_cliente"])
+        fila["url"] = _url_analitica(
+            request,
+            replace(filtro, id_cliente=None if filtro.id_cliente == id_cliente else id_cliente),
+        )
+        fila["activa"] = filtro.id_cliente == id_cliente
+
+    filtros_activos: list[dict[str, str]] = []
+    if filtro.mes:
+        filtros_activos.append(
+            {
+                "etiqueta": f"Mes: {analitica.MESES[filtro.mes - 1]} {filtro.anio}",
+                "url": _url_analitica(request, replace(filtro, mes=None)),
+            }
+        )
+    if filtro.id_cliente:
+        cliente_elegido = bd.get(Cliente, filtro.id_cliente)
+        nombre = cliente_elegido.nombre if cliente_elegido else "cliente elegido"
+        filtros_activos.append(
+            {
+                "etiqueta": f"Cliente: {nombre}",
+                "url": _url_analitica(request, replace(filtro, id_cliente=None)),
+            }
+        )
+    if filtro.producto:
+        filtros_activos.append(
+            {
+                "etiqueta": f"Producto: {filtro.producto}",
+                "url": _url_analitica(request, replace(filtro, producto=None)),
+            }
+        )
+
+    url_csv = {
+        nombre: f"{request.url_for('exportar_analitica_csv', tabla=nombre)}"
+        f"?{urlencode(_parametros_filtro(filtro))}"
+        for nombre in analitica.TABLAS_CSV
+    }
+
     contexto = contexto_base(usuario)
     contexto.update(
         {
             "titulo_pagina": "Analítica · OLB_BYTE",
-            "anio": anio_consultado,
+            "anio": filtro.anio,
+            "mes": filtro.mes,
+            "nombre_mes": analitica.MESES[filtro.mes - 1] if filtro.mes else None,
+            "meses": list(enumerate(analitica.MESES, start=1)),
             "anios": anios,
-            "mensual": analitica.reporte_mensual(bd, anio_consultado),
-            "anual": analitica.reporte_anual(bd),
-            "vip": analitica.ranking_vip(bd),
-            "alertas": analitica.alertas_costos(bd),
+            "filtro_activo": filtro.mes is not None or bool(filtro.id_cliente or filtro.producto),
+            "filtros_activos": filtros_activos,
+            "filtros_ocultos": [
+                {"nombre": nombre, "valor": valor}
+                for nombre, valor in (
+                    ("cliente", filtro.id_cliente or ""),
+                    ("producto", filtro.producto or ""),
+                )
+                if valor
+            ],
+            "url_limpiar": _url_analitica(request, analitica.Filtro(anio=filtro.anio)),
+            "mensual": mensual,
+            "anual": analitica.reporte_anual(bd, filtro),
+            "vip": vip,
+            "alertas": alertas,
+            "ventas": ventas,
+            "url_csv": url_csv,
         }
     )
     return plantillas.TemplateResponse(request, "olb_byte/analitica.html", contexto)
+
+
+@router.get(
+    "/olb-byte/analitica/exportar/{tabla}.csv",
+    name="exportar_analitica_csv",
+    response_model=None,
+)
+def exportar_analitica_csv(
+    tabla: str,
+    usuario: UsuarioSesion = Depends(obtener_usuario_actual),
+    bd: Session = Depends(obtener_bd),
+    anio: str = "",
+    mes: str = "",
+    cliente: str = "",
+    producto: str = "",
+) -> Response:
+    """Descarga una tabla de la analítica con la misma selección de la pantalla.
+
+    Args:
+        tabla: Una de `analitica.TABLAS_CSV`.
+        usuario: Administrador autenticado.
+        bd: Sesión de base de datos.
+        anio: Año de la tabla mensual.
+        mes: Mes elegido; vacío descarga todo el histórico.
+        cliente: Cliente elegido.
+        producto: Producto elegido.
+
+    Returns:
+        CSV con separador `;` y BOM UTF-8.
+
+    Raises:
+        HTTPException: 404 si la tabla no existe.
+    """
+    exigir_olb_byte(usuario)
+    hoy = datetime.now(comercial.ZONA_TIENDA).date()
+    filtro = _filtro_desde_url(anio, mes, cliente, producto, hoy)
+    resultado = analitica.tabla_csv(bd, tabla, filtro, hoy)
+    if resultado is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tabla no encontrada.")
+    encabezados, filas = resultado
+    return Response(
+        content=analitica.serializar_csv(encabezados, filas),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="analitica_{tabla}.csv"'},
+    )
 
 
 def _contexto_garantias(usuario: UsuarioSesion, bd: Session, *, error: str | None = None) -> dict[str, object]:

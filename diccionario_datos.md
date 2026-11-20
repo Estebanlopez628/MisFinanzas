@@ -51,9 +51,11 @@ Configuración salarial del usuario (onboarding). Un registro por usuario.
 | `id_usuario` | `UUID` (FK → `usuarios`) | No | Sí | `UNIQUE`; relación 1:1. |
 | `sueldo_basico` | `NUMERIC(14,2)` | No | Sí | Salario mensual base. `CHECK (sueldo_basico >= 0)`. |
 | `modalidad_pago` | `modalidad_pago` | No | Sí | `MENSUAL` o `QUINCENAL`. |
-| `porcentaje_quincena_1` | `NUMERIC(5,2)` | Sí | Condicional | Obligatorio si `modalidad_pago = QUINCENAL`. Porcentaje del sueldo pagado en la quincena 1 (día 15). `CHECK (> 0)`. |
-| `porcentaje_quincena_2` | `NUMERIC(5,2)` | Sí | Condicional | Obligatorio si `modalidad_pago = QUINCENAL`. Porcentaje del sueldo pagado en la quincena 2 (día 30). `CHECK (> 0)`. |
+| `porcentaje_quincena_1` | `NUMERIC(5,2)` | Sí | Condicional | Obligatorio si `modalidad_pago = QUINCENAL`. Porcentaje del sueldo pagado en la quincena 1. `CHECK (> 0)`. |
+| `porcentaje_quincena_2` | `NUMERIC(5,2)` | Sí | Condicional | Obligatorio si `modalidad_pago = QUINCENAL`. Porcentaje del sueldo pagado en la quincena 2. `CHECK (> 0)`. |
 | `quincena_deducciones` | `SMALLINT` | Sí | Condicional | Obligatorio si `modalidad_pago = QUINCENAL`. `1` o `2`: quincena a la que se descuentan salud y pensión. `CHECK (IN (1,2))`. |
+| `dia_quincena_1` | `SMALLINT` | Sí | Condicional | SRS v1.9. Obligatorio si `modalidad_pago = QUINCENAL`: día del mes en que se paga la quincena 1 (por ejemplo, 5). `CHECK (BETWEEN 1 AND 31)`. Los perfiles anteriores quedan con 15. |
+| `dia_quincena_2` | `SMALLINT` | Sí | Condicional | SRS v1.9. Obligatorio si `modalidad_pago = QUINCENAL`: día del mes en que se paga la quincena 2 (por ejemplo, 20). Debe ser mayor que `dia_quincena_1`. `CHECK (BETWEEN 1 AND 31)`. Los perfiles anteriores quedan con 30. |
 | `auxilio_transporte_habilitado` | `BOOLEAN` | No | Sí | Resultado del validador de tope 2 SMMLV (Tarea 3). Solo lectura en UI. |
 | `fecha_actualizacion` | `TIMESTAMPTZ` | No | Sí | `now()` en cada cambio. |
 
@@ -194,9 +196,10 @@ Gastos fijos y variables que afectan el bolsillo del periodo.
 
 ## 8. `deudas`
 
-Pasivos del usuario (módulo `Resumen de Deudas`). **SRS v1.5:** se capturan seis
-datos visibles; la tasa de interés no se pide, se deriva del saldo, la cuota y el
-número de pagos. Desaparecen la fecha límite y el abono manual.
+Pasivos del usuario (módulo `Resumen de Deudas`). **SRS v1.8:** se capturan seis
+datos visibles y **no hay intereses**: la cuota por el número de pagos debe
+reconstruir el total adeudado. Desaparecen la tasa, la fecha límite y el abono
+manual.
 
 | Campo | Tipo | Nulo | Obligatorio | Descripción / Regla |
 | --- | --- | --- | --- | --- |
@@ -204,20 +207,23 @@ número de pagos. Desaparecen la fecha límite y el abono manual.
 | `id_usuario` | `UUID` (FK → `usuarios`) | No | Sí | Dueño. |
 | `acreedor` | `VARCHAR(100)` | No | Sí | Entidad o persona. |
 | `descripcion` | `VARCHAR(150)` | Sí | No | Detalle. |
-| `saldo_total` | `NUMERIC(14,2)` | No | Sí | Capital pendiente; se reduce con cada cuota aplicada. |
+| `saldo_total` | `NUMERIC(14,2)` | No | Sí | Total adeudado (capital); se reduce con cada cuota aplicada. |
 | `cuota_mensual` | `NUMERIC(14,2)` | No | Sí | Valor de cada pago (mensual o quincenal según `periodicidad`). |
 | `cuotas_pendientes` | `SMALLINT` | No | Sí | Pagos que faltan; `1..600`. |
 | `periodicidad` | `VARCHAR(12)` | No | Sí | `QUINCENAL` o `MENSUAL`. |
-| `tasa_interes` | `NUMERIC(12,10)` | Sí | No | **Derivada**, no capturada. Tasa implícita por periodo (`0.0137085766` = 1,3709 %). |
 | `fecha_creacion` | `TIMESTAMPTZ` | No | Sí | Ancla del calendario de amortización. |
 | `fecha_limite` | `DATE` | Sí | No | Heredada; sin uso. |
 | `estado` | `estado_deuda` | No | Sí | `ACTIVA` o `PAGADA` (se actualiza al aplicar cuotas). |
 
-**Tasa implícita:** se resuelve por bisección
-`saldo = cuota × (1 − (1 + r)^−n) / r`. Si `cuota × n = saldo`, la tasa es cero.
-Si `cuota × n < saldo`, el plan no cubre la deuda y se rechaza.
+> La columna heredada `tasa_interes` puede seguir existiendo en bases ya
+> desplegadas; queda nula y sin uso. El modelo ya no la mapea.
 
-## 8.1 `pagos_deuda` — *Amortización automática* (SRS v1.5)
+**Coherencia del plan (SRS v1.8):** como no se capturan intereses,
+`cuota × cuotas` debe coincidir con el total adeudado. Se tolera **un peso por
+cuota** (60 cuotas → $60) para absorber redondeos; una diferencia mayor se
+rechaza con un mensaje que muestra las cuentas y pide revisar los datos.
+
+## 8.1 `pagos_deuda` — *Amortización automática* (SRS v1.8)
 
 Cada cuota que vence se registra aquí al abrir el módulo. `UNIQUE(id_deuda,
 numero_cuota)` hace la operación idempotente: abrir dos veces el mismo día no
@@ -230,8 +236,8 @@ duplica pagos.
 | `numero_cuota` | `SMALLINT` | No | Sí | Consecutivo; `>= 1`. |
 | `fecha_aplicacion` | `DATE` | No | Sí | Fecha de vencimiento de la cuota. |
 | `valor_cuota` | `NUMERIC(14,2)` | No | Sí | Valor pagado; la última se ajusta al saldo exacto. |
-| `abono_capital` | `NUMERIC(14,2)` | No | Sí | Porción que reduce el capital. |
-| `interes` | `NUMERIC(14,2)` | No | Sí | Porción de intereses del periodo. |
+| `abono_capital` | `NUMERIC(14,2)` | No | Sí | Porción que reduce el capital (la cuota completa, sin intereses). |
+| `interes` | `NUMERIC(14,2)` | No | Sí | Heredado; se guarda en `0` porque el modelo no cobra intereses. |
 | `saldo_despues` | `NUMERIC(14,2)` | No | Sí | Saldo restante; la última cuota lo deja en `0`. |
 
 ---
@@ -404,6 +410,7 @@ en `devoluciones_clientes` (§10.8); los abonos originales se conservan como his
 | `precio_unitario` | `NUMERIC(14,2)` | No | Precio al cliente. `CHECK (>= 0)`. |
 | `subtotal_item` | `NUMERIC(14,2)` | No | `precio_unitario × cantidad`. |
 | `garantia_texto` | `VARCHAR(200)` | Sí | Garantía de esta línea. |
+| `garantia_fecha_fin` | `DATE` | Sí | SRS v1.9. Vencimiento de la garantía de esta línea (fecha de venta + meses de la línea). Las líneas anteriores heredan la fecha de su orden. Lo usa la tabla de ventas de la analítica para indicar Activa o Vencida por producto. |
 
 ### 10.5 `abonos` — *Pagos del cliente (`abonos_clientes` del SRS)*
 | Campo | Tipo | Nulo | Descripción |

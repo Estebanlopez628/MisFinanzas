@@ -62,12 +62,17 @@
                 </circle>
               {% endfor %}
             </svg>
+            {# El balance va al centro con signo y color: verde a favor, rojo en déficit. #}
+            <div class="dona__centro">
+              <strong class="dona__centro-valor {{ balance_clase }}">{{ balance_texto }}</strong>
+              <span class="dona__centro-etiqueta">balance</span>
+            </div>
           </div>
           <ul class="dona__leyenda">
             {% for arco in segmentos %}
               <li>
                 <span class="dona__muestra" style="background: {{ arco.color }}"></span>
-                {{ arco.etiqueta }}: <strong>{{ arco.valor }}</strong> ({{ arco.porcentaje }} %)
+                {{ arco.etiqueta }}: <strong class="{{ arco.clase }}">{{ arco.valor }}</strong> ({{ arco.porcentaje }} %)
               </li>
             {% endfor %}
           </ul>

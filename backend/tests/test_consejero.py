@@ -1,8 +1,8 @@
-"""Pruebas del consejero financiero (SRS v1.7, bloque G).
+"""Pruebas del consejero financiero (SRS v1.8).
 
-Cubren la activación por umbral, la elección entre avalancha y bola de nieve, la
-comparación base frente a optimizado, el modo ahorro con y sin metas y las dos
-situaciones de la vista de presupuesto.
+Cubren la activación por encima de la base mínima de liquidez, la elección de la
+deuda que libera más cuotas, la comparación base frente a optimizado, el modo
+ahorro con y sin metas y las dos situaciones de la vista de presupuesto.
 """
 
 from __future__ import annotations
@@ -61,32 +61,34 @@ def test_el_consejero_se_activa_por_encima_del_umbral(bd) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Deudas: avalancha y bola de nieve
+# Deudas: liberación de flujo de caja
 # ---------------------------------------------------------------------------
 
 
-def test_la_avalancha_ataca_la_tasa_mas_alta(bd) -> None:
-    """Con una deuda cara y una barata sin interés, gana la avalancha."""
+def test_el_excedente_ataca_la_deuda_que_libera_mas_cuotas(bd) -> None:
+    """Con un excedente que cancela varias, gana la de más cuotas por delante."""
     id_usuario = _id_admin(bd)
-    deudas.crear_deuda(bd, id_usuario, "Banco", "2000000", "250000", 12)
-    deudas.crear_deuda(bd, id_usuario, "Familia", "300000", "100000", 3)
+    deudas.crear_deuda(bd, id_usuario, "Grande", "1200000", "100000", 12)
+    deudas.crear_deuda(bd, id_usuario, "Pequeña", "500000", "100000", 5)
 
-    resultado = consejero.consejo_financiero(bd, id_usuario, "Ana", Decimal("500000"))
+    resultado = consejero.consejo_financiero(bd, id_usuario, "Ana", Decimal("1800000"))
 
     assert resultado.modo == consejero.MODO_DEUDA
-    assert resultado.estrategia == consejero.ESTRATEGIA_AVALANCHA
-    assert resultado.deuda_objetivo == "Banco"
-    assert resultado.interes_optimizado < resultado.interes_base
+    assert resultado.estrategia == consejero.ESTRATEGIA_FLUJO
+    assert resultado.deuda_objetivo == "Grande"
+    assert resultado.excedente == Decimal("1500000.00")
+    assert resultado.meses_optimizado < resultado.meses_base
+    assert resultado.cuota_liberada == Decimal("200000.00")
 
 
-def test_la_bola_de_nieve_ordena_por_saldo(bd) -> None:
-    """El orden de la bola de nieve empieza por la deuda más pequeña."""
+def test_sin_excedente_para_cancelar_empieza_por_el_saldo_menor(bd) -> None:
+    """Si no alcanza para cerrar ninguna, el orden empieza por la más pequeña."""
     id_usuario = _id_admin(bd)
-    deudas.crear_deuda(bd, id_usuario, "Grande", "2000000", "250000", 12)
-    deudas.crear_deuda(bd, id_usuario, "Pequeña", "300000", "100000", 3)
+    deudas.crear_deuda(bd, id_usuario, "Grande", "1200000", "100000", 12)
+    deudas.crear_deuda(bd, id_usuario, "Pequeña", "500000", "100000", 5)
     estados = consejero._estados(deudas.listar_deudas(bd, id_usuario))
 
-    orden = consejero._ordenar(estados, consejero.ESTRATEGIA_BOLA)
+    orden = consejero._ordenar(estados, Decimal("400000"))
 
     assert orden[0].deuda.acreedor == "Pequeña"
     assert orden[-1].deuda.acreedor == "Grande"
@@ -106,7 +108,7 @@ def test_el_excedente_liquida_la_deuda_dentro_del_año(bd) -> None:
 def test_la_serie_de_deuda_baja_con_el_excedente(bd) -> None:
     """En modo deuda, el saldo optimizado nunca supera al base."""
     id_usuario = _id_admin(bd)
-    deudas.crear_deuda(bd, id_usuario, "Banco", "2000000", "250000", 12)
+    deudas.crear_deuda(bd, id_usuario, "Banco", "3000000", "250000", 12)
 
     resultado = consejero.consejo_financiero(bd, id_usuario, "Ana", Decimal("400000"))
 
@@ -184,12 +186,14 @@ def test_presupuesto_muestra_el_consejero_cuando_hay_excedente(cliente_admin) ->
     assert "Base frente a optimizado" in respuesta.text
 
 
-def test_presupuesto_oculta_el_consejero_sin_excedente(bd, cliente_admin) -> None:
-    """Una deducción fija alta deja el excedente bajo el umbral y oculta el panel."""
+def test_presupuesto_avisa_sin_excedente_suficiente(bd, cliente_admin) -> None:
+    """Una deducción fija alta deja el libre en la base mínima y apaga el consejo."""
     id_usuario = _id_admin(bd)
     deducciones_fijas.crear_deduccion(bd, id_usuario, "Cuota interna", "2800000", 1)
 
     respuesta = cliente_admin.get("/presupuesto")
 
     assert respuesta.status_code == 200
-    assert "Consejero financiero" not in respuesta.text
+    assert "Base mínima de liquidez" in respuesta.text
+    assert "No puedo ofrecerte un consejo financiero" in respuesta.text
+    assert "Base frente a optimizado" not in respuesta.text

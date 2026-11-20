@@ -2,16 +2,17 @@
 
 Responsabilidad
 ---------------
-- Registrar deudas con seis datos: acreedor, descripción, saldo, cuota, cuotas
-  pendientes y periodicidad (`QUINCENAL` o `MENSUAL`).
-- Derivar la tasa de interés implícita del saldo, la cuota y el número de pagos.
+- Registrar deudas con seis datos: acreedor, descripción, total adeudado, cuota,
+  cuotas pendientes y periodicidad (`QUINCENAL` o `MENSUAL`).
+- Validar que cuota × cuotas coincida con el total adeudado, con una tolerancia
+  de un peso por cuota para absorber redondeos.
 - Aplicar las cuotas vencidas al abrir el módulo, registrando cada pago en
   `pagos_deuda` (idempotente por `UNIQUE(id_deuda, numero_cuota)`).
 - Proyectar las cuotas restantes y resumir la cartera.
 
-Reglas (SRS v1.5):
-- El usuario no captura tasa de interés, fecha límite ni abonos: la cuota es
-  fija y la última se ajusta para dejar el saldo exactamente en cero.
+Reglas (SRS v1.8):
+- Sin intereses: no se captura tasa, no se deriva por bisección y no se simulan
+  intereses. La cuota es fija y la última se ajusta para dejar el saldo en cero.
 - Una cuota solo se aplica cuando su fecha de vencimiento ya pasó; abrir el
   módulo dos veces el mismo día no descuenta dos veces.
 - `saldo_total` guarda el capital pendiente y se reduce con cada cuota aplicada.
@@ -24,13 +25,13 @@ from __future__ import annotations
 import calendar
 from dataclasses import dataclass
 from datetime import date, timedelta
-from decimal import ROUND_HALF_UP, Decimal
+from decimal import Decimal
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.numeros import redondear_dinero
-from app.core.texto import parsear_monto
+from app.core.texto import formatear_cop, parsear_monto
 from app.modelos import Deuda, PagoDeuda
 
 CERO = Decimal("0")
@@ -43,12 +44,10 @@ PERIODICIDADES = (PERIODICIDAD_QUINCENAL, PERIODICIDAD_MENSUAL)
 DIAS_QUINCENA = 15
 CUOTAS_MAXIMAS = 600
 
-# La bisección busca la tasa por periodo en [0, 100 %]. Cien iteraciones sobran
-# para la precisión de diez decimales que se guarda en la base; con menos, el
-# redondeo de los intereses acumula centavos y la última cuota se desvía.
-TASA_MAXIMA = Decimal("1")
-PRECISION_TASA = Decimal("0.0000000001")
-ITERACIONES_TASA = 100
+# SRS v1.8: la cuota y las cuotas deben reconstruir el total adeudado. Se acepta
+# un peso de diferencia por cuota para absorber redondeos de centavos; cualquier
+# diferencia mayor se rechaza con un mensaje que pide revisar los datos.
+TOLERANCIA_POR_CUOTA = Decimal("1")
 
 
 @dataclass(frozen=True)
@@ -59,8 +58,7 @@ class CuotaProyectada:
         numero: Número consecutivo de la cuota.
         fecha: Fecha de vencimiento estimada.
         valor: Valor de la cuota; la última se ajusta al saldo exacto.
-        interes: Porción de la cuota destinada a intereses.
-        abono_capital: Porción que reduce el capital.
+        abono_capital: Porción que reduce el capital (la cuota completa).
         saldo_despues: Saldo pendiente después de esta cuota.
         ultima: `True` si es la cuota que cierra la deuda.
     """
@@ -68,7 +66,6 @@ class CuotaProyectada:
     numero: int
     fecha: date
     valor: Decimal
-    interes: Decimal
     abono_capital: Decimal
     saldo_despues: Decimal
     ultima: bool = False
@@ -134,76 +131,61 @@ def _periodos_transcurridos(desde: date, hasta: date, periodicidad: str) -> int:
     return cuenta
 
 
-def tasa_implicita(
+def validar_plan(
     saldo: Decimal | str | int | float,
     cuota: Decimal | str | int | float,
     cuotas: int | str,
-) -> Decimal:
-    """Deriva la tasa de interés por periodo que hace coherente la deuda.
+) -> tuple[Decimal, Decimal, int]:
+    """Comprueba que la cuota y las cuotas reconstruyan el total adeudado.
 
-    Resuelve por bisección `saldo = cuota × (1 − (1 + r)^−n) / r`, la fórmula de
-    una anualidad. Así el usuario solo informa saldo, cuota y número de pagos; la
-    tasa queda implícita en esos tres datos.
+    SRS v1.8: como no se capturan intereses, el plan es coherente cuando
+    ``cuota × cuotas`` coincide con el total adeudado. La tolerancia es de un
+    peso por cuota para absorber redondeos; un error de digitación mayor se
+    rechaza con un mensaje que muestra las cuentas.
 
     Args:
-        saldo: Capital pendiente.
+        saldo: Total adeudado.
         cuota: Valor de cada pago.
         cuotas: Número de pagos restantes.
 
     Returns:
-        Tasa por periodo como fracción (`0.013709` equivale a 1,3709 %).
+        Tupla ``(total_adeudado, cuota, cuotas)`` normalizada.
 
     Raises:
-        ValueError: Si algún dato no es positivo o la cuota no alcanza a cubrir
-            el saldo en el número de cuotas indicado.
+        ValueError: Si algún dato es inválido o el plan no coincide con el total.
     """
-    capital = redondear_dinero(parsear_monto(str(saldo)))
-    pago = redondear_dinero(parsear_monto(str(cuota)))
-    try:
-        numero = int(cuotas)
-    except (TypeError, ValueError) as error:
-        raise ValueError("El número de cuotas debe ser un entero.") from error
+    total = redondear_dinero(parsear_monto(str(saldo)))
+    if total <= CERO:
+        raise ValueError("El total adeudado debe ser mayor que cero.")
 
-    if numero <= 0:
-        raise ValueError("El número de cuotas debe ser mayor que cero.")
-    if capital < CERO:
-        raise ValueError("El saldo total no puede ser negativo.")
+    pago = redondear_dinero(parsear_monto(str(cuota)))
     if pago <= CERO:
         raise ValueError("La cuota debe ser mayor que cero.")
-    if capital == CERO:
-        return CERO
 
-    total = pago * numero
-    if total < capital:
+    try:
+        restantes = int(str(cuotas).strip())
+    except (TypeError, ValueError) as error:
+        raise ValueError("Las cuotas pendientes deben ser un número entero.") from error
+    if restantes < 1 or restantes > CUOTAS_MAXIMAS:
         raise ValueError(
-            "La cuota y el número de cuotas no alcanzan a cubrir el saldo total."
+            f"Las cuotas pendientes deben estar entre 1 y {CUOTAS_MAXIMAS}."
         )
-    if total == capital:
-        # Sin intereses: la tasa implícita es cero.
-        return CERO
 
-    def valor_presente(tasa: Decimal) -> Decimal:
-        """Valor presente de la anualidad a una tasa dada.
-
-        Args:
-            tasa: Tasa por periodo como fracción.
-
-        Returns:
-            Suma descontada de las cuotas.
-        """
-        if tasa == CERO:
-            return pago * numero
-        return pago * (1 - (1 + tasa) ** -numero) / tasa
-
-    bajo, alto = CERO, TASA_MAXIMA
-    for _ in range(ITERACIONES_TASA):
-        medio = (bajo + alto) / 2
-        if valor_presente(medio) > capital:
-            # Con esta tasa las cuotas valen más que la deuda: hay que subirla.
-            bajo = medio
-        else:
-            alto = medio
-    return ((bajo + alto) / 2).quantize(PRECISION_TASA, rounding=ROUND_HALF_UP)
+    calculado = redondear_dinero(pago * restantes)
+    tolerancia = TOLERANCIA_POR_CUOTA * restantes
+    if calculado > total + tolerancia:
+        raise ValueError(
+            f"Los datos no cuadran: {formatear_cop(pago)} × {restantes} cuotas "
+            f"darían {formatear_cop(calculado)}, más que el total adeudado de "
+            f"{formatear_cop(total)}. Revisa los datos e ingrésalos de nuevo."
+        )
+    if calculado < total - tolerancia:
+        raise ValueError(
+            f"Los datos no cuadran: {formatear_cop(pago)} × {restantes} cuotas "
+            f"darían {formatear_cop(calculado)}, menos que el total adeudado de "
+            f"{formatear_cop(total)}. Revisa los datos e ingrésalos de nuevo."
+        )
+    return total, pago, restantes
 
 
 def crear_deuda(
@@ -229,35 +211,18 @@ def crear_deuda(
         descripcion: Detalle opcional.
 
     Returns:
-        La deuda persistida, con la tasa implícita ya calculada.
+        La deuda persistida, lista para aplicar sus cuotas.
 
     Raises:
-        ValueError: Si falta el acreedor, algún monto es inválido o el plan de
-            pagos no cubre el saldo.
+        ValueError: Si falta el acreedor, algún monto es inválido o la cuota por
+            el número de pagos no coincide con el total adeudado.
     """
     acreedor_limpio = acreedor.strip()
     if not acreedor_limpio:
         raise ValueError("El acreedor es obligatorio.")
 
-    capital = redondear_dinero(parsear_monto(str(saldo_total)))
-    if capital <= CERO:
-        raise ValueError("El saldo total debe ser mayor que cero.")
-
-    pago = redondear_dinero(parsear_monto(str(cuota)))
-    if pago <= CERO:
-        raise ValueError("La cuota debe ser mayor que cero.")
-
-    try:
-        restantes = int(cuotas_pendientes)
-    except (TypeError, ValueError) as error:
-        raise ValueError("Las cuotas pendientes deben ser un número entero.") from error
-    if restantes < 1 or restantes > CUOTAS_MAXIMAS:
-        raise ValueError(
-            f"Las cuotas pendientes deben estar entre 1 y {CUOTAS_MAXIMAS}."
-        )
-
+    capital, pago, restantes = validar_plan(saldo_total, cuota, cuotas_pendientes)
     frecuencia = _limpiar_periodicidad(periodicidad)
-    tasa = tasa_implicita(capital, pago, restantes)
 
     deuda = Deuda(
         id_usuario=id_usuario,
@@ -267,7 +232,6 @@ def crear_deuda(
         cuota_mensual=pago,
         cuotas_pendientes=restantes,
         periodicidad=frecuencia,
-        tasa_interes=tasa,
         fecha_limite=None,
         estado=ESTADO_ACTIVA,
     )
@@ -339,27 +303,11 @@ def _aplicar_pago(
     if pago <= CERO or saldo <= CERO:
         return False
 
-    tasa = deuda.tasa_interes
-    if tasa is None:
-        # Deudas migradas desde el modelo anterior: la tasa se deriva ahora.
-        tasa = tasa_implicita(saldo, pago, max(deuda.cuotas_pendientes, 1))
-        deuda.tasa_interes = tasa
-
-    interes = redondear_dinero(saldo * tasa)
+    # SRS v1.8: sin intereses. La cuota reduce capital y la última absorbe el
+    # redondeo para dejar el saldo exacto en cero.
     ultima = deuda.cuotas_pendientes <= 1
-    if ultima:
-        # La última cuota absorbe el redondeo y deja el saldo exacto en cero.
-        valor = redondear_dinero(saldo + interes)
-        capital = saldo
-    else:
-        valor = pago
-        capital = redondear_dinero(pago - interes)
-
-    if capital <= CERO:
-        # Cuota menor que los intereses: no amortiza y la deuda no avanzaría.
-        raise ValueError(
-            "La cuota no cubre los intereses del periodo; revisa el plan de pagos."
-        )
+    valor = saldo if ultima else min(pago, saldo)
+    capital = valor
 
     saldo_nuevo = redondear_dinero(max(saldo - capital, CERO))
     bd.add(
@@ -369,7 +317,7 @@ def _aplicar_pago(
             fecha_aplicacion=fecha,
             valor_cuota=valor,
             abono_capital=capital,
-            interes=interes,
+            interes=CERO,
             saldo_despues=saldo_nuevo,
         )
     )
@@ -448,11 +396,8 @@ def proyeccion_deuda(deuda: Deuda, desde: date | None = None) -> list[CuotaProye
     saldo = redondear_dinero(deuda.saldo_total)
     pago = redondear_dinero(deuda.cuota_mensual or CERO)
     restantes = deuda.cuotas_pendientes
-    tasa = deuda.tasa_interes
     if saldo <= CERO or pago <= CERO or restantes <= 0:
         return []
-    if tasa is None:
-        tasa = tasa_implicita(saldo, pago, restantes)
 
     ancla = desde or deuda.fecha_creacion.date()
     fecha = _sumar_periodo(ancla, deuda.periodicidad)
@@ -460,24 +405,16 @@ def proyeccion_deuda(deuda: Deuda, desde: date | None = None) -> list[CuotaProye
     cuotas: list[CuotaProyectada] = []
     numero = 1
     while restantes > 0 and saldo > CERO:
-        interes = redondear_dinero(saldo * tasa)
+        # Sin intereses: cada cuota abona capital y la última cierra el saldo.
         ultima = restantes == 1
-        if ultima:
-            valor = redondear_dinero(saldo + interes)
-            capital = saldo
-        else:
-            valor = pago
-            capital = redondear_dinero(pago - interes)
-        if capital <= CERO:
-            break
-        saldo = redondear_dinero(max(saldo - capital, CERO))
+        valor = saldo if ultima else min(pago, saldo)
+        saldo = redondear_dinero(max(saldo - valor, CERO))
         cuotas.append(
             CuotaProyectada(
                 numero=numero,
                 fecha=fecha,
                 valor=valor,
-                interes=interes,
-                abono_capital=capital,
+                abono_capital=valor,
                 saldo_despues=saldo,
                 ultima=ultima,
             )

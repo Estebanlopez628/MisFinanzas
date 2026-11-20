@@ -32,19 +32,26 @@ from app.servicios import auditoria, perfiles, usuarios
 router = APIRouter(tags=["Perfil"])
 
 
-def _formatear_porcentaje(valor: Decimal | None, defecto: str = "50") -> str:
-    """Formatea un porcentaje para un `input type="number"`.
+def _formatear_porcentaje(valor: Decimal | None, defecto: str = "50 %") -> str:
+    """Formatea un porcentaje para mostrarlo en el campo del perfil.
+
+    SRS v1.8: se muestra con el símbolo «%» y sin ceros de relleno, de modo que
+    copiar el valor entregue «60 %» y no «60.00». La coma separa los decimales.
 
     Args:
         valor: Porcentaje almacenado o `None`.
         defecto: Texto a usar cuando no hay valor.
 
     Returns:
-        Cadena con punto decimal, que es el formato que acepta el navegador.
+        Cadena como «60 %» o «60,5 %».
     """
     if valor is None:
         return defecto
-    return f"{valor:.2f}"
+    numero = Decimal(valor)
+    texto = format(numero, "f")
+    if "." in texto:
+        texto = texto.rstrip("0").rstrip(".")
+    return f"{texto.replace('.', ',')} %"
 
 
 def _contexto_perfil(
@@ -73,16 +80,19 @@ def _contexto_perfil(
         "alias": usuario.alias,
         "sueldo_basico": "",
         "modalidad_pago": perfiles.MODALIDAD_MENSUAL,
-        "porcentaje_quincena_1": "50",
-        "porcentaje_quincena_2": "50",
+        "porcentaje_quincena_1": "50 %",
+        "porcentaje_quincena_2": "50 %",
         "quincena_deducciones": "1",
         "conoce_porcentajes": "SI",
         "neto_sin_deducciones": "",
         "quincena_sin_deducciones": "1",
+        "dia_quincena_1": str(perfiles.DIA_QUINCENA_1_PREDETERMINADO),
+        "dia_quincena_2": str(perfiles.DIA_QUINCENA_2_PREDETERMINADO),
     }
 
     if perfil is not None:
         primero, segundo = perfiles.porcentajes_quincena(perfil)
+        dia_1, dia_2 = perfiles.dias_quincena(perfil)
         valores.update(
             {
                 "alias": usuario.alias,
@@ -91,6 +101,8 @@ def _contexto_perfil(
                 "porcentaje_quincena_1": _formatear_porcentaje(primero),
                 "porcentaje_quincena_2": _formatear_porcentaje(segundo),
                 "quincena_deducciones": str(perfil.quincena_deducciones or 1),
+                "dia_quincena_1": str(dia_1),
+                "dia_quincena_2": str(dia_2),
             }
         )
 
@@ -156,6 +168,8 @@ def guardar_perfil(
     conoce_porcentajes: Annotated[str, Form()] = "SI",
     neto_sin_deducciones: Annotated[str, Form()] = "",
     quincena_sin_deducciones: Annotated[str, Form()] = "1",
+    dia_quincena_1: Annotated[str, Form()] = "",
+    dia_quincena_2: Annotated[str, Form()] = "",
 ) -> HTMLResponse | RedirectResponse:
     """Guarda el perfil salarial del usuario.
 
@@ -172,6 +186,8 @@ def guardar_perfil(
         conoce_porcentajes: `SI` o `NO`; en `NO` se calcula desde el neto.
         neto_sin_deducciones: Valor recibido en la quincena sin descuentos.
         quincena_sin_deducciones: Quincena a la que corresponde ese valor.
+        dia_quincena_1: Día del mes en que cae la quincena 1 (modalidad quincenal).
+        dia_quincena_2: Día del mes en que cae la quincena 2 (modalidad quincenal).
 
     Returns:
         Redirección al tablero si se guarda; la vista con errores en caso
@@ -204,6 +220,8 @@ def guardar_perfil(
                 primero,
                 segundo,
                 deducciones,
+                dia_quincena_1=dia_quincena_1,
+                dia_quincena_2=dia_quincena_2,
             )
         else:
             perfiles.guardar_perfil(
@@ -226,6 +244,8 @@ def guardar_perfil(
                 "conoce_porcentajes": conoce_porcentajes,
                 "neto_sin_deducciones": neto_sin_deducciones,
                 "quincena_sin_deducciones": quincena_sin_deducciones,
+                "dia_quincena_1": dia_quincena_1,
+                "dia_quincena_2": dia_quincena_2,
             }
         )
         contexto["es_onboarding"] = perfil is None

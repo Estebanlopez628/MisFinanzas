@@ -150,6 +150,51 @@ def formatear_mes_anio(anio: int, mes: int) -> str:
     return f"{MESES_ES[mes - 1].capitalize()} de {anio}"
 
 
+def parsear_porcentaje(
+    texto: Decimal | int | float | str | None,
+    etiqueta: str = "El porcentaje",
+) -> Decimal:
+    """Convierte un porcentaje a `Decimal`.
+
+    SRS v1.8: acepta ``"60"``, ``"60 %"`` y ``"60,5"``. El punto decimal se
+    rechaza con un mensaje claro porque en Colombia el punto es separador de
+    miles y ``"60.00"`` es ambiguo. Los valores internos (`Decimal`, `int` o
+    `float`) se aceptan tal cual, sin pasar por el texto del formulario.
+
+    Args:
+        texto: Cadena capturada en el formulario o número interno.
+        etiqueta: Nombre visible del campo, usado en el mensaje de error.
+
+    Returns:
+        El porcentaje como `Decimal`.
+
+    Raises:
+        ValueError: Si el texto está vacío, trae letras o usa punto decimal.
+    """
+    if isinstance(texto, Decimal):
+        return texto
+    if isinstance(texto, (int, float)) and not isinstance(texto, bool):
+        return Decimal(str(texto))
+
+    if texto is None:
+        raise ValueError(f"{etiqueta} es obligatorio.")
+
+    limpio = str(texto).strip().replace("%", "").replace("\u00a0", "").replace(" ", "")
+    if not limpio:
+        raise ValueError(f"{etiqueta} es obligatorio.")
+    if "." in limpio:
+        raise ValueError(
+            f"{etiqueta} no admite punto decimal. Escribe «60» o «60,5»: "
+            "en Colombia la coma separa los decimales."
+        )
+    if not re.fullmatch(r"-?\d+(,\d+)?", limpio):
+        raise ValueError(
+            f"{etiqueta} no es un número válido. Escribe solo dígitos y, si "
+            "hace falta, una coma decimal (por ejemplo, 60,5)."
+        )
+    return Decimal(limpio.replace(",", "."))
+
+
 def parsear_periodo_mes(texto: str | None) -> tuple[int, int] | None:
     """Convierte un periodo ``"AAAA-MM"`` en una tupla ``(año, mes)``.
 

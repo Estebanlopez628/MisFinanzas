@@ -14,6 +14,7 @@ from app.core.texto import (
     formatear_mes_anio,
     parsear_monto,
     parsear_periodo_mes,
+    parsear_porcentaje,
 )
 
 
@@ -47,6 +48,41 @@ def test_parsear_monto_con_letras() -> None:
     """Las letras se rechazan con un mensaje claro."""
     with pytest.raises(ValueError, match="no es un número válido"):
         parsear_monto("tres millones")
+
+
+def test_parsear_porcentaje_sin_simbolo() -> None:
+    """«60» es un porcentaje válido."""
+    assert parsear_porcentaje("60") == Decimal("60")
+
+
+def test_parsear_porcentaje_con_simbolo_y_espacio() -> None:
+    """El símbolo «%» y los espacios se ignoran."""
+    assert parsear_porcentaje(" 60 % ") == Decimal("60")
+
+
+def test_parsear_porcentaje_con_coma_decimal() -> None:
+    """La coma separa los decimales, como en el formato colombiano."""
+    assert parsear_porcentaje("60,5") == Decimal("60.5")
+
+
+def test_parsear_porcentaje_acepta_decimal_interno() -> None:
+    """Los valores internos no pasan por el texto del formulario."""
+    assert parsear_porcentaje(Decimal("50.00")) == Decimal("50.00")
+    assert parsear_porcentaje(60) == Decimal("60")
+
+
+def test_parsear_porcentaje_rechaza_el_punto_ambiguo() -> None:
+    """«60.00» se rechaza: el punto decimal es ambiguo en Colombia."""
+    with pytest.raises(ValueError, match="punto decimal"):
+        parsear_porcentaje("60.00")
+
+
+def test_parsear_porcentaje_rechaza_letras_y_vacio() -> None:
+    """Las letras y el campo vacío no se convierten en cero por accidente."""
+    with pytest.raises(ValueError, match="no es un número válido"):
+        parsear_porcentaje("sesenta")
+    with pytest.raises(ValueError, match="obligatorio"):
+        parsear_porcentaje("   ")
 
 
 def test_parsear_periodo_valido() -> None:

@@ -85,6 +85,14 @@ class PerfilFinanciero(Base):
             "quincena_deducciones IS NULL OR quincena_deducciones IN (1, 2)",
             name="ck_perfil_quincena_deducciones",
         ),
+        CheckConstraint(
+            "dia_quincena_1 IS NULL OR dia_quincena_1 BETWEEN 1 AND 31",
+            name="ck_perfil_dia_quincena_1",
+        ),
+        CheckConstraint(
+            "dia_quincena_2 IS NULL OR dia_quincena_2 BETWEEN 1 AND 31",
+            name="ck_perfil_dia_quincena_2",
+        ),
     )
 
     id_perfil: Mapped[str] = mapped_column(String(32), primary_key=True, default=nuevo_id)
@@ -99,6 +107,10 @@ class PerfilFinanciero(Base):
     porcentaje_quincena_1: Mapped[Decimal | None] = mapped_column(Numeric(5, 2), nullable=True)
     porcentaje_quincena_2: Mapped[Decimal | None] = mapped_column(Numeric(5, 2), nullable=True)
     quincena_deducciones: Mapped[int | None] = mapped_column(SmallInteger, nullable=True)
+    # SRS v1.9: día del mes en que cae cada quincena, según lo indique el usuario
+    # (por ejemplo 5 y 20). Si no existe el día en un mes, se usa su último día.
+    dia_quincena_1: Mapped[int | None] = mapped_column(SmallInteger, nullable=True)
+    dia_quincena_2: Mapped[int | None] = mapped_column(SmallInteger, nullable=True)
     auxilio_transporte_habilitado: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     fecha_actualizacion: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
@@ -272,11 +284,11 @@ class Gasto(Base):
 
 
 class Deuda(Base):
-    """Pasivo del usuario (§8, SRS v1.5).
+    """Pasivo del usuario (§8, SRS v1.8).
 
-    La deuda se describe con seis datos: acreedor, descripción, saldo pendiente,
-    cuota, cuotas pendientes y periodicidad. La tasa de interés no se captura: se
-    deriva del saldo, la cuota y el número de pagos (interés implícito). Cada
+    La deuda se describe con seis datos: acreedor, descripción, total adeudado,
+    cuota, cuotas pendientes y periodicidad. Sin intereses: la cuota y las
+    cuotas deben reconstruir el total adeudado, y cada pago reduce capital. Cada
     cuota aplicada queda registrada en `pagos_deuda`.
     """
 
@@ -301,9 +313,6 @@ class Deuda(Base):
     fecha_creacion: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
-    # Interno: tasa implícita por periodo, derivada al registrar la deuda. La
-    # interfaz no la pide ni la edita; solo se muestra como dato informativo.
-    tasa_interes: Mapped[Decimal | None] = mapped_column(Numeric(12, 10), nullable=True)
     # Columnas heredadas del modelo anterior; quedan sin uso y se conservan
     # nulas para no romper bases ya desplegadas.
     fecha_limite: Mapped[date | None] = mapped_column(Date, nullable=True)
@@ -575,6 +584,9 @@ class VentaDetalle(Base):
     precio_unitario: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False)
     subtotal_item: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False, default=0)
     garantia_texto: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    # SRS v1.9: vencimiento de la garantía de este producto. La orden guarda la
+    # más cercana; el CSV de analítica necesita la de cada línea.
+    garantia_fecha_fin: Mapped[date | None] = mapped_column(Date, nullable=True)
 
 
 class Abono(Base):

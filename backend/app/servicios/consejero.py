@@ -1,22 +1,23 @@
-"""Consejero financiero del excedente mensual (SRS v1.7, bloque G).
+"""Consejero financiero del excedente mensual (SRS v1.8).
 
 Responsabilidad
 ---------------
-- Analizar si conviene amortizar deudas o alimentar metas de ahorro cuando el
-  excedente consolidado del mes (quincenas más trabajos extras) supera los
-  $300.000.
-- Comparar las dos estrategias de amortización: bola de nieve (deuda más pequeña
-  primero) y avalancha (tasa más alta primero), y recomendar la que menos
-  intereses cuesta en doce meses.
+- Decidir si el dinero libre del mes supera la base mínima de liquidez
+  ($300.000) y, solo con el remanente, sugerir abonos o metas.
+- En deudas, ordenar por **liberación de flujo de caja**: primero la deuda que
+  el excedente pueda cancelar completa y que deje más cuotas por delante (la de
+  12 meses antes que la de 5); si ninguna se puede cancelar de una vez, la de
+  menor saldo, que es la que se cierra antes.
 - Entregar la serie mensual «base frente a optimizado» para la gráfica.
 
 Reglas:
-- El consejero solo se activa con un excedente **mayor** que el umbral; por
-  debajo, el usuario primero debe equilibrar su presupuesto.
-- La simulación trabaja en meses: una deuda quincenal convierte su tasa y su
-  cuota a equivalente mensual. Los intereses se redondean a pesos.
-- En modo deuda, «base» paga solo las cuotas mínimas y «optimizado» aplica todo
-  el excedente a la deuda elegida, pasando a la siguiente cuando se termina.
+- Sin intereses: el saldo de cada deuda baja con su cuota mínima y con el
+  excedente. No se prometen ahorros de intereses que el sistema no puede
+  comprobar.
+- La base mínima de liquidez se descuenta antes de calcular el excedente: si el
+  libre son $500.000, quedan $200.000 para abonar.
+- Si el libre no supera la base, el consejo se apaga con un mensaje que invita a
+  crear una meta de emergencia con lo mínimo que se pueda ahorrar.
 - En modo ahorro, «base» acumula solo lo ya planeado en metas y «optimizado»
   suma el excedente. Si no hay metas, se sugiere crear una.
 - Es una proyección educativa, no una promesa: supone ingreso y cuotas estables.
@@ -43,13 +44,14 @@ from app.servicios import deudas as servicio_deudas
 CERO = Decimal("0")
 CIEN = Decimal("100")
 MESES = 12
-UMBRAL_ACTIVACION = Decimal("300000")
+# SRS v1.8: el consejero solo opina sobre el dinero que supera la reserva de
+# supervivencia; por debajo de ella no se sugiere abonar ni proyectar.
+UMBRAL_ACTIVACION = servicio_capacidad.BASE_MINIMA_LIQUIDEZ
 
 MODO_DEUDA = "DEUDA"
 MODO_AHORRO = "AHORRO"
 
-ESTRATEGIA_AVALANCHA = "AVALANCHA"
-ESTRATEGIA_BOLA = "BOLA_DE_NIEVE"
+ESTRATEGIA_FLUJO = "FLUJO_DE_CAJA"
 ESTRATEGIA_METAS = "METAS"
 ESTRATEGIA_SIN_METAS = "SIN_METAS"
 
@@ -59,18 +61,19 @@ class Consejo:
     """Recomendación del consejero y su comparación a doce meses.
 
     Attributes:
-        activo: `True` solo si el excedente supera el umbral.
+        activo: `True` solo si el dinero libre supera la base mínima.
         alias: Nombre visible del usuario para el saludo.
-        excedente: Dinero disponible del mes (quincenas + extras).
-        umbral: Monto mínimo para activarse.
+        excedente: Dinero disponible para abonar (libre − base mínima).
+        umbral: Base mínima de liquidez que debe superarse.
         modo: `DEUDA` si hay pasivos, `AHORRO` si no los hay.
-        estrategia: `AVALANCHA`, `BOLA_DE_NIEVE`, `METAS` o `SIN_METAS`.
+        estrategia: `FLUJO_DE_CAJA`, `METAS` o `SIN_METAS`.
         titulo: Saludo con el alias.
         mensaje: Recomendación principal en lenguaje natural.
         pasos: Acciones concretas sugeridas.
         deuda_objetivo: Acreedor que concentra el excedente, si aplica.
-        interes_base: Intereses pagados a doce meses sin aplicar el excedente.
-        interes_optimizado: Intereses pagados con la estrategia recomendada.
+        meses_base: Meses para quedar libre de deudas pagando solo lo mínimo.
+        meses_optimizado: Meses con el excedente aplicado.
+        cuota_liberada: Cuota mensual que deja de pesarte al cerrar deudas.
         ahorro_base: Ahorro acumulado sin aplicar el excedente.
         ahorro_optimizado: Ahorro acumulado aplicando el excedente.
         meses_liquidacion: Mes en que la deuda llega a cero, si ocurre.
@@ -88,8 +91,9 @@ class Consejo:
     mensaje: str = ""
     pasos: list[str] = field(default_factory=list)
     deuda_objetivo: str | None = None
-    interes_base: Decimal = CERO
-    interes_optimizado: Decimal = CERO
+    meses_base: int | None = None
+    meses_optimizado: int | None = None
+    cuota_liberada: Decimal = CERO
     ahorro_base: Decimal = CERO
     ahorro_optimizado: Decimal = CERO
     meses_liquidacion: int | None = None
@@ -102,41 +106,34 @@ class _EstadoDeuda:
     """Deuda con su saldo vivo durante una simulación.
 
     Attributes:
-        deuda: Registro original, del que se toman el acreedor y la tasa.
+        deuda: Registro original, del que se toma el acreedor.
         saldo: Capital pendiente en el mes simulado.
-        tasa: Tasa mensual equivalente como fracción.
         cuota: Cuota mensual equivalente.
+        cuotas: Cuotas que faltan, expresadas en meses de pago.
     """
 
     deuda: Deuda
     saldo: Decimal
-    tasa: Decimal
     cuota: Decimal
+    cuotas: int
 
 
-def _tasa_mensual(deuda: Deuda) -> Decimal:
-    """Convierte la tasa de una deuda a equivalente mensual.
+def _cuotas_mensuales(deuda: Deuda) -> int:
+    """Expresa las cuotas pendientes en meses de pago.
+
+    Una deuda quincenal tiene dos vencimientos por mes; para comparar plazos con
+    las mensuales se redondea hacia arriba la mitad de sus cuotas.
 
     Args:
-        deuda: Deuda activa.
+        deuda: Deuda consultada.
 
     Returns:
-        Tasa mensual como fracción; cero si la deuda no tiene plan válido.
+        Número de meses de pago que le quedan; al menos uno si sigue activa.
     """
-    tasa = deuda.tasa_interes
-    if tasa is None:
-        try:
-            tasa = servicio_deudas.tasa_implicita(
-                deuda.saldo_total,
-                deuda.cuota_mensual or CERO,
-                max(deuda.cuotas_pendientes, 1),
-            )
-        except (ValueError, ArithmeticError):
-            tasa = CERO
+    pendientes = max(int(deuda.cuotas_pendientes or 0), 0)
     if deuda.periodicidad == servicio_deudas.PERIODICIDAD_QUINCENAL:
-        # Dos pagos por mes: la tasa compuesta mensual es (1 + r)² − 1.
-        return (1 + tasa) ** 2 - 1
-    return tasa
+        return max(int(math.ceil(pendientes / 2)), 1)
+    return max(pendientes, 1)
 
 
 def _estados(deudas: list[Deuda]) -> list[_EstadoDeuda]:
@@ -146,7 +143,7 @@ def _estados(deudas: list[Deuda]) -> list[_EstadoDeuda]:
         deudas: Deudas del usuario.
 
     Returns:
-        Lista con saldo y cuota mensual de cada deuda vigente.
+        Lista con saldo, cuota mensual y plazo de cada deuda vigente.
     """
     estados: list[_EstadoDeuda] = []
     for deuda in deudas:
@@ -160,51 +157,62 @@ def _estados(deudas: list[Deuda]) -> list[_EstadoDeuda]:
             _EstadoDeuda(
                 deuda=deuda,
                 saldo=saldo,
-                tasa=_tasa_mensual(deuda),
                 cuota=cuota,
+                cuotas=_cuotas_mensuales(deuda),
             )
         )
     return estados
 
 
-def _ordenar(estados: list[_EstadoDeuda], estrategia: str) -> list[_EstadoDeuda]:
-    """Ordena las deudas según la estrategia de amortización.
+def _ordenar(estados: list[_EstadoDeuda], excedente: Decimal) -> list[_EstadoDeuda]:
+    """Ordena las deudas para liberar cuotas lo antes posible.
+
+    SRS v1.8: si el excedente alcanza para cancelar una deuda completa, se ataca
+    primero la que tenga más cuotas por delante (la de 12 meses antes que la de
+    5), porque libera la cuota durante más tiempo. Si no alcanza para ninguna,
+    se empieza por la de menor saldo, que es la que se cierra antes.
 
     Args:
         estados: Deudas simulables.
-        estrategia: `AVALANCHA` (tasa más alta) o `BOLA_DE_NIEVE` (saldo menor).
+        excedente: Dinero mensual disponible para abonar.
 
     Returns:
         Lista ordenada de la primera a la última deuda a atacar.
     """
-    if estrategia == ESTRATEGIA_BOLA:
-        return sorted(estados, key=lambda estado: (estado.saldo, -estado.tasa))
-    return sorted(estados, key=lambda estado: (-estado.tasa, estado.saldo))
+    cancelables = [estado for estado in estados if estado.saldo <= excedente]
+    resto = [estado for estado in estados if estado.saldo > excedente]
+    cancelables.sort(key=lambda estado: (-estado.cuotas, -estado.saldo))
+    resto.sort(key=lambda estado: (estado.saldo, -estado.cuotas))
+    return cancelables + resto
 
 
 def _simular(
     estados: list[_EstadoDeuda],
     excedente: Decimal,
-    estrategia: str | None = None,
     aplicar_excedente: bool = True,
-) -> tuple[Decimal, list[Decimal], int | None]:
+) -> tuple[list[Decimal], int | None, Decimal]:
     """Simula doce meses de pagos sobre un conjunto de deudas.
+
+    Sin intereses: cada mes se paga la cuota mínima de todas las deudas y, si se
+    aplica el excedente, el remanente se dirige a la primera de la lista hasta
+    agotarlo.
 
     Args:
         estados: Deudas de partida; no se modifican.
         excedente: Dinero extra que se aplica cada mes.
-        estrategia: Orden de ataque cuando se aplica el excedente.
         aplicar_excedente: `False` simula solo las cuotas mínimas (base).
 
     Returns:
-        Tupla `(intereses_totales, saldo_restante_por_mes, mes_liquidacion)`.
+        Tupla `(saldo_restante_por_mes, mes_liquidacion, cuota_liberada)`. La
+        cuota liberada suma las cuotas de las deudas que se cierran.
     """
     copia = [
-        _EstadoDeuda(estado.deuda, estado.saldo, estado.tasa, estado.cuota)
+        _EstadoDeuda(estado.deuda, estado.saldo, estado.cuota, estado.cuotas)
         for estado in estados
     ]
-    orden = _ordenar(copia, estrategia) if estrategia else []
-    intereses = CERO
+    orden = _ordenar(copia, excedente) if aplicar_excedente else []
+    cerradas: set[str] = set()
+    liberada = CERO
     serie: list[Decimal] = []
     liquidacion: int | None = None
 
@@ -212,15 +220,11 @@ def _simular(
         for estado in copia:
             if estado.saldo <= CERO:
                 continue
-            interes = redondear_dinero(estado.saldo * estado.tasa)
-            estado.saldo = redondear_dinero(estado.saldo + interes)
-            intereses = redondear_dinero(intereses + interes)
-
-        for estado in copia:
-            if estado.saldo <= CERO:
-                continue
             pago = min(estado.cuota, estado.saldo)
             estado.saldo = redondear_dinero(estado.saldo - pago)
+            if estado.saldo <= CERO and estado.deuda.id_deuda not in cerradas:
+                cerradas.add(estado.deuda.id_deuda)
+                liberada = redondear_dinero(liberada + estado.cuota)
 
         if aplicar_excedente and excedente > CERO:
             resto = excedente
@@ -232,13 +236,16 @@ def _simular(
                 pago = min(resto, estado.saldo)
                 estado.saldo = redondear_dinero(estado.saldo - pago)
                 resto = redondear_dinero(resto - pago)
+                if estado.saldo <= CERO and estado.deuda.id_deuda not in cerradas:
+                    cerradas.add(estado.deuda.id_deuda)
+                    liberada = redondear_dinero(liberada + estado.cuota)
 
         total = redondear_dinero(sum((estado.saldo for estado in copia), start=CERO))
         serie.append(total)
         if liquidacion is None and total <= CERO:
             liquidacion = avance + 1
 
-    return intereses, serie, liquidacion
+    return serie, liquidacion, liberada
 
 
 def _altura(valor: Decimal, maximo: Decimal) -> Decimal:
@@ -291,74 +298,73 @@ def _serie_comparada(
     return filas, maximo
 
 
+def _meses_de_texto(meses: int | None) -> str:
+    """Describe un plazo en meses para el mensaje del consejo.
+
+    Args:
+        meses: Número de meses; `None` cuando no se cierra dentro del año.
+
+    Returns:
+        Texto como «en 3 meses» o «en más de 12 meses».
+    """
+    if meses is None:
+        return f"en más de {MESES} meses"
+    if meses == 1:
+        return "en 1 mes"
+    return f"en {meses} meses"
+
+
 def _consejo_deuda(
     estados: list[_EstadoDeuda],
     excedente: Decimal,
     alias: str,
     etiquetas: list[str],
 ) -> Consejo:
-    """Recomienda bola de nieve o avalancha y compara contra el pago mínimo.
+    """Recomienda a qué deuda dirigir el excedente para liberar la cuota.
 
     Args:
         estados: Deudas activas del usuario.
-        excedente: Dinero extra mensual.
+        excedente: Dinero disponible después de la base mínima de liquidez.
         alias: Nombre visible para el saludo.
         etiquetas: Rótulos de los doce meses.
 
     Returns:
         El consejo configurado en modo deuda.
     """
-    interes_base, serie_base, _ = _simular(estados, excedente, aplicar_excedente=False)
-    interes_aval, serie_aval, meses_aval = _simular(
-        estados, excedente, ESTRATEGIA_AVALANCHA
-    )
-    interes_bola, serie_bola, meses_bola = _simular(
-        estados, excedente, ESTRATEGIA_BOLA
-    )
+    serie_base, meses_base, _ = _simular(estados, excedente, aplicar_excedente=False)
+    serie_optima, meses, liberada = _simular(estados, excedente)
+    orden = _ordenar(estados, excedente)
+    objetivo = orden[0]
+    cancela_completa = objetivo.saldo <= excedente
 
-    if interes_aval <= interes_bola:
-        estrategia = ESTRATEGIA_AVALANCHA
-        interes_optimo, serie_optima, meses = interes_aval, serie_aval, meses_aval
-        nombre = "avalancha"
-        criterio = "la deuda con la tasa más alta"
+    if cancela_completa:
+        criterio = (
+            f"es la que puedes cancelar completa y te libera la cuota por más "
+            f"tiempo ({objetivo.cuotas} cuota(s) por delante)"
+        )
     else:
-        estrategia = ESTRATEGIA_BOLA
-        interes_optimo, serie_optima, meses = interes_bola, serie_bola, meses_bola
-        nombre = "bola de nieve"
-        criterio = "la deuda más pequeña"
+        criterio = "es la de menor saldo y la cierras antes"
 
-    orden = _ordenar(estados, estrategia)
-    objetivo = orden[0].deuda.acreedor if orden else None
-    ahorro_intereses = max(redondear_dinero(interes_base - interes_optimo), CERO)
     serie, maximo = _serie_comparada(serie_base, serie_optima, etiquetas)
 
-    if meses:
-        cierre = f"Con este ritmo quedarías libre de deudas en {meses} meses."
-    else:
-        cierre = (
-            "En doce meses tu saldo pendiente bajaría a "
-            f"{formatear_cop(serie_optima[-1])}."
-        )
-
     pasos = [
-        f"Concentra el excedente de {formatear_cop(excedente)} en {objetivo} "
-        f"({criterio})."
+        f"Concentra el excedente de {formatear_cop(excedente)} en "
+        f"{objetivo.deuda.acreedor}: {criterio}."
     ]
     if len(orden) > 1:
         siguientes = ", ".join(estado.deuda.acreedor for estado in orden[1:3])
         pasos.append(f"Cuando esa deuda cierre, sigue con {siguientes}.")
-    mayor = max(estados, key=lambda estado: estado.saldo)
-    pasos.append(
-        f"Tu deuda más grande es {mayor.deuda.acreedor}, con "
-        f"{formatear_cop(mayor.saldo)} de saldo."
-    )
-    pasos.append(cierre)
+    if liberada > CERO:
+        pasos.append(
+            f"Al cerrar esas deudas liberarás {formatear_cop(liberada)} de cuota "
+            "mensual para tus metas."
+        )
+    pasos.append(f"Pagando solo lo mínimo quedarías libre {_meses_de_texto(meses_base)}.")
 
     mensaje = (
-        f"{alias}, con {formatear_cop(excedente)} de excedente te conviene la "
-        f"estrategia {nombre}: ataca primero {objetivo}. Aplicarla ahorra "
-        f"{formatear_cop(ahorro_intereses)} en intereses frente a pagar solo lo "
-        "mínimo."
+        f"{alias}, con {formatear_cop(excedente)} de excedente te conviene atacar "
+        f"primero {objetivo.deuda.acreedor}. Con ese ritmo quedarías libre de "
+        f"deudas {_meses_de_texto(meses)}."
     )
 
     return Consejo(
@@ -367,13 +373,14 @@ def _consejo_deuda(
         excedente=excedente,
         umbral=UMBRAL_ACTIVACION,
         modo=MODO_DEUDA,
-        estrategia=estrategia,
+        estrategia=ESTRATEGIA_FLUJO,
         titulo=f"Hola, {alias}: esto es lo que haría con tu excedente",
         mensaje=mensaje,
         pasos=pasos,
-        deuda_objetivo=objetivo,
-        interes_base=interes_base,
-        interes_optimizado=interes_optimo,
+        deuda_objetivo=objetivo.deuda.acreedor,
+        meses_base=meses_base,
+        meses_optimizado=meses,
+        cuota_liberada=liberada,
         meses_liquidacion=meses,
         serie=serie,
         maximo=maximo,
@@ -392,7 +399,7 @@ def _consejo_ahorro(
     Args:
         bd: Sesión de base de datos.
         id_usuario: Dueño de las metas.
-        excedente: Dinero extra mensual.
+        excedente: Dinero disponible después de la base mínima de liquidez.
         alias: Nombre visible para el saludo.
         etiquetas: Rótulos de los doce meses.
 
@@ -403,15 +410,6 @@ def _consejo_ahorro(
     planeado = redondear_dinero(
         sum(
             (servicio_ahorro.valor_mensual_efectivo(meta.proyeccion) for meta in metas),
-            start=CERO,
-        )
-    )
-    objetivo = redondear_dinero(
-        sum(
-            (
-                max((meta.total_proyectado or CERO) - meta.acumulado, CERO)
-                for meta in metas
-            ),
             start=CERO,
         )
     )
@@ -490,25 +488,27 @@ def consejo_financiero(
         bd: Sesión de base de datos.
         id_usuario: Dueño de las deudas y metas.
         alias: Nombre visible del usuario.
-        excedente: Disponible consolidado del mes (quincenas + trabajos extras).
+        excedente: Dinero libre del mes (quincenas + trabajos extras − gastos).
         hoy: Mes de partida de la comparación; por defecto, el actual.
 
     Returns:
         El `Consejo` activo con su recomendación y su gráfica, o uno inactivo si
-        el excedente no supera el umbral.
+        el dinero libre no supera la base mínima de liquidez.
     """
-    monto = redondear_dinero(Decimal(str(excedente or CERO)))
-    if monto <= UMBRAL_ACTIVACION:
+    libre = redondear_dinero(Decimal(str(excedente or CERO)))
+    disponible = max(redondear_dinero(libre - UMBRAL_ACTIVACION), CERO)
+    if libre <= UMBRAL_ACTIVACION:
         return Consejo(
             activo=False,
             alias=alias,
-            excedente=monto,
+            excedente=CERO,
             umbral=UMBRAL_ACTIVACION,
             titulo=f"Hola, {alias}",
             mensaje=(
-                "El consejero se activa cuando tu excedente supera los "
-                f"{formatear_cop(UMBRAL_ACTIVACION)}. Hoy tienes "
-                f"{formatear_cop(monto)}: primero equilibra gastos y deudas."
+                "Tienes el valor de la base mínima de liquidez. No puedo "
+                "ofrecerte un consejo financiero sobre tus deudas en este "
+                "momento, pero podrías empezar creando una meta para crear un "
+                "colchón de emergencias, con lo mínimo que puedas ahorrar."
             ),
         )
 
@@ -521,5 +521,5 @@ def consejo_financiero(
     ]
     estados = _estados(servicio_deudas.listar_deudas(bd, id_usuario))
     if estados:
-        return _consejo_deuda(estados, monto, alias, etiquetas)
-    return _consejo_ahorro(bd, id_usuario, monto, alias, etiquetas)
+        return _consejo_deuda(estados, disponible, alias, etiquetas)
+    return _consejo_ahorro(bd, id_usuario, disponible, alias, etiquetas)

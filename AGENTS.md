@@ -58,7 +58,7 @@ Plataforma web/móvil híbrida (PWA) con backend y frontend **100% Python**, arq
     ├── datos/finanzas.db               # Base SQLite local (no versionar)
     ├── scripts/respaldo.py             # Respaldo consistente y rotación
     ├── scripts/generar_guia.py        # Inventario de Guia.md + --verificar
-    ├── tests/                          # Suite completa (478 pruebas)
+    ├── tests/                          # Suite completa (559 pruebas)
     └── app/
         ├── main.py                     # Punto de entrada FastAPI (fábrica de app)
         ├── dependencias.py             # Sesión, `SesionRequerida` y RBAC por rol
@@ -99,7 +99,7 @@ Plataforma web/móvil híbrida (PWA) con backend y frontend **100% Python**, arq
         │   ├── deudas.py
         │   ├── trabajos.py
         │   ├── capacidad.py            # Dona y proyección de endeudamiento (v1.7)
-        │   ├── consejero.py            # Bola de nieve, avalancha y metas (v1.7)
+        │   ├── consejero.py            # Liberación de flujo de caja y metas (v1.8)
         │   ├── comercial.py            # Inventario, ventas y cartera
         │   ├── auditoria.py
         │   └── usuarios.py             # Repositorio de usuarios sobre BD
@@ -160,9 +160,9 @@ Plataforma web/móvil híbrida (PWA) con backend y frontend **100% Python**, arq
   - Recargo Dominical/Festivo: `1.90`
 - **Auxilio de Transporte:** se anula ($0) si `Sueldo Básico + Recargos` > 2 SMMLV (**COP 3.501.810**, parametrizable).
 - **Incapacidades (origen común):** días 1–2 al 100% (empleador); días 3+ al 66.67% (descuento del 33.33% a cargo de EPS). Los días son **calendario** (`fin − inicio + 1`) y no se digitan; la regla 100 %/66,67 % se aplica una sola vez sobre la incapacidad completa. Si el rango cruza de mes, cada mes descuenta **solo su tramo** (`registro_incapacidades.tramos_del_mes`); **no hay rollover** (ADR-20). La incapacidad entra en la caja única de deducciones de ley.
-- **Deudas (SRS v1.5, ADR-21):** seis datos (acreedor, descripción, saldo, cuota, cuotas pendientes y periodicidad quincenal/mensual). Sin tasa capturada ni fecha límite: la tasa se deriva por bisección de `saldo = cuota × (1 − (1+r)^−n) / r` con 10 decimales. Al abrir el módulo se aplican las cuotas vencidas en `pagos_deuda` (idempotente por `UNIQUE(id_deuda, numero_cuota)`) y la última cuota deja el saldo exacto en cero. No existe abono manual.
+- **Deudas (SRS v1.8, ADR-53):** seis datos (acreedor, descripción, total adeudado, cuota, cuotas pendientes y periodicidad quincenal/mensual). **Sin intereses:** la tasa se retira del modelo y `cuota × cuotas` debe reconstruir el total adeudado con tolerancia de **$1 por cuota** (si no cuadra, se pide revisar y reingresar). Al abrir el módulo se aplican las cuotas vencidas en `pagos_deuda` (idempotente por `UNIQUE(id_deuda, numero_cuota)`); cada cuota abona capital completo y la última deja el saldo exacto en cero. No existe abono manual.
 - **Metas con «Ambas quincenas» (ADR-22):** `quincena = 3` guarda la cuota mensual y la reparte entre los dos pagos (`valor_por_pago`). Sigue siendo planificación: no se resta del saldo libre.
-- **Capacidad de endeudamiento y consejero (SRS v1.7, ADR-44 y ADR-45):** el ingreso del mes (quincenas + extras cobrados) se reparte entre gastos fijos, cuota mensual de deudas y libre; el semáforo usa el porcentaje de deuda (≤ 20 % verde, ≤ 35 % ámbar, más rojo). El consejero solo se activa con un excedente **mayor** que $300.000 y compara bola de nieve (saldo menor) contra avalancha (tasa mayor) a 12 meses; sin deudas dirige el excedente a las metas.
+- **Capacidad de endeudamiento y consejero (SRS v1.8, ADR-53):** el ingreso del mes (quincenas + extras cobrados) se reparte entre gastos fijos, cuota mensual de deudas y libre; el semáforo usa el porcentaje de deuda (≤ 20 % verde, ≤ 35 % ámbar, más rojo). Del libre se reserva una **base mínima de liquidez de $300.000** (`BASE_MINIMA_LIQUIDEZ`, compartida con `ahorro.py`): la dona muestra «Base mínima de liquidez» y «Disponible para abonar», y solo el remanente alimenta el consejero. Si el libre no supera la base, el consejo se apaga con un mensaje que invita a crear una meta de emergencia. Con deudas, el orden es de **flujo de caja**: si el excedente cancela una deuda completa, primero la de más cuotas por delante (12 meses antes que 5); si no, la de menor saldo. Sin deudas dirige el excedente a las metas.
 - **Onboarding obligatorio (SRS v1.2):** ninguna ruta de negocio se abre sin perfil financiero; `UsuarioSesion.perfil_configurado` se calcula por petición y `OnboardingRequerido` redirige a `/perfil?bienvenida=1` (303 HTML / 409 JSON).
 - **Quincenas independientes:** en modalidad `QUINCENAL`, `porcentaje_quincena_1 + porcentaje_quincena_2 = 100 %`. Las deducciones de ley se aplican **solo** a la quincena indicada en `quincena_deducciones`. Si el usuario no conoce los porcentajes, informa el neto de la quincena sin descuentos y el sistema deriva ambos porcentajes por descarte.
 - **Obligaciones fijas por quincena:** `gastos.quincena` (`1`, `2` o `NULL`) decide de qué pago se resta el gasto fijo. Los gastos sin quincena se muestran en la quincena 1 como «todo el mes» para conservar el total.
@@ -197,7 +197,7 @@ python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 
 ```bash
 cd backend
-.\.venv\Scripts\python -m pytest -q          # suite completa (478 pruebas)
+.\.venv\Scripts\python -m pytest -q          # suite completa (559 pruebas)
 .\.venv\Scripts\python scripts\respaldo.py   # copia consistente en backend/respaldos
 .\.venv\Scripts\python scripts\generar_guia.py --verificar  # docstrings y fichas de Guia.md
 ```
@@ -338,6 +338,14 @@ La configuración vive en `.vscode/launch.json`. También existe **Pruebas (pyte
 - [x] **Decisión (propietario):** Analítica y Cartera muestran ganancia y saldos sin protección adicional; el módulo es de uso exclusivo del administrador, por lo que no se requiere ocultarlos. La tabla de órdenes del panel sí oculta ganancia y saldo (ADR-43).
 - [x] **SRS v1.8 — Bloque 8 (recuperación de contraseña por correo, ADR-51):** `/olvide-contrasena` con respuesta neutra, `/restablecer-contrasena` con enlace de 15 minutos de un solo uso, SMTP con `smtplib` (`SMTP_*`, `APP_URL`) y auditoría. Verificación: `pytest` en verde (525) y `generar_guia.py --verificar` sin problemas (98 archivos con ficha).
 - [x] **PostgreSQL en Neon y Render (ADR-52):** `DATABASE_URL` de Neon en `backend/.env` (no versionado), `psycopg` 3, motor con `pool_pre_ping` y `pool_recycle=300`, `scripts/migrar_a_neon.py` (idempotente) con la base cargada y `/salud` respondiendo 200 contra Neon. Pruebas sobre SQLite temporal.
+- [x] **Analítica con filtros y CSV (Bloque 3, ADR-55):** filtros de año, mes, cliente y producto compartidos por todas las tablas; clic en una fila activa o quita el filtro; «Descargar CSV» por tabla con la selección de pantalla; tabla de ventas por producto (No. de orden, cliente, categoría, producto, costo, total, saldo pendiente, abonos, ganancia y garantía Activa/Vencida por línea). `venta_detalle.garantia_fecha_fin` nuevo. `sw.js` en `olb-finanzas-v38`. Verificación: **604 pruebas** en verde y `generar_guia.py --verificar` sin problemas.
+- [ ] **Analítica — verificación pendiente:** migración de `venta_detalle` sobre una copia de `finanzas.db` antigua y sobre Neon; revisión visual de la tabla de ventas y los chips en 360/390/1280 px.
+- [x] **Día de cada quincena (Bloque 2, ADR-54):** el perfil quincenal pide «Día de la quincena 1» y «Día de la quincena 2» (1 a 31; la 2 debe ser posterior). Metas, deducciones fijas, gastos y el panel de quincenas muestran esos días. Perfiles previos: 15 y 30. En PostgreSQL se agregan las columnas al arrancar. `sw.js` en `olb-finanzas-v37`. Verificación: **589 pruebas** en verde.
+- [ ] **Día de quincena — verificación pendiente:** migración sobre una copia de `finanzas.db` con perfiles antiguos y sobre Neon antes de desplegar; revisión visual del formulario de perfil en 360/390 px. Trabajos Extras conserva «día 15/30» (pendiente de decisión).
+- [x] **Colores de la dona (Bloque 1 de la ronda de analítica):** capacidad de endeudamiento y trabajos extras pintan las cifras en verde (a favor) o rojo (gastos, deudas, saldo negativo); cartera frente a deuda en OLB_BYTE usa verde para la cartera y rojo para la deuda, y muestra el balance con color en el centro. `sw.js` en `olb-finanzas-v36`. Verificación: **561 pruebas** en verde y `generar_guia.py --verificar` sin problemas.
+- [ ] **Colores de la dona — revisión visual pendiente:** leyenda y centro de la dona en 360/390/1280 px.
+- [x] **SRS v1.8 — Base mínima de liquidez, deudas sin intereses y blindaje de entradas (ADR-53):** `BASE_MINIMA_LIQUIDEZ = $300.000` compartida por la dona, el consejero y el planificador; la dona muestra «Base mínima de liquidez» y «Disponible para abonar», y el consejo solo usa el remanente (por debajo se apaga con el mensaje de emergencia). Deudas sin tasa ni intereses: `cuota × cuotas` debe cuadrar con el total adeudado (tolerancia $1 por cuota). Orden por flujo de caja (más cuotas por delante si se cancela completa; si no, menor saldo). `parsear_porcentaje()` acepta «60», «60 %» y «60,5»; manejador global de `ValueError` y guardia numérica en `app.js`; abono de OLB_BYTE con saldo pendiente en el mensaje. Metas: «Quincena donde aplicaremos los pagos», selector de modo alineado y cinco abonos con scroll. Verificación: `compileall` OK y **559 pruebas** en verde. `sw.js` en `olb-finanzas-v35`.
+- [ ] **SRS v1.8 — Revisión visual pendiente:** alineación del selector de modo de «Ambas quincenas» y la caja de cinco abonos en 360/390/768/escritorio.
 - [ ] **Neon — rotar contraseña:** la clave de Neon se compartió en el chat; rotarla y actualizar `DATABASE_URL` en Render y en `backend/.env`.
 - [ ] **Recuperación de contraseña — configuración pendiente:** definir en Render `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` y `APP_URL`; probar el correo real.
 - [ ] **OLB_BYTE — revisión visual pendiente:** Android con Chrome en HTTPS (contactos y compartir PDF) y la impresión de la factura.

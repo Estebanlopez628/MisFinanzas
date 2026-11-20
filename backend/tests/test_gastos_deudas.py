@@ -87,24 +87,41 @@ def test_vista_gastos_registra_y_elimina(bd, cliente_admin: TestClient) -> None:
     assert gastos.listar_gastos(bd, _id_admin(bd)) == []
 
 
-def test_tasa_implicita_coincide_con_el_ejemplo_del_srs() -> None:
-    """3.500.000 en 48 cuotas de 100.000 → 1,3709 % por periodo."""
-    tasa = deudas.tasa_implicita("3.500.000", "100.000", 48)
+def test_validar_plan_acepta_el_redondeo_de_la_cuota() -> None:
+    """72.917 × 48 = 3.500.016: la diferencia de 16 pesos cabe en la tolerancia."""
+    total, pago, cuotas = deudas.validar_plan("3.500.000", "72.917", 48)
 
-    assert tasa == Decimal("0.0137085766")
-
-
-def test_tasa_implicita_sin_intereses_es_cero() -> None:
-    """Si la suma de cuotas iguala el saldo, no hay interés implícito."""
-    assert deudas.tasa_implicita("1.200.000", "100.000", 12) == Decimal("0")
+    assert total == Decimal("3500000.00")
+    assert pago == Decimal("72917.00")
+    assert cuotas == 48
 
 
-def test_deuda_rechaza_plan_que_no_cubre_el_saldo(bd) -> None:
-    """La cuota por el número de pagos debe alcanzar el capital."""
+def test_validar_plan_rechaza_un_total_mayor_al_adeudado() -> None:
+    """Cuota × cuotas mayor al total adeudado pide revisar los datos."""
+    try:
+        deudas.validar_plan("23.000.000", "433.000", 60)
+    except ValueError as error:
+        assert "más que el total adeudado" in str(error)
+    else:  # pragma: no cover - protección contra regresiones
+        raise AssertionError("Se esperaba ValueError")
+
+
+def test_validar_plan_rechaza_un_total_menor_al_adeudado() -> None:
+    """Cuota × cuotas menor al total adeudado también pide revisar los datos."""
+    try:
+        deudas.validar_plan("23.000.000", "300.000", 60)
+    except ValueError as error:
+        assert "menos que el total adeudado" in str(error)
+    else:  # pragma: no cover - protección contra regresiones
+        raise AssertionError("Se esperaba ValueError")
+
+
+def test_deuda_rechaza_plan_que_no_cuadra(bd) -> None:
+    """La cuota por el número de pagos debe coincidir con el total adeudado."""
     try:
         deudas.crear_deuda(bd, _id_admin(bd), "Banco", "1.000.000", "50.000", 10)
     except ValueError as error:
-        assert "no alcanzan" in str(error).lower()
+        assert "no cuadran" in str(error).lower()
     else:  # pragma: no cover - protección contra regresiones
         raise AssertionError("Se esperaba ValueError")
 
@@ -137,7 +154,7 @@ def test_deuda_quincenal_aplica_cada_quince_dias(bd) -> None:
 def test_ultima_cuota_deja_el_saldo_exacto_en_cero(bd) -> None:
     """El plan termina en cero y la última cuota absorbe el redondeo."""
     id_usuario = _id_admin(bd)
-    deuda = deudas.crear_deuda(bd, id_usuario, "Banco", "1.000.000", "400.000", 3)
+    deuda = deudas.crear_deuda(bd, id_usuario, "Banco", "1.000.000", "333.333", 3)
     deuda.fecha_creacion = datetime(2026, 1, 1, 8, 0)
     bd.commit()
 
@@ -152,20 +169,20 @@ def test_ultima_cuota_deja_el_saldo_exacto_en_cero(bd) -> None:
     assert sum(pago.abono_capital for pago in pagos) == Decimal("1000000.00")
 
 
-def test_ejemplo_del_srs_cierra_el_saldo_en_cero(bd) -> None:
-    """3.500.000 / 48 cuotas de 100.000: última cuota 100.000,02 y saldo 0."""
+def test_sin_intereses_la_cuota_abona_capital_completo(bd) -> None:
+    """Cada cuota reduce el capital por su valor; no hay porción de interés."""
     id_usuario = _id_admin(bd)
-    deuda = deudas.crear_deuda(bd, id_usuario, "Banco", "3.500.000", "100.000", 48)
+    deuda = deudas.crear_deuda(bd, id_usuario, "Banco", "3.500.000", "72.917", 48)
     deuda.fecha_creacion = datetime(2026, 1, 1, 8, 0)
     bd.commit()
 
-    assert deudas.aplicar_cuotas_vencidas(bd, id_usuario, date(2030, 12, 31)) == 48
+    assert deudas.aplicar_cuotas_vencidas(bd, id_usuario, date(2026, 3, 1)) == 2
     pagos = deudas.listar_pagos(bd, id_usuario)[deuda.id_deuda]
 
-    assert pagos[-1].valor_cuota == Decimal("100000.02")
-    assert pagos[-1].saldo_despues == Decimal("0.00")
-    assert sum(pago.valor_cuota for pago in pagos) == Decimal("4800000.02")
-    assert sum(pago.interes for pago in pagos) == Decimal("1300000.02")
+    assert pagos[0].valor_cuota == Decimal("72917.00")
+    assert pagos[0].abono_capital == Decimal("72917.00")
+    assert pagos[0].interes == Decimal("0.00")
+    assert sum(pago.interes for pago in pagos) == Decimal("0.00")
 
 
 def test_resumen_deudas_suma_activas(bd) -> None:
@@ -200,7 +217,7 @@ def test_vista_deudas_registra_y_muestra_amortizacion(
             "acreedor": "Banco",
             "descripcion": "Tarjeta",
             "saldo_total": "3.500.000",
-            "cuota": "100.000",
+            "cuota": "72.917",
             "cuotas_pendientes": "48",
             "periodicidad": "MENSUAL",
         },
@@ -210,9 +227,8 @@ def test_vista_deudas_registra_y_muestra_amortizacion(
     html = " ".join(cliente_admin.get("/deudas").text.split())
     assert "Banco" in html
     assert "3.500.000" in html
-    assert "1,3709 %" in html
-    assert "Ver amortización" in html
-    # SRS v1.5: sin abonos manuales ni tasa capturada por el usuario.
+    assert "Ver cuotas" in html
+    # SRS v1.8: sin intereses, sin abonos manuales y sin tasa capturada.
     assert "Abonar" not in html
     assert 'name="tasa_interes"' not in html
     assert 'name="fecha_limite"' not in html

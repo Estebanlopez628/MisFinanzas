@@ -482,6 +482,7 @@ def registrar_venta(
                 precio_unitario=precio,
                 subtotal_item=subtotal_item,
                 garantia_texto=texto_garantia,
+                garantia_fecha_fin=vencimiento,
             )
         )
 
@@ -619,7 +620,11 @@ def registrar_abono(
     if valor <= CERO:
         raise ValueError("El abono debe ser mayor que cero.")
     if valor > venta.saldo_pendiente:
-        raise ValueError("El abono no puede superar el saldo pendiente.")
+        raise ValueError(
+            "El abono no puede superar el saldo pendiente, que es "
+            f"{formatear_pesos(venta.saldo_pendiente)}. Revisa el monto e "
+            "inténtalo de nuevo."
+        )
     metodo = _validar_metodo(metodo_pago)
 
     abono = Abono(
@@ -1111,7 +1116,8 @@ def segmentos_dona(cartera_clientes: Decimal, deuda: Decimal) -> list[dict[str, 
         deuda: Deuda con el proveedor.
 
     Returns:
-        Lista con un diccionario por arco. Vacía si no hay cartera ni deuda.
+        Lista con un diccionario por arco. Vacía si no hay cartera ni deuda. Cada
+        arco incluye `clase`, el color verde o rojo de la cifra en la leyenda.
     """
     cartera_positiva = max(cartera_clientes, CERO)
     deuda_positiva = max(deuda, CERO)
@@ -1121,9 +1127,11 @@ def segmentos_dona(cartera_clientes: Decimal, deuda: Decimal) -> list[dict[str, 
 
     arcos: list[dict[str, object]] = []
     avance = 0.0
-    for etiqueta, valor, color in (
-        ("Cartera por cobrar", cartera_positiva, "var(--accent-blue)"),
-        ("Deuda con proveedor", deuda_positiva, "var(--accent-amber)"),
+    # SRS v1.8: la leyenda usa la paleta de referencia. La cartera es dinero a
+    # favor (verde) y la deuda con el proveedor es dinero en contra (rojo).
+    for etiqueta, valor, color, clase in (
+        ("Cartera por cobrar", cartera_positiva, "var(--accent-blue)", "valor-positivo"),
+        ("Deuda con proveedor", deuda_positiva, "var(--accent-amber)", "valor-negativo"),
     ):
         porcentaje = float(valor / total * 100)
         arcos.append(
@@ -1134,6 +1142,7 @@ def segmentos_dona(cartera_clientes: Decimal, deuda: Decimal) -> list[dict[str, 
                 "longitud": round(porcentaje, 4),
                 "desplazamiento": round(-avance, 4),
                 "color": color,
+                "clase": clase,
             }
         )
         avance += porcentaje

@@ -154,6 +154,8 @@ def test_vista_perfil_guarda_porcentajes(bd, cliente_admin: TestClient) -> None:
             "porcentaje_quincena_1": "40",
             "porcentaje_quincena_2": "60",
             "quincena_deducciones": "2",
+            "dia_quincena_1": "15",
+            "dia_quincena_2": "30",
         },
         follow_redirects=False,
     )
@@ -179,6 +181,8 @@ def test_vista_perfil_calcula_desde_neto(bd, cliente_admin: TestClient) -> None:
             "conoce_porcentajes": "NO",
             "neto_sin_deducciones": "1.800.000",
             "quincena_sin_deducciones": "1",
+            "dia_quincena_1": "15",
+            "dia_quincena_2": "30",
         },
         follow_redirects=False,
     )

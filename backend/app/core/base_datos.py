@@ -310,7 +310,33 @@ _COLUMNAS_PERFIL_NUEVAS = {
     "porcentaje_quincena_1": "NUMERIC(5, 2)",
     "porcentaje_quincena_2": "NUMERIC(5, 2)",
     "quincena_deducciones": "SMALLINT",
+    "dia_quincena_1": "SMALLINT",
+    "dia_quincena_2": "SMALLINT",
 }
+
+# SRS v1.9: los perfiles anteriores no tenían día de quincena. Se les asigna el
+# 15 y el 30 que la app usaba hasta ahora, para que ninguna cifra cambie de golpe.
+_COLUMNAS_DIA_QUINCENA = ("dia_quincena_1", "dia_quincena_2")
+
+
+def _migrar_dias_quincena_postgres() -> None:
+    """Agrega los días de quincena a una base PostgreSQL ya existente (Neon).
+
+    `create_all` no altera tablas que ya existen y las migraciones de SQLite no
+    corren en PostgreSQL. Por eso se usa `ADD COLUMN IF NOT EXISTS`, que es
+    idempotente, y se rellenan los perfiles previos con 15 y 30.
+    """
+    with motor.begin() as conexion:
+        for columna in _COLUMNAS_DIA_QUINCENA:
+            conexion.exec_driver_sql(
+                f"ALTER TABLE perfiles_financieros ADD COLUMN IF NOT EXISTS {columna} SMALLINT"
+            )
+        conexion.exec_driver_sql(
+            "UPDATE perfiles_financieros SET dia_quincena_1 = 15 WHERE dia_quincena_1 IS NULL"
+        )
+        conexion.exec_driver_sql(
+            "UPDATE perfiles_financieros SET dia_quincena_2 = 30 WHERE dia_quincena_2 IS NULL"
+        )
 
 
 def _migrar_columnas_perfil() -> None:
@@ -322,6 +348,7 @@ def _migrar_columnas_perfil() -> None:
     restricciones `CHECK` solo existen en bases creadas desde cero.
     """
     if not _conexion_sqlite:
+        _migrar_dias_quincena_postgres()
         return
 
     with motor.begin() as conexion:
@@ -348,6 +375,13 @@ def _migrar_columnas_perfil() -> None:
                 "  AND porcentaje_quincenal IS NOT NULL "
                 "  AND modalidad_pago = 'QUINCENAL'"
             )
+
+        conexion.exec_driver_sql(
+            "UPDATE perfiles_financieros SET dia_quincena_1 = 15 WHERE dia_quincena_1 IS NULL"
+        )
+        conexion.exec_driver_sql(
+            "UPDATE perfiles_financieros SET dia_quincena_2 = 30 WHERE dia_quincena_2 IS NULL"
+        )
 
 
 def _migrar_columnas_gastos() -> None:
@@ -652,6 +686,36 @@ def _migrar_columnas_usuarios() -> None:
             conexion.exec_driver_sql("ALTER TABLE usuarios ADD COLUMN avatar_url VARCHAR(500)")
 
 
+def _migrar_garantia_detalle() -> None:
+    """Agrega la fecha de garantía por producto a `venta_detalle` (SRS v1.9).
+
+    Las líneas antiguas reciben la fecha de su orden: es la más cercana de sus
+    productos, así que puede quedar antes de lo que corresponde a un producto con
+    más meses de garantía. Las ventas nuevas guardan la fecha exacta de cada línea.
+    Es idempotente en SQLite (PRAGMA) y en PostgreSQL (`IF NOT EXISTS`).
+    """
+    if _conexion_sqlite:
+        with motor.begin() as conexion:
+            filas = conexion.exec_driver_sql("PRAGMA table_info(venta_detalle)").fetchall()
+            if not filas:
+                return
+            if "garantia_fecha_fin" not in {fila[1] for fila in filas}:
+                conexion.exec_driver_sql("ALTER TABLE venta_detalle ADD COLUMN garantia_fecha_fin DATE")
+    else:
+        with motor.begin() as conexion:
+            conexion.exec_driver_sql(
+                "ALTER TABLE venta_detalle ADD COLUMN IF NOT EXISTS garantia_fecha_fin DATE"
+            )
+
+    with motor.begin() as conexion:
+        conexion.exec_driver_sql(
+            "UPDATE venta_detalle SET garantia_fecha_fin = ("
+            "SELECT ventas.garantia_fecha_fin FROM ventas "
+            "WHERE ventas.id_venta = venta_detalle.id_venta) "
+            "WHERE garantia_fecha_fin IS NULL"
+        )
+
+
 def inicializar_base_datos() -> None:
     """Prepara el esquema y siembra las cuentas de demostración.
 
@@ -668,5 +732,6 @@ def inicializar_base_datos() -> None:
     _migrar_proyeccion_quincena()
     _migrar_saldos_incapacidad()
     _migrar_columnas_usuarios()
+    _migrar_garantia_detalle()
     with FabricaSesiones() as sesion:
         usuarios.sembrar_demostracion(sesion)

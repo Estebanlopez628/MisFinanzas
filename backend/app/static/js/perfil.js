@@ -75,20 +75,59 @@
     alternarSubgrupo(casoNeto, !sabe);
   }
 
+  /**
+   * Lee un porcentaje escrito con «%» y coma decimal.
+   *
+   * @param {string} texto Valor del campo, por ejemplo «60 %» o «60,5».
+   * @returns {number} Porcentaje numérico; `NaN` si no se puede interpretar.
+   */
+  function leerPorcentaje(texto) {
+    var limpio = String(texto || "").replace(/%/g, "").replace(/\s/g, "").replace(",", ".");
+    var valor = parseFloat(limpio);
+    return isFinite(valor) ? valor : NaN;
+  }
+
+  /**
+   * Escribe un porcentaje con «%» y sin ceros de relleno.
+   *
+   * @param {number} valor Porcentaje a mostrar.
+   * @returns {string} Texto como «40 %» o «37,5 %».
+   */
+  function escribirPorcentaje(valor) {
+    var redondeado = Math.round(valor * 100) / 100;
+    var texto = String(redondeado).replace(".", ",");
+    return texto + " %";
+  }
+
   if (porcentaje1 && porcentaje2) {
     porcentaje1.addEventListener("input", function () {
       if (segundoEditado) {
         return;
       }
-      var valor = parseFloat(porcentaje1.value);
+      var valor = leerPorcentaje(porcentaje1.value);
       if (!isNaN(valor) && valor > 0 && valor < 100) {
-        porcentaje2.value = (100 - valor).toFixed(2);
+        porcentaje2.value = escribirPorcentaje(100 - valor);
       }
     });
     porcentaje2.addEventListener("input", function () {
       segundoEditado = true;
     });
   }
+
+  // SRS v1.9: los rótulos «Quincena N (día X)» siguen al día que se escribe,
+  // sin esperar a guardar. Si el campo queda vacío se muestra el día predeterminado.
+  var predeterminados = { "1": "15", "2": "30" };
+  document.querySelectorAll("[data-dia-quincena]").forEach(function (campo) {
+    var numero = campo.getAttribute("data-dia-quincena");
+    campo.addEventListener("input", function () {
+      var dia = campo.value.trim() || predeterminados[numero];
+      document
+        .querySelectorAll("option[data-etiqueta-quincena='" + numero + "']")
+        .forEach(function (opcion) {
+          opcion.textContent = "Quincena " + numero + " (día " + dia + ")";
+        });
+    });
+  });
 
   radios.forEach(function (radio) {
     radio.addEventListener("change", actualizar);
