@@ -453,6 +453,24 @@ Recálculo en tiempo real (<100 ms) sin recargar página. Se implementa con func
 
 ## Bitácora de Cambios
 
+### 2026-11-20 — Metas en móvil: dos abonos visibles y formulario «Extender» dentro de la tarjeta
+
+**Cambios realizados**
+1. `static/css/estilos.css`: en celular la lista de abonos muestra dos meses (`max-height: 214px`, medido en Chromium a 390 px: cada tarjeta mide 101 px y la separación 10 px); el resto se desplaza.
+2. El formulario «Extender» (`.formulario-abono-manual`) se acomoda en varias líneas en celular; antes, su campo de 90 px fijo lo sacaba de la tarjeta.
+3. `sw.js` en `olb-finanzas-v49`.
+
+**Verificación:** medición en Chromium a 390 px: el formulario termina en 340 px y el contenedor en 359 px; la lista mide 214 px. `pytest` en verde con **621 pruebas**. Pendiente: confirmar en 360 px.
+
+### 2026-11-20 — Selección de la dona persistente y leyenda más pequeña
+
+**Cambios realizados**
+1. `static/js/dona.js`: el detalle seleccionado se mantiene al tocar el centro o el fondo; tocar otro arco lo cambia y tocar el mismo lo quita. Se eliminó el reinicio por clic fuera.
+2. `static/css/estilos.css`: los arcos solo reciben el toque sobre su trazo (`pointer-events: stroke`), así que el centro ya no activa un arco. La leyenda de ambas donas pasa a 0,8 rem.
+3. `sw.js` en `olb-finanzas-v48`.
+
+**Verificación:** prueba en Chromium (390 px): tocar un arco muestra el detalle; tocar el centro y el fondo lo mantiene; un segundo toque al mismo arco lo quita. `pytest` en verde con **621 pruebas**; `generar_guia.py --verificar` sin problemas.
+
 ### 2026-11-20 — Formato de pesos al escribir en los campos de dinero
 
 **Cambios realizados**

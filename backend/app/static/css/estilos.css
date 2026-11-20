@@ -767,6 +767,14 @@ a.tarjeta:focus-visible {
   margin-top: 6px;
 }
 
+/* En celular se ven dos meses (cada tarjeta mide unos 101 px y la separación 10 px);
+   los demás se alcanzan desplazando la lista hacia abajo. */
+@media (max-width: 640px) {
+  .abonos-scroll {
+    max-height: 214px;
+  }
+}
+
 /* SRS v1.6: cada mes es de solo lectura; su contenido va centrado con el mismo
    margen interior en todos los lados. */
 .mes-abono {
@@ -1189,14 +1197,26 @@ a.tarjeta:focus-visible {
 /* SRS v1.6: abono manual en un pago saltado; compacto para caber en la fila. */
 .formulario-abono-manual {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 4px;
   margin: 0;
+  max-width: 100%;
 }
 
 .formulario-abono-manual .campo__control {
   width: 90px;
+  max-width: 100%;
   padding: 4px 6px;
+}
+
+/* En celular el formulario se acomoda en varias líneas y no se sale de la tarjeta. */
+@media (max-width: 640px) {
+  .formulario-abono-manual .campo__control {
+    flex: 1 1 90px;
+    width: auto;
+    min-width: 0;
+  }
 }
 
 /* SRS v1.6: estado de una meta (en curso o cumplida). */
@@ -2578,6 +2598,8 @@ textarea.campo__control {
 /* Interacción con la dona (dona.js): el arco activo se engrosa y el centro muestra su detalle. */
 .dona__arco {
   cursor: pointer;
+  /* Solo el trazo responde al toque: el centro y el fondo quedan libres. */
+  pointer-events: stroke;
   outline: none;
   transition: stroke-width 0.15s ease, opacity 0.15s ease;
 }
@@ -2733,6 +2755,8 @@ textarea.campo__control {
   padding: 0;
   display: grid;
   gap: 8px;
+  font-size: 0.8rem;
+  line-height: 1.4;
 }
 
 .barra {

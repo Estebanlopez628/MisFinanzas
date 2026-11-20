@@ -244,14 +244,14 @@ Principios que explican el resto del código:
 
 #### `backend/app/static/css/`
 
-- **`estilos.css`** · 3897 líneas — Fondo y superficies
+- **`estilos.css`** · 3901 líneas — Fondo y superficies
 - **`factura-olb.css`** · 671 líneas — Sello de Anulada si aplica
 
 #### `backend/app/static/js/`
 
 - **`app.js`** · 326 líneas — Mejoras progresivas globales.
   - Funciones: `copiar`, `seleccionarManual`, `cerrarEdicion`
-- **`dona.js`** · 121 líneas — Interacción de las gráficas tipo dona (capacidad de endeudamiento y cartera).
+- **`dona.js`** · 122 líneas — Interacción de las gráficas tipo dona (capacidad de endeudamiento y cartera).
   - Funciones: `centro`, `mostrar`, `restaurar`, `iniciar`
 - **`factura.js`** · 304 líneas — Factura y recibo de abono de OLB_BYTE como imagen PNG (ADR-50).
   - Funciones: `descargar`, `esperarImagen`, `montarHoja`, `crearPng`, `imagenDe`, `copiarImagen`, `mensajeDelEnlace`, `compartirArchivo`, `enviarPorWhatsapp`, `descargarImagen`
@@ -850,8 +850,9 @@ tocar o enfocar un arco, el centro muestra su nombre, porcentaje y valor; al pas
 sobre la leyenda se resalta el arco. `mostrar` escribe el centro y marca el arco
 activo, `restaurar` vuelve a los textos por defecto guardados en `data-*-defecto`, e
 `iniciar` conecta los eventos de cada `[data-dona-contenedor]`. En celular, el toque
-fija el arco hasta tocar fuera. Sin JavaScript, la dona conserva su leyenda y sus
-`<title>`.
+fija el arco: tocar otro arco cambia la selección y tocar el mismo lo quita; tocar el
+centro o el fondo no cambia nada (los arcos solo reciben el toque sobre el trazo). Sin
+JavaScript, la dona conserva su leyenda y sus `<title>`.
 
 ### `backend/app/static/js/app.js`
 

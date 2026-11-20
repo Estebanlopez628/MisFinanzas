@@ -83,8 +83,15 @@
           restaurar(contenedor);
         }
       });
-      // En celular no hay cursor: el toque fija el arco hasta tocar fuera.
+      // En celular no hay cursor: el toque fija el arco. Tocar el mismo arco de nuevo
+      // lo quita; tocar otro cambia la selección. Tocar el centro o el fondo no hace nada.
       arco.addEventListener("click", function () {
+        var yaActivo = arco.classList.contains("dona__arco--activo");
+        if (fijado && yaActivo) {
+          fijado = false;
+          restaurar(contenedor);
+          return;
+        }
         fijado = true;
         mostrar.apply(null, [contenedor].concat(datos()));
       });
@@ -108,12 +115,6 @@
       });
     });
 
-    document.addEventListener("click", function (evento) {
-      if (fijado && !contenedor.contains(evento.target)) {
-        fijado = false;
-        restaurar(contenedor);
-      }
-    });
   }
 
   document.querySelectorAll("[data-dona-contenedor]").forEach(iniciar);
