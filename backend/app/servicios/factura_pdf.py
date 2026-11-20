@@ -18,6 +18,7 @@ constantes de este módulo. El diseño visual vive en `static/css/factura-olb.cs
 from __future__ import annotations
 
 import base64
+import logging
 import re
 import unicodedata
 from functools import lru_cache
@@ -62,6 +63,9 @@ PATRONES_LOGO = {
 }
 
 
+registro = logging.getLogger("app.factura")
+
+
 def nombre_archivo(numero_orden: int, cliente: str) -> str:
     """Forma el nombre del PDF con el número de orden y el cliente sin tildes.
 
@@ -94,6 +98,9 @@ def logo_como_data_uri(clave: str) -> str:
     """
     archivo = next(RUTA_ASSETS.glob(PATRONES_LOGO[clave]), None) if RUTA_ASSETS.exists() else None
     if archivo is None:
+        # Sin logo la factura sale sin imagen; el aviso en el log ayuda a ver en Render
+        # si `assets/` no llegó al servidor.
+        registro.warning("No se encontró el logo %s en %s", clave, RUTA_ASSETS)
         return ""
     datos = base64.b64encode(archivo.read_bytes()).decode("ascii")
     return f"data:image/png;base64,{datos}"

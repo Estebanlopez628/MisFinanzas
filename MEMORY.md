@@ -450,6 +450,23 @@ Recálculo en tiempo real (<100 ms) sin recargar página. Se implementa con func
 
 **Verificación:** `pytest` en verde (509). En Chromium a 390 px: la tabla queda oculta, la lista aparece, el detalle se abre y se cierra.
 
+### 2026-11-19 — Factura: WhatsApp abre el chat del cliente y logos con registro de avisos
+
+**Problemas reportados:** (1) al descargar, la imagen salía sin logos; (2) «Compartir por WhatsApp» quedaba en «Preparando…» y no abría nada.
+
+**Diagnóstico:** en Chromium local la imagen sale con todos los logos (verificado). El botón esperaba la captura antes de abrir WhatsApp, y en el teléfono el permiso de compartir se pierde durante esa espera. Los logos sí están versionados en Git (`assets/`), así que la causa en Render no se pudo confirmar desde aquí.
+
+**Cambios realizados**
+1. `static/js/factura.js`: la imagen se prepara al cargar la página; «Compartir por WhatsApp» abre de inmediato `wa.me/57…` con el número del cliente, copia la imagen al portapapeles si el navegador lo permite y la descarga. Sin celular, avisa y no abre nada. Las imágenes se esperan con `decode()` antes de capturar.
+2. `templates/olb_byte/factura.html`: atributo `data-sin-celular` cuando la orden no tiene celular.
+3. `servicios/factura_pdf.py`: si un logo no existe, queda un aviso en el log (`app.factura`) para revisarlo en Render.
+4. `sw.js` en `olb-finanzas-v31`.
+5. `tests/test_factura_whatsapp.py` (3 pruebas).
+
+**Verificación:** en Chromium a 390 px, la descarga produce PNG completo con logos y el chat abre `api.whatsapp.com/send?phone=573163826366`. `pytest` en verde.
+
+**Pendiente:** confirmar en Render si el aviso «No se encontró el logo» aparece en los logs. Si aparece, `assets/` no llegó al servidor.
+
 ### 2026-11-19 — PostgreSQL en Neon y despliegue en Render (ADR-52)
 
 **Decisión:** la base de producción es PostgreSQL en Neon, con `psycopg` 3 (`psycopg[binary]`, nueva dependencia justificada aquí). SQLite queda para desarrollo y pruebas. El destino de despliegue sigue siendo Render (`misfinanzas-odbc.onrender.com`); se evaluó Koyeb y se descartó porque el proyecto ya está en Render. No se añade Alembic todavía: el esquema lo crea `create_all` y las migraciones `_migrar_*` siguen siendo solo para SQLite.

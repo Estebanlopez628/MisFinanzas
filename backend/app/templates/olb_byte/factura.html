@@ -18,7 +18,8 @@
               data-fragmento="{{ url_for('ver_factura_hoja', id_venta=venta.id_venta) }}"
               data-nombre="{{ nombre_archivo }}"
               data-texto="{{ texto_compartir }}"
-              data-whatsapp="{{ enlace_whatsapp }}">Compartir por WhatsApp</button>
+              data-whatsapp="{{ enlace_whatsapp }}"
+              {% if not venta.cliente_telefono %}data-sin-celular{% endif %}>Compartir por WhatsApp</button>
       <button class="boton boton--secundario boton--pequeno" type="button" onclick="window.print()">
         Imprimir
       </button>

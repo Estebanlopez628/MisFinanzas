@@ -5,9 +5,9 @@
  * ---------------
  * - Pedir al servidor la hoja HTML de la factura o del recibo y convertirla en PNG
  *   en el propio navegador con `html-to-image` (vendor/html-to-image.js, local).
- * - Compartir la imagen: en móvil con la hoja de compartir del sistema (archivo
- *   adjunto); en escritorio copiarla al portapapeles para pegarla en WhatsApp Web
- *   y descargarla como respaldo.
+ * - Preparar la imagen al cargar la página, para que el clic responda al instante.
+ * - WhatsApp: abre la conversación con el número del cliente de inmediato, copia la
+ *   imagen al portapapeles (si el navegador lo permite) y la descarga como respaldo.
  * - Descargar la imagen cuando el botón lo pide.
  *
  * El servidor no genera imágenes ni PDF. Ninguna regla de negocio vive aquí.
@@ -18,6 +18,7 @@
 
   var COLOR_FACTURA = "#ffffff";
   var COLOR_RECIBO = "#0f172a";
+  var imagenesPreparadas = {};
 
   /**
    * Guarda un archivo en el equipo mediante un enlace temporal.
@@ -39,24 +40,21 @@
   }
 
   /**
-   * Espera a que las imágenes de un contenedor estén listas para dibujarse.
+   * Espera a que una imagen esté cargada y decodificada para poder dibujarla.
    *
-   * @param {HTMLElement} raiz Contenedor con la hoja.
-   * @returns {Promise<void>} Se resuelve cuando todas las imágenes terminan de cargar.
+   * @param {HTMLImageElement} imagen Logo o imagen de la hoja.
+   * @returns {Promise<void>} Se resuelve también si la imagen falla, para no bloquear la captura.
    */
-  function esperarImagenes(raiz) {
-    var imagenes = Array.prototype.slice.call(raiz.querySelectorAll("img"));
-    return Promise.all(
-      imagenes.map(function (imagen) {
-        if (imagen.complete) {
-          return Promise.resolve();
-        }
-        return new Promise(function (resolver) {
-          imagen.onload = resolver;
-          imagen.onerror = resolver;
+  function esperarImagen(imagen) {
+    var cargada = imagen.complete
+      ? Promise.resolve()
+      : new Promise(function (resolver) {
+          imagen.addEventListener("load", resolver);
+          imagen.addEventListener("error", resolver);
         });
-      })
-    );
+    return cargada.then(function () {
+      return imagen.decode ? imagen.decode().catch(function () {}) : null;
+    });
   }
 
   /**
@@ -80,7 +78,8 @@
           "position:fixed;left:-10000px;top:0;width:850px;background:#ffffff;";
         contenedor.innerHTML = html;
         document.body.appendChild(contenedor);
-        return esperarImagenes(contenedor).then(function () {
+        var imagenes = Array.prototype.slice.call(contenedor.querySelectorAll("img"));
+        return Promise.all(imagenes.map(esperarImagen)).then(function () {
           return contenedor;
         });
       });
@@ -120,7 +119,23 @@
   }
 
   /**
-   * Copia una imagen PNG al portapapeles para pegarla en WhatsApp Web (Ctrl+V).
+   * Devuelve la imagen de una hoja, reutilizando la que ya se preparó al cargar.
+   *
+   * @param {string} url Dirección del fragmento HTML.
+   * @returns {Promise<Blob>} Imagen PNG.
+   */
+  function imagenDe(url) {
+    if (!imagenesPreparadas[url]) {
+      imagenesPreparadas[url] = crearPng(url).catch(function (error) {
+        delete imagenesPreparadas[url];
+        throw error;
+      });
+    }
+    return imagenesPreparadas[url];
+  }
+
+  /**
+   * Copia una imagen PNG al portapapeles para pegarla en WhatsApp (Ctrl+V).
    *
    * @param {Blob} blob Imagen a copiar.
    * @returns {Promise<boolean>} `true` si el navegador la copió.
@@ -142,50 +157,40 @@
   }
 
   /**
-   * Comparte la imagen: hoja de compartir en móvil; portapapeles y descarga en PC.
+   * Abre la conversación de WhatsApp del cliente y deja lista la imagen para adjuntarla.
+   *
+   * La ventana se abre dentro del clic para que el navegador no la bloquee; la imagen se
+   * prepara en paralelo, así que la conversación aparece sin esperar la captura.
    *
    * @param {HTMLElement} boton Botón que disparó la acción.
    */
-  function compartir(boton) {
+  function enviarPorWhatsapp(boton) {
     var url = boton.getAttribute("data-fragmento");
-    var nombre = boton.getAttribute("data-nombre") || "imagen.png";
-    var texto = boton.getAttribute("data-texto") || "";
+    var nombre = boton.getAttribute("data-nombre") || "factura.png";
     var whatsapp = boton.getAttribute("data-whatsapp") || "";
     var etiqueta = boton.textContent;
 
-    // La ventana se abre dentro del clic para que el navegador no la bloquee.
-    var ventana = whatsapp ? window.open("", "_blank") : null;
+    if (boton.hasAttribute("data-sin-celular")) {
+      window.alert("Esta orden no tiene celular del cliente. Agrégalo en su ficha para abrir el chat.");
+      return;
+    }
+
+    window.open(whatsapp, "_blank");
     boton.disabled = true;
     boton.textContent = "Preparando…";
 
-    crearPng(url)
+    imagenDe(url)
       .then(function (blob) {
-        var archivo = new File([blob], nombre, { type: "image/png" });
-        if (navigator.share && navigator.canShare && navigator.canShare({ files: [archivo] })) {
-          if (ventana) {
-            ventana.close();
-          }
-          return navigator.share({ files: [archivo], text: texto, title: nombre });
-        }
+        descargar(blob, nombre);
         return copiarImagen(blob).then(function (copiada) {
-          descargar(blob, nombre);
-          if (ventana) {
-            ventana.location.href = whatsapp;
-          }
           window.alert(
             copiada
-              ? "La imagen se copió y se descargó. En WhatsApp, pégala con Ctrl+V."
-              : "La imagen se descargó. En WhatsApp, toca el clip y adjúntala antes de enviar."
+              ? "Se abrió el chat del cliente y la imagen se copió. Pégala con Ctrl+V; también quedó descargada."
+              : "Se abrió el chat del cliente y la imagen se descargó. Adjúntala con el clip antes de enviar."
           );
         });
       })
       .catch(function (error) {
-        if (ventana) {
-          ventana.close();
-        }
-        if (error && error.name === "AbortError") {
-          return;
-        }
         window.alert((error && error.message) || "No se pudo preparar la imagen.");
       })
       .then(function () {
@@ -206,7 +211,7 @@
     boton.disabled = true;
     boton.textContent = "Preparando…";
 
-    crearPng(url)
+    imagenDe(url)
       .then(function (blob) {
         descargar(blob, nombre);
       })
@@ -219,10 +224,19 @@
       });
   }
 
+  // Preparar la imagen al cargar: el clic posterior no espera a la captura.
+  var botonesPreparar = document.querySelectorAll("[data-compartir], [data-compartir-factura], [data-descargar-imagen]");
+  for (var p = 0; p < botonesPreparar.length; p += 1) {
+    var urlPreparar = botonesPreparar[p].getAttribute("data-fragmento");
+    if (urlPreparar && window.htmlToImage) {
+      imagenDe(urlPreparar).catch(function () {});
+    }
+  }
+
   var botonesCompartir = document.querySelectorAll("[data-compartir], [data-compartir-factura]");
   for (var i = 0; i < botonesCompartir.length; i += 1) {
     botonesCompartir[i].addEventListener("click", function (evento) {
-      compartir(evento.currentTarget);
+      enviarPorWhatsapp(evento.currentTarget);
     });
   }
 

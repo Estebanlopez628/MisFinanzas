@@ -106,7 +106,7 @@ Principios que explican el resto del código:
 ### Resumen del inventario
 
 - **99 archivos** documentados: 51 Python, 36 plantillas Jinja2 y 12 recursos estáticos.
-- **56 clases**, **484 funciones** y **26 métodos** de clase.
+- **56 clases**, **485 funciones** y **26 métodos** de clase.
 
 ### Detalle por archivo
 
@@ -210,7 +210,7 @@ Principios que explican el resto del código:
 - **`deudas.py`** · 549 líneas — Pasivos del usuario y amortización automática ("Resumen de Deudas").
   - Clases: `CuotaProyectada`
   - Funciones: `_limpiar_periodicidad`, `_sumar_periodo`, `_periodos_transcurridos`, `tasa_implicita`, `crear_deuda`, `listar_deudas`, `listar_pagos`, `_aplicar_pago`, `aplicar_cuotas_vencidas`, `proyeccion_deuda`, `cuota_mensual_equivalente`, `eliminar_deuda`, `resumen_deudas`
-- **`factura_pdf.py`** · 152 líneas — Factura de OLB_BYTE: datos, logos, diseño compartido y conversión a PDF (ADR-36).
+- **`factura_pdf.py`** · 159 líneas — Factura de OLB_BYTE: datos, logos, diseño compartido y conversión a PDF (ADR-36).
   - Funciones: `nombre_archivo`, `logo_como_data_uri`, `datos_factura`
 - **`gastos.py`** · 333 líneas — Gastos y presupuesto del usuario.
   - Funciones: `valor_computable`, `crear_gasto`, `_normalizar_quincena`, `listar_gastos`, `total_gastos_mes`, `total_gastos_quincena`, `total_gastos_periodo`, `resumen_por_categoria`, `eliminar_gasto`, `actualizar_gasto`
@@ -251,8 +251,8 @@ Principios que explican el resto del código:
 
 - **`app.js`** · 281 líneas — Mejoras progresivas globales.
   - Funciones: `copiar`, `seleccionarManual`, `cerrarEdicion`
-- **`factura.js`** · 236 líneas — Factura y recibo de abono de OLB_BYTE como imagen PNG (ADR-50).
-  - Funciones: `descargar`, `esperarImagenes`, `montarHoja`, `crearPng`, `copiarImagen`, `compartir`, `descargarImagen`
+- **`factura.js`** · 250 líneas — Factura y recibo de abono de OLB_BYTE como imagen PNG (ADR-50).
+  - Funciones: `descargar`, `esperarImagen`, `montarHoja`, `crearPng`, `imagenDe`, `copiarImagen`, `enviarPorWhatsapp`, `descargarImagen`
 - **`finanzas.js`** · 598 líneas — Mejora progresiva de "Mis Finanzas".
   - Funciones: `leerFormulario`, `pintarCampo`, `pintarDeduccion`, `pintarValorAuxilio`, `pintarErrores`, `pintarDetalle`, `pintarAuxilio`, `aplicarResultado`, `pintarTramos`, `pintarIncapacidad`, `pintarQuincenas`, `pintarTexto`, `calcular`, `programarCalculo`, `marcarCambios`, `aplicarPlantilla`, `copiarAlPortapapeles`, `prepararCopiadoRapido`
 - **`incapacidades.js`** · 129 líneas — Cálculo automático del módulo de incapacidades (SRS v1.5).
@@ -325,7 +325,7 @@ Principios que explican el resto del código:
 - **`analitica.html`** · 212 líneas — Plantilla: Analítica
 - **`cartera.html`** · 133 líneas — Plantilla: Cartera y liquidez
 - **`cobro.html`** · 93 líneas — Plantilla: Gestionar cobro
-- **`factura.html`** · 35 líneas — Plantilla: Factura No.
+- **`factura.html`** · 36 líneas — Plantilla: Factura No.
 - **`garantias.html`** · 148 líneas — Plantilla: Garantías
 - **`index.html`** · 466 líneas — Plantilla: OLB_BYTE
 - **`pendientes.html`** · 117 líneas — Plantilla: Pendientes de pago
@@ -856,6 +856,9 @@ El filtro `q` busca por cliente, celular o número de orden.
 
 ### `backend/app/servicios/factura_pdf.py`
 
+Si un logo no se encuentra en `assets/`, `logo_como_data_uri` lo registra como aviso en el log
+del servidor (`app.factura`), para revisar en Render que los archivos llegaron.
+
 Factura PDF de OLB_BYTE (RF-18, ADR-36). `datos_factura` reúne líneas, filas vacías para
 completar diez, totales, garantía, medios de pago y el nombre del archivo; rechaza
 órdenes con más de diez productos. `logo_como_data_uri` embebe los logos de `assets/`.
@@ -885,11 +888,12 @@ producción solo registra el fallo, sin contenido ni enlaces.
 
 ### `backend/app/static/js/factura.js`
 
-Acciones de la factura. La vista previa muestra la hoja; «Descargar» y «Enviar por
-WhatsApp» capturan la hoja como PNG con `html-to-image` en el navegador (ADR-50) y lo
-comparten como archivo con la hoja de compartir del navegador, con el mensaje «Hola
-{cliente}, adjunto tu factura de compra.». Si el navegador no puede compartir archivos,
-descarga el PNG y abre WhatsApp; el usuario lo adjunta desde la descarga.
+Acciones de la factura. Captura la hoja como PNG con `html-to-image` en el navegador (ADR-50).
+La imagen se prepara al cargar la página, así el clic responde al instante. «Compartir por
+WhatsApp» abre de inmediato la conversación del número del cliente (`wa.me/57…`, con el mensaje
+prellenado), copia la imagen al portapapeles si el navegador lo permite y la descarga como
+respaldo. Si la orden no tiene celular, el botón lo avisa y no abre nada. «Descargar imagen»
+solo descarga el PNG (SRS v1.8, ajuste de WhatsApp).
 
 ### `backend/app/static/js/vendor/html-to-image.js`
 
