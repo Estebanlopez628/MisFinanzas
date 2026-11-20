@@ -5,6 +5,21 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#0F172A" />
+  {# Vista previa al compartir el enlace (WhatsApp, redes). La URL pública sale de APP_URL;
+     sin esa variable usa el dominio de producción, porque las imágenes exigen URL absoluta. #}
+  {% set base_social = (configuracion.app_url or 'https://misfinanzas-odbc.onrender.com') | trim('/') %}
+  {% set descripcion_social = "Toma el control de tu dinero de forma simple y visual. Atrévete a probar un nuevo método para manejar tus finanzas. ¡Dale clic al enlace para ingresar y descubrirla!" %}
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Mis Finanzas" />
+  <meta property="og:title" content="Mis Finanzas" />
+  <meta property="og:description" content="{{ descripcion_social }}" />
+  <meta property="og:url" content="{{ base_social }}/" />
+  <meta property="og:image" content="{{ base_social }}/estaticos/img/vista-previa.png" />
+  <meta property="og:image:alt" content="Mis Finanzas: finanzas personales y nómina colombiana" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Mis Finanzas" />
+  <meta name="twitter:description" content="{{ descripcion_social }}" />
+  <meta name="twitter:image" content="{{ base_social }}/estaticos/img/vista-previa.png" />
   <meta name="description" content="Finanzas personales, nómina colombiana y administración OLB_BYTE." />
   <title>{% block titulo %}{{ titulo_pagina or "Finanzas y OLB_BYTE" }}{% endblock %} · OLB_BYTE</title>
   <link rel="icon" type="image/svg+xml" href="{{ url_for('estaticos', path='img/favicon.svg') }}" />

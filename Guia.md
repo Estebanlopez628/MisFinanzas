@@ -244,7 +244,7 @@ Principios que explican el resto del código:
 
 #### `backend/app/static/css/`
 
-- **`estilos.css`** · 3672 líneas — Fondo y superficies
+- **`estilos.css`** · 3676 líneas — Fondo y superficies
 - **`factura-olb.css`** · 671 líneas — Sello de Anulada si aplica
 
 #### `backend/app/static/js/`
@@ -271,7 +271,7 @@ Principios que explican el resto del código:
 
 #### `backend/app/templates/`
 
-- **`base.html`** · 102 líneas — Encabezado: marca institucional + alias del usuario y badge de rol.
+- **`base.html`** · 117 líneas — Vista previa al compartir el enlace (WhatsApp, redes). La URL pública sale de APP_URL;
 - **`dashboard.html`** · 53 líneas — Plantilla: Panel principal
 - **`login.html`** · 88 líneas — Plantilla: Iniciar sesión
 - **`olvide_contrasena.html`** · 29 líneas — Plantilla: Recuperar contraseña
@@ -1016,6 +1016,11 @@ Manifiesto PWA: nombre, colores de la paleta, `display: standalone`, íconos y
 ### 5.6 Plantillas
 
 ### `backend/app/templates/base.html`
+
+El `<head>` declara las etiquetas Open Graph y Twitter Card para la vista previa al compartir
+el enlace: título «Mis Finanzas», descripción comercial, `og:url`, `twitter:card` tipo
+`summary_large_image` y la imagen `/estaticos/img/vista-previa.png` con URL absoluta. La base
+es `APP_URL`; sin esa variable usa `https://misfinanzas-odbc.onrender.com` (SRS v1.8).
 
 El pie muestra solo «Finanzas · v1.0.0 | © año», sin el entorno (SRS v1.8). El `body` acepta
 la clase de cada pantalla mediante el bloque `clase_cuerpo`.
