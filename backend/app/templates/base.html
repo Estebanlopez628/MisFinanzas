@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="{{ url_for('estaticos', path='css/estilos.css') }}" />
   {% block estilos %}{% endblock %}
 </head>
-<body>
+<body class="{% block clase_cuerpo %}{% endblock %}">
   <div class="contenedor-app">
 
     {# Encabezado: marca institucional + alias del usuario y badge de rol. #}
@@ -71,9 +71,7 @@
     {% endif %}
 
     <footer class="pie">
-      <span>{{ configuracion.nombre }} · v{{ configuracion.version }}</span>
-      <span class="pie__separador">|</span>
-      <span>Entorno: {{ configuracion.entorno }}</span>
+      <span>Finanzas · v{{ configuracion.version }}</span>
       <span class="pie__separador">|</span>
       <span>© {{ anio_actual }}</span>
       {% if usuario and not usuario.es_administrador %}

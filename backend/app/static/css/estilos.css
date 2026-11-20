@@ -3371,6 +3371,56 @@ textarea.campo__control {
   background: rgba(0, 168, 255, 0.15);
 }
 
+/* Login a pantalla completa (SRS v1.8): sin cabecera ni caja dentro de caja. El fondo
+   ocupa toda la pantalla y el formulario queda centrado sobre él. */
+.pagina-acceso .cabecera {
+  display: none;
+}
+
+.pagina-acceso .contenedor-app {
+  width: 100%;
+  max-width: none;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  gap: 0;
+}
+
+.pagina-acceso .contenido {
+  padding: 0;
+  max-width: none;
+  gap: 0;
+}
+
+.pagina-acceso .acceso-nuevo {
+  min-height: 100vh;
+  padding: 0;
+}
+
+.pagina-acceso .acceso-nuevo__tarjeta {
+  width: 100%;
+  min-height: 100vh;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.pagina-acceso .acceso-nuevo__tarjeta > header,
+.pagina-acceso .acceso-nuevo__tarjeta > form,
+.pagina-acceso .acceso-nuevo__tarjeta > .alerta,
+.pagina-acceso .acceso-nuevo__tarjeta > .acceso-nuevo__separador,
+.pagina-acceso .acceso-nuevo__tarjeta > .acceso-nuevo__google {
+  width: min(420px, 92vw);
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
+}
+
 .acceso-nuevo__olvido {
   align-self: flex-end;
   margin-top: -6px;

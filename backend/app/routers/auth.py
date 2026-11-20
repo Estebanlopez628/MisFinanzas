@@ -39,7 +39,6 @@ router = APIRouter(tags=["Autenticación"])
 
 # Se expone la lista del repositorio para que la vista y las pruebas usen la
 # misma fuente; en producción se retirará de la pantalla de login.
-CUENTAS_DEMO = usuarios.CUENTAS_DEMO
 
 
 def _clave_intento(request: Request, correo: str) -> str:
@@ -105,7 +104,6 @@ def ver_login(
             "titulo_pagina": "Iniciar sesión",
             "error": None,
             "registrado": bool(registrado),
-            "cuentas_demo": CUENTAS_DEMO,
             "exito": "Tu contraseña se actualizó. Ya puedes iniciar sesión." if restablecida else None,
         }
     )
@@ -143,7 +141,6 @@ def procesar_login(
                     f"Espera {segundos} segundo(s) antes de volver a intentar."
                 ),
                 "registrado": False,
-                "cuentas_demo": CUENTAS_DEMO,
                 "correo_ingresado": correo,
             }
         )
@@ -165,7 +162,6 @@ def procesar_login(
                 "titulo_pagina": "Iniciar sesión",
                 "error": "Correo o contraseña incorrectos.",
                 "registrado": False,
-                "cuentas_demo": CUENTAS_DEMO,
                 "correo_ingresado": correo,
             }
         )
@@ -309,7 +305,6 @@ def _login_con_error(request: Request, mensaje: str) -> HTMLResponse:
             "titulo_pagina": "Iniciar sesión",
             "error": mensaje,
             "registrado": False,
-            "cuentas_demo": CUENTAS_DEMO,
             "correo_ingresado": "",
         }
     )

@@ -1,4 +1,4 @@
-﻿# Guía del proyecto — Finanzas y OLB_BYTE
+# Guía del proyecto — Finanzas y OLB_BYTE
 
 > **Documento vivo.** Se reescribe completo en cada cambio relevante del código
 > (ver `AGENTS.md` §5 y `MEMORY.md`). El inventario de §4 es automático y no debe
@@ -106,7 +106,7 @@ Principios que explican el resto del código:
 ### Resumen del inventario
 
 - **99 archivos** documentados: 51 Python, 36 plantillas Jinja2 y 12 recursos estáticos.
-- **56 clases**, **485 funciones** y **26 métodos** de clase.
+- **56 clases**, **487 funciones** y **26 métodos** de clase.
 
 ### Detalle por archivo
 
@@ -148,7 +148,7 @@ Principios que explican el resto del código:
 - **`__init__.py`** · 11 líneas — Routers de la aplicación.
 - **`admin.py`** · 176 líneas — Administración de cuentas (solo `ADMIN_OLB`).
   - Funciones: `_contexto_admin`, `ver_usuarios`, `cambiar_rol_usuario`, `cambiar_estado_usuario`
-- **`auth.py`** · 574 líneas — Rutas de autenticación: login, registro y cierre de sesión.
+- **`auth.py`** · 569 líneas — Rutas de autenticación: login, registro y cierre de sesión.
   - Funciones: `_clave_intento`, `_establecer_cookie`, `ver_login`, `procesar_login`, `cerrar_sesion`, `ver_registro`, `procesar_registro`, `ver_olvide_contrasena`, `_login_con_error`, `iniciar_google`, `callback_google`, `_base_publica`, `_pagina_olvide`, `_cuenta_del_enlace`, `_pagina_restablecer`, `procesar_olvide_contrasena`, `ver_restablecer_contrasena`, `procesar_restablecer_contrasena`
 - **`chancucos.py`** · 180 líneas — Panel de Chancucos: referencias de pago con copiado y botón *Pagar*.
   - Funciones: `ver_chancucos`, `crear_chancuco`, `alternar_favorito`, `eliminar_chancuco`
@@ -244,15 +244,15 @@ Principios que explican el resto del código:
 
 #### `backend/app/static/css/`
 
-- **`estilos.css`** · 3559 líneas — Fondo y superficies
+- **`estilos.css`** · 3609 líneas — Fondo y superficies
 - **`factura-olb.css`** · 671 líneas — Sello de Anulada si aplica
 
 #### `backend/app/static/js/`
 
 - **`app.js`** · 281 líneas — Mejoras progresivas globales.
   - Funciones: `copiar`, `seleccionarManual`, `cerrarEdicion`
-- **`factura.js`** · 250 líneas — Factura y recibo de abono de OLB_BYTE como imagen PNG (ADR-50).
-  - Funciones: `descargar`, `esperarImagen`, `montarHoja`, `crearPng`, `imagenDe`, `copiarImagen`, `enviarPorWhatsapp`, `descargarImagen`
+- **`factura.js`** · 304 líneas — Factura y recibo de abono de OLB_BYTE como imagen PNG (ADR-50).
+  - Funciones: `descargar`, `esperarImagen`, `montarHoja`, `crearPng`, `imagenDe`, `copiarImagen`, `mensajeDelEnlace`, `compartirArchivo`, `enviarPorWhatsapp`, `descargarImagen`
 - **`finanzas.js`** · 598 líneas — Mejora progresiva de "Mis Finanzas".
   - Funciones: `leerFormulario`, `pintarCampo`, `pintarDeduccion`, `pintarValorAuxilio`, `pintarErrores`, `pintarDetalle`, `pintarAuxilio`, `aplicarResultado`, `pintarTramos`, `pintarIncapacidad`, `pintarQuincenas`, `pintarTexto`, `calcular`, `programarCalculo`, `marcarCambios`, `aplicarPlantilla`, `copiarAlPortapapeles`, `prepararCopiadoRapido`
 - **`incapacidades.js`** · 129 líneas — Cálculo automático del módulo de incapacidades (SRS v1.5).
@@ -271,9 +271,9 @@ Principios que explican el resto del código:
 
 #### `backend/app/templates/`
 
-- **`base.html`** · 113 líneas — Encabezado: marca institucional + alias del usuario y badge de rol.
+- **`base.html`** · 111 líneas — Encabezado: marca institucional + alias del usuario y badge de rol.
 - **`dashboard.html`** · 53 líneas — Plantilla: Panel principal
-- **`login.html`** · 101 líneas — Plantilla: Iniciar sesión
+- **`login.html`** · 88 líneas — Plantilla: Iniciar sesión
 - **`olvide_contrasena.html`** · 29 líneas — Plantilla: Recuperar contraseña
 - **`registro.html`** · 59 líneas — Plantilla: Crear cuenta
 - **`restablecer_contrasena.html`** · 37 líneas — Plantilla: Nueva contraseña
@@ -888,12 +888,7 @@ producción solo registra el fallo, sin contenido ni enlaces.
 
 ### `backend/app/static/js/factura.js`
 
-Acciones de la factura. Captura la hoja como PNG con `html-to-image` en el navegador (ADR-50).
-La imagen se prepara al cargar la página, así el clic responde al instante. «Compartir por
-WhatsApp» abre de inmediato la conversación del número del cliente (`wa.me/57…`, con el mensaje
-prellenado), copia la imagen al portapapeles si el navegador lo permite y la descarga como
-respaldo. Si la orden no tiene celular, el botón lo avisa y no abre nada. «Descargar imagen»
-solo descarga el PNG (SRS v1.8, ajuste de WhatsApp).
+Acciones de la factura. Captura la hoja como PNG con `html-to-image` en el navegador (ADR-50). La imagen se prepara al cargar la página. «Compartir por WhatsApp»: en móvil abre la hoja de compartir del sistema con el PNG adjunto y el mensaje; en escritorio copia el PNG al portapapeles en el mismo clic, abre la conversación del número del cliente (wa.me/57…) y descarga el PNG. WhatsApp Web no admite adjuntos desde un enlace, por eso se pega con Ctrl+V. Si la orden no tiene celular, el botón avisa y no abre nada. «Descargar imagen» solo descarga el PNG (SRS v1.8).
 
 ### `backend/app/static/js/vendor/html-to-image.js`
 
@@ -1022,6 +1017,9 @@ Manifiesto PWA: nombre, colores de la paleta, `display: standalone`, íconos y
 
 ### `backend/app/templates/base.html`
 
+El pie muestra solo «Finanzas · v1.0.0 | © año», sin el entorno (SRS v1.8). El `body` acepta
+la clase de cada pantalla mediante el bloque `clase_cuerpo`.
+
 El encabezado usa la macro `avatar` en tamaño compacto antes del saludo (SRS v1.8).
 
 Layout común: `<head>` con manifest y CSS, header de tres opciones (`Inicio`,
@@ -1046,6 +1044,10 @@ Panel principal con las tarjetas de módulo según rol (OLB_BYTE se omite para
 `USER_FINANZAS`), saludo con alias y accesos a Mi Perfil/Usuarios.
 
 ### `backend/app/templates/login.html`
+
+Pantalla de acceso a pantalla completa (clase `pagina-acceso` en el `body`, que oculta la
+cabecera y quita la caja interior). Muestra la marca y el subtítulo «Análisis de nómina y
+presupuesto». No muestra cuentas de demostración ni contraseñas (SRS v1.8, en producción).
 
 Formulario de acceso con correo y contraseña, enlace al registro y mensajes de
 error del limitador. Sin JavaScript obligatorio.

@@ -6,8 +6,12 @@
  * - Pedir al servidor la hoja HTML de la factura o del recibo y convertirla en PNG
  *   en el propio navegador con `html-to-image` (vendor/html-to-image.js, local).
  * - Preparar la imagen al cargar la página, para que el clic responda al instante.
- * - WhatsApp: abre la conversación con el número del cliente de inmediato, copia la
- *   imagen al portapapeles (si el navegador lo permite) y la descarga como respaldo.
+ * - Compartir por WhatsApp:
+ *   · Móvil con soporte de archivos: abre la hoja de compartir del sistema con el PNG
+ *     adjunto y el mensaje (la app de WhatsApp recibe la imagen completa).
+ *   · Escritorio: copia el PNG al portapapeles en el mismo clic, abre la conversación
+ *     del número del cliente y descarga el PNG. WhatsApp Web no admite adjuntos desde
+ *     un enlace; se pega con Ctrl+V en la conversación.
  * - Descargar la imagen cuando el botón lo pide.
  *
  * El servidor no genera imágenes ni PDF. Ninguna regla de negocio vive aquí.
@@ -18,7 +22,8 @@
 
   var COLOR_FACTURA = "#ffffff";
   var COLOR_RECIBO = "#0f172a";
-  var imagenesPreparadas = {};
+  var imagenesPromesas = {};
+  var imagenesListas = {};
 
   /**
    * Guarda un archivo en el equipo mediante un enlace temporal.
@@ -125,49 +130,94 @@
    * @returns {Promise<Blob>} Imagen PNG.
    */
   function imagenDe(url) {
-    if (!imagenesPreparadas[url]) {
-      imagenesPreparadas[url] = crearPng(url).catch(function (error) {
-        delete imagenesPreparadas[url];
-        throw error;
-      });
+    if (!imagenesPromesas[url]) {
+      imagenesPromesas[url] = crearPng(url)
+        .then(function (blob) {
+          imagenesListas[url] = blob;
+          return blob;
+        })
+        .catch(function (error) {
+          delete imagenesPromesas[url];
+          throw error;
+        });
     }
-    return imagenesPreparadas[url];
+    return imagenesPromesas[url];
   }
 
   /**
-   * Copia una imagen PNG al portapapeles para pegarla en WhatsApp (Ctrl+V).
+   * Copia la imagen al portapapeles. Acepta la promesa de la imagen para llamarla
+   * dentro del clic, cuando la ventana todavía tiene el foco.
    *
-   * @param {Blob} blob Imagen a copiar.
+   * @param {Promise<Blob>} promesaBlob Imagen PNG en preparación.
    * @returns {Promise<boolean>} `true` si el navegador la copió.
    */
-  function copiarImagen(blob) {
+  function copiarImagen(promesaBlob) {
     if (!navigator.clipboard || typeof window.ClipboardItem === "undefined") {
       return Promise.resolve(false);
     }
-    return navigator.clipboard
-      .write([new window.ClipboardItem({ "image/png": blob })])
-      .then(
-        function () {
-          return true;
-        },
-        function () {
-          return false;
-        }
-      );
+    try {
+      return navigator.clipboard
+        .write([new window.ClipboardItem({ "image/png": promesaBlob })])
+        .then(
+          function () {
+            return true;
+          },
+          function () {
+            return false;
+          }
+        );
+    } catch (error) {
+      return Promise.resolve(false);
+    }
   }
 
   /**
-   * Abre la conversación de WhatsApp del cliente y deja lista la imagen para adjuntarla.
+   * Obtiene el mensaje prellenado de un enlace de WhatsApp.
    *
-   * La ventana se abre dentro del clic para que el navegador no la bloquee; la imagen se
-   * prepara en paralelo, así que la conversación aparece sin esperar la captura.
+   * @param {string} enlace URL `wa.me` o `api.whatsapp.com`.
+   * @returns {string} Texto del mensaje, o cadena vacía.
+   */
+  function mensajeDelEnlace(enlace) {
+    try {
+      return new URL(enlace).searchParams.get("text") || "";
+    } catch (error) {
+      return "";
+    }
+  }
+
+  /**
+   * Abre la hoja de compartir del sistema con el PNG adjunto (móvil).
+   *
+   * Debe llamarse dentro del clic: el navegador exige un gesto del usuario.
+   *
+   * @param {Blob} blob Imagen PNG ya preparada.
+   * @param {string} nombre Nombre del archivo.
+   * @param {string} texto Mensaje que acompaña a la imagen.
+   * @returns {boolean} `true` si el navegador puede compartir archivos y se abrió la hoja.
+   */
+  function compartirArchivo(blob, nombre, texto) {
+    var archivo = new File([blob], nombre, { type: "image/png" });
+    if (!navigator.share || !navigator.canShare || !navigator.canShare({ files: [archivo] })) {
+      return false;
+    }
+    navigator.share({ files: [archivo], text: texto, title: nombre }).catch(function (error) {
+      if (error && error.name !== "AbortError") {
+        window.alert("No se pudo compartir la imagen. Intenta de nuevo.");
+      }
+    });
+    return true;
+  }
+
+  /**
+   * Envía la factura o el recibo por WhatsApp.
    *
    * @param {HTMLElement} boton Botón que disparó la acción.
    */
   function enviarPorWhatsapp(boton) {
     var url = boton.getAttribute("data-fragmento");
-    var nombre = boton.getAttribute("data-nombre") || "factura.png";
+    var nombre = boton.getAttribute("data-nombre") || "imagen.png";
     var whatsapp = boton.getAttribute("data-whatsapp") || "";
+    var texto = boton.getAttribute("data-texto") || mensajeDelEnlace(whatsapp);
     var etiqueta = boton.textContent;
 
     if (boton.hasAttribute("data-sin-celular")) {
@@ -175,20 +225,24 @@
       return;
     }
 
-    window.open(whatsapp, "_blank");
+    if (imagenesListas[url] && compartirArchivo(imagenesListas[url], nombre, texto)) {
+      return;
+    }
+
     boton.disabled = true;
     boton.textContent = "Preparando…";
+    var promesaImagen = imagenDe(url);
+    var copiada = copiarImagen(promesaImagen);
+    window.open(whatsapp, "_blank");
 
-    imagenDe(url)
-      .then(function (blob) {
-        descargar(blob, nombre);
-        return copiarImagen(blob).then(function (copiada) {
-          window.alert(
-            copiada
-              ? "Se abrió el chat del cliente y la imagen se copió. Pégala con Ctrl+V; también quedó descargada."
-              : "Se abrió el chat del cliente y la imagen se descargó. Adjúntala con el clip antes de enviar."
-          );
-        });
+    Promise.all([promesaImagen, copiada])
+      .then(function (resultado) {
+        descargar(resultado[0], nombre);
+        window.alert(
+          resultado[1]
+            ? "Se abrió el chat del cliente y la imagen se copió. En la conversación pulsa Ctrl+V y luego Enviar. También quedó descargada."
+            : "Se abrió el chat del cliente y la imagen se descargó. Adjúntala con el clip antes de enviar."
+        );
       })
       .catch(function (error) {
         window.alert((error && error.message) || "No se pudo preparar la imagen.");
