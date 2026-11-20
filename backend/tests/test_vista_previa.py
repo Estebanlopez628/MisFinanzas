@@ -36,7 +36,7 @@ def test_imagen_de_vista_previa_es_absoluta_y_responde() -> None:
     """La imagen usa URL absoluta sin espacios y el servidor la entrega."""
     cliente = TestClient(crear_aplicacion())
     html = cliente.get("/login").text
-    imagen = f"{URL_PRODUCCION}/estaticos/img/vista-previa.png"
+    imagen = f"{URL_PRODUCCION}/estaticos/img/vista-previa.png?v=2"
 
     assert f'<meta property="og:image" content="{imagen}" />' in html
     assert f'<meta name="twitter:image" content="{imagen}" />' in html
