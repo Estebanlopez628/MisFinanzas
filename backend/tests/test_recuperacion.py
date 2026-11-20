@@ -201,3 +201,11 @@ def test_sin_smtp_en_desarrollo_no_falla(monkeypatch) -> None:
 
     monkeypatch.setattr(correo, "obtener_configuracion", lambda: SimpleNamespace(smtp_host="", es_produccion=False))
     assert correo.enviar_correo("x@correo.co", "Asunto", "Cuerpo") is True
+
+
+def test_perfil_enlaza_a_la_recuperacion_por_correo(cliente_usuario) -> None:
+    """Mi Perfil ya no dice que falta SMTP: enlaza a la recuperación por correo."""
+    html = cliente_usuario.get("/perfil").text
+
+    assert 'olvide-contrasena">Recuperar contraseña</a>' in html
+    assert "requiere configurar" not in html
