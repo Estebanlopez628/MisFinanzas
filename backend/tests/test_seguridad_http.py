@@ -205,8 +205,9 @@ def test_publicidad_visible_solo_para_el_rol_publico(
     publico = cliente_usuario.get("/").text
     administrador = cliente_admin.get("/").text
 
-    assert "banner-publicidad" in publico
-    assert "banner-publicidad" not in administrador
+    assert "apoyo-cafe" in publico
+    assert "banner-publicidad" not in publico
+    assert "apoyo-cafe" not in administrador
 
 
 def test_documentacion_disponible_fuera_de_produccion(cliente: TestClient) -> None:

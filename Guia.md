@@ -244,7 +244,7 @@ Principios que explican el resto del código:
 
 #### `backend/app/static/css/`
 
-- **`estilos.css`** · 3609 líneas — Fondo y superficies
+- **`estilos.css`** · 3672 líneas — Fondo y superficies
 - **`factura-olb.css`** · 671 líneas — Sello de Anulada si aplica
 
 #### `backend/app/static/js/`
@@ -271,7 +271,7 @@ Principios que explican el resto del código:
 
 #### `backend/app/templates/`
 
-- **`base.html`** · 111 líneas — Encabezado: marca institucional + alias del usuario y badge de rol.
+- **`base.html`** · 102 líneas — Encabezado: marca institucional + alias del usuario y badge de rol.
 - **`dashboard.html`** · 53 líneas — Plantilla: Panel principal
 - **`login.html`** · 88 líneas — Plantilla: Iniciar sesión
 - **`olvide_contrasena.html`** · 29 líneas — Plantilla: Recuperar contraseña
@@ -1025,10 +1025,7 @@ El encabezado usa la macro `avatar` en tamaño compacto antes del saludo (SRS v1
 Layout común: `<head>` con manifest y CSS, header de tres opciones (`Inicio`,
 `Mi Perfil`, `Salir`), banner de publicidad para `USER_FINANZAS`, contenedor de
 mensajes y bloque `contenido`. Carga `app.js` y registra el service worker.
-En el pie, solo para `USER_FINANZAS`, un botón discreto «☕ Si te gusta mi trabajo, invítame
-un café ($6.000 COP)» abre un `<dialog>` con una tarjeta con solo el QR de Bre-B
-(`assets/Logo De Bre-B.png`). No muestra teléfono ni llave, para no exponer datos personales. No usa JavaScript propio: lo abren `data-abrir-dialogo` y
-`data-cerrar-dialogo` de `app.js`.
+En el espacio que antes ocupaba la publicidad (solo USER_FINANZAS) aparece una tarjeta visible «Si te gusta mi trabajo · Invítame un café ($6.000 COP)» con un botón que abre un <dialog> con una sola tarjeta: el QR de Bre-B (ssets/Logo De Bre-B.png). No muestra teléfono ni llave. La publicidad quedó retirada de la plantilla (SRS v1.8). No usa JavaScript propio: lo abren data-abrir-dialogo y data-cerrar-dialogo de pp.js.
 
 ### `backend/app/templates/componentes/avatar.html`
 

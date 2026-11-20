@@ -39,7 +39,7 @@ def test_dashboard_oculta_modulos_privados_al_usuario_publico(
         assert f">{titulo}</h3>" in respuesta.text
     assert ">OLB_BYTE</h3>" not in respuesta.text
     assert ">Chancucos</h3>" not in respuesta.text
-    assert "Espacio reservado para anuncios" in respuesta.text
+    assert "Invítame un café" in respuesta.text
 
 
 def test_navegacion_superior_solo_tiene_tres_opciones(

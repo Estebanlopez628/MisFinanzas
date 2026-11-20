@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-TEXTO_ENLACE = "invítame un café"
+TEXTO_ENLACE = "Invítame un café"
 NUMERO_TELEFONO = "316 382 63 66"
 
 

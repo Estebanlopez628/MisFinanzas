@@ -1855,6 +1855,73 @@ textarea.campo__control {
   border-color: var(--accent-blue);
 }
 
+/* Tarjeta de apoyo visible en el espacio de la antigua publicidad (SRS v1.8). */
+.apoyo-cafe {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 8px;
+  padding: 20px 24px;
+  border-radius: var(--radio-lg);
+  background: var(--bg-card);
+  border: 1px solid rgba(0, 168, 255, 0.35);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+}
+
+.apoyo-cafe__texto {
+  flex: 1 1 280px;
+  min-width: 0;
+}
+
+.apoyo-cafe__titulo {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.apoyo-cafe__detalle {
+  margin: 4px 0 0;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.apoyo-cafe__boton {
+  min-height: 44px;
+  padding: 12px 22px;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #0066cc, #00a8ff);
+  color: #f8fafc;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(2, 132, 199, 0.35);
+}
+
+.apoyo-cafe__boton:hover,
+.apoyo-cafe__boton:focus-visible {
+  filter: brightness(1.08);
+}
+
+@media (max-width: 640px) {
+  .apoyo-cafe {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+  }
+
+  .apoyo-cafe__texto {
+    flex: none;
+  }
+
+  .apoyo-cafe__boton {
+    width: 100%;
+  }
+}
+
 .cafe-dialogo {
   width: min(440px, 94vw);
   padding: 20px;

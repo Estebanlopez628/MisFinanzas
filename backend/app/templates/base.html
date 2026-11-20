@@ -55,18 +55,14 @@
       {% block contenido %}{% endblock %}
     </main>
 
-    {# Publicidad no invasiva: solo para el rol público y si está activa. #}
-    {% if usuario and not usuario.es_administrador and configuracion.publicidad_activa %}
-      <aside class="banner-publicidad" aria-label="Espacio publicitario">
-        <span class="banner-publicidad__etiqueta">Publicidad</span>
-        {% if configuracion.publicidad_url %}
-          <a class="banner-publicidad__texto banner-publicidad__enlace"
-             href="{{ configuracion.publicidad_url }}" rel="sponsored noopener" target="_blank">
-            {{ configuracion.publicidad_texto }}
-          </a>
-        {% else %}
-          <p class="banner-publicidad__texto">{{ configuracion.publicidad_texto }}</p>
-        {% endif %}
+    {# Apoyo voluntario en el espacio que antes ocupaba la publicidad (solo USER_FINANZAS). #}
+    {% if usuario and not usuario.es_administrador %}
+      <aside class="apoyo-cafe" aria-label="Apoyo al desarrollo">
+        <div class="apoyo-cafe__texto">
+          <p class="apoyo-cafe__titulo">☕ Si te gusta mi trabajo</p>
+          <p class="apoyo-cafe__detalle">Invítame un café ({{ cafe.monto }}) y ayúdame a seguir mejorando esta herramienta.</p>
+        </div>
+        <button class="apoyo-cafe__boton" type="button" data-abrir-dialogo="dialogo-cafe">Invítame un café</button>
       </aside>
     {% endif %}
 
@@ -74,11 +70,6 @@
       <span>Finanzas · v{{ configuracion.version }}</span>
       <span class="pie__separador">|</span>
       <span>© {{ anio_actual }}</span>
-      {% if usuario and not usuario.es_administrador %}
-        <button class="cafe-disparador" type="button" data-abrir-dialogo="dialogo-cafe">
-          ☕ Si te gusta mi trabajo, invítame un café ({{ cafe.monto }})
-        </button>
-      {% endif %}
     </footer>
 
     {# Apoyo voluntario (solo Colombia): modal ligero con <dialog>, sin librerías. #}
