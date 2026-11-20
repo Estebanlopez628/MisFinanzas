@@ -453,6 +453,19 @@ Recálculo en tiempo real (<100 ms) sin recargar página. Se implementa con func
 
 ## Bitácora de Cambios
 
+### 2026-11-20 — Imagen de vista previa de WhatsApp actualizada
+
+**Causa:** la vista previa usa `static/img/vista-previa.png`, una copia separada de `assets/Nuevo Logo2.png`. Al cambiar solo `assets/`, la app seguía sirviendo la copia anterior. Además, WhatsApp guarda la imagen por su dirección (`?v=2`).
+
+**Cambios realizados**
+1. `static/img/vista-previa.png` es ahora una copia de `assets/Nuevo Logo2.png` (mismo MD5).
+2. `templates/base.html`: `og:image` y `twitter:image` apuntan a `vista-previa.png?v=3`.
+3. `tests/test_vista_previa.py` espera `?v=3`.
+
+**Nota:** el logo de la factura se guarda en memoria al arrancar (`logo_como_data_uri`); para verlo cambiado hay que reiniciar la aplicación.
+
+**Verificación:** `pytest` en verde con **621 pruebas**.
+
 ### 2026-11-20 — Metas en móvil: dos abonos visibles y formulario «Extender» dentro de la tarjeta
 
 **Cambios realizados**
