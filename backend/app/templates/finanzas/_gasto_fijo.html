@@ -81,7 +81,7 @@
               name="valor"
               inputmode="decimal"
               value="{{ gasto.valor | cop(false) }}"
-              required
+              required data-moneda
             />
           </label>
           {# SRS v1.7: «Cancelar» cierra la edición sin guardar; mismo tamaño #}
@@ -135,7 +135,7 @@
             inputmode="decimal"
             placeholder="Abonar"
             aria-label="Monto a abonar en {{ gasto.descripcion }}"
-            required
+            required data-moneda
           />
           <button class="boton boton--secundario boton--pequeno" type="submit">Abonar</button>
         </form>

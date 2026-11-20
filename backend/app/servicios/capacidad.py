@@ -542,9 +542,22 @@ def capacidad_endeudamiento(
     ingreso = redondear_dinero(ingreso_base + ingreso_extras)
 
     # Las deducciones fijas que son créditos pasan a deuda; el resto es gasto fijo.
+    # Un crédito sin deuda vinculada se pasa a cuota de deudas. Uno vinculado ya
+    # cuenta como deducción fija y su cuota sale de la deuda (SRS v1.9, ADR-56).
     creditos = redondear_dinero(
         sum(
-            (fija.valor for fija in servicio_deducciones.listar_deducciones(bd, id_usuario) if es_credito(fija.descripcion)),
+            (
+                fija.valor
+                for fija in servicio_deducciones.listar_vigentes(bd, id_usuario)
+                if fija.id_deuda is None and es_credito(fija.descripcion)
+            ),
+            start=CERO,
+        )
+    )
+    cuota_vinculada = servicio_deducciones.cuota_de_vinculadas(bd, id_usuario)
+    valor_vinculado = redondear_dinero(
+        sum(
+            (fija.valor for fija in servicio_deducciones.vinculadas_activas(bd, id_usuario)),
             start=CERO,
         )
     )
@@ -558,7 +571,9 @@ def capacidad_endeudamiento(
     )
     deudas = list(servicio_deudas.listar_deudas(bd, id_usuario))
     cuota_deudas = redondear_dinero(
-        servicio_deudas.resumen_deudas(bd, id_usuario)["cuota_mensual"] + creditos
+        servicio_deudas.resumen_deudas(bd, id_usuario)["cuota_mensual"]
+        + creditos
+        - cuota_vinculada
     )
     libre = redondear_dinero(ingreso - gastos - cuota_deudas)
     libre_salario = redondear_dinero(libre - libre_extras)
@@ -588,7 +603,12 @@ def capacidad_endeudamiento(
         mensaje=_mensaje_semaforo(estado, porcentaje_deudas),
         arcos=_repartir_arcos(gastos, cuota_deudas, libre, ingreso),
         por_terminar=deudas_por_terminar(bd, id_usuario),
-        proyeccion=proyeccion_capacidad(ingreso, gastos, deudas, hoy, creditos),
+        # La proyección cuenta la cuota de la deuda vinculada en su calendario; por eso
+        # su descuento de nómina sale de los gastos fijos constantes. Así, al terminar
+        # la deuda, la cuota y el descuento se retiran juntos.
+        proyeccion=proyeccion_capacidad(
+            ingreso, gastos - valor_vinculado, deudas, hoy, creditos
+        ),
         libre_salario=libre_salario,
         libre_extras=libre_extras,
         base_minima=base,

@@ -47,30 +47,35 @@
     <section class="panel">
       <h2 class="panel__titulo">Cartera frente a deuda</h2>
       {% if segmentos %}
-        <div class="dona-contenedor">
+        <div class="dona-contenedor" data-dona-contenedor>
           <div class="dona">
             <svg viewBox="0 0 42 42" class="dona__svg" role="img"
                  aria-label="Cartera por cobrar frente a deuda con el proveedor">
               <circle cx="21" cy="21" r="15.9155" fill="transparent" class="dona__fondo" stroke-width="6" />
               {% for arco in segmentos %}
-                <circle cx="21" cy="21" r="15.9155" fill="transparent" stroke-width="6"
+                <circle class="dona__arco" tabindex="0" cx="21" cy="21" r="15.9155" fill="transparent" stroke-width="6"
                         style="stroke: {{ arco.color }}"
                         stroke-dasharray="{{ arco.longitud }} {{ 100 - arco.longitud }}"
                         stroke-dashoffset="{{ arco.desplazamiento }}"
-                        transform="rotate(-90 21 21)">
+                        transform="rotate(-90 21 21)"
+                        data-etiqueta="{{ arco.etiqueta }}"
+                        data-porcentaje="{{ arco.porcentaje }} %"
+                        data-valor="{{ arco.valor }}">
                   <title>{{ arco.etiqueta }}: {{ arco.valor }} ({{ arco.porcentaje }} %)</title>
                 </circle>
               {% endfor %}
             </svg>
             {# El balance va al centro con signo y color: verde a favor, rojo en déficit. #}
             <div class="dona__centro">
-              <strong class="dona__centro-valor {{ balance_clase }}">{{ balance_texto }}</strong>
-              <span class="dona__centro-etiqueta">balance</span>
+              <strong class="dona__centro-valor {{ balance_clase }}" data-centro-valor
+                      data-valor-defecto="{{ balance_texto }}">{{ balance_texto }}</strong>
+              <span class="dona__centro-etiqueta" data-centro-etiqueta data-etiqueta-defecto="balance">balance</span>
+              <span class="dona__centro-detalle" data-centro-detalle></span>
             </div>
           </div>
           <ul class="dona__leyenda">
             {% for arco in segmentos %}
-              <li>
+              <li data-leyenda-etiqueta="{{ arco.etiqueta }}">
                 <span class="dona__muestra" style="background: {{ arco.color }}"></span>
                 {{ arco.etiqueta }}: <strong class="{{ arco.clase }}">{{ arco.valor }}</strong> ({{ arco.porcentaje }} %)
               </li>
@@ -92,7 +97,7 @@
       <form class="formulario" method="post" action="{{ url_for('registrar_abono_proveedor') }}">
         <label class="campo">
           <span class="campo__etiqueta">Monto pagado (COP)</span>
-          <input class="campo__control" type="text" name="monto" inputmode="decimal" placeholder="100.000" required />
+          <input class="campo__control" type="text" name="monto" inputmode="decimal" placeholder="100.000" required data-moneda />
         </label>
         <label class="campo">
           <span class="campo__etiqueta">Concepto</span>
@@ -105,7 +110,7 @@
     <section class="panel panel--tabla">
       <h2 class="panel__titulo">Movimientos con el proveedor</h2>
       {% if movimientos %}
-        <div class="tabla-contenedor">
+        <div class="tabla-contenedor tabla-escritorio">
           <table class="tabla tabla--tarjetas">
             <thead>
               <tr>
@@ -129,6 +134,41 @@
             </tbody>
           </table>
         </div>
+
+        {# Celular: fecha sin hora, concepto, monto y saldo; el detalle completo se abre al tocar la fila. #}
+        <ul class="ordenes-moviles" aria-label="Movimientos con el proveedor">
+          <li class="orden-movil orden-movil--cabecera orden-movil--movimiento" aria-hidden="true">
+            <span>Fecha</span><span>Concepto</span><span>Monto</span><span>Saldo</span>
+          </li>
+          {% for movimiento in movimientos %}
+            <li>
+              <button type="button" class="orden-movil orden-movil--movimiento"
+                      data-abrir-dialogo="movimiento-{{ movimiento.id_movimiento }}">
+                <span class="orden-movil__fecha">{{ movimiento.fecha.strftime('%d-%m-%Y') }}</span>
+                <span>{{ movimiento.concepto }}</span>
+                <span>{{ movimiento.monto | cop }}</span>
+                <span>{{ movimiento.saldo_resultante | cop }}</span>
+              </button>
+            </li>
+          {% endfor %}
+        </ul>
+
+        {% for movimiento in movimientos %}
+          <dialog class="detalle-orden" id="movimiento-{{ movimiento.id_movimiento }}"
+                  aria-label="Detalle del movimiento del {{ movimiento.fecha.strftime('%d-%m-%Y') }}">
+            <div class="detalle-orden__cuerpo">
+              <h3 class="detalle-orden__titulo">Movimiento con el proveedor</h3>
+              <dl class="detalle-orden__lista">
+                <div><dt>Fecha y hora</dt><dd>{{ movimiento.fecha.strftime('%d/%m/%Y %H:%M') }}</dd></div>
+                <div><dt>Tipo</dt><dd>{{ 'Compra a crédito' if movimiento.tipo == 'COMPRA_CREDITO' else 'Pago' }}</dd></div>
+                <div><dt>Concepto</dt><dd>{{ movimiento.concepto }}</dd></div>
+                <div><dt>Monto</dt><dd>{{ movimiento.monto | cop }}</dd></div>
+                <div><dt>Saldo después</dt><dd>{{ movimiento.saldo_resultante | cop }}</dd></div>
+              </dl>
+              <button type="button" class="boton boton--secundario boton--pequeno detalle-orden__volver" data-cerrar-dialogo>Volver a movimientos</button>
+            </div>
+          </dialog>
+        {% endfor %}
       {% else %}
         <p class="tabla__vacia">Aún no hay compras a crédito ni pagos al proveedor.</p>
       {% endif %}

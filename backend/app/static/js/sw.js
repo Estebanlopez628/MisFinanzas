@@ -13,7 +13,7 @@
 
 "use strict";
 
-var CACHE = "olb-finanzas-v38";
+var CACHE = "olb-finanzas-v47";
 var RECURSOS = [
   "/estaticos/css/estilos.css",
   "/estaticos/js/app.js",
@@ -22,6 +22,8 @@ var RECURSOS = [
   "/estaticos/js/factura.js",
   "/estaticos/js/vendor/html-to-image.js",
   "/estaticos/js/perfil.js",
+  "/estaticos/js/dona.js",
+  "/estaticos/js/moneda.js",
   "/estaticos/img/favicon.svg",
   "/estaticos/img/icono-192.svg",
   "/estaticos/img/icono-512.svg"

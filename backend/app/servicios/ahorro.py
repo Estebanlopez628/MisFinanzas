@@ -34,6 +34,8 @@ from app.core.numeros import redondear_dinero
 from app.core.texto import parsear_monto
 from app.modelos import AbonoProyeccion, Gasto, PerfilFinanciero, ProyeccionAhorro
 from app.servicios import capacidad as servicio_capacidad
+from app.servicios import deducciones_fijas as servicio_fijas
+from app.servicios import deudas as servicio_deudas
 from app.servicios import quincenas as servicio_quincenas
 from app.servicios import trabajos as servicio_trabajos
 from app.servicios.gastos import valor_computable
@@ -817,13 +819,23 @@ def diagnostico(
     Returns:
         Diccionario con `saldo_libre` (Decimal), `extras_mes` (Decimal),
         `disponible` (Decimal), `alerta` (bool), `umbral` (Decimal) y
-        `metas_mes` (Decimal). `extras_mes` es el neto cobrado de trabajos
-        extras del mes (SRS v1.7) y `disponible` es el saldo libre más ese neto.
+        `metas_mes` (Decimal). `saldo_libre` es el sueldo libre después de la
+        cuota mensual de deudas (`cuota_deudas`); `extras_mes` es el neto cobrado de
+        trabajos extras del mes (SRS v1.7). `disponible` es `saldo_libre` más ese neto
+        y coincide con el «Total libre» de la dona de capacidad (SRS v1.9).
         `alerta` indica que el disponible quedó por debajo de $300.000.
         `metas_mes` es informativo: ya está restado en el saldo porque cada meta
         vive como gasto fijo (SRS v1.6).
     """
-    saldo = saldo_libre_total(bd, id_usuario, perfil, anio, mes)
+    # La cuota mensual de las deudas sale del disponible, igual que en la dona de
+    # capacidad (ADR-53). Las deducciones fijas que son créditos ya restan dentro
+    # del saldo de cada quincena, así que aquí no se vuelven a descontar.
+    # Las cuotas de deudas vinculadas ya restan como deducción fija (ADR-56).
+    cuota_deudas = redondear_dinero(
+        servicio_deudas.resumen_deudas(bd, id_usuario)["cuota_mensual"]
+        - servicio_fijas.cuota_de_vinculadas(bd, id_usuario)
+    )
+    saldo = redondear_dinero(saldo_libre_total(bd, id_usuario, perfil, anio, mes) - cuota_deudas)
     extras = servicio_trabajos.extras_cobrados_mes(bd, id_usuario, anio, mes)
     disponible = redondear_dinero(saldo + extras)
     inicio = date(anio, mes, 1)
@@ -841,6 +853,7 @@ def diagnostico(
     )
     return {
         "saldo_libre": saldo,
+        "cuota_deudas": cuota_deudas,
         "extras_mes": extras,
         "disponible": disponible,
         "alerta": disponible < UMBRAL_ALERTA,

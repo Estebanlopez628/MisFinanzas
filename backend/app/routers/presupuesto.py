@@ -29,6 +29,7 @@ from app.servicios import (
     capacidad,
     consejero,
     deducciones_fijas,
+    deudas,
     pagos_metas,
     perfiles,
 )
@@ -96,6 +97,8 @@ def _contexto(
     """
     hoy = date.today()
     pagos_metas.asegurar_gastos_de_metas(bd, usuario.id_usuario, hoy.year, hoy.month)
+    # SRS v1.9: las cuotas de las libranzas bajan al abrir esta vista, no solo en Deudas.
+    deudas.aplicar_cuotas_vencidas(bd, usuario.id_usuario)
     perfil = perfiles.obtener_perfil(bd, usuario.id_usuario)
     diagnostico = ahorro.diagnostico(bd, usuario.id_usuario, perfil, hoy.year, hoy.month)
     contexto = contexto_base(usuario)
@@ -116,6 +119,12 @@ def _contexto(
             ),
             "historial": ahorro.historial_metas(bd, usuario.id_usuario),
             "deducciones": deducciones_fijas.listar_deducciones(bd, usuario.id_usuario),
+            "deudas_mensuales": [
+                deuda
+                for deuda in deudas.listar_deudas(bd, usuario.id_usuario)
+                if deuda.estado == deudas.ESTADO_ACTIVA
+                and deuda.periodicidad == deudas.PERIODICIDAD_MENSUAL
+            ],
             "etiquetas_quincena": perfiles.etiquetas_quincena(perfil),
             "categorias": ahorro.CATEGORIAS_SUGERIDAS,
             "fecha_hoy": hoy.isoformat(),
@@ -304,6 +313,7 @@ def crear_deduccion_fija(
     descripcion: Annotated[str, Form()] = "",
     valor: Annotated[str, Form()] = "",
     quincena: Annotated[str, Form()] = "1",
+    id_deuda: Annotated[str, Form()] = "",
 ) -> HTMLResponse | RedirectResponse:
     """Registra una deducción fija del salario (libranza, fondo, seguro).
 
@@ -314,13 +324,14 @@ def crear_deduccion_fija(
         descripcion: Concepto del descuento.
         valor: Monto por pago en pesos.
         quincena: `1` o `2`, pago del que se descuenta.
+        id_deuda: Deuda mensual que esta deducción paga; vacío si no aplica.
 
     Returns:
         Redirección al planificador o la vista con el error (400).
     """
     try:
         deduccion = deducciones_fijas.crear_deduccion(
-            bd, usuario.id_usuario, descripcion, valor, quincena
+            bd, usuario.id_usuario, descripcion, valor, quincena, id_deuda
         )
     except (ValueError, ArithmeticError) as error:
         contexto = _contexto(usuario, bd, error=str(error))
@@ -351,6 +362,7 @@ def editar_deduccion_fija(
     descripcion: Annotated[str, Form()] = "",
     valor: Annotated[str, Form()] = "",
     quincena: Annotated[str, Form()] = "1",
+    id_deuda: Annotated[str, Form()] = "",
 ) -> HTMLResponse | RedirectResponse:
     """Modifica una deducción fija existente del usuario.
 
@@ -362,13 +374,14 @@ def editar_deduccion_fija(
         descripcion: Nuevo concepto.
         valor: Nuevo monto por pago.
         quincena: Nueva quincena de descuento.
+        id_deuda: Deuda vinculada; vacío quita el vínculo.
 
     Returns:
         Redirección al planificador o la vista con el error.
     """
     try:
         actualizada = deducciones_fijas.actualizar_deduccion(
-            bd, usuario.id_usuario, id_deduccion, descripcion, valor, quincena
+            bd, usuario.id_usuario, id_deduccion, descripcion, valor, quincena, id_deuda
         )
     except (ValueError, ArithmeticError) as error:
         contexto = _contexto(usuario, bd, error=str(error))

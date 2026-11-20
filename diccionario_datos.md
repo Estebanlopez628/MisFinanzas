@@ -331,6 +331,7 @@ antes de calcular el saldo libre.
 | `descripcion` | `VARCHAR(150)` | No | Sí | Concepto, por ejemplo «Libranza banco X». |
 | `valor` | `NUMERIC(14,2)` | No | Sí | Monto por pago; `>= 0`. |
 | `quincena` | `SMALLINT` | No | Sí | `1` o `2`: pago del que se descuenta. |
+| `id_deuda` | `UUID` (FK → `deudas`) | Sí | No | SRS v1.9 (ADR-56). Deuda mensual que esta deducción paga. Si existe, `valor` toma la cuota de la deuda y la cuota no se cuenta dos veces. `ON DELETE SET NULL`: al borrar la deuda la deducción sigue como descuento normal. Cuando la deuda se paga, la deducción deja de descontarse. |
 | `fecha_creacion` | `TIMESTAMPTZ` | No | Sí | `now()`. |
 
 ---

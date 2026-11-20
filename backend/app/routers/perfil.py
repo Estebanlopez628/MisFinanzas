@@ -25,6 +25,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
 from app.core.base_datos import obtener_bd
+from app.core.texto import formatear_cop
 from app.dependencias import UsuarioSesion, obtener_usuario_sin_onboarding
 from app.routers.vistas import contexto_base, plantillas
 from app.servicios import auditoria, perfiles, usuarios
@@ -96,7 +97,7 @@ def _contexto_perfil(
         valores.update(
             {
                 "alias": usuario.alias,
-                "sueldo_basico": f"{perfil.sueldo_basico:.2f}".replace(".", ","),
+                "sueldo_basico": formatear_cop(perfil.sueldo_basico, con_simbolo=False),
                 "modalidad_pago": perfil.modalidad_pago,
                 "porcentaje_quincena_1": _formatear_porcentaje(primero),
                 "porcentaje_quincena_2": _formatear_porcentaje(segundo),

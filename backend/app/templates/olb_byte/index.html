@@ -50,7 +50,7 @@
                           <label class="campo">
                             <span class="campo__etiqueta">Devolver al cliente (COP)</span>
                             <input class="campo__control" type="text" name="monto_devuelto" inputmode="decimal"
-                                   placeholder="0" />
+                                   placeholder="0" data-moneda />
                             <span class="ayuda">Abonado: {{ venta.total_abonado | cop }}</span>
                           </label>
                           <label class="campo">
@@ -71,7 +71,7 @@
                               action="{{ url_for('registrar_devolucion', id_venta=venta.id_venta) }}">
                           <label class="campo">
                             <span class="campo__etiqueta">Monto devuelto (COP)</span>
-                            <input class="campo__control" type="text" name="monto" inputmode="decimal" required />
+                            <input class="campo__control" type="text" name="monto" inputmode="decimal" required data-moneda />
                           </label>
                           <label class="campo">
                             <span class="campo__etiqueta">Medio</span>
@@ -193,7 +193,7 @@
           <label class="campo">
             <span class="campo__etiqueta">Valor del anticipo (COP)</span>
             <input class="campo__control" type="text" name="monto_anticipo" inputmode="decimal"
-                   placeholder="50.000" value="{{ pago.monto_anticipo or '' }}" data-monto-anticipo />
+                   placeholder="50.000" value="{{ pago.monto_anticipo or '' }}" data-monto-anticipo data-moneda />
           </label>
           <label class="campo">
             <span class="campo__etiqueta">Método de pago del anticipo</span>
@@ -225,11 +225,11 @@
           </label>
           <label class="campo">
             <span class="campo__etiqueta">Costo (proveedor)</span>
-            <input class="campo__control" type="text" inputmode="decimal" placeholder="0" data-campo-panel="costo_unitario" />
+            <input class="campo__control" type="text" inputmode="decimal" placeholder="0" data-campo-panel="costo_unitario" data-moneda />
           </label>
           <label class="campo">
             <span class="campo__etiqueta">Precio de venta</span>
-            <input class="campo__control" type="text" inputmode="decimal" placeholder="50.000" data-campo-panel="precio_unitario" />
+            <input class="campo__control" type="text" inputmode="decimal" placeholder="50.000" data-campo-panel="precio_unitario" data-moneda />
           </label>
           <label class="campo">
             <span class="campo__etiqueta">Garantía (meses)</span>
@@ -307,11 +307,11 @@
         </label>
         <label class="campo">
           <span class="campo__etiqueta">Costo (proveedor)</span>
-          <input class="campo__control" type="text" inputmode="decimal" data-campo-edicion="costo_unitario" />
+          <input class="campo__control" type="text" inputmode="decimal" data-campo-edicion="costo_unitario" data-moneda />
         </label>
         <label class="campo">
           <span class="campo__etiqueta">Precio de venta</span>
-          <input class="campo__control" type="text" inputmode="decimal" data-campo-edicion="precio_unitario" />
+          <input class="campo__control" type="text" inputmode="decimal" data-campo-edicion="precio_unitario" data-moneda />
         </label>
         <label class="campo">
           <span class="campo__etiqueta">Garantía (meses)</span>
@@ -408,7 +408,7 @@
             <button type="button" class="orden-movil" data-abrir-dialogo="orden-{{ venta.id_venta }}">
               <span>{{ venta.numero_orden }}</span>
               <span>{{ venta.cliente_nombre }}</span>
-              <span>{{ venta.fecha_venta.strftime('%d-%m-%Y') }}</span>
+              <span class="orden-movil__fecha">{{ venta.fecha_venta.strftime('%d-%m-%Y') }}</span>
               <span>{{ venta.total | cop }}</span>
             </button>
           </li>

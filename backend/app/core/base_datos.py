@@ -716,6 +716,28 @@ def _migrar_garantia_detalle() -> None:
         )
 
 
+def _migrar_deduccion_vinculada() -> None:
+    """Agrega el enlace deducción → deuda a `deducciones_fijas` (SRS v1.9).
+
+    Las deducciones anteriores quedan sin deuda vinculada y se calculan como antes.
+    SQLite comprueba las columnas con PRAGMA; PostgreSQL usa `IF NOT EXISTS`.
+    """
+    if _conexion_sqlite:
+        with motor.begin() as conexion:
+            filas = conexion.exec_driver_sql("PRAGMA table_info(deducciones_fijas)").fetchall()
+            if filas and "id_deuda" not in {fila[1] for fila in filas}:
+                conexion.exec_driver_sql(
+                    "ALTER TABLE deducciones_fijas ADD COLUMN id_deuda VARCHAR(32) "
+                    "REFERENCES deudas (id_deuda) ON DELETE SET NULL"
+                )
+    else:
+        with motor.begin() as conexion:
+            conexion.exec_driver_sql(
+                "ALTER TABLE deducciones_fijas ADD COLUMN IF NOT EXISTS id_deuda VARCHAR(32) "
+                "REFERENCES deudas (id_deuda) ON DELETE SET NULL"
+            )
+
+
 def inicializar_base_datos() -> None:
     """Prepara el esquema y siembra las cuentas de demostración.
 
@@ -733,5 +755,6 @@ def inicializar_base_datos() -> None:
     _migrar_saldos_incapacidad()
     _migrar_columnas_usuarios()
     _migrar_garantia_detalle()
+    _migrar_deduccion_vinculada()
     with FabricaSesiones() as sesion:
         usuarios.sembrar_demostracion(sesion)

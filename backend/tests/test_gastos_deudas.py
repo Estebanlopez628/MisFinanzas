@@ -227,7 +227,9 @@ def test_vista_deudas_registra_y_muestra_amortizacion(
     html = " ".join(cliente_admin.get("/deudas").text.split())
     assert "Banco" in html
     assert "3.500.000" in html
-    assert "Ver cuotas" in html
+    # SRS v1.9: las cuotas se muestran directamente en la tabla, sin botón que las oculte.
+    assert "Ver cuotas" not in html
+    assert "Próximas cuotas" in html
     # SRS v1.8: sin intereses, sin abonos manuales y sin tasa capturada.
     assert "Abonar" not in html
     assert 'name="tasa_interes"' not in html

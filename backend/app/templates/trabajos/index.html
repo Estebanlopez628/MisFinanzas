@@ -59,7 +59,7 @@
         <label class="campo">
           <span class="campo__etiqueta">Valor (COP)</span>
           <input class="campo__control" type="text" name="valor" inputmode="decimal"
-                 placeholder="150.000" required />
+                 placeholder="150.000" required data-moneda />
         </label>
       </div>
       <button class="boton boton--secundario boton--pequeno" type="submit">Agregar gasto fijo</button>
@@ -138,7 +138,7 @@
 
           <label class="campo">
             <span class="campo__etiqueta">Valor del pago (COP)</span>
-            <input class="campo__control" type="text" name="valor" inputmode="decimal" required />
+            <input class="campo__control" type="text" name="valor" inputmode="decimal" required data-moneda />
           </label>
           <label class="campo">
             <span class="campo__etiqueta">Tipo de contrato</span>
@@ -200,7 +200,7 @@
           </label>
           <label class="campo" data-solo-quincenal data-conoce-no hidden>
             <span class="campo__etiqueta">Valor de esa quincena (COP)</span>
-            <input class="campo__control" type="text" name="valor_quincena" inputmode="decimal" />
+            <input class="campo__control" type="text" name="valor_quincena" inputmode="decimal" data-moneda />
           </label>
         </div>
 

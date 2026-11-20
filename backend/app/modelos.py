@@ -32,7 +32,7 @@ from sqlalchemy import (
     UniqueConstraint,
     func,
 )
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.base_datos import Base
 
@@ -473,6 +473,12 @@ class DeduccionFija(Base):
     descripcion: Mapped[str] = mapped_column(String(150), nullable=False)
     valor: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False)
     quincena: Mapped[int] = mapped_column(SmallInteger, nullable=False)
+    # SRS v1.9: si la deducción es la cuota de una deuda, se guarda aquí. La deuda
+    # lleva el conteo de cuotas y su cuota no se cuenta dos veces.
+    id_deuda: Mapped[str | None] = mapped_column(
+        ForeignKey("deudas.id_deuda", ondelete="SET NULL"), nullable=True, index=True
+    )
+    deuda: Mapped["Deuda | None"] = relationship(foreign_keys=[id_deuda])
     fecha_creacion: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )

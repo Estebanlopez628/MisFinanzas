@@ -32,7 +32,7 @@ from sqlalchemy.orm import Session
 
 from app.core.numeros import redondear_dinero
 from app.core.texto import formatear_cop, parsear_monto
-from app.modelos import Deuda, PagoDeuda
+from app.modelos import DeduccionFija, Deuda, PagoDeuda
 
 CERO = Decimal("0")
 ESTADO_ACTIVA = "ACTIVA"
@@ -454,6 +454,11 @@ def eliminar_deuda(bd: Session, id_usuario: str, id_deuda: str) -> bool:
     deuda = bd.get(Deuda, id_deuda)
     if deuda is None or deuda.id_usuario != id_usuario:
         return False
+    # SRS v1.9: la deducción vinculada sigue existiendo como descuento normal. Se
+    # desvincula en la sesión, además de en la base, para que los cálculos de esta
+    # misma sesión no la sigan viendo como cuota de la deuda borrada.
+    for deduccion in bd.scalars(select(DeduccionFija).where(DeduccionFija.id_deuda == id_deuda)):
+        deduccion.id_deuda = None
     bd.delete(deuda)
     bd.commit()
     return True

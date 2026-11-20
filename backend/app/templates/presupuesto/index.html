@@ -51,6 +51,12 @@
       </p>
     {% endif %}
 
+    {% if diagnostico.cuota_deudas > 0 %}
+      <p class="ayuda">
+        Ya descontadas las cuotas de deudas del mes: {{ diagnostico.cuota_deudas | cop }}.
+      </p>
+    {% endif %}
+
     {% if diagnostico.metas_mes > 0 %}
       <p class="ayuda">
         Metas de este mes: {{ diagnostico.metas_mes | cop }}, ya descontadas de tus gastos fijos.
@@ -156,7 +162,12 @@
                       style="height: {{ fila.optimizado_pct }}%"
                       title="Optimizado: {{ fila.optimizado | cop }}"></span>
               </div>
-              <span class="comparativa__etiqueta">{{ fila.etiqueta }}</span>
+              {# El mes y el año van en líneas separadas para que no se encimen en el celular. #}
+              {% set partes = fila.etiqueta.split(' ', 1) %}
+              <span class="comparativa__etiqueta">
+                <span class="comparativa__mes-nombre">{{ partes[0] }}</span>
+                {% if partes|length > 1 %}<span class="comparativa__anio">{{ partes[1] }}</span>{% endif %}
+              </span>
             </div>
           {% endfor %}
         </div>
@@ -209,7 +220,7 @@
         <label class="campo">
           <span class="campo__etiqueta">Valor mensual / cuota (COP)</span>
           <input class="campo__control" type="text" name="valor_mensual"
-                 inputmode="decimal" placeholder="100.000" required />
+                 inputmode="decimal" placeholder="100.000" required data-moneda />
         </label>
       </div>
 
@@ -294,7 +305,7 @@
         <label class="campo">
           <span class="campo__etiqueta">Valor por pago (COP)</span>
           <input class="campo__control" type="text" name="valor"
-                 inputmode="decimal" placeholder="120.000" required />
+                 inputmode="decimal" placeholder="120.000" required data-moneda />
         </label>
         <label class="campo">
           <span class="campo__etiqueta">Quincena donde aplicaremos los pagos</span>
@@ -304,6 +315,21 @@
           </select>
         </label>
       </div>
+      <label class="campo">
+        <span class="campo__etiqueta">¿Es la cuota de una deuda que estás pagando?</span>
+        <select class="campo__control" name="id_deuda">
+          <option value="">No, es un descuento sin control de cuotas</option>
+          {% for deuda in deudas_mensuales %}
+            <option value="{{ deuda.id_deuda }}">
+              {{ deuda.acreedor }} · saldo {{ deuda.saldo_total | cop }} · {{ deuda.cuotas_pendientes }} cuota(s)
+            </option>
+          {% endfor %}
+        </select>
+        <span class="ayuda">
+          Si eliges una deuda, el valor será su cuota mensual: el descuento se cuenta una
+          sola vez y verás cuántas cuotas faltan. Solo aparecen deudas que se pagan cada mes.
+        </span>
+      </label>
       {# SRS v1.5: mismo peso visual que «Crear meta»; sin el signo «+». #}
       <button class="boton boton--primario" type="submit">
         Agregar deducción fija
@@ -318,6 +344,16 @@
               {{ deduccion.descripcion }} - {{ etiquetas_quincena[deduccion.quincena] }}
             </span>
             <span class="lista-gastos__valor">Valor: {{ deduccion.valor | cop }}</span>
+            {% if deduccion.deuda %}
+              <span class="ayuda">
+                {% if deduccion.deuda.estado == 'ACTIVA' %}
+                  Crédito con {{ deduccion.deuda.acreedor }}: faltan
+                  {{ deduccion.deuda.cuotas_pendientes }} cuota(s) · saldo {{ deduccion.deuda.saldo_total | cop }}
+                {% else %}
+                  Crédito con {{ deduccion.deuda.acreedor }} pagado. Ya no se descuenta.
+                {% endif %}
+              </span>
+            {% endif %}
             <div class="lista-gastos__acciones">
               <details class="edicion-gasto edicion-gasto--modal">
                 {{ boton_editar(deduccion.descripcion) }}
@@ -332,13 +368,24 @@
                   <label class="campo">
                     <span class="campo__etiqueta">Valor (COP)</span>
                     <input class="campo__control" type="text" name="valor"
-                           inputmode="decimal" value="{{ deduccion.valor | cop(false) }}" required />
+                           inputmode="decimal" value="{{ deduccion.valor | cop(false) }}" required data-moneda />
                   </label>
                   <label class="campo">
                     <span class="campo__etiqueta">Quincena</span>
                     <select class="campo__control" name="quincena">
                       <option value="1" {% if deduccion.quincena == 1 %}selected{% endif %}>{{ etiquetas_quincena[1] }}</option>
                       <option value="2" {% if deduccion.quincena == 2 %}selected{% endif %}>{{ etiquetas_quincena[2] }}</option>
+                    </select>
+                  </label>
+                  <label class="campo">
+                    <span class="campo__etiqueta">¿Es la cuota de una deuda que estás pagando?</span>
+                    <select class="campo__control" name="id_deuda">
+                      <option value="">No, es un descuento sin control de cuotas</option>
+                      {% for opcion in deudas_mensuales %}
+                        <option value="{{ opcion.id_deuda }}" {% if deduccion.id_deuda == opcion.id_deuda %}selected{% endif %}>
+                          {{ opcion.acreedor }} · saldo {{ opcion.saldo_total | cop }} · {{ opcion.cuotas_pendientes }} cuota(s)
+                        </option>
+                      {% endfor %}
                     </select>
                   </label>
                   <div class="acciones-formulario acciones-formulario--edicion">

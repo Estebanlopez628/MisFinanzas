@@ -75,13 +75,13 @@
             <span class="campo__etiqueta">Total adeudado (COP)</span>
             <input class="campo__control" type="text" name="saldo_total"
                    inputmode="decimal" value="{{ valores.saldo_total if valores else '' }}"
-                   placeholder="23.000.000" required />
+                   placeholder="23.000.000" required data-moneda />
           </label>
           <label class="campo">
             <span class="campo__etiqueta">Cuota (COP)</span>
             <input class="campo__control" type="text" name="cuota"
                    inputmode="decimal" value="{{ valores.cuota if valores else '' }}"
-                   placeholder="383.333" required />
+                   placeholder="383.333" required data-moneda />
           </label>
           <label class="campo">
             <span class="campo__etiqueta">Cuotas pendientes</span>
@@ -149,10 +149,7 @@
                 </tr>
                 <tr class="fila-detalle-deuda">
                   <td colspan="7">
-                    <details class="edicion-gasto">
-                      <summary class="boton boton--secundario boton--pequeno">
-                        Ver cuotas
-                      </summary>
+                    <div class="deuda-cuotas">
 
                       {% if pagos.get(deuda.id_deuda) %}
                         <h4 class="panel__titulo">Cuotas aplicadas</h4>
@@ -209,7 +206,7 @@
                       {% elif not pagos.get(deuda.id_deuda) %}
                         <p class="tabla__vacia">Esta deuda no tiene cuotas pendientes.</p>
                       {% endif %}
-                    </details>
+                    </div>
                   </td>
                 </tr>
               {% endfor %}

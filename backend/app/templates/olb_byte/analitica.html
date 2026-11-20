@@ -45,13 +45,21 @@
       <ul class="filtros-activos" aria-label="Filtros activos">
         {% for filtro in filtros_activos %}
           <li>
-            <a class="insignia filtros-activos__chip" href="{{ filtro.url }}" title="Quitar este filtro">
-              {{ filtro.etiqueta }} ✕
-            </a>
+            <span class="filtros-activos__etiqueta">
+              {{ filtro.etiqueta }}
+              <a class="filtro-limpiar" href="{{ filtro.url }}" title="Quitar este filtro"
+                 aria-label="Quitar filtro: {{ filtro.etiqueta }}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M3 12a9 9 0 1 0 3-6.7"/>
+                  <polyline points="3 4 3 10 9 10"/>
+                </svg>
+              </a>
+            </span>
           </li>
         {% endfor %}
         <li>
-          <a class="enlace" href="{{ url_limpiar }}">Quitar todos los filtros</a>
+          <a class="filtros-activos__todos" href="{{ url_limpiar }}">Quitar todos los filtros</a>
         </li>
       </ul>
     {% else %}
@@ -132,7 +140,8 @@
                 <td class="tabla__numero">{{ fila.abonado | cop }}</td>
                 <td class="tabla__numero">{{ fila.ganancia | cop }}</td>
                 <td>
-                  <span class="insignia{{ ' insignia--anulada' if fila.garantia == 'Vencida' }}">{{ fila.garantia }}</span>
+                  {% set clase_garantia = {'Activa': 'insignia--vigente', 'Vencida': 'insignia--vencida'}.get(fila.garantia, 'insignia--sin-garantia') %}
+                  <span class="insignia {{ clase_garantia }}">{{ fila.garantia }}</span>
                 </td>
               </tr>
             {% endfor %}
@@ -254,7 +263,7 @@
                   <td class="tabla__numero">
                     {{ fila.margen ~ ' %' if fila.margen is not none else '—' }}
                     {% if fila.margen_bajo %}
-                      <span class="insignia insignia--anulada">Margen bajo</span>
+                      <span class="insignia insignia--vencida">Margen bajo</span>
                     {% endif %}
                   </td>
                 </tr>

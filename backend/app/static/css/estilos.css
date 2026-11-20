@@ -1885,13 +1885,13 @@ textarea.campo__control {
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  margin-top: 8px;
-  padding: 20px 24px;
-  border-radius: var(--radio-lg);
+  gap: 12px;
+  margin-top: 6px;
+  padding: 12px 16px;
+  border-radius: var(--radio-md);
   background: var(--bg-card);
   border: 1px solid rgba(0, 168, 255, 0.35);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
 }
 
 .apoyo-cafe__texto {
@@ -1901,20 +1901,21 @@ textarea.campo__control {
 
 .apoyo-cafe__titulo {
   margin: 0;
-  font-size: 1.1rem;
+  font-size: 0.98rem;
   font-weight: 700;
   color: var(--text-primary);
 }
 
 .apoyo-cafe__detalle {
-  margin: 4px 0 0;
+  margin: 2px 0 0;
   color: var(--text-muted);
-  font-size: 0.95rem;
+  font-size: 0.88rem;
 }
 
 .apoyo-cafe__boton {
-  min-height: 44px;
-  padding: 12px 22px;
+  min-height: 36px;
+  padding: 7px 18px;
+  font-size: 0.9rem;
   border: 0;
   border-radius: 999px;
   background: linear-gradient(135deg, #0066cc, #00a8ff);
@@ -1934,6 +1935,8 @@ textarea.campo__control {
   .apoyo-cafe {
     flex-direction: column;
     align-items: stretch;
+    gap: 8px;
+    padding: 10px 12px;
     text-align: center;
   }
 
@@ -1943,6 +1946,8 @@ textarea.campo__control {
 
   .apoyo-cafe__boton {
     width: 100%;
+    min-height: 34px;
+    padding: 6px 14px;
   }
 }
 
@@ -2570,6 +2575,48 @@ textarea.campo__control {
   line-height: 1.15;
 }
 
+/* Interacción con la dona (dona.js): el arco activo se engrosa y el centro muestra su detalle. */
+.dona__arco {
+  cursor: pointer;
+  outline: none;
+  transition: stroke-width 0.15s ease, opacity 0.15s ease;
+}
+
+.dona__arco--activo {
+  stroke-width: 8;
+}
+
+.dona-contenedor:has(.dona__arco--activo) .dona__arco:not(.dona__arco--activo) {
+  opacity: 0.45;
+}
+
+.dona__arco:focus-visible {
+  stroke-width: 8;
+}
+
+.dona__centro-detalle {
+  min-height: 1em;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  line-height: 1.2;
+}
+
+.dona__leyenda li[data-leyenda-etiqueta] {
+  cursor: pointer;
+}
+
+@media (max-width: 640px) {
+  /* En celular la dona va sola en su línea y centrada, no pegada a la izquierda. */
+  .dona-contenedor,
+  .capacidad__resumen {
+    justify-content: center;
+  }
+
+  .dona {
+    margin-inline: auto;
+  }
+}
+
 /* ---------------------- Analítica con filtros (SRS v1.9) ---------------------- */
 
 .panel__cabecera {
@@ -2578,10 +2625,18 @@ textarea.campo__control {
   justify-content: space-between;
   align-items: center;
   gap: 10px;
+  margin-bottom: 14px;
 }
 
 .panel__cabecera .panel__titulo {
   margin: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* El botón de descarga siempre queda a la derecha, sin importar la longitud del título. */
+.panel__cabecera > .boton {
+  margin-left: auto;
 }
 
 .fila-enlace {
@@ -2592,12 +2647,30 @@ textarea.campo__control {
 
 .fila-enlace:hover,
 .fila-enlace:focus-visible {
-  color: var(--accent-blue);
-  border-bottom-color: var(--accent-blue);
+  color: #e2e8f0;
+  border-bottom-color: #94a3b8;
 }
 
+/* Fila con filtro activo: un tono gris-azulado plano, legible en claro y oscuro. */
 .fila--activa > td {
-  background: rgba(2, 132, 199, 0.18);
+  background: #2b3a4f;
+  color: #f1f5f9;
+}
+
+/* Etiquetas de garantía y alertas: tonos apagados con buen contraste sobre el panel. */
+.insignia--vigente {
+  background: #2a3f3a;
+  color: #cfe9df;
+}
+
+.insignia--vencida {
+  background: #3f3238;
+  color: #e7c6cc;
+}
+
+.insignia--sin-garantia {
+  background: #2b3444;
+  color: #cbd5e1;
 }
 
 .filtros-activos {
@@ -2610,9 +2683,48 @@ textarea.campo__control {
   gap: 8px;
 }
 
-.filtros-activos__chip {
+.filtros-activos__etiqueta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px 4px 12px;
+  border-radius: 999px;
+  background: #2b3444;
+  border: 1px solid #475569;
+  color: #e2e8f0;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+/* Botón circular con flecha de reinicio: quita ese filtro. */
+.filtro-limpiar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #334155;
+  border: 1px solid #475569;
+  color: #e2e8f0;
   text-decoration: none;
-  cursor: pointer;
+}
+
+.filtro-limpiar:hover,
+.filtro-limpiar:focus-visible {
+  background: #475569;
+}
+
+.filtro-limpiar svg {
+  width: 14px;
+  height: 14px;
+}
+
+.filtros-activos__todos {
+  color: #cbd5e1;
+  font-size: 0.85rem;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .dona__leyenda {
@@ -2818,9 +2930,19 @@ textarea.campo__control {
 }
 
 .comparativa__etiqueta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
   color: var(--text-muted);
   font-size: 0.7rem;
+  line-height: 1.2;
+  text-align: center;
   white-space: nowrap;
+}
+
+.comparativa__anio {
+  font-variant-numeric: tabular-nums;
 }
 
 .comparativa__leyenda {
@@ -3575,9 +3697,14 @@ textarea.campo__control {
 .acceso-nuevo__olvido {
   align-self: flex-end;
   margin-top: -6px;
-  color: #00a8ff;
+  color: #93c5e0;
   font-size: 0.85rem;
   text-decoration: none;
+}
+
+.acceso-nuevo__olvido:hover,
+.acceso-nuevo__olvido:focus-visible {
+  color: #bfe0f0;
 }
 
 .acceso-nuevo__boton {
@@ -3663,6 +3790,16 @@ textarea.campo__control {
 
 .orden-movil--tres {
   grid-template-columns: 0.6fr 1.8fr 1fr;
+}
+
+/* Movimientos con el proveedor: fecha, concepto, monto y saldo en una fila vertical. */
+.orden-movil--movimiento {
+  grid-template-columns: 0.95fr 1.5fr 1fr 1fr;
+}
+
+/* La fecha de las filas va un poco más pequeña que el resto de la fila. */
+.orden-movil__fecha {
+  font-size: 0.7rem;
 }
 
 .orden-movil--cabecera {

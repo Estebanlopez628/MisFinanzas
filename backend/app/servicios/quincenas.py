@@ -118,7 +118,8 @@ def resumen_quincenas(
         Lista con una tarjeta para modalidad MENSUAL o dos para QUINCENAL.
     """
     del_mes = servicio_gastos.listar_gastos(bd, id_usuario, anio, mes)
-    fijas = servicio_deducciones.listar_deducciones(bd, id_usuario)
+    # SRS v1.9: una deducción vinculada a una deuda pagada ya no se descuenta.
+    fijas = servicio_deducciones.listar_vigentes(bd, id_usuario)
     total_fijas_mes = servicio_deducciones.total_por_quincena(fijas, 1) + (
         servicio_deducciones.total_por_quincena(fijas, 2)
     )

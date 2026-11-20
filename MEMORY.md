@@ -298,6 +298,11 @@ Recálculo en tiempo real (<100 ms) sin recargar página. Se implementa con func
 - **Decisión:** `servicios/consejero.py` se activa solo si el disponible consolidado (quincenas + extras) supera $300.000. Con deudas simula doce meses de cuotas mínimas y dos escenarios que aplican todo el excedente: bola de nieve (saldo menor primero) y avalancha (tasa mayor primero). Recomienda el de menor interés total y muestra la deuda objetivo, el ahorro en intereses, el mes de liquidación y la deuda más grande. Sin deudas dirige el excedente a la primera meta activa y calcula en cuántos meses se completa; si no hay metas, sugiere crearlas. La gráfica compara doce meses de base contra optimizado: en modo deuda es saldo restante (más bajo es mejor) y en modo ahorro es dinero acumulado (más alto es mejor). Las tasas quincenales se convierten a mensuales con `(1 + r)² − 1`. Es una proyección educativa con ingreso y cuotas constantes.
 - **Archivos:** `servicios/consejero.py`, `routers/presupuesto.py`, `templates/presupuesto/index.html`, `static/css/estilos.css`, `tests/test_consejero.py`.
 
+### ADR-56 — Deducción fija vinculada a la deuda que paga (SRS v1.9)
+- **Contexto:** una libranza es un descuento de nómina y también un crédito con cuotas. Registrada en los dos lugares, el sistema la contaba dos veces; registrada solo en uno, no se veía el avance de cuotas o no se descontaba en la quincena correcta.
+- **Decisión:** `deducciones_fijas.id_deuda` (nulo por defecto) vincula la deducción a una deuda **mensual** y **activa** del mismo usuario. El valor de la deducción toma la cuota de la deuda. Mientras la deuda esté activa, la deducción se descuenta en su quincena y su cuota sale de la cuota de deudas (dona y diagnóstico). Al pagarse la deuda, la deducción deja de descontarse (`listar_vigentes`). Al borrar la deuda, la deducción queda como descuento normal (`ON DELETE SET NULL`). La proyección de doce meses retira el descuento y la cuota juntos cuando termina el crédito. Las deudas quincenales no se vinculan porque una deducción se descuenta una vez al mes.
+- **Consecuencias:** `eliminar_deuda` desvincula las deducciones en la sesión y en la base. Presupuesto aplica las cuotas vencidas al abrirse. Las deducciones anteriores no cambian. Pendiente: vincular deudas quincenales, que necesitaría dos deducciones por mes.
+
 ### ADR-55 — Filtros compartidos, saldo por producto y garantía por línea (SRS v1.9, bloque 3)
 - **Contexto:** la analítica tenía tablas separadas sin filtros y no se podía descargar lo que se veía. El propietario pidió una fila por producto en el CSV, con saldo, abonos, ganancia y garantía. El saldo y los abonos pertenecen a la orden, no a cada producto, y la garantía de la orden es la más cercana de sus productos.
 - **Decisión:** un `Filtro` (año, mes, cliente, producto) lo usan todas las tablas y sus CSV. Saldo y abonos se reparten entre líneas en proporción a su total, con la última línea absorbiendo el redondeo, para que las sumas cuadren al centavo. Cada línea guarda su propia fecha de garantía (`venta_detalle.garantia_fecha_fin`).
@@ -447,6 +452,81 @@ Recálculo en tiempo real (<100 ms) sin recargar página. Se implementa con func
 ---
 
 ## Bitácora de Cambios
+
+### 2026-11-20 — Formato de pesos al escribir en los campos de dinero
+
+**Cambios realizados**
+1. `static/js/moneda.js` (nuevo, cargado desde `base.html`): los campos con `data-moneda` agrupan los miles con punto mientras se escribe o pega; la coma separa hasta dos centavos; el cursor se conserva al insertar en medio. Porcentajes y cantidades no se tocan.
+2. 24 campos de dinero marcados con `data-moneda` en perfil, deudas, gastos, trabajos, Mis Finanzas, presupuesto, OLB_BYTE (ventas, cobro, abonos, costos y precios de productos) e incapacidades.
+3. `routers/perfil.py`: el sueldo guardado se muestra como «3.484.000» (antes «3484000,00»).
+4. `sw.js` en `olb-finanzas-v47`.
+
+**Verificación:** prueba en navegador (Chromium): escribir `3484000` → `3.484.000`; `1234567,5` → `1.234.567,5`; insertar un dígito en medio conserva el cursor; pegar se formatea; el porcentaje queda en `60`. `pytest` en verde con **621 pruebas** (3 nuevas en `tests/test_formato_moneda.py`); `generar_guia.py --verificar` sin problemas.
+
+**Pendiente:** no se cambió el campo de horas extra ni los porcentajes de quincena (son cantidades y porcentajes, no pesos).
+
+### 2026-11-20 — Analítica: filtros con botón de quitar, colores planos y separación de los botones CSV
+
+**Cambios realizados**
+1. `templates/olb_byte/analitica.html`: cada filtro activo muestra su etiqueta y un botón circular con flecha de reinicio que lo quita. «Quitar todos los filtros» pasa a un enlace plano.
+2. `static/css/estilos.css`: los azules brillantes de la analítica se cambiaron por tonos grises-azulados planos: fila con filtro activo (`#2b3a4f`), chips (`#2b3444`), enlaces al pasar el cursor (`#e2e8f0`). Las garantías y el margen bajo usan `insignia--vigente`, `insignia--vencida` y `insignia--sin-garantia`, con texto apagado y buen contraste.
+3. `.panel__cabecera` tiene 14 px de margen inferior: los botones «Descargar CSV» ya no quedan pegados a la línea de la tabla.
+4. `sw.js` en `olb-finanzas-v45`.
+
+**Verificación:** `pytest` en verde con **618 pruebas**; `generar_guia.py --verificar` sin problemas. Pendiente: revisión visual en 360/390/1280 px.
+
+### 2026-11-20 — Movimientos con el proveedor en móvil y fecha más pequeña en órdenes
+
+**Cambios realizados**
+1. `templates/olb_byte/cartera.html`: en móvil, los movimientos con el proveedor son una lista vertical de cuatro columnas (fecha sin hora, concepto, monto y saldo). Al tocar una fila se abre un diálogo centrado con fecha y hora, tipo, concepto, monto y saldo después. La tabla completa queda solo para escritorio (`tabla-escritorio`).
+2. `templates/olb_byte/index.html` y `static/css/estilos.css`: la fecha de las órdenes registradas usa `orden-movil__fecha` (0,7 rem).
+3. `sw.js` en `olb-finanzas-v44`.
+
+**Verificación:** 2 pruebas nuevas en `tests/test_movimientos_movil.py`; `pytest` en verde con **618 pruebas**; `generar_guia.py --verificar` sin problemas.
+
+**Pendiente:** revisión visual en 360/390 px.
+
+### 2026-11-20 — Donas interactivas, dona centrada en celular, banner de café más delgado y Neon actualizado
+
+**Cambios realizados**
+1. `static/js/dona.js` (nuevo, cargado desde `base.html`): al pasar, tocar o enfocar un arco, el centro muestra su nombre, porcentaje y valor; la leyenda resalta el arco; en celular el toque lo fija hasta tocar fuera. Sin JavaScript queda la leyenda y los `<title>`.
+2. `finanzas/_capacidad.html` y `olb_byte/cartera.html`: arcos con `data-etiqueta`, `data-porcentaje` y `data-valor`; centro con valores por defecto.
+3. `static/css/estilos.css`: arco activo engrosado, los demás atenuados, y en celular la dona centrada (la clase `capacidad__resumen` forzaba `flex-start`).
+4. Banner «Invítame un café»: padding, tipografía y botón más bajos en escritorio y en celular; el ancho y el orden no cambian.
+5. Neon: `backend/.env` apunta a la nueva URL (archivo ignorado por git). La migración se aplicó: `venta_detalle.garantia_fecha_fin`, `perfiles_financieros.dia_quincena_1/2` y `deducciones_fijas.id_deuda` existen; las 3 ventas siguen intactas.
+6. `sw.js` en `olb-finanzas-v43`.
+
+**Verificación:** `node --check` de `dona.js` sin errores; `pytest` en verde con **616 pruebas** (3 nuevas en `tests/test_dona_interactiva.py`); `generar_guia.py --verificar` sin problemas (100 archivos).
+
+**Pendiente:** revisión visual de la dona en celular y del banner en 360/390/1280 px. La clave de Neon se compartió dos veces en el chat: conviene rotarla y actualizar `DATABASE_URL` en Render.
+
+### 2026-11-20 — Deducción vinculada a la deuda que paga (ADR-56)
+
+**Cambios realizados**
+1. `modelos.py`, `core/base_datos.py`: `deducciones_fijas.id_deuda` con migración idempotente en SQLite (PRAGMA) y PostgreSQL (`IF NOT EXISTS`).
+2. `servicios/deducciones_fijas.py`: validación de la deuda (propia, activa y mensual), valor tomado de la cuota, `listar_vigentes`, `vinculadas_activas` y `cuota_de_vinculadas`.
+3. `servicios/quincenas.py`: solo cuentan las deducciones vigentes.
+4. `servicios/capacidad.py`: la cuota vinculada sale de la cuota de deudas; los créditos vinculados no se pasan a cuota; la proyección saca el descuento de gastos constantes y deja la cuota en su calendario.
+5. `servicios/ahorro.py` (`diagnostico`): misma regla que la dona. `disponible` = dona «Total libre».
+6. `servicios/deudas.py` (`eliminar_deuda`): desvincula las deducciones en la sesión y la base.
+7. `routers/presupuesto.py` y `templates/presupuesto/index.html`: selector «¿Es la cuota de una deuda que estás pagando?» en alta y edición; cada deducción vinculada muestra «faltan N cuota(s) · saldo $X» o «pagado». Al abrir la vista se aplican las cuotas vencidas.
+8. `diccionario_datos.md` §9.3 y `sw.js` en `olb-finanzas-v42`.
+
+**Verificación:** prueba de la migración sobre una copia de `finanzas.db` antigua (dos ejecuciones, sin error). `pytest` en verde con **613 pruebas** (8 nuevas en `tests/test_deduccion_vinculada.py`). En la primera versión de la prueba se detectó que el borrado no desvinculaba la deducción en la sesión; se corrigió en `eliminar_deuda`.
+
+**Pendiente:** Neon (la migración de `deducciones_fijas` corre al arrancar, igual que las anteriores, cuando la URL sea válida); revisión visual del selector en 360/390 px.
+
+### 2026-11-19 — Diagnóstico coherente con la dona y gráfica móvil legible
+
+**Causa del desajuste:** el diagnóstico del mes sumaba el sueldo libre y los extras sin restar la cuota mensual de las deudas. La dona de capacidad sí la resta. La diferencia era exactamente la cuota de deudas ($433.000 en el caso reportado): el diagnóstico decía $3.302.280 y la dona, «Total libre» $2.869.280.
+
+**Cambios realizados**
+1. `servicios/ahorro.py` (`diagnostico`): descuenta la cuota mensual de deudas del saldo y la expone como `cuota_deudas`. Las deducciones fijas que son créditos no se descuentan dos veces (ya restan en la quincena). Ahora `disponible` coincide con el «Total libre» de la dona.
+2. `templates/presupuesto/index.html`: línea «Ya descontadas las cuotas de deudas del mes» en el diagnóstico.
+3. Gráfica base frente a optimizado: la etiqueta se divide en dos líneas (mes arriba, año abajo) y deja de encimarse en móvil.
+4. `sw.js` en `olb-finanzas-v39`.
+
+**Verificación:** `pytest` en verde con **605 pruebas** (1 nueva en `tests/test_diagnostico_coherente.py`). La gráfica móvil no se pudo revisar en navegador desde aquí; queda pendiente en 360/390 px.
 
 ### 2026-11-19 — Analítica con filtros, ventas por producto y CSV (Bloque 3, ADR-55)
 

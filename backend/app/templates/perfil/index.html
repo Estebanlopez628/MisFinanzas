@@ -57,7 +57,7 @@
         <label class="campo">
           <span class="campo__etiqueta">Sueldo básico mensual (COP)</span>
           <input class="campo__control" type="text" name="sueldo_basico" inputmode="decimal"
-                 value="{{ valores.sueldo_basico }}" placeholder="3.000.000" required />
+                 value="{{ valores.sueldo_basico }}" placeholder="3.000.000" required data-moneda />
           <span class="ayuda">Puedes escribirlo con puntos de miles: 3.000.000</span>
         </label>
 
@@ -172,7 +172,7 @@
               </span>
               <input class="campo__control" type="text" name="neto_sin_deducciones"
                      inputmode="decimal" value="{{ valores.neto_sin_deducciones }}"
-                     placeholder="1.480.000" />
+                     placeholder="1.480.000" data-moneda />
               <span class="ayuda">
                 Con ese dato derivamos por descarte los porcentajes de las dos
                 quincenas.
