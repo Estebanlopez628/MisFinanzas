@@ -239,30 +239,12 @@
   }
 
   /**
-   * Abre la hoja de compartir del sistema con el PNG adjunto (móvil).
-   *
-   * Debe llamarse dentro del clic: el navegador exige un gesto del usuario.
-   *
-   * @param {Blob} blob Imagen PNG ya preparada.
-   * @param {string} nombre Nombre del archivo.
-   * @param {string} texto Mensaje que acompaña a la imagen.
-   * @returns {boolean} `true` si el navegador puede compartir archivos y se abrió la hoja.
-   */
-  function compartirArchivo(blob, nombre, texto) {
-    var archivo = new File([blob], nombre, { type: "image/png" });
-    if (!navigator.share || !navigator.canShare || !navigator.canShare({ files: [archivo] })) {
-      return false;
-    }
-    navigator.share({ files: [archivo], text: texto, title: nombre }).catch(function (error) {
-      if (error && error.name !== "AbortError") {
-        window.alert("No se pudo compartir la imagen. Intenta de nuevo.");
-      }
-    });
-    return true;
-  }
-
-  /**
    * Envía la factura o el recibo por WhatsApp.
+   *
+   * SRS v3.0, punto 2: nunca se usa la Web Share API aquí. Los tres puntos
+   * (botón de Ver factura, ícono rápido y recibos de abono) comparten esta
+   * función y abren siempre el chat del cliente con el destinatario en la URL,
+   * sin pasar por el selector de aplicaciones del sistema.
    *
    * @param {HTMLElement} boton Botón que disparó la acción.
    */
@@ -285,15 +267,16 @@
 
     var enlaceDirecto = "https://wa.me/" + numero + "?text=" + encodeURIComponent(texto);
 
-    if (imagenesListas[url] && compartirArchivo(imagenesListas[url], nombre, texto)) {
-      return;
-    }
-
     boton.disabled = true;
     boton.textContent = "Preparando…";
     var promesaImagen = imagenDe(url);
     var copiada = copiarImagen(promesaImagen);
-    window.open(enlaceDirecto, "_blank");
+    // Apertura directa del chat. Si el navegador bloquea la ventana nueva, se
+    // navega en la misma pestaña para no caer en el selector de aplicaciones.
+    var ventana = window.open(enlaceDirecto, "_blank");
+    if (!ventana) {
+      window.location.href = enlaceDirecto;
+    }
 
     Promise.all([promesaImagen, copiada])
       .then(function (resultado) {

@@ -176,6 +176,66 @@ def actualizar_estado_feedback(
     }
 
 
+@router.patch("/api/feedback/{id_feedback}", name="actualizar_feedback_api")
+def actualizar_feedback_api(
+    id_feedback: str,
+    cambio: CambioEstado,
+    usuario: UsuarioSesion = Depends(obtener_usuario_actual),
+    bd: Session = Depends(obtener_bd),
+) -> dict[str, object]:
+    """Guarda el estado de un reporte (SRS v3.0, punto 7.2).
+
+    Args:
+        id_feedback: Identificador del reporte.
+        cambio: Estado nuevo.
+        usuario: Administrador autenticado.
+        bd: Sesión de base de datos.
+
+    Returns:
+        Confirmación con el estado, la fecha de resolución y el contador.
+
+    Raises:
+        HTTPException: 403 si no es administrador; 404 si no existe el reporte.
+    """
+    exigir_administrador(usuario)
+    reporte = feedback.cambiar_estado(bd, id_feedback, cambio.estado)
+    if reporte is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="El reporte o el estado indicado no existe.",
+        )
+    return {
+        "ok": True,
+        "estado": reporte.estado,
+        "fecha_resolucion": (
+            reporte.fecha_resolucion.isoformat() if reporte.fecha_resolucion else None
+        ),
+        "pendientes": feedback.contar_pendientes(bd),
+    }
+
+
+@router.get("/api/feedback/mios", name="listar_feedback_propio")
+def listar_feedback_propio(
+    usuario: UsuarioSesion = Depends(obtener_usuario_actual),
+    bd: Session = Depends(obtener_bd),
+) -> dict[str, object]:
+    """Devuelve al usuario sus propios reportes con su estado actual.
+
+    Args:
+        usuario: Usuario autenticado.
+        bd: Sesión de base de datos.
+
+    Returns:
+        Diccionario con la lista ``reportes``.
+    """
+    return {
+        "reportes": [
+            feedback.serialize(reporte)
+            for reporte in feedback.listar_del_usuario(bd, usuario.id_usuario)
+        ]
+    }
+
+
 @router.get("/admin/comentarios", response_class=HTMLResponse, name="ver_comentarios")
 def ver_comentarios(
     request: Request,

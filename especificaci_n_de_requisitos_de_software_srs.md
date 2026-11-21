@@ -270,3 +270,62 @@ Esta sección recoge la versión 2.0 de los requisitos de **MisFinanzas**, ejecu
 ### 7.5 Fase D — Documentación
 
 - `AGENTS.md`, `MEMORY.md` (ADR-65 a ADR-67 y bitácoras), `diccionario_datos.md` (§14 y relaciones), `Guia.md` (fichas e inventario), `USER_GUIDE.md` (manual del usuario) y esta SRS quedan sincronizados con el estado verificado.
+
+---
+
+## 8. SRS v3.0 — Auditoría Post-Despliegue
+
+Versión 3.0 del alcance de **MisFinanzas**. Se ejecutaron únicamente las diez correcciones de la auditoría, sin alterar lógica contable, cálculos de dona, fórmulas de liquidez ni mensajes aprobados.
+
+### 8.1 Retorno al registrar deudas
+
+- El módulo de origen viaja en el `POST /deudas` y se conserva en el redirect, de modo que el enlace sigue visible tras guardar.
+- `misfinanzas_pending_debt_link` permanece en `sessionStorage` durante toda la estancia en deudas y se elimina únicamente cuando el formulario de origen restaura sus datos.
+- El enlace es de texto (mismo estilo que «Ve a registrar la deuda») y se renderiza bajo el formulario «Nueva deuda».
+
+### 8.2 WhatsApp directo
+
+- Prohibida la Web Share API en el botón «Compartir por WhatsApp» de Ver factura, el ícono rápido junto a «Ver factura» y el botón de compartir recibos de abonos.
+- Los tres comparten `enviarPorWhatsapp`: saneamiento del celular, prefijo `57` para 10 dígitos y apertura de `https://wa.me/<numero>?text=<encodeURIComponent(mensaje)>` con fallback a `window.location.href`.
+- Si no hay número válido se muestra una alerta clara antes de abrir nada. El mensaje aprobado no cambia.
+
+### 8.3 Ayuda e invitación
+
+- Acceso inferior en Inicio sin pastilla ni íconos pesados: enlaces de texto con SVGs lineales de 14 px y separador de punto; «Invitar amigos» solo en móvil.
+- Centro de ayuda y políticas con `text-align: justify`; «Volver al inicio» usa el botón azul primario.
+
+### 8.4 Contraste y modales
+
+- Flechas de `<select>` en `#9CA3AF` mediante SVG en `background-image`; indicador de `<input type="date">` con `filter: invert(0.75)` y `color-scheme: dark`.
+- Centrado estricto de todos los modales (`.modal-centrado` y `<dialog>` nativos) con fondo `fixed inset-0 z-50`.
+
+### 8.5 Enlaces
+
+- Paleta uniforme `#60A5FA` con hover `#93C5FD`; se elimina el morado en Mi Perfil y en cualquier enlace de acción.
+
+### 8.6 Recuperación de contraseña
+
+- El flujo de olvido vive exclusivamente en el Login; en Mi Perfil solo queda el cambio autenticado.
+- Los botones «Enviar enlace» y «Volver a iniciar sesión» llevan separación vertical clara.
+- Backend: envío con `BackgroundTasks`, timeout SMTP de 10 s, alias `SMTP_PASSWORD`/`FROM_EMAIL`, registro explícito del resultado y aviso al usuario si falta configuración en producción.
+
+### 8.7 Comentarios y Reportes
+
+- Vista móvil en tarjetas conectada al mismo arreglo de datos, con usuario, fecha, módulo, descripción y selector de estado.
+- `PATCH /api/feedback/{id}` persiste el estado y `fecha_resolucion` en PostgreSQL; el badge circular cuenta solo `Pendiente`.
+- `GET /api/feedback/mios` alimenta la sección «Mis reportes enviados» en `/ayuda`, sin mensajería externa.
+
+### 8.8 Abonos, botones y gasto bloqueado
+
+- El modal de abono se titula «Registrar Abono / Pago Total» y no contiene separadores de guiones.
+- «Agregar gasto fijo» comparte estilo con «Guardar incapacidad».
+- El valor del gasto vinculado se muestra gris oscuro con candado y cursor de no escritura cuando `id_deuda != null`.
+
+### 8.9 Títulos de cartera
+
+- «ESTADO DE CARTERA» (centrado), «CUENTAS POR COBRAR Y PAGAR» y «FLUJO DE CAJA DISPONIBLE».
+
+### 8.10 Documentación
+
+- `AGENTS.md` y `MEMORY.md` (ADR-68) registran la persistencia de `misfinanzas_pending_debt_link`, la prohibición de la Web Share API, la exclusividad de la recuperación en Login, el estilo gris de los inputs bloqueados y la vista móvil de comentarios.
+- `diccionario_datos.md` documenta `fecha_resolucion` y «Mis reportes enviados»; `Guia.md`, `USER_GUIDE.md` y esta SRS quedan sincronizados.

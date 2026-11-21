@@ -293,6 +293,11 @@
         nota.hidden = true;
       }
       campoValor.readOnly = loEsta;
+      // SRS v3.0, punto 9: el bloqueo debe verse, no solo sentirse al intentar
+      // escribir. El candado y el fondo gris viven en CSS.
+      if (campoValor.classList) {
+        campoValor.classList.toggle("campo__control--bloqueado", loEsta);
+      }
     }
 
     selectorDeuda.addEventListener("change", sincronizarValor);

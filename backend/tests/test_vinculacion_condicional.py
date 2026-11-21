@@ -85,13 +85,13 @@ def test_el_desplegable_lista_todas_las_deudas_activas(
 def test_el_regreso_al_modulo_de_origen_lleva_la_deuda_reciente(
     cliente_admin: TestClient, bd
 ) -> None:
-    """El botón de regreso apunta al módulo correcto y al id de la deuda creada."""
+    """El enlace de regreso apunta al módulo correcto y a la deuda creada."""
     id_usuario = _id_admin(bd)
     deuda = deudas.crear_deuda(bd, id_usuario, "Banco", "1200000", "400000", 3)
 
     html = cliente_admin.get("/deudas?volver=deducciones").text
 
-    assert "Volver al formulario de origen" in html
+    assert "Volver a Deducciones Fijas para completar el registro" in html
     assert f"deuda_id={deuda.id_deuda}" in html
     assert 'href="/presupuesto?guardado_deuda=1' in html
 

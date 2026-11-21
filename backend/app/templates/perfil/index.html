@@ -238,10 +238,8 @@
         <button class="boton boton--secundario" type="submit">Cambiar contraseña</button>
       </form>
 
-      <p class="aviso">
-        ¿Olvidaste tu contraseña? Puedes recuperarla por correo desde
-        <a href="{{ url_for('ver_olvide_contrasena') }}">Recuperar contraseña</a>.
-      </p>
+      {# SRS v3.0, punto 6.1: el flujo de recuperación por olvido vive solo en
+         el Login. Aquí se mantiene exclusivamente el cambio autenticado. #}
     </section>
 
     {% if usuario.es_administrador %}

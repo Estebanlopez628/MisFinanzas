@@ -12,11 +12,12 @@ No se registra la contraseña ni se devuelve en ningún mensaje de error.
 
 from __future__ import annotations
 
+import logging
 import secrets
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Form, Request, status
+from fastapi import APIRouter, BackgroundTasks, Depends, Form, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
@@ -414,19 +415,32 @@ def _base_publica(request: Request) -> str:
     return configurada or str(request.base_url).rstrip("/")
 
 
-def _pagina_olvide(request: Request, mensaje: str | None = None, correo: str = "") -> HTMLResponse:
+def _pagina_olvide(
+    request: Request,
+    mensaje: str | None = None,
+    correo: str = "",
+    error: str | None = None,
+) -> HTMLResponse:
     """Muestra el formulario de recuperación con un mensaje neutral.
 
     Args:
         request: Petición HTTP.
         mensaje: Texto de confirmación o None.
         correo: Correo escrito, para repoblar el campo.
+        error: Aviso de configuración SMTP, si aplica.
 
     Returns:
         Página de recuperación.
     """
     contexto = contexto_base(None)
-    contexto.update({"titulo_pagina": "Recuperar contraseña", "mensaje": mensaje, "correo_ingresado": correo})
+    contexto.update(
+        {
+            "titulo_pagina": "Recuperar contraseña",
+            "mensaje": mensaje,
+            "correo_ingresado": correo,
+            "error": error,
+        }
+    )
     return plantillas.TemplateResponse(request, "olvide_contrasena.html", contexto)
 
 
@@ -478,18 +492,23 @@ def _pagina_restablecer(
 @router.post("/olvide-contrasena", response_class=HTMLResponse, name="procesar_olvide_contrasena", response_model=None)
 def procesar_olvide_contrasena(
     request: Request,
+    tareas: BackgroundTasks,
     correo: Annotated[str, Form()] = "",
     bd: Session = Depends(obtener_bd),
 ) -> HTMLResponse:
-    """Envía el enlace de recuperación por correo sin revelar si la cuenta existe.
+    """Solicita el enlace de recuperación sin revelar si la cuenta existe.
+
+    El envío real se programa en segundo plano para que la respuesta sea
+    inmediata; si falta configuración SMTP se avisa antes de encolar la tarea.
 
     Args:
         request: Petición HTTP.
+        tareas: Tareas de fondo de FastAPI.
         correo: Correo de la cuenta.
         bd: Sesión de base de datos.
 
     Returns:
-        Página con el mismo mensaje neutral en todos los casos.
+        Página con el mensaje neutral o con el aviso de configuración.
     """
     correo_limpio = correo.strip().lower()[:254]
     cuenta = usuarios.buscar_por_correo(bd, correo_limpio) if correo_limpio else None
@@ -498,13 +517,20 @@ def procesar_olvide_contrasena(
             cuenta.id_usuario, cuenta.rol, cuenta.alias, usuarios.huella_contrasena(cuenta)
         )
         enlace = f"{_base_publica(request)}/restablecer-contrasena?token={token}"
-        cuerpo = (
-            f"Hola {cuenta.alias}.\n\n"
-            "Para crear una nueva contraseña abre este enlace. Vence en 15 minutos:\n"
-            f"{enlace}\n\n"
-            "Si no pediste este cambio, ignora este correo."
-        )
-        servicio_correo.enviar_correo(cuenta.correo, "Recupera tu contraseña · OLB Finanzas", cuerpo)
+        if not servicio_correo.configuracion_valida():
+            registro = logging.getLogger("app.correo")
+            registro.error(
+                "No se puede enviar la recuperación: SMTP incompleto para %s.", cuenta.correo
+            )
+            return _pagina_olvide(
+                request,
+                correo=correo_limpio,
+                error=(
+                    "El servidor de correo no está configurado correctamente. "
+                    "Intenta más tarde o contacta al administrador."
+                ),
+            )
+        tareas.add_task(servicio_correo.enviar_recuperacion, cuenta.correo, cuenta.alias, enlace)
         auditoria.registrar(bd, cuenta.id_usuario, "RECUPERACION_SOLICITADA", "usuarios", "Enlace de recuperación enviado")
     else:
         auditoria.registrar(

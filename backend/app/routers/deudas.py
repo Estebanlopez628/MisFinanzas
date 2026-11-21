@@ -129,6 +129,7 @@ def crear_deuda(
     cuota: Annotated[str, Form()] = "",
     cuotas_pendientes: Annotated[str, Form()] = "",
     periodicidad: Annotated[str, Form()] = deudas.PERIODICIDAD_MENSUAL,
+    volver: Annotated[str, Form()] = "",
 ) -> HTMLResponse | RedirectResponse:
     """Registra una deuda con su plan de pagos.
 
@@ -142,6 +143,8 @@ def crear_deuda(
         cuota: Valor de cada pago.
         cuotas_pendientes: Número de pagos que faltan.
         periodicidad: `QUINCENAL` o `MENSUAL`.
+        volver: Módulo de origen del flujo de vinculación; se conserva en la
+            redirección para que el enlace de retorno no desaparezca al guardar.
 
     Returns:
         Redirección o vista con error.
@@ -183,11 +186,13 @@ def crear_deuda(
                     "cuotas_pendientes": cuotas_pendientes,
                     "periodicidad": periodicidad,
                 },
+                volver=volver or None,
             ),
             status_code=status.HTTP_400_BAD_REQUEST,
         )
 
-    return RedirectResponse(url="/deudas?guardado=1", status_code=status.HTTP_303_SEE_OTHER)
+    destino = f"/deudas?guardado=1&volver={quote(volver)}" if volver else "/deudas?guardado=1"
+    return RedirectResponse(url=destino, status_code=status.HTTP_303_SEE_OTHER)
 
 
 @router.post("/deudas/{id_deuda}/editar", name="editar_deuda", response_model=None)

@@ -10,7 +10,7 @@
   </section>
 
   <div class="acciones-formulario acciones-volver">
-    <a class="boton boton--secundario boton--pequeno" href="{{ url_for('ver_dashboard') }}">← Volver al inicio</a>
+    <a class="boton boton--primario boton--pequeno" href="{{ url_for('ver_dashboard') }}">← Volver al inicio</a>
   </div>
 
   {# TARJETA SUPERIOR — Soporte y Guías #}
@@ -30,6 +30,18 @@
         <span aria-hidden="true">›</span>
       </button>
     </div>
+  </section>
+
+  {# SRS v3.0, punto 7.2: historial propio de tickets con su estado actual. #}
+  <section class="panel ayuda-tarjeta" aria-labelledby="titulo-mis-reportes">
+    <h2 class="panel__titulo" id="titulo-mis-reportes">Mis reportes enviados</h2>
+    <p class="panel__descripcion">
+      Aquí puedes ver el estado de los reportes que has enviado. Se actualiza
+      automáticamente cuando el administrador los revisa.
+    </p>
+    <ul class="mis-reportes" data-mis-reportes>
+      <li class="mis-reportes__vacio" data-mis-reportes-vacio>Cargando tus reportes…</li>
+    </ul>
   </section>
 
   {# TARJETA INFERIOR — Información Legal #}

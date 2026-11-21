@@ -6,7 +6,7 @@ Principios innegociables. Toda especificación, plan y tarea debe cumplirlos de 
    - El sistema es público para la gestión de finanzas personales (`USER_FINANZAS`) y privado exclusivamente para el administrador (`ADMIN_OLB`), protegiendo el módulo de ventas, cartera y enlaces de pago ("chancucos").
 
 2. **La Especificación Activa Manda:**
-   - La especificación vigente es la **SRS v2.0** (sección 7 del archivo `especificaci_n_de_requisitos_de_software_srs.md`), que conserva las reglas de v1.1.0 a v1.9 salvo contradicción explícita.
+   - La especificación vigente es la **SRS v3.0** (sección 8 del archivo `especificaci_n_de_requisitos_de_software_srs.md`), que conserva las reglas de v1.1.0 a v2.0 salvo contradicción explícita.
    - Ninguna funcionalidad de cálculo salarial, recargos, incapacidades o control de quincenas se implementa si no está formalmente detallada en la especificación activa.
 
 3. **Cálculos Financieros Transparentes y Automáticos:**

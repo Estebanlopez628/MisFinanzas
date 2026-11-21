@@ -816,3 +816,6 @@ class FeedbackUsuario(Base):
     fecha_creacion: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
+    # SRS v3.0, punto 7.2: se registra cuándo el administrador resolvió o puso
+    # en revisión el reporte; vuelve a nulo si se devuelve a «Pendiente».
+    fecha_resolucion: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

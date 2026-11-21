@@ -172,8 +172,14 @@ class ConfiguracionApp:
     smtp_host: str = field(default_factory=lambda: os.getenv("SMTP_HOST", "").strip())
     smtp_port: int = field(default_factory=lambda: int(os.getenv("SMTP_PORT", "587") or "587"))
     smtp_user: str = field(default_factory=lambda: os.getenv("SMTP_USER", "").strip())
-    smtp_pass: str = field(default_factory=lambda: os.getenv("SMTP_PASS", ""))
-    smtp_from: str = field(default_factory=lambda: os.getenv("SMTP_FROM", "").strip())
+    # Se aceptan los alias `SMTP_PASSWORD` y `FROM_EMAIL` de algunos proveedores;
+    # las variables canónicas del proyecto siguen mandando.
+    smtp_pass: str = field(
+        default_factory=lambda: os.getenv("SMTP_PASS") or os.getenv("SMTP_PASSWORD", "")
+    )
+    smtp_from: str = field(
+        default_factory=lambda: (os.getenv("SMTP_FROM") or os.getenv("FROM_EMAIL", "")).strip()
+    )
     app_url: str = field(default_factory=lambda: os.getenv("APP_URL", "").strip())
     google_client_id: str = field(default_factory=lambda: os.getenv("GOOGLE_CLIENT_ID", "").strip())
     google_client_secret: str = field(

@@ -855,6 +855,31 @@ def _migrar_valor_atajo() -> None:
             )
 
 
+def _migrar_feedback_resolucion() -> None:
+    """Agrega `feedback_usuarios.fecha_resolucion` (SRS v3.0, punto 7.2).
+
+    Los reportes existentes conservan su estado; el campo nuevo queda nulo hasta
+    que el administrador cambie el estado. Es idempotente en SQLite y PostgreSQL.
+    """
+    if _conexion_sqlite:
+        with motor.begin() as conexion:
+            existentes = {
+                fila[1]
+                for fila in conexion.exec_driver_sql(
+                    "PRAGMA table_info(feedback_usuarios)"
+                ).fetchall()
+            }
+            if existentes and "fecha_resolucion" not in existentes:
+                conexion.exec_driver_sql(
+                    "ALTER TABLE feedback_usuarios ADD COLUMN fecha_resolucion DATETIME"
+                )
+    else:
+        with motor.begin() as conexion:
+            conexion.exec_driver_sql(
+                "ALTER TABLE feedback_usuarios ADD COLUMN IF NOT EXISTS fecha_resolucion TIMESTAMPTZ"
+            )
+
+
 def aplicar_migraciones() -> None:
     """Ejecuta todas las migraciones idempotentes del esquema.
 
@@ -874,6 +899,7 @@ def aplicar_migraciones() -> None:
     _migrar_garantia_detalle()
     _migrar_deduccion_vinculada()
     _migrar_categorias_y_vinculos()
+    _migrar_feedback_resolucion()
 
 
 def inicializar_base_datos() -> None:

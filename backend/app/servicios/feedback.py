@@ -15,6 +15,8 @@ La tabla `feedback_usuarios` está documentada en `diccionario_datos.md` §14.
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
+
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -194,9 +196,29 @@ def cambiar_estado(
     if reporte is None:
         return None
     reporte.estado = normal
+    # Solo los estados revisados llevan fecha; volver a «Pendiente» la limpia.
+    reporte.fecha_resolucion = None if normal == ESTADO_PENDIENTE else datetime.now(timezone.utc)
     bd.commit()
     bd.refresh(reporte)
     return reporte
+
+
+def listar_del_usuario(bd: Session, id_usuario: str) -> list[FeedbackUsuario]:
+    """Lista los reportes enviados por un usuario, los más recientes primero.
+
+    Args:
+        bd: Sesión de base de datos.
+        id_usuario: Dueño de los reportes.
+
+    Returns:
+        Lista ordenada por fecha de creación descendente.
+    """
+    consulta = (
+        select(FeedbackUsuario)
+        .where(FeedbackUsuario.id_usuario == id_usuario)
+        .order_by(FeedbackUsuario.fecha_creacion.desc())
+    )
+    return list(bd.scalars(consulta))
 
 
 def serialize(reporte: FeedbackUsuario) -> dict[str, object]:
@@ -218,4 +240,7 @@ def serialize(reporte: FeedbackUsuario) -> dict[str, object]:
         "dispositivo": reporte.dispositivo,
         "estado": reporte.estado,
         "fecha_creacion": reporte.fecha_creacion.isoformat(),
+        "fecha_resolucion": (
+            reporte.fecha_resolucion.isoformat() if reporte.fecha_resolucion else None
+        ),
     }

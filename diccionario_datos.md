@@ -596,6 +596,7 @@ entre paréntesis se indica el nombre del campo que aparece en la SRS.
 | `dispositivo` | `VARCHAR(12)` | No | Sí | `Móvil` o `Escritorio`; lo detecta el servidor desde `User-Agent`. |
 | `estado` | `VARCHAR(20)` | No | Sí | `Pendiente` (inicial), `En revisión` o `Resuelto`; indexado para el contador. |
 | `fecha_creacion` (`created_at`) | `TIMESTAMPTZ` | No | Sí | `now()`. |
+| `fecha_resolucion` | `TIMESTAMPTZ` | Sí | No | Se registra al pasar a `En revisión` o `Resuelto`; vuelve a nulo si se devuelve a `Pendiente` (SRS v3.0). |
 
 **Relaciones y reglas transversales**
 
@@ -603,5 +604,8 @@ entre paréntesis se indica el nombre del campo que aparece en la SRS.
   cuenta se borran sus reportes.
 - El contador de la tarjeta administrativa cuenta solo `estado = 'Pendiente'`.
   Al pasar a `En revisión` o `Resuelto` el badge se actualiza en tiempo real.
+- SRS v3.0: `PATCH /api/feedback/{id}` persiste el estado y `fecha_resolucion`.
+  La sección «Mis reportes enviados» de `/ayuda` consulta `GET /api/feedback/mios`
+  y muestra a cada usuario únicamente sus propios tickets con su estado actual.
 - La tabla se crea con `create_all` en SQLite y PostgreSQL al arrancar
   (`aplicar_migraciones()`), sin borrar datos existentes.

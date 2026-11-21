@@ -56,6 +56,14 @@ En la parte inferior de Inicio encontrarás **Ayuda y comentarios**. Allí puede
 
 Desde el teléfono también verás **Invitar amigos**: abre WhatsApp con un mensaje listo para compartir la aplicación con tus contactos.
 
+### Mis reportes enviados
+
+Dentro de «Ayuda y comentarios» encontrarás **Mis reportes enviados**: el historial de los tickets que has enviado con su estado actual. Cuando el administrador cambia el estado a «En revisión» o «Resuelto», la etiqueta se actualiza sola. No se envían correos ni mensajes externos: todo el seguimiento ocurre dentro de la aplicación.
+
+### Recuperación de contraseña
+
+El enlace «¿Olvidaste tu contraseña?» está únicamente en la pantalla de inicio de sesión. Dentro de la app, en «Mi Perfil», solo está el cambio de contraseña autenticado.
+
 > Los textos completos y literales de las guías y la política de privacidad están en la sección «Ayuda y comentarios» de la aplicación (`/ayuda`).
 
 © 2026 MisFinanzas

@@ -203,9 +203,11 @@ def test_sin_smtp_en_desarrollo_no_falla(monkeypatch) -> None:
     assert correo.enviar_correo("x@correo.co", "Asunto", "Cuerpo") is True
 
 
-def test_perfil_enlaza_a_la_recuperacion_por_correo(cliente_usuario) -> None:
-    """Mi Perfil ya no dice que falta SMTP: enlaza a la recuperación por correo."""
+def test_perfil_no_ofrece_recuperacion_de_clave(cliente_usuario) -> None:
+    """SRS v3.0: recuperar contraseña vive solo en el Login."""
     html = cliente_usuario.get("/perfil").text
 
-    assert 'olvide-contrasena">Recuperar contraseña</a>' in html
-    assert "requiere configurar" not in html
+    assert "Recuperar contraseña" not in html
+    assert "olvide-contrasena" not in html
+    # El cambio autenticado sigue disponible.
+    assert "Cambiar contraseña" in html

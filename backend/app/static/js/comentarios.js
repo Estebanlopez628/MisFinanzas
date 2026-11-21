@@ -13,8 +13,8 @@
       if (!fila) {
         return;
       }
-      fetch("/feedback/" + fila.getAttribute("data-id") + "/estado", {
-        method: "POST",
+      fetch("/api/feedback/" + fila.getAttribute("data-id"), {
+        method: "PATCH",
         headers: { "Content-Type": "application/json", "X-Requested-With": "fetch" },
         body: JSON.stringify({ estado: selector.value })
       })

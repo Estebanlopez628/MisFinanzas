@@ -82,7 +82,9 @@ def test_session_storage_usa_la_clave_y_etiquetas_de_la_srs() -> None:
 def test_banner_de_regreso_muestra_la_etiqueta(cliente_admin: TestClient) -> None:
     """La vista de deudas muestra un banner con el nombre legible del origen."""
     html = cliente_admin.get("/deudas?volver=finanzas").text
-    assert "banner-volver-deuda" in html
+    # SRS v3.0: el enlace es de texto y vive bajo el formulario «Nueva deuda».
+    assert "enlace-volver-origen" in html
+    assert "data-banner-volver" in html
     assert "Volver a Gastos Fijos - Finanzas para completar el registro" in html
     assert "guardado_deuda=1" in html
 

@@ -15,32 +15,6 @@
     <a class="boton boton--secundario boton--pequeno" href="{{ url_for('ver_dashboard') }}">← Volver al inicio</a>
   </div>
 
-  {# SRS v2.0, sección 2.2: banner destacado de regreso al formulario que envió
-     al usuario a registrar su deuda. Se lleva el id de la deuda recién creada
-     para preseleccionarla al volver. `deudas.js` usa `sessionStorage` para
-     confirmar el módulo de origen y ajustar la etiqueta. #}
-  {% if volver %}
-    {% set destinos = {
-      'deducciones': '/presupuesto',
-      'finanzas': '/finanzas',
-      'trabajos': '/trabajos-extras'
-    } %}
-    {% set destino = destinos.get(volver, '/') %}
-    <div class="banner-volver-deuda" data-banner-volver data-origen="{{ volver }}"
-         {% if deuda_reciente %}data-deuda-reciente="{{ deuda_reciente.id_deuda }}"{% endif %}>
-      <p class="banner-volver-deuda__texto">
-        Registraste la deuda. Vuelve a tu formulario para vincular la cuota y
-        terminar el registro.
-      </p>
-      <a class="boton boton--primario boton--pequeno" data-volver-origen
-         title="Volver al formulario de origen"
-         data-destino="{{ destino }}"
-         href="{{ destino }}?guardado_deuda=1{% if deuda_reciente %}&deuda_id={{ deuda_reciente.id_deuda }}{% endif %}">
-        ← Volver a {{ volver_etiqueta or 'tu formulario de origen' }} para completar el registro
-      </a>
-    </div>
-  {% endif %}
-
   {% if guardado %}
     <div class="alerta alerta--exito" role="status">Deuda registrada.</div>
   {% endif %}
@@ -85,6 +59,9 @@
         corrijas los datos.
       </p>
       <form class="formulario" method="post" action="{{ url_for('crear_deuda') }}">
+        {# SRS v3.0, punto 1: el módulo de origen viaja en el POST para que el
+           enlace de retorno siga presente después de guardar la deuda. #}
+        {% if volver %}<input type="hidden" name="volver" value="{{ volver }}" />{% endif %}
         <div class="fila-campos">
           <label class="campo">
             <span class="campo__etiqueta">Acreedor</span>
@@ -130,6 +107,24 @@
         </div>
         <button class="boton boton--primario" type="submit">Guardar deuda</button>
       </form>
+      {# SRS v3.0, punto 1: enlace de texto limpio, justo debajo del formulario
+         «Nueva deuda» y con el mismo estilo que «Ve a registrar la deuda». #}
+      {% if volver %}
+        {% set destinos = {
+          'deducciones': '/presupuesto',
+          'finanzas': '/finanzas',
+          'trabajos': '/trabajos-extras'
+        } %}
+        {% set destino = destinos.get(volver, '/') %}
+        <p class="enlace-volver-origen" data-banner-volver data-origen="{{ volver }}"
+           {% if deuda_reciente %}data-deuda-reciente="{{ deuda_reciente.id_deuda }}"{% endif %}>
+          <a class="enlace" data-volver-origen
+             data-destino="{{ destino }}"
+             href="{{ destino }}?guardado_deuda=1{% if deuda_reciente %}&deuda_id={{ deuda_reciente.id_deuda }}{% endif %}">
+            ← Volver a {{ volver_etiqueta or 'tu formulario de origen' }} para completar el registro
+          </a>
+        </p>
+      {% endif %}
     </section>
 
     <section class="panel panel--tabla">

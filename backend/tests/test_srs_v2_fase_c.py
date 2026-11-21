@@ -92,10 +92,11 @@ def test_balance_tres_bloques_déficit_apunta_a_la_izquierda() -> None:
 def test_vista_cartera_muestra_los_tres_bloques(cliente_admin: TestClient) -> None:
     """La tarjeta reemplaza al antiguo panel de barras de balance."""
     html = cliente_admin.get("/olb-byte/cartera").text
-    assert "BALANCE DE CARTERA Y EFECTIVO" in html
+    # SRS v3.0, punto 10: títulos actualizados del panel de tres bloques.
+    assert "ESTADO DE CARTERA" in html
     assert "Análisis de lo que tienes en la calle y tu dinero en caja." in html
-    assert "LO QUE ESTÁ EN LA CALLE (Cuentas)" in html
-    assert "TU BOLSILLO (Efectivo hoy)" in html
+    assert "CUENTAS POR COBRAR Y PAGAR" in html
+    assert "FLUJO DE CAJA DISPONIBLE" in html
     assert "RESULTADO FINAL ESPERADO" in html
     assert "Ganancia final proyectada" in html
     assert "balance-bloque--final" in html

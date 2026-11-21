@@ -14,6 +14,30 @@
   </div>
 
   {% if reportes %}
+    {# SRS v3.0, punto 7.1: tarjetas móviles alimentadas por el mismo arreglo
+       que la tabla de escritorio. Sin esto la vista quedaba en blanco en celular. #}
+    <div class="reportes-moviles">
+      {% for reporte in reportes %}
+        <article class="reporte-movil" data-reporte-fila data-id="{{ reporte.id }}">
+          <h2 class="reporte-movil__titulo">{{ etiquetas_tipo.get(reporte.tipo_reporte, reporte.tipo_reporte) }}</h2>
+          <p class="reporte-movil__usuario"><strong>{{ reporte.usuario }}</strong><br />{{ reporte.correo }}</p>
+          <p class="reporte-movil__dato"><span>Fecha</span> {{ reporte.fecha_creacion[:10] }}</p>
+          <p class="reporte-movil__dato"><span>Módulo</span> {{ reporte.modulo }}</p>
+          <p class="reporte-movil__dato"><span>Dispositivo</span> {{ reporte.dispositivo }}</p>
+          <p class="reporte-movil__descripcion">{{ reporte.descripcion }}</p>
+          <label class="campo">
+            <span class="campo__etiqueta">Estado</span>
+            <select class="campo__control" data-estado-reporte
+                    aria-label="Estado del reporte de {{ reporte.usuario }}">
+              {% for estado in estados %}
+                <option value="{{ estado }}" {% if estado == reporte.estado %}selected{% endif %}>{{ estado }}</option>
+              {% endfor %}
+            </select>
+          </label>
+        </article>
+      {% endfor %}
+    </div>
+
     <div class="tabla-contenedor tabla-escritorio">
       <table class="tabla tabla--tarjetas tabla--comentarios">
         <thead>

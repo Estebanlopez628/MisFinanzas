@@ -24,12 +24,12 @@
   {# SRS v2.0, sección 4: tarjeta única con tres bloques. En escritorio A y B
      van lado a lado y C ocupa toda la fila inferior; en móvil se apilan. #}
   <section class="panel panel--balance-cartera">
-    <h2 class="panel__titulo">BALANCE DE CARTERA Y EFECTIVO</h2>
+    <h2 class="panel__titulo panel__titulo--centrado">ESTADO DE CARTERA</h2>
     <p class="panel__descripcion">Análisis de lo que tienes en la calle y tu dinero en caja.</p>
 
     <div class="balance-cartera">
       <section class="balance-bloque" aria-labelledby="titulo-bloque-a">
-        <h3 class="balance-bloque__titulo" id="titulo-bloque-a">LO QUE ESTÁ EN LA CALLE (Cuentas)</h3>
+        <h3 class="balance-bloque__titulo" id="titulo-bloque-a">CUENTAS POR COBRAR Y PAGAR</h3>
         <ul class="balance-barras">
           {% for barra in balance_bloques.bloque_a %}
             <li class="balance-barra">
@@ -49,7 +49,7 @@
       </section>
 
       <section class="balance-bloque" aria-labelledby="titulo-bloque-b">
-        <h3 class="balance-bloque__titulo" id="titulo-bloque-b">TU BOLSILLO (Efectivo hoy)</h3>
+        <h3 class="balance-bloque__titulo" id="titulo-bloque-b">FLUJO DE CAJA DISPONIBLE</h3>
         <ul class="balance-barras">
           {% for barra in balance_bloques.bloque_b %}
             <li class="balance-barra">

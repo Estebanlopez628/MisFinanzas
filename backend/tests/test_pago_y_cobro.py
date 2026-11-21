@@ -153,7 +153,7 @@ def test_pago_a_credito_con_anticipo_muestra_el_formulario_de_cobro(cliente_admi
     respuesta = cliente_admin.get(f"/olb-byte/ventas/{venta.id_venta}/cobro")
 
     assert respuesta.status_code == 200
-    assert "Opción 1 · Registrar abono o pago total" in respuesta.text
+    assert "Registrar Abono / Pago Total" in respuesta.text
     assert "Opción 2 · Recordatorio por WhatsApp" in respuesta.text
     assert "Registrar pago" in respuesta.text
     assert "Enviar recordatorio por WhatsApp" in respuesta.text
@@ -211,7 +211,7 @@ def test_error_al_cobrar_se_muestra_en_la_gestion_de_cobro(cliente_admin: TestCl
     )
 
     assert respuesta.status_code == 400
-    assert "Opción 1 · Registrar abono o pago total" in respuesta.text
+    assert "Registrar Abono / Pago Total" in respuesta.text
     assert "no puede superar el saldo pendiente" in respuesta.text
 
 

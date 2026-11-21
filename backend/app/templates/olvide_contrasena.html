@@ -12,6 +12,9 @@
       {% if mensaje %}
         <div class="alerta alerta--exito" role="status">{{ mensaje }}</div>
       {% endif %}
+      {% if error %}
+        <div class="alerta alerta--error" role="alert">{{ error }}</div>
+      {% endif %}
 
       <form class="acceso-nuevo__formulario" method="post" action="{{ url_for('procesar_olvide_contrasena') }}">
         <label class="campo" for="campo-correo-recuperar">
@@ -19,10 +22,13 @@
           <input id="campo-correo-recuperar" class="campo__control" type="email" name="correo" autocomplete="email"
                  placeholder="tu@correo.com" value="{{ correo_ingresado | default('', true) }}" required />
         </label>
-        <button class="boton boton--primario acceso-nuevo__boton" type="submit">Enviar enlace</button>
+        <button class="boton boton--primario" type="submit">Enviar enlace</button>
       </form>
 
-      <a class="boton boton--secundario acceso-nuevo__boton" href="{{ url_for('ver_login') }}">Volver a iniciar sesión</a>
+      {# SRS v3.0, punto 6.2: los dos botones van separados en móvil y escritorio. #}
+      <div class="olvide-acciones">
+        <a class="boton boton--secundario" href="{{ url_for('ver_login') }}">Volver a iniciar sesión</a>
+      </div>
     </div>
   </section>
 {% endblock %}
