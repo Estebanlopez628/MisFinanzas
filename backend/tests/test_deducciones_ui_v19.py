@@ -47,7 +47,7 @@ def test_el_css_oculta_los_iconos_en_movil_y_alinea_a_la_derecha() -> None:
 
     bloque_movil = css.split("@media (max-width: 640px)", 1)[1]
     assert ".lista-gastos__item[data-deduccion-fila]" in bloque_movil
-    assert "> .lista-gastos__acciones > summary" in bloque_movil
+    assert "> .lista-gastos__acciones > details > summary" in bloque_movil
     assert "> .lista-gastos__acciones > form" in bloque_movil
     assert "display: none !important;" in bloque_movil
 

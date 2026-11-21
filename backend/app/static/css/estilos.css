@@ -3974,7 +3974,9 @@ strong.valor-negativo.recibo__cifra--saldo {
     cursor: pointer;
   }
 
-  .lista-gastos__item[data-deduccion-fila] > .lista-gastos__acciones > summary,
+  /* El lápiz es el <summary> del <details>, no hijo directo del contenedor de
+     acciones. Ocultar el summary no impide que la fila abra el modal con JS. */
+  .lista-gastos__item[data-deduccion-fila] > .lista-gastos__acciones > details > summary,
   .lista-gastos__item[data-deduccion-fila] > .lista-gastos__acciones > form {
     display: none !important;
   }

@@ -1883,6 +1883,11 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 - `.alerta` lleva `margin-bottom: 12px`; el formulario de deducciones usa `formulario--deducciones` (18 px) y la lista `lista-gastos--deducciones` (4 px) para que el alta y el listado, y los avisos, no queden pegados.
 - `sw.js` pasa a `olb-finanzas-v58`. Verificación: **665 pruebas** en verde y `generar_guia.py --verificar` sin problemas.
 
+### 2026-11-20 — Corrector: ocultar el lápiz de deducciones en móvil
+
+- El lápiz de edición es el `<summary>` del `<details>` y no un hijo directo de `.lista-gastos__acciones`; por eso la regla anterior `> .lista-gastos__acciones > summary` no lo ocultaba. Se cambió a `> .lista-gastos__acciones > details > summary` con `display: none !important`. La «×» de borrado (formulario hijo directo) ya se ocultaba.
+- El toque sobre la fila sigue abriendo el modal centrado (`deudas.js`). `sw.js` pasa a `olb-finanzas-v59`; **665 pruebas** en verde.
+
 **Pendiente para el Paso 3:** solo la revisión visual en navegador (360/390/768/escritorio) de la dona, el consejero, los modales, el formulario de deducciones, el flujo SI/NO y el recibo; la corrección aritmética y la anti-duplicación ya están cubiertas por pruebas.
 
 
