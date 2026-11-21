@@ -1894,6 +1894,13 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 - Los colores hexadecimales siguen intactos en `core/categorias.py`, en los arcos SVG y en la leyenda de la dona. El nombre exacto se sigue pegando al cuadro de solo lectura al elegir.
 - Aplica a todos los formularios que usan el selector (Finanzas, Gastos, Trabajos Extras y Deducciones Fijas). `sw.js` pasa a `olb-finanzas-v60`; **665 pruebas** en verde.
 
+### 2026-11-20 — Atajos guardados: grosores iguales y filas táctiles
+
+- Escritorio: Copiar, Pagar y Eliminar comparten `.atajo-accion` (min-height 34 px, padding 7×12, fuente 0.78rem), para que Pagar no sea más grueso.
+- Móvil (≤640 px, solo `/chancucos`): `.tabla--atajos` convierte cada `<tr data-chancuco-fila>` en una fila tipo Excel con Descripción | Valor a pagar | Día de pago; se ocultan Favorito, Referencia y los controles de la celda de acciones.
+- Al tocar la fila, `deudas.js` abre `details.atajo-modal` centrado con descripción, valor, días, referencia con Copiar al lado, enlace y favorito; abajo Pagar → Eliminar y cierre sutil en la cabecera.
+- No se tocó el panel embebido de Mis Finanzas. `sw.js` pasa a `olb-finanzas-v61`; **668 pruebas** en verde y `node --check` OK.
+
 **Pendiente para el Paso 3:** solo la revisión visual en navegador (360/390/768/escritorio) de la dona, el consejero, los modales, el formulario de deducciones, el flujo SI/NO y el recibo; la corrección aritmética y la anti-duplicación ya están cubiertas por pruebas.
 
 

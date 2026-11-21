@@ -3982,6 +3982,118 @@ strong.valor-negativo.recibo__cifra--saldo {
   }
 }
 
+/* ---- Atajos guardados: grosores iguales y filas táctiles (SRS v1.9) ----- */
+
+.boton.atajo-accion {
+  min-height: 34px;
+  padding: 7px 12px;
+  font-size: 0.78rem;
+  line-height: 1.2;
+  border-radius: 10px;
+  box-sizing: border-box;
+  white-space: nowrap;
+}
+
+.atajo-modal {
+  display: none;
+}
+
+.atajo-modal__datos {
+  margin: 0 0 14px;
+}
+
+.atajo-modal__datos > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0;
+  border-bottom: 1px dashed var(--borde-suave, rgba(255, 255, 255, 0.12));
+  font-size: 0.86rem;
+}
+
+.atajo-modal__datos dt {
+  color: var(--text-muted);
+}
+
+.atajo-modal__datos dd {
+  margin: 0;
+  text-align: right;
+  font-weight: 600;
+}
+
+@media (max-width: 640px) {
+  .tabla--atajos {
+    display: block;
+  }
+
+  .tabla--atajos thead {
+    display: none;
+  }
+
+  .tabla--atajos tbody {
+    display: block;
+  }
+
+  .tabla--atajos tr[data-chancuco-fila] {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    padding: 8px 10px;
+    border: 1px solid var(--borde-suave);
+    border-radius: var(--radio-md);
+    background: rgba(15, 23, 42, 0.35);
+    cursor: pointer;
+  }
+
+  .tabla--atajos tr[data-chancuco-fila] > td {
+    display: block;
+    padding: 0;
+    border: 0;
+    min-width: 0;
+  }
+
+  .tabla--atajos tr[data-chancuco-fila] > td:nth-child(2) {
+    grid-column: 1;
+  }
+
+  .tabla--atajos tr[data-chancuco-fila] > td:nth-child(3) {
+    grid-column: 2;
+  }
+
+  .tabla--atajos tr[data-chancuco-fila] > td:nth-child(4) {
+    grid-column: 3;
+  }
+
+  .tabla--atajos tr[data-chancuco-fila] > td:nth-child(1),
+  .tabla--atajos tr[data-chancuco-fila] > td:nth-child(5) {
+    display: none;
+  }
+
+  /* La celda de acciones solo aloja el modal: se ocultan sus controles. */
+  .tabla--atajos tr[data-chancuco-fila] > td:nth-child(6) {
+    position: absolute;
+    width: 0;
+    height: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  .tabla--atajos tr[data-chancuco-fila] > td:nth-child(6) > a,
+  .tabla--atajos tr[data-chancuco-fila] > td:nth-child(6) > form {
+    display: none !important;
+  }
+
+  .atajo-modal {
+    display: block;
+  }
+
+  .atajo-modal > summary {
+    display: none !important;
+  }
+}
+
 /* ---------------- Deudas registradas (SRS v1.9, sección 2.3) -------------- */
 
 .sr-only {

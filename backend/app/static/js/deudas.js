@@ -7,7 +7,8 @@
  *   abre el `<details class="edicion-gasto--modal">` que ya existe en el resto
  *   de módulos.
  * - En móvil esos iconos se ocultan con CSS y un toque sobre la fila abre el
- *   mismo modal: tanto en «Deudas registradas» como en «Deducciones fijas».
+ *   mismo modal: en «Deudas registradas», «Deducciones fijas» y «Atajos
+ *   guardados».
  *   Solo se abre uno a la vez para no apilar fondos.
  *
  * El cierre con «Cancelar», Escape o tocando el fondo lo hace `app.js`.
@@ -50,4 +51,5 @@
 
   conectarFilas("tr[data-deuda-fila]", "details.edicion-gasto--modal");
   conectarFilas("li[data-deduccion-fila]", "details.edicion-gasto--modal");
+  conectarFilas("tr[data-chancuco-fila]", "details.atajo-modal");
 })();
