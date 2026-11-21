@@ -198,7 +198,7 @@ Principios que explican el resto del código:
 - **`auxilio.py`** · 146 líneas — Evaluación del derecho al auxilio de transporte (SRS RF-07).
   - Clases: `EvaluacionAuxilio`
   - Funciones: `evaluar_auxilio_transporte`, `evaluar_auxilio_salarial`
-- **`capacidad.py`** · 777 líneas — Capacidad de endeudamiento y proyección a doce meses (SRS v1.7, bloque F).
+- **`capacidad.py`** · 780 líneas — Capacidad de endeudamiento y proyección a doce meses (SRS v1.7, bloque F).
   - Clases: `Capacidad`
   - Funciones: `repartir_libre`, `es_credito`, `_porcentaje`, `agrupar_por_categoria`, `resumen_categorias`, `_arcos_categoria`, `_repartir_arcos`, `_meses_equivalentes`, `_etiqueta_mes`, `_mover_mes`, `meses_siguientes`, `deudas_por_terminar`, `proyeccion_capacidad`, `_mensaje_semaforo`, `capacidad_trabajos`, `capacidad_endeudamiento`
 - **`chancucos.py`** · 276 líneas — Referencias de pago rápido ("Chancucos").
@@ -250,8 +250,8 @@ Principios que explican el resto del código:
 
 #### `backend/app/static/css/`
 
-- **`estilos.css`** · 4506 líneas — Fondo y superficies
-- **`factura-olb.css`** · 671 líneas — Sello de Anulada si aplica
+- **`estilos.css`** · 4497 líneas — Fondo y superficies
+- **`factura-olb.css`** · 699 líneas — Sello de Anulada si aplica
 
 #### `backend/app/static/js/`
 
@@ -263,7 +263,7 @@ Principios que explican el resto del código:
   - Funciones: `esMovil`, `sacarDeLaTabla`, `devolverALaTabla`, `vigilarPortabilidad`, `cerrarOtras`, `conectarFilas`
 - **`dona.js`** · 122 líneas — Interacción de las gráficas tipo dona (capacidad de endeudamiento y cartera).
   - Funciones: `centro`, `mostrar`, `restaurar`, `iniciar`
-- **`factura.js`** · 304 líneas — Factura y recibo de abono de OLB_BYTE como imagen PNG (ADR-50).
+- **`factura.js`** · 305 líneas — Factura y recibo de abono de OLB_BYTE como imagen PNG (ADR-50).
   - Funciones: `descargar`, `esperarImagen`, `montarHoja`, `crearPng`, `imagenDe`, `copiarImagen`, `mensajeDelEnlace`, `compartirArchivo`, `enviarPorWhatsapp`, `descargarImagen`
 - **`finanzas.js`** · 540 líneas — Mejora progresiva de "Mis Finanzas".
   - Funciones: `leerFormulario`, `pintarCampo`, `pintarDeduccion`, `pintarValorAuxilio`, `pintarErrores`, `pintarDetalle`, `pintarAuxilio`, `aplicarResultado`, `pintarTramos`, `pintarIncapacidad`, `pintarQuincenas`, `pintarTexto`, `calcular`, `programarCalculo`, `marcarCambios`, `aplicarPlantilla`
@@ -340,7 +340,7 @@ Principios que explican el resto del código:
 - **`analitica.html`** · 315 líneas — Plantilla: Analítica
 - **`cartera.html`** · 178 líneas — Plantilla: Cartera y liquidez
 - **`cobro.html`** · 93 líneas — Plantilla: Gestionar cobro
-- **`factura.html`** · 36 líneas — Plantilla: Factura No.
+- **`factura.html`** · 38 líneas — Plantilla: Factura No.
 - **`garantias.html`** · 148 líneas — Plantilla: Garantías
 - **`index.html`** · 466 líneas — Plantilla: OLB_BYTE
 - **`pendientes.html`** · 117 líneas — Plantilla: Pendientes de pago

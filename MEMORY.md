@@ -262,6 +262,12 @@ Recálculo en tiempo real (<100 ms) sin recargar página. Se implementa con func
 - **Decisión:** `trabajos_extras` gana `tipo_contrato` (`INDEFINIDO` | `TERMINO_FIJO`), `frecuencia` (`MENSUAL` | `QUINCENAL`), `fecha_fin` y `fecha_pago`. `valor` es el monto **de cada pago**. Los pagos se generan de forma idempotente como filas de `gastos` con `id_trabajo`: reutilizan la macro `fila_gasto` (lápiz, «Cancelar», ×, ✔ y abono manual) pero `gastos.listar_gastos` los excluye, así que no tocan el sueldo, las quincenas ni los totales de gastos. El ✔ registra el cobro y `trabajos.extras_cobrados_mes` lo suma al `disponible` del diagnóstico del mes. La frecuencia quincenal crea dos pagos (día 15 y día 30 ajustado al último día); la mensual, uno en el día de `fecha_pago`. Un contrato indefinido mantiene una ventana móvil de 12 meses desde el mes visible; un término fijo se detiene en `fecha_fin`. La × inhabilita el pago 15 días en lugar de borrarlo, para que la generación idempotente no lo recree. Los trabajos anteriores se migran como término fijo de un solo mes para no inventar ingresos recurrentes.
 - **Archivos:** `modelos.py` (`TrabajoExtra`, `Gasto.id_trabajo`), `core/base_datos.py` (`_migrar_columnas_trabajos`, `id_trabajo` en `_migrar_columnas_gastos`), `servicios/trabajos.py`, `servicios/gastos.py`, `servicios/pagos_metas.py` (`quitar_gasto`), `servicios/ahorro.py` (`diagnostico`), `routers/trabajos.py`, `routers/gastos.py` (`_volver`), `templates/trabajos/index.html`, `templates/finanzas/_gasto_fijo.html`, `templates/presupuesto/index.html`, `static/js/app.js`, `diccionario_datos.md` §7 y §12, `tests/test_trabajos_extras.py`.
 
+### ADR-63 — Factura con el mismo diseño en pantalla y en la imagen compartida (SRS OLB_BYTE v1.0, ajuste)
+- **Contexto:** la imagen que se comparte por WhatsApp desde el celular salía con la cabecera apilada. Las reglas `@media (max-width: 760px)` se evaluaban contra el viewport del teléfono, no contra la hoja que `factura.js` captura a 850 px.
+- **Decisión:** las reglas de ancho pequeño pasan a `@container (max-width: 760px)`, con `container-type: inline-size` en `.hoja-contenedor` (pantalla, `olb_byte/factura.html`) y en el contenedor de captura de `static/js/factura.js`. La captura siempre usa el diseño de escritorio, sin importar el dispositivo. En la fila ABONADO / SALDO las celdas llenan la altura de la fila (sin franjas blancas), el valor va en una línea y el bloque de totales mide 340 px.
+- **Consecuencia:** en el celular la pantalla conserva el diseño compacto, pero la imagen compartida es idéntica a la del PC. Verificado en Chromium a 390 px y 1280 px con una factura con abono: capturas idénticas. Pendiente: prueba real en Android con Chrome en HTTPS.
+- **Archivos:** `static/css/factura-olb.css`, `templates/olb_byte/factura.html`, `static/js/factura.js`, `static/js/sw.js` (`olb-finanzas-v80`).
+
 ### ADR-46 — Diseño único de la factura para pantalla, PDF y WhatsApp (SRS OLB_BYTE v1.0, rediseño)
 - **Contexto:** el propietario entregó un diseño corporativo (cabecera con curva, tarjetas, tabla con relleno hasta nueve filas, totales, medios de pago y pie). Debe verse igual en la pantalla, en la vista previa, en la descarga y en el PDF enviado por WhatsApp.
 - **Decisión:**
@@ -452,6 +458,25 @@ Recálculo en tiempo real (<100 ms) sin recargar página. Se implementa con func
 ---
 
 ## Bitácora de Cambios
+
+### 2026-11-21 — Factura: la imagen compartida sale igual que en el PC (ADR-63)
+
+- La cabecera se apilaba en la imagen enviada desde el celular porque las reglas de ancho pequeño dependían del viewport. Ahora dependen del ancho de la hoja (`@container`), y la captura siempre usa el diseño de escritorio.
+- Saldo: ABONADO / SALDO ocupa una sola línea con el valor más ancho, y las celdas de cada fila llenan su altura (se quitaron las franjas blancas). El bloque de totales pasa de 280 px a 340 px.
+- Verificado en Chromium con una factura de prueba con abono: 390 px y 1280 px producen capturas idénticas. `sw.js` en `olb-finanzas-v80`; **678 pruebas** en verde.
+
+### 2026-11-21 — Tabla de deudas en móvil: cuatro filas visibles (ajusta ADR-62)
+
+- En móvil la caja de «Deudas registradas» muestra cuatro deudas con `max-height: 332px` (cabecera de 74 px y cuatro filas de 64 px, medidas en Chromium a 390 px). El resto se alcanza deslizando dentro de la caja.
+- La cabecera queda fija y la caja no se desplaza: en la prueba, `scrollY` se mantuvo en 0 y el `thead` quedó en su sitio al bajar.
+- Se mantiene `contain: paint` de ADR-62. Se retiró la regla que dejaba la altura sin límite en móvil. En escritorio no cambia.
+- `sw.js` en `olb-finanzas-v81`; prueba `test_deudas_ui_v19.py` actualizada al nuevo contrato. **679 pruebas** en verde (con la prueba nueva de Trabajos Extras).
+- Pendiente: probar en iPhone, porque la verificación fue en Chromium.
+
+### 2026-11-21 — Dona de Trabajos Extras sin base mínima de liquidez
+
+- `capacidad_trabajos` reutilizaba `repartir_libre`, que aparta $300.000 para la base mínima. Esa regla es de Mis Finanzas (ADR-53). Ahora Trabajos Extras no reserva la base: `base_minima = 0` y todo el libre queda como «Disponible para abonar».
+- Nueva prueba `test_dona_de_trabajos_no_reserva_la_base_minima` en `tests/test_capacidad.py`. La dona de Mis Finanzas no cambió.
 
 ### 2026-11-20 — Vista previa de WhatsApp reducida a JPEG de 71 KB
 
