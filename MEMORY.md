@@ -497,6 +497,7 @@ Recálculo en tiempo real (<100 ms) sin recargar página. Se implementa con func
 - UI uniforme: ayuda sin pastilla, textos justificados, flechas/calendario legibles, enlaces azules, valor bloqueado con candado y títulos nuevos de cartera.
 - `fecha_resolucion` migrada y verificada en Neon. `sw.js` en `olb-finanzas-v93`.
 - Verificación: **724 pruebas** en verde, `node --check` OK y `generar_guia.py --verificar` correcto.
+- Revisión visual en Chromium (Playwright) de v2.0/v3.0 en 360/390/768/1280 px: 88 comprobaciones en verde, sin desbordamiento horizontal ni errores de consola, modales centrados y SVGs/enlaces con el estilo esperado. Capturas en la carpeta temporal de `opencode`. El 403 inicial de cartera era del entorno de prueba (faltaba `CORREOS_OLB_BYTE`), no un defecto de la app.
 
 ### 2026-11-21 — SRS v2.0, Fase D: cierre documental y ajuste de la fila de gastos
 
