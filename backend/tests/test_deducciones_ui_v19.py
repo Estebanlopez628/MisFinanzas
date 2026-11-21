@@ -52,6 +52,34 @@ def test_el_css_oculta_los_iconos_en_movil_y_alinea_a_la_derecha() -> None:
     assert "display: none !important;" in bloque_movil
 
 
+def test_todos_los_modales_se_centran_y_las_alertas_tienen_espacio() -> None:
+    """El modal se centra por sí mismo y los avisos no quedan pegados."""
+    css = (RAIZ_APP / "static" / "css" / "estilos.css").read_text(encoding="utf-8")
+    modal = css.split("details.edicion-gasto--modal[open] > .edicion-gasto__formulario {", 1)[1]
+    declaraciones = modal.split("}", 1)[0]
+    for regla in (
+        "position: fixed;",
+        "top: 50%;",
+        "left: 50%;",
+        "transform: translate(-50%, -50%);",
+    ):
+        assert regla in declaraciones
+    assert "margin-bottom: 12px;" in css.split(".alerta {", 1)[1].split("}", 1)[0]
+
+
+def test_el_formulario_y_la_lista_de_deducciones_tienen_separacion(
+    cliente_admin: TestClient, bd
+) -> None:
+    """El alta y el listado no quedan pegados."""
+    cuenta = usuarios.buscar_por_correo(bd, "admin@olbbyte.co")
+    assert cuenta is not None
+    deducciones_fijas.crear_deduccion(bd, cuenta.id_usuario, "Libranza", "120.000", 1)
+
+    html = cliente_admin.get("/presupuesto").text
+    assert "formulario--deducciones" in html
+    assert "lista-gastos--deducciones" in html
+
+
 def test_el_javascript_abre_el_modal_al_tocar_la_fila_de_deduccion() -> None:
     """El mismo script de donas y deudas atiende las filas de deducciones."""
     javascript = (RAIZ_APP / "static" / "js" / "deudas.js").read_text(encoding="utf-8")

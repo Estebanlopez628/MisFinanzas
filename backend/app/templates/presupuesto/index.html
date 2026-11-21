@@ -295,7 +295,7 @@
       calcular tu saldo libre.
     </p>
 
-    <form class="formulario formulario--compacto" method="post"
+    <form class="formulario formulario--compacto formulario--deducciones" method="post"
           action="{{ url_for('crear_deduccion_fija') }}" data-proteccion
           data-guardar-formulario="crear-deduccion-fija"
           data-origen-modulo="deducciones">
@@ -335,7 +335,7 @@
     </form>
 
     {% if deducciones %}
-      <ul class="lista-gastos">
+      <ul class="lista-gastos lista-gastos--deducciones">
         {% for deduccion in deducciones %}
           <li class="lista-gastos__item" data-deduccion-fila data-id-deduccion="{{ deduccion.id_deduccion }}">
             <span class="lista-gastos__nombre">

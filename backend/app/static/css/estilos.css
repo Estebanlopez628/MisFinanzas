@@ -1638,6 +1638,7 @@ textarea.campo__control {
 
 .alerta {
   padding: 16px 18px;
+  margin-bottom: 12px;
   border-radius: var(--radio-md);
   font-size: 0.9rem;
   border: 1px solid transparent;
@@ -3952,6 +3953,14 @@ strong.valor-negativo.recibo__cifra--saldo {
 
 /* ---- Deducciones fijas: acciones a la derecha y fila táctil (3.3) -------- */
 
+.formulario--deducciones {
+  margin-bottom: 18px;
+}
+
+.lista-gastos--deducciones {
+  margin-top: 4px;
+}
+
 .lista-gastos__item[data-deduccion-fila] > .lista-gastos__acciones {
   grid-column: 3;
   justify-self: end;
@@ -4178,19 +4187,34 @@ details.edicion-gasto--modal[open] > summary {
   outline: none;
 }
 
-/* La tarjeta del modal deja de estar anclada a la derecha o al 50 % con
-   translate: ahora es un elemento flex centrado por el contenedor. */
-.modal-centrado > *,
+/* La tarjeta de los modales de edición se centra por sí misma, no solo por el
+   flex del contenedor: así no depende de que el <details> esté dentro de una
+   celda de la grid (les pasaba al modal de la libranza, que se iba a la
+   izquierda). `inset:auto` limpia el right:0/left:50% heredado. */
 details.edicion-gasto--modal[open] > .edicion-gasto__formulario {
-  position: relative;
+  position: fixed;
   inset: auto;
-  transform: none;
-  width: min(440px, 100%);
+  top: 50%;
+  left: 50%;
+  right: auto;
+  bottom: auto;
+  transform: translate(-50%, -50%);
+  margin: 0;
+  width: min(440px, calc(100vw - 2rem));
   max-height: calc(100vh - 2rem);
   overflow-y: auto;
   overscroll-behavior: contain;
   z-index: 51;
   box-shadow: 0 18px 46px rgba(0, 0, 0, 0.45);
+}
+
+.modal-centrado > * {
+  position: relative;
+  width: min(440px, 100%);
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  z-index: 51;
 }
 
 /* Los <dialog> nativos ya centra el navegador con showModal(); se les fija el

@@ -1877,6 +1877,12 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 - Se retiró la insignia «automática · deudas» y el CSS huérfano `.dona__leyenda--categorias`. `sw.js` pasa a `olb-finanzas-v57`.
 - Verificación: **663 pruebas** en verde y `generar_guia.py --verificar` sin problemas.
 
+### 2026-11-20 — Centrado directo de modales y espaciado de avisos
+
+- La tarjeta de los modales de edición ya no depende del flex del `<details>` para centrarse: usa `position: fixed; inset: auto; top: 50%; left: 50%; transform: translate(-50%, -50%)` y ancho `min(440px, calc(100vw - 2rem))`. Esto corrige que el modal de la libranza (dentro de una celda de la grid) saliera desplazado a la izquierda mientras el de almuerzos sí salía centrado.
+- `.alerta` lleva `margin-bottom: 12px`; el formulario de deducciones usa `formulario--deducciones` (18 px) y la lista `lista-gastos--deducciones` (4 px) para que el alta y el listado, y los avisos, no queden pegados.
+- `sw.js` pasa a `olb-finanzas-v58`. Verificación: **665 pruebas** en verde y `generar_guia.py --verificar` sin problemas.
+
 **Pendiente para el Paso 3:** solo la revisión visual en navegador (360/390/768/escritorio) de la dona, el consejero, los modales, el formulario de deducciones, el flujo SI/NO y el recibo; la corrección aritmética y la anti-duplicación ya están cubiertas por pruebas.
 
 
