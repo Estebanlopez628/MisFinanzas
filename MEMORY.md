@@ -1963,6 +1963,12 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 - El modal de edición ya no contiene el campo «Segundo día (opcional)»; su valor se conserva en un `<input type="hidden" name="dia_pago_2">` para no perderlo al actualizar.
 - `sw.js` pasa a `olb-finanzas-v71`; **671 pruebas** en verde y `generar_guia.py --verificar` sin problemas.
 
+### 2026-11-20 — Actualizar sustituye a Pagar en Atajos guardados
+
+- En escritorio se retiró el enlace «Pagar» de la fila. Ahora hay un botón «Actualizar» (`data-abrir-atajo`, con `.atajo-accion`) que abre el modal de edición del atajo mediante `deudas.js`.
+- El modal sigue teniendo el enlace en un `<input type="url">` con `min-width: 0; max-width: 100%; box-sizing: border-box`, para que una URL larga no ensanche la tarjeta.
+- Solo afecta a `/chancucos`; los atajos embebidos de Mis Finanzas mantienen su botón Pagar. `sw.js` pasa a `olb-finanzas-v72`; **671 pruebas** en verde.
+
 **Pendiente para el Paso 3:** solo la revisión visual en navegador (360/390/768/escritorio) de la dona, el consejero, los modales, el formulario de deducciones, el flujo SI/NO y el recibo; la corrección aritmética y la anti-duplicación ya están cubiertas por pruebas.
 
 

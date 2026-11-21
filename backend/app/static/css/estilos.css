@@ -3990,6 +3990,13 @@ strong.valor-negativo.recibo__cifra--saldo {
   font-size: 0.8rem;
 }
 
+/* El enlace puede ser largo: se desplaza dentro del input sin ensanchar el modal. */
+.atajo-modal__tarjeta input[type="url"] {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
 .boton.atajo-accion {
   min-height: 34px;
   padding: 7px 12px;

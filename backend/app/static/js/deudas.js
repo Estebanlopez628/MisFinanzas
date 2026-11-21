@@ -53,4 +53,17 @@
   conectarFilas("li[data-deduccion-fila]", "details.edicion-gasto--modal");
   conectarFilas("tr[data-chancuco-fila]", "details.atajo-modal");
   conectarFilas("li[data-atajo-fila]", "details.atajo-finanzas-modal");
+
+  // Escritorio: el botón «Actualizar» de cada fila abre su modal de edición.
+  document.querySelectorAll("[data-abrir-atajo]").forEach(function (boton) {
+    boton.addEventListener("click", function () {
+      var fila = boton.closest("tr");
+      var detalles = fila && fila.querySelector("details.atajo-modal");
+      if (!detalles) {
+        return;
+      }
+      cerrarOtras(detalles);
+      detalles.open = true;
+    });
+  });
 })();

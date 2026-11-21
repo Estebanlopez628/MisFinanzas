@@ -154,10 +154,10 @@
                           data-copiar="{{ item.numero_referencia }}">Copiar</button>
                 </td>
                 <td class="tabla__acciones">
-                  {% if item.url_pago %}
-                    <a class="boton boton--primario boton--pequeno atajo-accion" href="{{ item.url_pago }}"
-                       target="_blank" rel="noopener">Pagar</a>
-                  {% endif %}
+                  {# SRS v1.9: desde este panel no se paga, se edita. El botón
+                     abre el mismo modal centrado que al tocar la fila en móvil. #}
+                  <button class="boton boton--primario boton--pequeno atajo-accion" type="button"
+                          data-abrir-atajo aria-label="Actualizar {{ item.descripcion }}">Actualizar</button>
                   <form method="post" action="{{ url_for('eliminar_chancuco', id_chancuco=item.id_chancuco) }}"
                         onsubmit="return confirm('¿Eliminar este atajo de pago?');">
                     <button class="boton boton--peligro boton--pequeno atajo-accion" type="submit">Eliminar</button>
