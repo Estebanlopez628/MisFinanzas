@@ -51,16 +51,34 @@
   min-height: 225px;
 }
 
+/* La curva y sus dos sombras azules se dibujan en SVG (`.curva-fondo`): el radio de
+   borde y la sombra de caja no se capturan bien en Safari, y aparecían como un
+   recuadro azul sobresaliendo. */
 .factura-header__fondo-curvo {
   position: relative;
   width: 64%;
   min-height: 220px;
-  background: radial-gradient(circle at 25% 40%, #0b4a99 0%, #051937 65%, #020c1b 100%);
-  border-bottom-right-radius: 100% 75%;
   padding: 24px 36px 32px 36px;
   color: #ffffff;
-  box-shadow: 10px 6px 0px #00a8ff, 18px 10px 0px #d4e3f5;
-  overflow: hidden;
+}
+
+.curva-fondo {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.curva-fondo--sombra-clara {
+  fill: #d4e3f5;
+  transform: translate(18px, 10px);
+}
+
+.curva-fondo--sombra-azul {
+  fill: #00a8ff;
+  transform: translate(10px, 6px);
 }
 
 .circuitos-svg {
@@ -363,21 +381,15 @@
   font-size: 1rem;
 }
 
-/* ABONADO / SALDO: la fila reparte más ancho al valor para que "abono / saldo"
-   quepa en una sola línea. */
-.total-fila--abono {
-  grid-template-columns: 1fr 1.5fr;
-}
-
+/* ABONADO / SALDO: conserva las mismas columnas que las otras filas del bloque;
+   el valor va en una línea con una letra un poco menor. */
 .total-fila--abono .total-etiqueta {
   background: #1d3557;
   font-size: 0.72rem;
-  padding: 6px 8px;
   border-top: 1px solid #3c7ac4;
 }
 
 .total-fila--abono .total-valor {
-  padding: 6px 8px;
   font-size: 0.78rem;
   white-space: nowrap;
 }

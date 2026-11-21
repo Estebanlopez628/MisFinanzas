@@ -13,6 +13,18 @@
   <!-- ENCABEZADO CON CURVA TECNOLÓGICA -->
   <header class="factura-header">
     <div class="factura-header__fondo-curvo">
+      <svg class="curva-fondo curva-fondo--sombra-clara" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path d="M0 0H100V25A100 75 0 0 1 0 100Z"/></svg>
+      <svg class="curva-fondo curva-fondo--sombra-azul" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path d="M0 0H100V25A100 75 0 0 1 0 100Z"/></svg>
+      <svg class="curva-fondo curva-fondo--base" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+        <defs>
+          <radialGradient id="degradado-curva-olb" cx="25%" cy="40%" r="85%">
+            <stop offset="0" stop-color="#0b4a99" />
+            <stop offset="0.65" stop-color="#051937" />
+            <stop offset="1" stop-color="#020c1b" />
+          </radialGradient>
+        </defs>
+        <path fill="url(#degradado-curva-olb)" d="M0 0H100V25A100 75 0 0 1 0 100Z"/>
+      </svg>
       <svg class="circuitos-svg" viewBox="0 0 600 220" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M0 40 H180 L210 70 H350" stroke="#00d2ff" stroke-width="1.5" stroke-opacity="0.35"/>
         <circle cx="350" cy="70" r="4" fill="#00d2ff" fill-opacity="0.6"/>

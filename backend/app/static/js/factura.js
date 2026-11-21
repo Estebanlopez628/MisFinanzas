@@ -45,6 +45,18 @@
   }
 
   /**
+   * Espera un tiempo antes de seguir, para que el navegador termine de pintar.
+   *
+   * @param {number} milisegundos Pausa en milisegundos.
+   * @returns {Promise<void>} Se resuelve al cumplirse la pausa.
+   */
+  function esperar(milisegundos) {
+    return new Promise(function (resolver) {
+      window.setTimeout(resolver, milisegundos);
+    });
+  }
+
+  /**
    * Espera a que una imagen esté cargada y decodificada para poder dibujarla.
    *
    * @param {HTMLImageElement} imagen Logo o imagen de la hoja.
@@ -109,8 +121,21 @@
         throw new Error("No se encontró el contenido para la imagen.");
       }
       var fondo = nodo.classList.contains("hoja-factura") ? COLOR_FACTURA : COLOR_RECIBO;
-      return libreria
-        .toBlob(nodo, { pixelRatio: 2, backgroundColor: fondo, cacheBust: false })
+      // Safari dibuja las imágenes de la hoja solo tras un instante: sin esta pausa
+      // los logos se capturaban vacíos desde la lista de órdenes.
+      var opciones = { pixelRatio: 2, backgroundColor: fondo, cacheBust: false };
+      // Safari no dibuja las imágenes en la primera conversión: la primera pasada las
+      // carga y la segunda es la que se entrega.
+      return esperar(300)
+        .then(function () {
+          return libreria.toBlob(nodo, opciones);
+        })
+        .then(function () {
+          return esperar(200);
+        })
+        .then(function () {
+          return libreria.toBlob(nodo, opciones);
+        })
         .then(
           function (blob) {
             document.body.removeChild(contenedor);

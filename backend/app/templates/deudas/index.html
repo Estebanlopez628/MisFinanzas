@@ -147,6 +147,7 @@
                     {% if deuda.descripcion %}
                       <br /><span class="ayuda">{{ deuda.descripcion }}</span>
                     {% endif %}
+                    <span class="deudas__detalle-movil">{{ deuda.periodicidad | capitalize }} · {{ deuda.estado | capitalize }}</span>
                   </td>
                   <td class="tabla__numero">{{ deuda.saldo_total | cop }}</td>
                   <td class="tabla__numero">
