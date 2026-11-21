@@ -1951,6 +1951,11 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 - Se conserva `.rejilla-paneles--deudas > .panel--tabla { margin-top: 0; }` para que el panel de la tabla no baje respecto al formulario.
 - `sw.js` pasa a `olb-finanzas-v69`; **671 pruebas** en verde y `generar_guia.py --verificar` sin problemas.
 
+### 2026-11-20 — Tipografía uniforme en atajos embebidos
+
+- En el panel «Atajos de pago» de Mis Finanzas (Resumen/Liquidación), la descripción y el número de referencia usan ahora el mismo `font-size: 0.85rem`; antes la descripción heredaba 1 rem y destacaba más.
+- `sw.js` pasa a `olb-finanzas-v70`; **671 pruebas** en verde y `generar_guia.py --verificar` sin problemas.
+
 **Pendiente para el Paso 3:** solo la revisión visual en navegador (360/390/768/escritorio) de la dona, el consejero, los modales, el formulario de deducciones, el flujo SI/NO y el recibo; la corrección aritmética y la anti-duplicación ya están cubiertas por pruebas.
 
 

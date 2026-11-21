@@ -876,6 +876,7 @@ a.tarjeta:focus-visible {
   min-width: 0;
   overflow: hidden;
   font-weight: 600;
+  font-size: 0.85rem;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -910,6 +911,7 @@ a.tarjeta:focus-visible {
 }
 
 .lista-atajos__referencia code {
+  font-size: 0.85rem;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.04em;
 }
