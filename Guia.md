@@ -78,8 +78,8 @@ Principios que explican el resto del código:
 
 | Rol | Ve | No ve |
 | --- | --- | --- |
-| `ADMIN_OLB` | Mis Finanzas (+ Chancucos), OLB_BYTE, Registro y Detalles de deudas, Trabajos Extras, Mi Perfil, Usuarios | — |
-| `USER_FINANZAS` | Mis Finanzas (+ Chancucos propios), Registro y Detalles de deudas, Trabajos Extras, Mi Perfil | OLB_BYTE (403 en UI y endpoint) |
+| `ADMIN_OLB` | Mis Finanzas (+ Chancucos), OLB_BYTE, Registro y Detalles de deudas, Trabajos Extras, Mi Perfil, Usuarios, Comentarios y Reportes (con badge de pendientes) | — |
+| `USER_FINANZAS` | Mis Finanzas (+ Chancucos propios), Registro y Detalles de deudas, Trabajos Extras, Mi Perfil, Ayuda y comentarios (con «Mis reportes enviados») | OLB_BYTE y Comentarios y Reportes (403 en UI y endpoint) |
 
 - **Acceso a OLB_BYTE por correo (ADR-48):** solo los correos de `CORREOS_OLB_BYTE`
   ven la tarjeta y entran al módulo; el resto recibe 403.
@@ -930,9 +930,11 @@ el mismo `<details class="edicion-gasto--modal">`: `esMovil` limita el
 comportamiento a 640 px, `conectarFilas` conecta ambas filas, `cerrarOtras`
 evita apilar ventanas y se ignoran los clics dentro de formularios o controles.
 El cierre con «Cancelar», Escape o fondo lo hace `app.js`. Se carga en deudas y
-presupuesto, y se cachea en `sw.js`. SRS v2.0 (sección 2.2): al cargar la vista
-lee `misfinanzas_pending_debt_link` y ajusta la etiqueta del banner de regreso
-con `origin_label`, sin alterar el `volver` que pinta el servidor.
+presupuesto, y se cachea en `sw.js`. SRS v2.0 (sección 2.2) y v3.0 (punto 1): al
+cargar la vista lee `misfinanzas_pending_debt_link` y ajusta la etiqueta del
+enlace de regreso con `origin_label`, sin alterar el `volver` que pinta el
+servidor. **Nunca elimina la clave**: solo el formulario de origen la borra tras
+restaurar sus datos, así que el enlace sigue vivo después de guardar la deuda.
 
 ### `backend/app/static/js/categorias.js`
 
@@ -1046,7 +1048,7 @@ producción solo registra el fallo, sin contenido ni enlaces. SRS v3.0: timeout 
 
 ### `backend/app/static/js/factura.js`
 
-Acciones de la factura. Captura la hoja como PNG con `html-to-image` en el navegador (ADR-50). La imagen se prepara al cargar la página. «Compartir por WhatsApp»: en móvil abre la hoja de compartir del sistema con el PNG adjunto y el mensaje; en escritorio copia el PNG al portapapeles en el mismo clic, abre la conversación del número del cliente (wa.me/57…) y descarga el PNG. WhatsApp Web no admite adjuntos desde un enlace, por eso se pega con Ctrl+V. Si la orden no tiene celular, el botón avisa y no abre nada. «Descargar imagen» solo descarga el PNG (SRS v1.8). SRS v2.0 (sección 1): `numeroDelEnlace` limpia espacios, guiones, paréntesis y `+`, antepone `57` a los 10 dígitos y conserva los 12 que ya empiezan por 57; `enviarPorWhatsapp` abre `https://wa.me/<numero>?text=<encodeURIComponent(texto)>` con el mismo mensaje de siempre.
+Acciones de la factura. Captura la hoja como PNG con `html-to-image` en el navegador (ADR-50). La imagen se prepara al cargar la página. Los tres botones de WhatsApp (Compartir en Ver factura, ícono rápido y recibos de abono) comparten `enviarPorWhatsapp`. SRS v2.0 (sección 1) y v3.0 (punto 2): `numeroDelEnlace` limpia espacios, guiones, paréntesis y `+`, antepone `57` a los 10 dígitos y conserva los 12 que ya empiezan por 57; se abre `https://wa.me/<numero>?text=<encodeURIComponent(texto)>` con el mismo mensaje aprobado. **Nunca se usa la Web Share API**: se eliminó la hoja de compartir del sistema para evitar el selector de aplicaciones; si la ventana nueva es bloqueada se navega en la misma pestaña. Sin número válido se avisa antes de abrir. El PNG se copia al portapapeles y se descarga para adjuntarlo manualmente. «Descargar imagen» solo descarga el PNG.
 
 ### `backend/app/static/js/ayuda.js`
 
@@ -1286,6 +1288,9 @@ versión; tarjeta de soporte con el acordeón del centro de ayuda (GUÍA A de
 instalación PWA y GUÍA B de preguntas frecuentes) y el modal de reportes; tarjeta
 legal con los modales de condiciones/privacidad y licencias; pie «© 2026
 MisFinanzas». Todos los textos son literales y solo mencionan módulos públicos.
+SRS v3.0 (punto 7): incluye «Mis reportes enviados», alimentado por
+`/api/feedback/mios`, con la etiqueta de estado actual de cada ticket; «Volver
+al inicio» usa el botón azul primario y los textos van justificados.
 
 ### `backend/app/templates/ayuda/_legal.html`
 
@@ -1297,7 +1302,10 @@ texto literal «CONDICIONES DE USO Y POLÍTICA DE PRIVACIDAD — MISFINANZAS».
 
 Panel administrativo de reportes (SRS v2.0, 5.5): tabla con usuario y correo,
 fecha, tipo, módulo, dispositivo, descripción y selector de estado. Cada cambio
-llama a la API y actualiza el contador de pendientes del dashboard.
+llama a la API y actualiza el contador de pendientes del dashboard. SRS v3.0
+(punto 7): la tabla se oculta en móvil y se sustituye por tarjetas
+`.reportes-moviles` conectadas al mismo arreglo, con el selector de estado
+(`PATCH /api/feedback/{id}`) para que la vista no quede en blanco en celular.
 
 ### `backend/app/templates/_categorias.html`
 
@@ -1612,9 +1620,11 @@ Si quieres usar el logo como imagen en lugar del texto «OB / OLB BYTE», reempl
 ## 11. Lista de verificación antes de cerrar un bloque
 
 1. `python -m compileall -q app` sin errores.
-2. `pytest -q` en verde (hoy: 260).
-3. Migraciones nuevas probadas **dos veces** sobre copia de `finanzas.db`.
-4. `sw.js` con la caché subida si cambió CSS o JS.
-5. `python scripts\generar_guia.py` y luego `--verificar` sin problemas.
-6. `MEMORY.md` con la bitácora y el ADR si cambió una regla.
-7. `AGENTS.md` §9 con el estado verificado y el conteo de pruebas.
+2. `pytest -q` en verde (hoy: **724**; v2.0 cerró en 705 y v3.0 añadió 19).
+3. `node --check` de todos los JS que se hayan tocado, sin errores.
+4. Migraciones nuevas probadas **dos veces** sobre copia de `finanzas.db` y aplicadas en Neon.
+5. `sw.js` con la caché subida si cambió CSS o JS (hoy: `olb-finanzas-v93`).
+6. `python scripts\generar_guia.py` y luego `--verificar` sin problemas (114 fichas).
+7. `MEMORY.md` con la bitácora y el ADR si cambió una regla (hoy: ADR-68 para v3.0).
+8. `AGENTS.md` §9 con el estado verificado y el conteo de pruebas.
+9. `constitution.md`, `diccionario_datos.md`, `USER_GUIDE.md` y la SRS con la versión activa (hoy: **v3.0**, sección 8).

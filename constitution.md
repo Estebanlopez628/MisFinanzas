@@ -30,11 +30,13 @@ Principios innegociables. Toda especificación, plan y tarea debe cumplirlos de 
    - `diccionario_datos.md` es la fuente única de verdad del modelo de datos.
    - No se crea ninguna tabla, columna o migración que no esté previamente documentada y aprobada en dicho archivo.
 
-9. **No Regresión y Separación Estricta por Rol (SRS v2.0):**
-   - No se altera el diseño, los cálculos, los estados ni el mensaje de las facturas de OLB_BYTE; solo se saneó el destinatario del enlace de WhatsApp.
+9. **No Regresión y Separación Estricta por Rol (SRS v2.0 y v3.0):**
+   - No se altera el diseño, los cálculos, los estados ni el mensaje de las facturas de OLB_BYTE. Solo se saneó el destinatario del enlace de WhatsApp y se prohibió la Web Share API en los tres botones (factura, ícono rápido y recibos): siempre apertura directa de `wa.me/<numero>`.
    - OLB_BYTE y la facturación son exclusivos del administrador. Guías, preguntas frecuentes, selectores de reporte y textos legales del usuario estándar no los mencionan.
    - Los gastos vinculados a deudas (`id_deuda`) se ven en todas las listas, pero su cuota **no** se suma dos veces en la dona ni en el consejero; su valor se sincroniza con la deuda y la fila conserva la descripción del usuario sin mostrar el acreedor.
+   - La recuperación de contraseña por olvido pertenece exclusivamente al Login; dentro de la app solo existe el cambio autenticado.
+   - `misfinanzas_pending_debt_link` permanece en `sessionStorage` durante toda la estancia en deudas y se elimina únicamente al restaurar el formulario de origen.
 
 10. **Documentación Viva Completa:**
-   - Además de `AGENTS.md` y `MEMORY.md`, son obligatorios `diccionario_datos.md`, `Guia.md` (fichas por archivo + inventario regenerado con `--verificar`), `USER_GUIDE.md` (manual del usuario) y la SRS del repositorio.
+   - Además de `AGENTS.md` y `MEMORY.md`, son obligatorios esta misma `constitution.md`, `diccionario_datos.md`, `Guia.md` (fichas por archivo + inventario regenerado con `--verificar`), `USER_GUIDE.md` (manual del usuario) y la SRS del repositorio, con la versión activa reflejada en todos ellos.
    - Ningún bloque se considera terminado si `compileall`, `pytest`, `node --check` y `generar_guia.py --verificar` no están en verde.
