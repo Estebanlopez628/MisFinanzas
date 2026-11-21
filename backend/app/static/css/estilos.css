@@ -4133,7 +4133,10 @@ strong.valor-negativo.recibo__cifra--saldo {
     border: 0;
   }
 
+  /* En móvil no se muestra ningún botón de la celda de acciones: la fila entera
+     abre el modal. «Actualizar» es un <button>, por eso también se incluye. */
   .tabla--atajos tr[data-chancuco-fila] > td:nth-child(6) > a,
+  .tabla--atajos tr[data-chancuco-fila] > td:nth-child(6) > button,
   .tabla--atajos tr[data-chancuco-fila] > td:nth-child(6) > form {
     display: none !important;
   }

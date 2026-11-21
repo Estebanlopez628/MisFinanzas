@@ -144,6 +144,7 @@ def test_el_css_de_movil_oculta_columnas_y_el_js_abre_el_modal() -> None:
     assert "> td:nth-child(1)" in movil
     assert "> td:nth-child(5)" in movil
     assert "> td:nth-child(6) > a" in movil
+    assert "> td:nth-child(6) > button" in movil
     assert ">Ver</summary>" not in plantilla
     assert 'conectarFilas("tr[data-chancuco-fila]"' in javascript
     assert '[data-abrir-atajo]' in javascript
