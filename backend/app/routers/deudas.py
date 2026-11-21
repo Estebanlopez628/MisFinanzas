@@ -57,14 +57,12 @@ def _contexto(
     """
     contexto = contexto_base(usuario)
     lista = deudas.listar_deudas(bd, usuario.id_usuario)
-    # SRS v1.9, 2.3: no se calcula ni se muestra el calendario de «Próximas
-    # cuotas»; solo se listan las cuotas ya aplicadas.
-    pagos = deudas.listar_pagos(bd, usuario.id_usuario)
+    # SRS v1.9: la tabla muestra una fila por deuda, sin calendarios ni bloques
+    # de cuotas; las cuotas aplicadas se consultan en el servidor cuando hace falta.
     contexto.update(
         {
             "titulo_pagina": "Registro y Detalles de deudas",
             "deudas": lista,
-            "pagos": pagos,
             "resumen": deudas.resumen_deudas(bd, usuario.id_usuario),
             "periodicidades": deudas.PERIODICIDADES,
             "error": error,

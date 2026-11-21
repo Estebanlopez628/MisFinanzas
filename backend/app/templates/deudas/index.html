@@ -126,7 +126,7 @@
     <section class="panel panel--tabla">
       <h2 class="panel__titulo">Deudas registradas</h2>
       {% if deudas %}
-        <div class="tabla-contenedor">
+        <div class="tabla-contenedor tabla-contenedor--deudas">
           <table class="tabla tabla--deudas">
             <thead>
               <tr>
@@ -202,41 +202,6 @@
                       <button class="boton boton--peligro boton-circular" type="submit"
                               aria-label="Eliminar {{ deuda.acreedor }}" title="Eliminar deuda">×</button>
                     </form>
-                  </td>
-                </tr>
-                <tr class="fila-detalle-deuda">
-                  <td colspan="7">
-                    <div class="deuda-cuotas">
-                      {% if pagos.get(deuda.id_deuda) %}
-                        <h4 class="panel__titulo">Cuotas aplicadas</h4>
-                        <div class="tabla-contenedor tabla-contenedor--compacta">
-                          <table class="tabla tabla--compacta">
-                            <thead>
-                              <tr>
-                                <th scope="col">#</th>
-                                <th scope="col">Fecha</th>
-                                <th scope="col">Cuota</th>
-                                <th scope="col">Abono a capital</th>
-                                <th scope="col">Saldo</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {% for pago in pagos[deuda.id_deuda] %}
-                                <tr>
-                                  <td>{{ pago.numero_cuota }}</td>
-                                  <td>{{ pago.fecha_aplicacion | fecha_larga }}</td>
-                                  <td class="tabla__numero">{{ pago.valor_cuota | cop }}</td>
-                                  <td class="tabla__numero">{{ pago.abono_capital | cop }}</td>
-                                  <td class="tabla__numero">{{ pago.saldo_despues | cop }}</td>
-                                </tr>
-                              {% endfor %}
-                            </tbody>
-                          </table>
-                        </div>
-                      {% else %}
-                        <p class="tabla__vacia">Esta deuda no tiene cuotas aplicadas.</p>
-                      {% endif %}
-                    </div>
                   </td>
                 </tr>
               {% endfor %}

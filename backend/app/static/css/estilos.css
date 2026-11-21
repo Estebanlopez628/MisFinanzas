@@ -4161,6 +4161,19 @@ strong.valor-negativo.recibo__cifra--saldo {
   border: 0;
 }
 
+/* SRS v1.9: como máximo cuatro deudas visibles; el resto se alcanza
+   deslizando hacia abajo y las columnas hacia la derecha. */
+.tabla-contenedor--deudas {
+  max-height: 280px;
+  overflow: auto;
+}
+
+.tabla-contenedor--deudas thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
 .tabla--deudas td.deudas__acciones {
   display: flex;
   align-items: center;

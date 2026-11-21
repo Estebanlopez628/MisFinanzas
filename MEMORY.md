@@ -1932,6 +1932,13 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 - Se eliminó `copiarAlPortapapeles()`/`prepararCopiadoRapido()` de `finanzas.js`. Ahora `app.js` es el único manejador: guarda el texto original en `data-texto-original`, muestra «¡Copiado!» solo en el botón pulsado, restaura cualquier otro botón en estado copiado y vuelve a «Copiar» a los **5000 ms**.
 - `sw.js` pasa a `olb-finanzas-v66`; `node --check` OK y **671 pruebas** en verde.
 
+### 2026-11-20 — Tabla de deudas: una fila por deuda y vista limitada
+
+- Se eliminó el `<tr class="fila-detalle-deuda">` completo: ya no se muestra «Cuotas aplicadas» ni el mensaje «Esta deuda no tiene cuotas aplicadas». Cada deuda ocupa una sola fila, una debajo de otra.
+- El router dejó de consultar `pagos` para esta vista (solo se usa en el servidor cuando hace falta).
+- `.tabla-contenedor--deudas` fija `max-height: 280px` (≈4 deudas visibles) con `overflow: auto`, cabecera `position: sticky` y scroll horizontal para ver el resto de columnas.
+- `sw.js` pasa a `olb-finanzas-v67`; **671 pruebas** en verde y `generar_guia.py --verificar` sin problemas.
+
 **Pendiente para el Paso 3:** solo la revisión visual en navegador (360/390/768/escritorio) de la dona, el consejero, los modales, el formulario de deducciones, el flujo SI/NO y el recibo; la corrección aritmética y la anti-duplicación ya están cubiertas por pruebas.
 
 

@@ -37,6 +37,9 @@ def test_la_vista_de_deudas_usa_el_nombre_en_titulo_y_encabezado(
     assert "Resumen de Deudas" not in html
     assert "Nueva deuda" in html
     assert "Deudas registradas" in html
+    # Una sola fila por deuda: sin bloque de cuotas ni mensaje de deuda vacía.
+    assert "fila-detalle-deuda" not in html
+    assert "Esta deuda no tiene cuotas aplicadas." not in html
 
 
 def test_la_tabla_tipo_excel_no_muestra_próximas_cuotas_ni_intereses(
@@ -60,7 +63,9 @@ def test_la_tabla_tipo_excel_no_muestra_próximas_cuotas_ni_intereses(
         assert columna in html
     assert html.count('scope="col"') == 7  # seis columnas + acciones
     assert "Próximas cuotas" not in html
-    assert "Esta deuda no tiene cuotas aplicadas." in html
+    assert "Esta deuda no tiene cuotas aplicadas." not in html
+    assert "fila-detalle-deuda" not in html
+    assert "tabla-contenedor--deudas" in html
     assert 'name="tasa_interes"' not in html
     assert "interés" not in html.lower().replace("sin simular intereses", "")
 
@@ -117,3 +122,9 @@ def test_los_paneles_de_escritorio_comparten_la_misma_altura_superior() -> None:
     assert css.index(".rejilla-paneles--deudas > .panel--tabla {") > css.index(".panel--tabla {")
     bloque = css.split(".rejilla-paneles--deudas > .panel--tabla {", 1)[1].split("}", 1)[0]
     assert "margin-top: 0;" in bloque
+
+    # La tabla muestra cuatro filas y permite scroll vertical y horizontal.
+    tabla = css.split(".tabla-contenedor--deudas {", 1)[1].split("}", 1)[0]
+    assert "max-height: 280px;" in tabla
+    assert "overflow: auto;" in tabla
+    assert ".tabla-contenedor--deudas thead th {" in css
