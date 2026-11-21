@@ -3969,6 +3969,8 @@ strong.valor-negativo.recibo__cifra--saldo {
 /* ---- Deducciones fijas: acciones a la derecha y fila táctil (3.3) -------- */
 
 .lista-gastos__item[data-deduccion-fila] > .lista-gastos__acciones {
+  grid-column: 3;
+  justify-self: end;
   justify-content: flex-end;
   text-align: right;
   margin-left: auto;

@@ -161,15 +161,22 @@ def test_al_borrar_la_deuda_la_deduccion_queda_sin_vinculo(bd) -> None:
     assert deduccion in deducciones_fijas.listar_vigentes(bd, id_usuario)
 
 
-def test_la_vista_muestra_las_cuotas_que_faltan(cliente_admin: TestClient, bd) -> None:
-    """La lista de deducciones dice cuántas cuotas faltan del crédito vinculado."""
+def test_la_vista_no_repite_los_detalles_del_credito_vinculado(
+    cliente_admin: TestClient, bd
+) -> None:
+    """La fila solo muestra la deducción: el detalle de la deuda no desplaza los botones."""
     id_usuario = _id_admin(bd)
     deuda = deudas.crear_deuda(bd, id_usuario, "Banco", "1200000", "400000", 3)
-    deducciones_fijas.crear_deduccion(bd, id_usuario, "Libranza", "0", 2, deuda.id_deuda)
+    deduccion = deducciones_fijas.crear_deduccion(
+        bd, id_usuario, "Libranza BBVA", "0", 2, deuda.id_deuda
+    )
 
     html = " ".join(cliente_admin.get("/presupuesto").text.split())
 
-    assert "Crédito con Banco: faltan 3 cuota(s)" in html
+    assert "Libranza BBVA" in html
+    assert f'data-id-deduccion="{deduccion.id_deduccion}"' in html
+    assert "faltan 3 cuota(s)" not in html
+    assert "Crédito con Banco" not in html
 
 
 def test_formulario_vincula_la_deuda(cliente_admin: TestClient, bd) -> None:

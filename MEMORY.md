@@ -1858,6 +1858,12 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 - `aplicar_migraciones()` ejecutado en Neon: `chancucos.valor_pago` confirmado en `information_schema`.
 - `scripts/generar_guia.py --verificar` → 106 archivos con ficha y sin docstrings pendientes.
 
+### 2026-11-20 — Ajuste visual post Step 3: leyenda de dona y filas de deducciones
+
+- La leyenda `.dona__leyenda--categorias` solo pinta categorías con `valor > 0`; las categorías en cero (por ejemplo, «Créditos y Obligaciones» sin deudas) ya no aparecen con `$ 0`. Los arcos ya filtraban ceros.
+- Se retiró el bloque «Crédito con …: faltan N cuota(s) · saldo …» de la fila de deducciones vinculadas: ocupaba una cuarta celda de la grid de tres columnas y bajaba los botones al centro. Ahora Editar/Eliminar quedan fijos en `grid-column: 3; justify-self: end`. El vínculo `id_deuda` y la anti-duplicación no cambian.
+- `sw.js` pasa a `olb-finanzas-v55`. Verificación: **663 pruebas** en verde y `generar_guia.py --verificar` sin problemas.
+
 **Pendiente para el Paso 3:** solo la revisión visual en navegador (360/390/768/escritorio) de la dona, el consejero, los modales, el formulario de deducciones, el flujo SI/NO y el recibo; la corrección aritmética y la anti-duplicación ya están cubiertas por pruebas.
 
 

@@ -141,17 +141,30 @@ def test_el_alta_de_gastos_vincula_la_deuda_desde_el_formulario(
     assert creado.categoria == "Créditos y Obligaciones"
 
 
-def test_la_dona_muestra_las_ocho_categorias_y_la_obligacion_automatica(
-    cliente_admin: TestClient,
+def test_la_leyenda_de_la_dona_solo_muestra_categorias_con_valor(
+    cliente_admin: TestClient, bd
 ) -> None:
-    """La leyenda de la dona trae las ocho categorías y marca la número 8."""
+    """Las categorías en cero no se pintan en la leyenda de la dona."""
+    cuenta = usuarios.buscar_por_correo(bd, "admin@olbbyte.co")
+    assert cuenta is not None
+    from app.servicios import capacidad, perfiles
+
+    perfil = perfiles.obtener_perfil(bd, cuenta.id_usuario)
+    hoy = date.today()
+    resultado = capacidad.capacidad_endeudamiento(
+        bd, cuenta.id_usuario, perfil, hoy.year, hoy.month
+    )
+
     html = cliente_admin.get("/presupuesto").text
 
-    for categoria in catalogo.CATEGORIAS:
-        assert f'data-leyenda-categoria="{categoria.nombre}"' in html
-        assert categoria.color in html
-    assert "automática · deudas" in html
+    for categoria in resultado.categorias:
+        etiqueta = f'data-leyenda-categoria="{categoria["nombre"]}"'
+        if categoria["valor"] > 0:
+            assert etiqueta in html
+        else:
+            assert etiqueta not in html
     assert 'data-etiqueta="Otros Gastos Fijos"' in html
+    assert "automática · deudas" not in html  # sin deudas, la categoría 8 vale 0
 
 
 def test_el_js_y_el_service_worker_incluyen_el_selector_y_la_preservacion() -> None:

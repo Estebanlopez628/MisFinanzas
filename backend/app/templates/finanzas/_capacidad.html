@@ -87,7 +87,7 @@
            categoría 8 se calcula sola con las deudas activas; los gastos y
            deducciones vinculados a una deuda ya no aparecen aquí dos veces. #}
         <ul class="dona__leyenda dona__leyenda--categorias">
-          {% for categoria in capacidad.categorias %}
+          {% for categoria in capacidad.categorias if categoria.valor > 0 %}
             <li data-leyenda-categoria="{{ categoria.nombre }}">
               <span class="dona__muestra" style="background: {{ categoria.color }}"></span>
               {{ categoria.nombre }}:

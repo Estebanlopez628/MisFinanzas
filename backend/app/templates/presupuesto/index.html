@@ -342,16 +342,9 @@
               {{ deduccion.descripcion }} - {{ deduccion.categoria }} - {{ etiquetas_quincena[deduccion.quincena] }}
             </span>
             <span class="lista-gastos__valor">Valor: {{ deduccion.valor | cop }}</span>
-            {% if deduccion.deuda %}
-              <span class="ayuda">
-                {% if deduccion.deuda.estado == 'ACTIVA' %}
-                  Crédito con {{ deduccion.deuda.acreedor }}: faltan
-                  {{ deduccion.deuda.cuotas_pendientes }} cuota(s) · saldo {{ deduccion.deuda.saldo_total | cop }}
-                {% else %}
-                  Crédito con {{ deduccion.deuda.acreedor }} pagado. Ya no se descuenta.
-                {% endif %}
-              </span>
-            {% endif %}
+            {# SRS v1.9: no se repiten aquí los detalles de la deuda vinculada;
+               ese texto ocupaba una cuarta celda de la grid y desplazaba los
+               botones de editar y eliminar fuera del extremo derecho. #}
             <div class="lista-gastos__acciones">
               <details class="edicion-gasto edicion-gasto--modal">
                 {{ boton_editar(deduccion.descripcion) }}

@@ -32,8 +32,9 @@ def test_la_dona_de_capacidad_muestra_el_detalle_del_arco(cliente_admin: TestCli
     assert 'class="dona__arco"' in html
     # SRS v1.9: la dona se dibuja por categorías, con los colores del catálogo.
     assert 'data-etiqueta="Otros Gastos Fijos"' in html
-    assert 'data-leyenda-categoria="Créditos y Obligaciones"' in html
-    assert "#EF4444" in html
+    # Solo se pintan las categorías con valor: sin deudas, la categoría 8 no aparece.
+    assert 'data-leyenda-categoria="Otros Gastos Fijos"' in html
+    assert 'data-leyenda-categoria="Créditos y Obligaciones"' not in html
     assert "data-centro-valor" in html
     assert 'data-etiqueta-defecto="libre"' in html
 
