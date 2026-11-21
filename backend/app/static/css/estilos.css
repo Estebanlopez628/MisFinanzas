@@ -1697,11 +1697,11 @@ textarea.campo__control {
 }
 
 /* SRS v1.9, sección 2.1: en «Registro y Detalles de deudas» los paneles
-   «Nueva deuda» y «Deudas registradas» deben empezar a la misma altura. El
-   margen genérico de `.panel--tabla` bajaba el segundo panel en escritorio;
-   dentro de esta rejilla se anula y el `gap` ya separa las tarjetas en móvil. */
+   «Nueva deuda» y «Deudas registradas» empiezan a la misma altura y ocupan
+   exactamente la misma altura en escritorio (stretch). El margen genérico de
+   `.panel--tabla` se anula para que no baje el segundo panel. */
 .rejilla-paneles--deudas {
-  align-items: start;
+  align-items: stretch;
 }
 
 .rejilla-paneles--deudas > .panel--tabla {

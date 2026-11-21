@@ -114,14 +114,15 @@ def test_la_fila_completa_es_táctil_en_móvil_y_el_modal_está_en_la_caché() -
     assert "js/deudas.js" in service_worker
 
 
-def test_los_paneles_de_escritorio_comparten_la_misma_altura_superior() -> None:
-    """La rejilla anula el margen superior del panel de tabla en esta vista."""
+def test_los_paneles_de_escritorio_comparten_la_misma_altura() -> None:
+    """La rejilla estira ambos paneles y anula el margen superior del de tabla."""
     plantilla = (RAIZ_APP / "templates" / "deudas" / "index.html").read_text(encoding="utf-8")
     css = (RAIZ_APP / "static" / "css" / "estilos.css").read_text(encoding="utf-8")
 
     assert 'rejilla-paneles rejilla-paneles--deudas' in plantilla
     assert ".rejilla-paneles--deudas {" in css
-    assert "align-items: start;" in css
+    rejilla = css.split(".rejilla-paneles--deudas {", 1)[1].split("}", 1)[0]
+    assert "align-items: stretch;" in rejilla
     assert ".rejilla-paneles--deudas > .panel--tabla {" in css
     # La regla específica debe ir después del margin-top genérico para ganar.
     assert css.index(".rejilla-paneles--deudas > .panel--tabla {") > css.index(".panel--tabla {")
