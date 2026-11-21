@@ -37,7 +37,9 @@
       <div class="marca-contenedor">
         {% if logos.olb %}
           <div class="logo-ob-caja">
-            <img class="logo-ob-imagen" src="{{ logos.olb }}" alt="OLB BYTE · Alta Tecnología" />
+            <img class="logo-ob-imagen" src="{{ logos.olb }}" alt="OLB BYTE · Alta Tecnología"
+                 loading="eager" decoding="sync" width="230" height="64"
+                 onerror="this.style.visibility='hidden'" />
           </div>
         {% else %}
           <div class="logo-ob">

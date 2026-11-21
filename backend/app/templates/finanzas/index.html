@@ -14,7 +14,7 @@ contenido %}
 </section>
 
 <div class="acciones-formulario acciones-volver">
-  <a class="boton boton--secundario boton--pequeno" href="{{ url_for('ver_dashboard') }}">← Volver al inicio</a>
+  <a class="boton boton--primario boton--pequeno" href="{{ url_for('ver_dashboard') }}">← Volver al inicio</a>
 </div>
 
 {% include "finanzas/_subnav.html" %} {% if guardado %}
@@ -48,6 +48,7 @@ contenido %}
     <article
       class="panel panel--quincena"
       data-quincena="{{ quincena.numero }}"
+      {% if loop.first %}id="seccion-gastos-fijos-finanzas"{% endif %}
     >
       <header class="quincena__cabecera">
         <h3 class="quincena__titulo">{{ quincena.etiqueta }}</h3>
@@ -171,7 +172,7 @@ contenido %}
              'finanzas', deudas_activas,
              '¿Este crédito corresponde a una de tus deudas registradas?'
            ) }}
-        <button class="boton boton--secundario" type="submit">
+        <button class="boton boton--primario" type="submit">
           + Agregar gasto fijo
         </button>
       </form>

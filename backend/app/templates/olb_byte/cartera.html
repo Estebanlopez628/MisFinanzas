@@ -8,7 +8,7 @@
   </section>
 
   <div class="acciones-formulario acciones-volver">
-    <a class="boton boton--secundario boton--pequeno" href="{{ url_for('ver_olb_byte') }}">← Volver a Ventas</a>
+    <a class="boton boton--primario boton--pequeno" href="{{ url_for('ver_olb_byte') }}">← Volver a Ventas</a>
   </div>
 
   {% set seccion = 'cartera' %}
@@ -210,7 +210,7 @@
                 <div><dt>Monto</dt><dd>{{ movimiento.monto | cop }}</dd></div>
                 <div><dt>Saldo después</dt><dd>{{ movimiento.saldo_resultante | cop }}</dd></div>
               </dl>
-              <button type="button" class="boton boton--secundario boton--pequeno detalle-orden__volver" data-cerrar-dialogo>Volver a movimientos</button>
+              <button type="button" class="boton boton--primario boton--pequeno detalle-orden__volver" data-cerrar-dialogo>Volver a movimientos</button>
             </div>
           </dialog>
         {% endfor %}

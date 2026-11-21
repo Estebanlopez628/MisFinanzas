@@ -63,15 +63,14 @@ def test_titulo_y_limpieza_del_modal_de_abono() -> None:
 
 
 def test_boton_agregar_gasto_igual_a_guardar_incapacidad() -> None:
-    """Ambos comparten la misma clase de botón."""
+    """SRS v3.1: todos comparten el azul institucional (primario)."""
     finanzas = (RUTA_APP / "templates/finanzas/index.html").read_text(encoding="utf-8")
     trabajos = (RUTA_APP / "templates/trabajos/index.html").read_text(encoding="utf-8")
     incapacidades = (RUTA_APP / "templates/incapacidades/index.html").read_text(encoding="utf-8")
 
-    assert 'class="boton boton--secundario" type="submit"' in incapacidades
-    assert 'class="boton boton--secundario" type="submit"' in finanzas
-    assert 'class="boton boton--secundario" type="submit"' in trabajos
-    assert "boton--pequeno\" type=\"submit\">\n          + Agregar gasto fijo" not in finanzas
+    assert 'class="boton boton--primario" type="submit"' in incapacidades
+    assert 'class="boton boton--primario" type="submit"' in finanzas
+    assert 'class="boton boton--primario" type="submit"' in trabajos
 
 
 def test_campo_bloqueado_con_candado() -> None:

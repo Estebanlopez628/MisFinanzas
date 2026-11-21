@@ -14,7 +14,7 @@
   </section>
 
   <div class="acciones-formulario acciones-volver">
-    <a class="boton boton--secundario boton--pequeno" href="{{ url_for('ver_finanzas') }}">← Volver a Mis Finanzas</a>
+    <a class="boton boton--primario boton--pequeno" href="{{ url_for('ver_finanzas') }}">← Volver a Mis Finanzas</a>
   </div>
 
   {% include "finanzas/_subnav.html" %}
@@ -287,7 +287,7 @@
   </section>
 
   {# ---------------- Deducciones fijas del salario (SRS v1.4) ----------------- #}
-  <section class="panel" aria-labelledby="titulo-deducciones">
+  <section class="panel" id="seccion-deducciones-fijas" aria-labelledby="titulo-deducciones">
     <h2 id="titulo-deducciones" class="panel__titulo">Deducciones fijas del salario</h2>
     <p class="panel__descripcion">
       Descuentos que la empresa aplica por nómina antes del pago (libranzas,

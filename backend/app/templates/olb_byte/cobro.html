@@ -8,7 +8,7 @@
   </section>
 
   <div class="acciones-formulario acciones-volver">
-    <a class="boton boton--secundario boton--pequeno" href="{{ url_for('ver_pendientes') }}">← Volver a pendientes</a>
+    <a class="boton boton--primario boton--pequeno" href="{{ url_for('ver_pendientes') }}">← Volver a pendientes</a>
   </div>
 
   {% set seccion = 'pendientes' %}
@@ -64,7 +64,7 @@
           {% endif %}
         </p>
         <div class="acciones-cobro">
-          <a class="boton boton--cancelar" href="{{ url_for('ver_pendientes') }}">Volver a pendientes</a>
+          <a class="boton boton--primario" href="{{ url_for('ver_pendientes') }}">Volver a pendientes</a>
         </div>
       {% endif %}
     </section>

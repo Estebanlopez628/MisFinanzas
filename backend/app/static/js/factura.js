@@ -75,6 +75,54 @@
   }
 
   /**
+   * Guarda el estado del logo visible y devuelve una función que lo restaura.
+   *
+   * SRS v3.1, punto 2: durante la captura se trabaja solo sobre un clon fuera de
+   * pantalla. Esta guardia evita que, si una librería muta el nodo original, el
+   * modal pierda el logo al compartir. Nunca se oculta al usuario.
+   *
+   * @returns {Function} Restaurador del logo visible.
+   */
+  function protegerLogoVisible() {
+    var logo = document.querySelector(".logo-ob-imagen");
+    if (!logo) {
+      return function () {};
+    }
+    var estado = {
+      src: logo.getAttribute("src"),
+      display: logo.style.display,
+      visibility: logo.style.visibility,
+      opacity: logo.style.opacity
+    };
+    return function () {
+      if (estado.src !== null) {
+        logo.setAttribute("src", estado.src);
+      }
+      logo.style.display = estado.display;
+      logo.style.visibility = estado.visibility;
+      logo.style.opacity = estado.opacity;
+    };
+  }
+
+  /**
+   * Muestra un aviso discreto y temporal en la esquina inferior.
+   *
+   * @param {string} texto Mensaje a mostrar.
+   */
+  function mostrarAviso(texto) {
+    var aviso = document.createElement("div");
+    aviso.className = "aviso-toast";
+    aviso.setAttribute("role", "status");
+    aviso.textContent = texto;
+    document.body.appendChild(aviso);
+    window.setTimeout(function () {
+      if (aviso.parentNode) {
+        aviso.parentNode.removeChild(aviso);
+      }
+    }, 5000);
+  }
+
+  /**
    * Descarga la hoja desde el servidor y la monta fuera de la vista para capturarla.
    *
    * @param {string} url Dirección del fragmento HTML de la hoja.
@@ -269,6 +317,9 @@
 
     boton.disabled = true;
     boton.textContent = "Preparando…";
+    // Guardia del logo del modal: la captura usa un clon fuera de pantalla y
+    // aquí se garantiza que el nodo visible quede exactamente como estaba.
+    var restaurarLogo = protegerLogoVisible();
     var promesaImagen = imagenDe(url);
     var copiada = copiarImagen(promesaImagen);
     // Apertura directa del chat. Si el navegador bloquea la ventana nueva, se
@@ -281,16 +332,17 @@
     Promise.all([promesaImagen, copiada])
       .then(function (resultado) {
         descargar(resultado[0], nombre);
-        window.alert(
+        mostrarAviso(
           resultado[1]
-            ? "Se abrió el chat del cliente y la imagen se copió. En la conversación pulsa Ctrl+V y luego Enviar. También quedó descargada."
-            : "Se abrió el chat del cliente y la imagen se descargó. Adjúntala con el clip antes de enviar."
+            ? "Chat abierto y comprobante copiado: si deseas adjuntar la imagen, solo pulsa Pegar en el chat de WhatsApp"
+            : "Chat abierto y comprobante descargado: adjúntalo con el clip antes de enviar."
         );
       })
       .catch(function (error) {
-        window.alert((error && error.message) || "No se pudo preparar la imagen.");
+        mostrarAviso((error && error.message) || "No se pudo preparar la imagen.");
       })
       .then(function () {
+        restaurarLogo();
         boton.disabled = false;
         boton.textContent = etiqueta;
       });
@@ -308,6 +360,7 @@
     boton.disabled = true;
     boton.textContent = "Preparando…";
 
+    var restaurarLogo = protegerLogoVisible();
     imagenDe(url)
       .then(function (blob) {
         descargar(blob, nombre);
@@ -316,6 +369,7 @@
         window.alert((error && error.message) || "No se pudo preparar la imagen.");
       })
       .then(function () {
+        restaurarLogo();
         boton.disabled = false;
         boton.textContent = etiqueta;
       });

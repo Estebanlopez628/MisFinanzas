@@ -106,7 +106,7 @@ Principios que explican el resto del código:
 ### Resumen del inventario
 
 - **114 archivos** documentados: 56 Python, 40 plantillas Jinja2 y 18 recursos estáticos.
-- **69 clases**, **601 funciones** y **43 métodos** de clase.
+- **69 clases**, **605 funciones** y **43 métodos** de clase.
 
 ### Detalle por archivo
 
@@ -134,7 +134,7 @@ Principios que explican el resto del código:
 - **`categorias.py`** · 195 líneas — Catálogo cerrado de categorías de egresos y colores de la dona.
   - Clases: `Categoria`
   - Funciones: `_clave`, `normalizar_categoria`, `es_categoria_valida`, `color_de_categoria`, `es_credito`, `lista_categorias`
-- **`config.py`** · 320 líneas — Parámetros de negocio y configuración de la plataforma.
+- **`config.py`** · 325 líneas — Parámetros de negocio y configuración de la plataforma.
   - Clases: `ParametrosNomina`, `ConfiguracionApp`
   - Funciones: `_decimal_desde_entorno`, `_lista_desde_entorno`, `obtener_parametros`, `obtener_configuracion`
 - **`limitador.py`** · 130 líneas — Limitador de intentos para proteger el inicio de sesión.
@@ -214,8 +214,8 @@ Principios que explican el resto del código:
 - **`consejero.py`** · 526 líneas — Consejero financiero del excedente mensual (SRS v1.8).
   - Clases: `Consejo`, `_EstadoDeuda`
   - Funciones: `_cuotas_mensuales`, `_estados`, `_ordenar`, `_simular`, `_altura`, `_serie_comparada`, `_meses_de_texto`, `_consejo_deuda`, `_consejo_ahorro`, `consejo_financiero`
-- **`correo.py`** · 122 líneas — Envío de correos del sistema por SMTP estándar (SRS v1.8, bloque 8).
-  - Funciones: `enviar_correo`, `configuracion_valida`, `enviar_recuperacion`
+- **`correo.py`** · 261 líneas — Envío de correos del sistema: APIs transaccionales HTTPS o SMTP (SRS v3.1).
+  - Funciones: `_destinatario`, `_enviar_por_api`, `enviar_correo`, `configuracion_valida`, `enviar_recuperacion`
 - **`deducciones_fijas.py`** · 335 líneas — Deducciones fijas del salario (SRS v1.4, REQ-08; vinculación SRS v1.9).
   - Funciones: `_validar`, `_deuda_vinculable`, `crear_deduccion`, `actualizar_deduccion`, `eliminar_deduccion`, `listar_deducciones`, `listar_vigentes`, `sin_vinculo`, `total_creditos_sin_vinculo`, `vinculadas_activas`, `cuota_de_vinculadas`, `total_por_quincena`
 - **`deudas.py`** · 755 líneas — Pasivos del usuario y amortización automática ("Registro y Detalles de deudas").
@@ -257,7 +257,7 @@ Principios que explican el resto del código:
 
 #### `backend/app/static/css/`
 
-- **`estilos.css`** · 5064 líneas — Fondo y superficies
+- **`estilos.css`** · 5089 líneas — Fondo y superficies
 - **`factura-olb.css`** · 711 líneas — Sello de Anulada si aplica
 
 #### `backend/app/static/js/`
@@ -266,15 +266,15 @@ Principios que explican el resto del código:
   - Funciones: `restaurarBotonCopiar`, `confirmarCopia`, `copiar`, `seleccionarManual`, `cerrarEdicion`
 - **`ayuda.js`** · 124 líneas — Envío de reportes desde «Ayuda y comentarios» (SRS v2.0, sección 5.3).
   - Funciones: `escapar`, `cargarMisReportes`
-- **`categorias.js`** · 438 líneas — Selector cerrado de categorías, vinculación con deudas y conservación de
+- **`categorias.js`** · 466 líneas — Selector cerrado de categorías, vinculación con deudas y conservación de
   - Funciones: `datosFormulario`, `restaurarDatos`, `cerrar`, `abrir`, `alternar`, `sincronizar`, `sincronizar`, `vinculado`, `sincronizarValor`
 - **`comentarios.js`** · 46 líneas — Cambio de estado en el panel administrativo de reportes (SRS v2.0, 5.5).
 - **`deudas.js`** · 148 líneas — Interacción de filas con modal centrado (SRS v1.9, secciones 2.3 y 3.3).
   - Funciones: `esMovil`, `sacarDeLaTabla`, `devolverALaTabla`, `vigilarPortabilidad`, `cerrarOtras`, `conectarFilas`, `pendienteDeDeuda`
 - **`dona.js`** · 122 líneas — Interacción de las gráficas tipo dona (capacidad de endeudamiento y cartera).
   - Funciones: `centro`, `mostrar`, `restaurar`, `iniciar`
-- **`factura.js`** · 347 líneas — Factura y recibo de abono de OLB_BYTE como imagen PNG (ADR-50).
-  - Funciones: `descargar`, `esperar`, `esperarImagen`, `montarHoja`, `crearPng`, `imagenDe`, `copiarImagen`, `mensajeDelEnlace`, `numeroDelEnlace`, `enviarPorWhatsapp`, `descargarImagen`
+- **`factura.js`** · 401 líneas — Factura y recibo de abono de OLB_BYTE como imagen PNG (ADR-50).
+  - Funciones: `descargar`, `esperar`, `esperarImagen`, `protegerLogoVisible`, `mostrarAviso`, `montarHoja`, `crearPng`, `imagenDe`, `copiarImagen`, `mensajeDelEnlace`, `numeroDelEnlace`, `enviarPorWhatsapp`, `descargarImagen`
 - **`finanzas.js`** · 540 líneas — Mejora progresiva de "Mis Finanzas".
   - Funciones: `leerFormulario`, `pintarCampo`, `pintarDeduccion`, `pintarValorAuxilio`, `pintarErrores`, `pintarDetalle`, `pintarAuxilio`, `aplicarResultado`, `pintarTramos`, `pintarIncapacidad`, `pintarQuincenas`, `pintarTexto`, `calcular`, `programarCalculo`, `marcarCambios`, `aplicarPlantilla`
 - **`incapacidades.js`** · 129 líneas — Cálculo automático del módulo de incapacidades (SRS v1.5).
@@ -331,7 +331,7 @@ Principios que explican el resto del código:
 - **`_capacidad.html`** · 132 líneas
 - **`_gasto_fijo.html`** · 202 líneas
 - **`_subnav.html`** · 27 líneas — Subnavegación interna del módulo "Mis Finanzas" (SRS v1.3, bloque 1).
-- **`index.html`** · 760 líneas — Plantilla: Mis Finanzas
+- **`index.html`** · 761 líneas — Plantilla: Mis Finanzas
 
 #### `backend/app/templates/gastos/`
 
@@ -350,7 +350,7 @@ Principios que explican el resto del código:
 
 - **`_fragmento_factura.html`** · 3 líneas — Plantilla Jinja2
 - **`_fragmento_recibo.html`** · 8 líneas — Plantilla Jinja2
-- **`_hoja_factura.html`** · 266 líneas
+- **`_hoja_factura.html`** · 268 líneas
 - **`_recibo.html`** · 47 líneas
 - **`_subnav.html`** · 30 líneas — Subnavegación de OLB_BYTE con el mismo componente que Mis Finanzas (subnav-finanzas).
 - **`analitica.html`** · 315 líneas — Plantilla: Analítica
@@ -376,7 +376,7 @@ Principios que explican el resto del código:
 
 #### `backend/app/templates/trabajos/`
 
-- **`index.html`** · 323 líneas — Plantilla: Trabajos Extras
+- **`index.html`** · 327 líneas — Plantilla: Trabajos Extras
 
 <!-- INVENTARIO:FIN -->
 
@@ -951,7 +951,12 @@ ante `?error…`. Sin JavaScript el servidor vuelve a validar todo. SRS v2.0: el
 ciclo usa una sola clave `misfinanzas_pending_debt_link` con
 `{origin_module, origin_label, origin_destino, form_data}` (la clave heredada
 `deuda-origen:` se sigue escribiendo como respaldo); al elegir deuda se copia su
-`data-cuota` al campo valor, que queda `readOnly` mientras haya vínculo.
+`data-cuota` al campo valor, que queda `readOnly` mientras haya vínculo. SRS v3.0:
+ese campo lleva la clase `campo__control--bloqueado` (gris y candado) y la clave
+se borra solo tras restaurar el origen. SRS v3.1: el payload incluye
+`origin_objetivo` con el ID del bloque; tras restaurar, `requestAnimationFrame` +
+150 ms preceden un `scrollIntoView` suave, un resaltado de 1,5 s
+(`retorno-resaltado`) y el foco en el selector de deudas.
 
 ### `backend/app/static/js/moneda.js`
 
@@ -1044,11 +1049,15 @@ Envío de correos por SMTP estándar (`smtplib`, SRS v1.8). `enviar_correo` usa 
 STARTTLS. Sin SMTP en desarrollo registra el contenido en el log para probar el flujo; en
 producción solo registra el fallo, sin contenido ni enlaces. SRS v3.0: timeout de
 10 s, alias `SMTP_PASSWORD`/`FROM_EMAIL`, `configuracion_valida()` y
-`enviar_recuperacion()` con registro explícito de éxito o error SMTP.
+`enviar_recuperacion()` con registro explícito de éxito o error SMTP. SRS v3.1:
+`_enviar_por_api` prioriza Resend → Brevo → SendGrid por HTTPS con `urllib.request`
+(sin dependencias nuevas) y registra el código HTTP exacto; si no hay API, usa
+SMTP SSL en 465 con timeout de 15 s (Gmail con contraseña de aplicación) o
+STARTTLS en el puerto configurado.
 
 ### `backend/app/static/js/factura.js`
 
-Acciones de la factura. Captura la hoja como PNG con `html-to-image` en el navegador (ADR-50). La imagen se prepara al cargar la página. Los tres botones de WhatsApp (Compartir en Ver factura, ícono rápido y recibos de abono) comparten `enviarPorWhatsapp`. SRS v2.0 (sección 1) y v3.0 (punto 2): `numeroDelEnlace` limpia espacios, guiones, paréntesis y `+`, antepone `57` a los 10 dígitos y conserva los 12 que ya empiezan por 57; se abre `https://wa.me/<numero>?text=<encodeURIComponent(texto)>` con el mismo mensaje aprobado. **Nunca se usa la Web Share API**: se eliminó la hoja de compartir del sistema para evitar el selector de aplicaciones; si la ventana nueva es bloqueada se navega en la misma pestaña. Sin número válido se avisa antes de abrir. El PNG se copia al portapapeles y se descarga para adjuntarlo manualmente. «Descargar imagen» solo descarga el PNG.
+Acciones de la factura. Captura la hoja como PNG con `html-to-image` en el navegador (ADR-50). La imagen se prepara al cargar la página. Los tres botones de WhatsApp (Compartir en Ver factura, ícono rápido y recibos de abono) comparten `enviarPorWhatsapp`. SRS v2.0 (sección 1) y v3.0 (punto 2): `numeroDelEnlace` limpia espacios, guiones, paréntesis y `+`, antepone `57` a los 10 dígitos y conserva los 12 que ya empiezan por 57; se abre `https://wa.me/<numero>?text=<encodeURIComponent(texto)>` con el mismo mensaje aprobado. **Nunca se usa la Web Share API**: se eliminó la hoja de compartir del sistema para evitar el selector de aplicaciones; si la ventana nueva es bloqueada se navega en la misma pestaña. Sin número válido se avisa antes de abrir. El PNG se copia al portapapeles y se descarga para adjuntarlo manualmente. «Descargar imagen» solo descarga el PNG. SRS v3.1: `protegerLogoVisible()` guarda y restaura `src`, `display`, `visibility` y `opacity` del logo del modal; la captura sigue ocurriendo en un clon fuera de pantalla y `mostrarAviso()` muestra un toast discreto con el texto aprobado.
 
 ### `backend/app/static/js/ayuda.js`
 

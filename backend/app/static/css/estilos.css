@@ -5049,6 +5049,31 @@ dialog::backdrop {
   text-align: center;
 }
 
+/* SRS v3.1, punto 2: aviso discreto al compartir factura o recibo. */
+.aviso-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  z-index: 60;
+  max-width: min(520px, calc(100vw - 2rem));
+  padding: 10px 16px;
+  border: 1px solid rgba(2, 132, 199, 0.55);
+  border-radius: 10px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  font-size: 0.85rem;
+  line-height: 1.4;
+  text-align: center;
+}
+
+/* SRS v3.1, punto 1: resaltado temporal del formulario al volver de deudas. */
+.retorno-resaltado {
+  box-shadow: 0 0 0 2px #3B82F6, 0 8px 24px rgba(59, 130, 246, 0.25);
+  transition: box-shadow 200ms ease;
+}
+
 .campo__control--bloqueado {
   background-color: rgba(30, 41, 59, 0.85);
   border-color: rgba(100, 116, 139, 0.6);

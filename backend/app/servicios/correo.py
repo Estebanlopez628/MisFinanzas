@@ -1,30 +1,144 @@
-"""Envío de correos del sistema por SMTP estándar (SRS v1.8, bloque 8).
+"""Envío de correos del sistema: APIs transaccionales HTTPS o SMTP (SRS v3.1).
 
 Responsabilidad
 ---------------
-- Enviar correos con `smtplib` usando `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`,
-  `SMTP_PASS` y `SMTP_FROM`.
-- Sin SMTP configurado: en desarrollo el contenido se escribe en el registro para
-  poder probar el flujo; en producción solo se registra el fallo, sin contenido.
-- Nunca registra contraseñas ni enlaces en producción.
+- Priorizar proveedores por API HTTPS (Resend, Brevo, SendGrid), que no sufren
+  bloqueo de puertos en Render.
+- Si no hay API, usar SMTP SSL en puerto 465 (obligatorio para Gmail con
+  contraseña de aplicación) o STARTTLS en el puerto configurado.
+- Registrar el código exacto de respuesta del proveedor (por ejemplo `250 OK`
+  o el estado HTTP) y el error detallado cuando falle, sin exponer secretos.
+- Sin proveedor en desarrollo: registrar el contenido para poder probar el
+  flujo. En producción: avisar del fallo sin contenido ni enlaces.
+
+Nunca registra contraseñas ni el enlace de recuperación en producción.
 """
 
 from __future__ import annotations
 
+import json
 import logging
 import smtplib
+import urllib.error
+import urllib.request
 from email.message import EmailMessage
 
 from app.core.config import obtener_configuracion
 
 registro = logging.getLogger("app.correo")
-# SRS v3.0, punto 6.3: timeout controlado para que el endpoint no se quede
-# colgado esperando al servidor SMTP.
+# Timeout del v3.0 para STARTTLS.
 TIEMPO_ESPERA_SEGUNDOS = 10
+# SRS v3.1: Gmail SMTP_SSL en 465 con contraseña de aplicación.
+TIEMPO_ESPERA_SSL_SEGUNDOS = 15
+
+
+def _destinatario(configuracion) -> str:
+    """Devuelve la dirección `From` disponible.
+
+    Args:
+        configuracion: Configuración de la aplicación.
+
+    Returns:
+        Correo de origen, o cadena vacía si no hay ninguno configurado.
+    """
+    return (
+        getattr(configuracion, "smtp_from", "")
+        or getattr(configuracion, "smtp_user", "")
+        or ""
+    ).strip()
+
+
+def _enviar_por_api(configuracion, destino: str, asunto: str, cuerpo: str) -> bool | None:
+    """Intenta enviar por la primera API transaccional configurada.
+
+    Args:
+        configuracion: Configuración de la aplicación.
+        destino: Correo del destinatario.
+        asunto: Asunto del mensaje.
+        cuerpo: Texto plano del mensaje.
+
+    Returns:
+        `True`/`False` si se intentó un proveedor; `None` si no hay ninguno.
+    """
+    remitente = _destinatario(configuracion)
+    proveedor = None
+    url = ""
+    cabeceras: dict[str, str] = {"Content-Type": "application/json"}
+    datos: dict[str, object] = {}
+
+    if getattr(configuracion, "resend_api_key", ""):
+        proveedor = "Resend"
+        url = "https://api.resend.com/emails"
+        cabeceras["Authorization"] = f"Bearer {configuracion.resend_api_key}"
+        datos = {
+            "from": remitente,
+            "to": [destino],
+            "subject": asunto,
+            "text": cuerpo,
+        }
+    elif getattr(configuracion, "brevo_api_key", ""):
+        proveedor = "Brevo"
+        url = "https://api.brevo.com/v3/smtp/email"
+        cabeceras["api-key"] = configuracion.brevo_api_key
+        datos = {
+            "sender": {"email": remitente, "name": "MisFinanzas"},
+            "to": [{"email": destino}],
+            "subject": asunto,
+            "textContent": cuerpo,
+        }
+    elif getattr(configuracion, "sendgrid_api_key", ""):
+        proveedor = "SendGrid"
+        url = "https://api.sendgrid.com/v3/mail/send"
+        cabeceras["Authorization"] = f"Bearer {configuracion.sendgrid_api_key}"
+        datos = {
+            "personalizations": [{"to": [{"email": destino}]}],
+            "from": {"email": remitente},
+            "subject": asunto,
+            "content": [{"type": "text/plain", "value": cuerpo}],
+        }
+
+    if proveedor is None:
+        return None
+
+    if not remitente:
+        registro.error(
+            "Proveedor %s configurado pero falta la dirección de origen (SMTP_FROM/FROM_EMAIL).",
+            proveedor,
+        )
+        return False
+
+    peticion = urllib.request.Request(
+        url,
+        data=json.dumps(datos).encode("utf-8"),
+        headers=cabeceras,
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(peticion, timeout=TIEMPO_ESPERA_SEGUNDOS) as respuesta:
+            codigo = respuesta.status
+        registro.info("Correo enviado por %s: HTTP %s para %s.", proveedor, codigo, destino)
+        return 200 <= codigo < 300
+    except urllib.error.HTTPError as error:
+        registro.error(
+            "Fallo %s al enviar a %s: HTTP %s. Revisa la clave de API y el remitente verificado.",
+            proveedor,
+            destino,
+            error.code,
+        )
+        return False
+    except (urllib.error.URLError, OSError) as error:
+        registro.error(
+            "Fallo de red con %s al enviar a %s: %s: %s",
+            proveedor,
+            destino,
+            type(error).__name__,
+            error,
+        )
+        return False
 
 
 def enviar_correo(destino: str, asunto: str, cuerpo: str) -> bool:
-    """Envía un correo de texto plano.
+    """Envía un correo de texto plano por API HTTPS o SMTP.
 
     Args:
         destino: Dirección del destinatario.
@@ -32,35 +146,57 @@ def enviar_correo(destino: str, asunto: str, cuerpo: str) -> bool:
         cuerpo: Texto del mensaje.
 
     Returns:
-        `True` si se envió (o se registró en desarrollo); `False` si falló.
+        `True` si se entregó al proveedor (o se registró en desarrollo);
+        `False` si falló.
     """
     configuracion = obtener_configuracion()
-    if not configuracion.smtp_host:
-        if configuracion.es_produccion:
-            registro.error("SMTP no está configurado en producción; no se envió un correo del sistema.")
+    por_api = _enviar_por_api(configuracion, destino, asunto, cuerpo)
+    if por_api is not None:
+        return por_api
+
+    if not getattr(configuracion, "smtp_host", ""):
+        if getattr(configuracion, "es_produccion", False):
+            registro.error(
+                "No hay proveedor de correo configurado en producción; no se envió un correo del sistema."
+            )
             return False
-        registro.warning("SMTP no configurado (desarrollo). Correo para %s · %s\n%s", destino, asunto, cuerpo)
+        registro.warning(
+            "Sin proveedor de correo (desarrollo). Correo para %s · %s\n%s",
+            destino,
+            asunto,
+            cuerpo,
+        )
         return True
 
     mensaje = EmailMessage()
     mensaje["Subject"] = asunto
-    mensaje["From"] = configuracion.smtp_from or configuracion.smtp_user
+    mensaje["From"] = _destinatario(configuracion) or configuracion.smtp_user
     mensaje["To"] = destino
     mensaje.set_content(cuerpo)
     try:
         if configuracion.smtp_port == 465:
-            servidor = smtplib.SMTP_SSL(configuracion.smtp_host, configuracion.smtp_port, timeout=TIEMPO_ESPERA_SEGUNDOS)
+            servidor = smtplib.SMTP_SSL(
+                configuracion.smtp_host,
+                465,
+                timeout=TIEMPO_ESPERA_SSL_SEGUNDOS,
+            )
         else:
-            servidor = smtplib.SMTP(configuracion.smtp_host, configuracion.smtp_port, timeout=TIEMPO_ESPERA_SEGUNDOS)
+            servidor = smtplib.SMTP(
+                configuracion.smtp_host,
+                configuracion.smtp_port,
+                timeout=TIEMPO_ESPERA_SEGUNDOS,
+            )
             servidor.starttls()
         with servidor:
             if configuracion.smtp_user:
                 servidor.login(configuracion.smtp_user, configuracion.smtp_pass)
-            servidor.send_message(mensaje)
+            rechazados = servidor.send_message(mensaje)
+        if rechazados:
+            registro.error("SMTP rechazó el correo para %s: %s", destino, rechazados)
+            return False
+        registro.info("Correo SMTP aceptado por el servidor para %s (250 OK).", destino)
         return True
     except (smtplib.SMTPException, OSError) as error:
-        # Se registra el tipo de fallo y su motivo, nunca credenciales ni el
-        # enlace de recuperación (que sí puede alterar la cuenta).
         registro.error(
             "Fallo SMTP al enviar a %s (asunto: %s): %s: %s",
             destino,
@@ -72,28 +208,30 @@ def enviar_correo(destino: str, asunto: str, cuerpo: str) -> bool:
 
 
 def configuracion_valida() -> bool:
-    """Indica si hay suficiente configuración SMTP para intentar un envío.
+    """Indica si existe algún medio de envío utilizable.
 
     Returns:
-        `True` si el envío puede intentarse. En desarrollo se permite continuar
-        sin SMTP porque `enviar_correo` registra el contenido en el log; en
-        producción se exigen host, usuario y contraseña.
+        `True` con cualquier API configurada, con SMTP completo, o en
+        desarrollo (donde el correo se registra en el log).
     """
     configuracion = obtener_configuracion()
-    if not configuracion.es_produccion:
+    if (
+        getattr(configuracion, "resend_api_key", "")
+        or getattr(configuracion, "brevo_api_key", "")
+        or getattr(configuracion, "sendgrid_api_key", "")
+    ):
+        return True
+    if not getattr(configuracion, "es_produccion", False):
         return True
     return bool(
-        configuracion.smtp_host
-        and configuracion.smtp_user
-        and configuracion.smtp_pass
+        getattr(configuracion, "smtp_host", "")
+        and getattr(configuracion, "smtp_user", "")
+        and getattr(configuracion, "smtp_pass", "")
     )
 
 
 def enviar_recuperacion(destino: str, alias: str, enlace: str) -> bool:
-    """Despacha el correo de recuperación y deja constancia explícita del resultado.
-
-    Se ejecuta en una tarea de fondo de FastAPI: la petición responde de inmediato
-    y el registro del servidor guarda el éxito o el error SMTP real.
+    """Despacha el correo de recuperación y registra el resultado exacto.
 
     Args:
         destino: Correo de la cuenta.
@@ -101,7 +239,7 @@ def enviar_recuperacion(destino: str, alias: str, enlace: str) -> bool:
         enlace: URL de restablecimiento de un solo uso.
 
     Returns:
-        `True` si el correo se entregó al servidor SMTP; `False` si falló.
+        `True` si el correo se entregó al proveedor; `False` si falló.
     """
     cuerpo = (
         f"Hola {alias}.\n\n"
@@ -115,7 +253,8 @@ def enviar_recuperacion(destino: str, alias: str, enlace: str) -> bool:
     else:
         registro.error(
             "No se pudo enviar el correo de recuperación a %s. "
-            "Revisa SMTP_HOST, SMTP_PORT, SMTP_USER y la contraseña de aplicación.",
+            "Revisa RESEND_API_KEY/BREVO_API_KEY/SENDGRID_API_KEY o SMTP_HOST, "
+            "SMTP_PORT, SMTP_USER y la contraseña de aplicación.",
             destino,
         )
     return enviado

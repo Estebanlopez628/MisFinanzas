@@ -30,7 +30,7 @@ La fila del gasto vinculado conserva la descripción que escribiste y muestra ú
 2. Ve a 'Gastos Fijos' (en Finanzas o Trabajos Extras) o a 'Deducciones Fijas' (en Gastos y Presupuestos), elige la categoría 'Créditos y Obligaciones', responde SI cuando te pregunte si corresponde a una deuda registrada y selecciónala en la lista.
 3. El valor de la cuota se carga automáticamente desde tu deuda y podrás marcarla como pagada cada mes sin que el gráfico de dona ni el Consejero te descuenten el dinero dos veces.
 
-Si pulsas «Ve a registrar la deuda» antes de terminar, la aplicación guarda lo que llevas escrito. Después de guardar la deuda verás, justo debajo del formulario «Nueva deuda», el enlace «← Volver a [tu módulo] para completar el registro». Tu formulario aparecerá restaurado con la deuda nueva preseleccionada y todos tus datos intactos.
+Si pulsas «Ve a registrar la deuda» antes de terminar, la aplicación guarda lo que llevas escrito. Después de guardar la deuda verás, justo debajo del formulario «Nueva deuda», el enlace «← Volver a [tu módulo] para completar el registro». Tu formulario aparecerá restaurado con la deuda nueva preseleccionada y todos tus datos intactos. La página se desplazará sola hasta ese formulario, lo resaltará un momento y dejará el cursor en el selector de deudas para que solo confirmes y guardes.
 
 Si tu gasto fijo no es una deuda, elige otra categoría como Vivienda, Servicios o Alimentación y digita su valor normalmente.
 
@@ -56,7 +56,7 @@ En la parte inferior de Inicio encontrarás **Ayuda y comentarios**. Allí puede
 
 Desde el teléfono también verás **Invitar amigos**: abre WhatsApp con un mensaje listo para compartir la aplicación con tus contactos.
 
-Cuando compartas una factura o un recibo, el botón de WhatsApp abre directamente el chat del cliente con el número registrado y el mensaje ya escrito. Si el cliente no tiene celular, la aplicación te lo avisa antes de abrir nada.
+Cuando compartas una factura o un recibo, el botón de WhatsApp abre directamente el chat del cliente con el número registrado y el mensaje ya escrito. La imagen del comprobante queda copiada al portapapeles y verás un aviso discreto: si quieres adjuntarla, solo pulsa «Pegar» en el chat. El logo de la factura permanece visible en todo momento. Si el cliente no tiene celular, la aplicación te lo avisa antes de abrir nada.
 
 ### Mis reportes enviados
 

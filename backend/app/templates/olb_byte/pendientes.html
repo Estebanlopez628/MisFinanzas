@@ -8,7 +8,7 @@
   </section>
 
   <div class="acciones-formulario acciones-volver">
-    <a class="boton boton--secundario boton--pequeno" href="{{ url_for('ver_olb_byte') }}">← Volver a Ventas</a>
+    <a class="boton boton--primario boton--pequeno" href="{{ url_for('ver_olb_byte') }}">← Volver a Ventas</a>
   </div>
 
   {% set seccion = 'pendientes' %}
@@ -99,7 +99,7 @@
               <div><dt>Saldo</dt><dd class="valor-negativo">{{ venta.saldo_pendiente | cop }}</dd></div>
             </dl>
             <a class="boton boton--primario boton--pequeno" href="{{ url_for('ver_cobro', id_venta=venta.id_venta) }}">Cobro</a>
-            <button type="button" class="boton boton--secundario boton--pequeno detalle-orden__volver" data-cerrar-dialogo>Volver a pendientes de pago</button>
+            <button type="button" class="boton boton--primario boton--pequeno detalle-orden__volver" data-cerrar-dialogo>Volver a pendientes de pago</button>
           </div>
         </dialog>
       {% endfor %}

@@ -22,17 +22,20 @@
     deducciones: {
       modulo: "deducciones_fijas",
       etiqueta: "Deducciones Fijas",
-      destino: "/presupuesto"
+      destino: "/presupuesto",
+      objetivo: "seccion-deducciones-fijas"
     },
     finanzas: {
       modulo: "finanzas_gastos_fijos",
       etiqueta: "Gastos Fijos - Finanzas",
-      destino: "/finanzas"
+      destino: "/finanzas",
+      objetivo: "seccion-gastos-fijos-finanzas"
     },
     trabajos: {
       modulo: "trabajos_extras_gastos_fijos",
       etiqueta: "Gastos Fijos - Trabajos Extras",
-      destino: "/trabajos-extras"
+      destino: "/trabajos-extras",
+      objetivo: "seccion-gastos-fijos-trabajos-extras"
     }
   };
 
@@ -334,6 +337,7 @@
         origin_module: origen.modulo,
         origin_label: origen.etiqueta,
         origin_destino: origen.destino,
+        origin_objetivo: origen.objetivo,
         form_data: datosFormulario(formulario)
       };
       try {
@@ -395,6 +399,30 @@
         // Nada que limpiar si el almacenamiento no está disponible.
       }
     });
+
+    // SRS v3.1, punto 1: llevar la vista al formulario restaurado. Se espera un
+    // frame y 150 ms para que Jinja/JS terminen de pintar la página de destino.
+    var objetivoId = pendiente && pendiente.origin_objetivo;
+    if (objetivoId) {
+      window.requestAnimationFrame(function () {
+        window.setTimeout(function () {
+          var seccion = document.getElementById(objetivoId);
+          if (!seccion) {
+            return;
+          }
+          seccion.scrollIntoView({ behavior: "smooth", block: "center" });
+          seccion.classList.add("retorno-resaltado");
+          window.setTimeout(function () {
+            seccion.classList.remove("retorno-resaltado");
+          }, 1500);
+          var selector = seccion.querySelector("[data-deuda-opciones]");
+          if (selector && selector.focus) {
+            selector.focus({ preventScroll: true });
+          }
+        }, 150);
+      });
+    }
+
     // La restauración terminó: la clave se elimina una sola vez.
     try {
       sessionStorage.removeItem(CLAVE_PENDIENTE);
