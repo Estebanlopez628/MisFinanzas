@@ -182,16 +182,17 @@ def test_pwa_sirve_manifiesto_service_worker_e_iconos(cliente: TestClient) -> No
     assert manifiesto.status_code == 200
     assert "application/manifest+json" in manifiesto.headers["content-type"]
     assert '"short_name"' in manifiesto.text
-    assert '"/estaticos/img/icono-192.svg"' in manifiesto.text
+    assert '"/estaticos/img/icono-192.png"' in manifiesto.text
 
     trabajador = cliente.get("/sw.js")
     assert trabajador.status_code == 200
     assert "javascript" in trabajador.headers["content-type"]
     assert "/estaticos/" in trabajador.text
 
-    icono = cliente.get("/estaticos/img/icono-192.svg")
+    # iOS no usa SVG como icono de pantalla de inicio: el icono es PNG (apple-touch-icon).
+    icono = cliente.get("/estaticos/img/icono-180.png")
     assert icono.status_code == 200
-    assert "svg" in icono.headers["content-type"]
+    assert "png" in icono.headers["content-type"]
 
     favicon = cliente.get("/favicon.ico", follow_redirects=False)
     assert favicon.status_code == 301

@@ -13,7 +13,7 @@
 
 "use strict";
 
-var CACHE = "olb-finanzas-v85";
+var CACHE = "olb-finanzas-v86";
 var RECURSOS = [
   "/estaticos/css/estilos.css",
   "/estaticos/js/app.js",
@@ -27,8 +27,10 @@ var RECURSOS = [
   "/estaticos/js/categorias.js",
   "/estaticos/js/deudas.js",
   "/estaticos/img/favicon.svg",
-  "/estaticos/img/icono-192.svg",
-  "/estaticos/img/icono-512.svg"
+  "/estaticos/img/icono-180.png",
+  "/estaticos/img/icono-192.png",
+  "/estaticos/img/icono-512.png",
+  "/estaticos/img/icono-512-maskable.png"
 ];
 
 self.addEventListener("install", function (evento) {
