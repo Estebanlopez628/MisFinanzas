@@ -262,6 +262,13 @@ Recálculo en tiempo real (<100 ms) sin recargar página. Se implementa con func
 - **Decisión:** `trabajos_extras` gana `tipo_contrato` (`INDEFINIDO` | `TERMINO_FIJO`), `frecuencia` (`MENSUAL` | `QUINCENAL`), `fecha_fin` y `fecha_pago`. `valor` es el monto **de cada pago**. Los pagos se generan de forma idempotente como filas de `gastos` con `id_trabajo`: reutilizan la macro `fila_gasto` (lápiz, «Cancelar», ×, ✔ y abono manual) pero `gastos.listar_gastos` los excluye, así que no tocan el sueldo, las quincenas ni los totales de gastos. El ✔ registra el cobro y `trabajos.extras_cobrados_mes` lo suma al `disponible` del diagnóstico del mes. La frecuencia quincenal crea dos pagos (día 15 y día 30 ajustado al último día); la mensual, uno en el día de `fecha_pago`. Un contrato indefinido mantiene una ventana móvil de 12 meses desde el mes visible; un término fijo se detiene en `fecha_fin`. La × inhabilita el pago 15 días en lugar de borrarlo, para que la generación idempotente no lo recree. Los trabajos anteriores se migran como término fijo de un solo mes para no inventar ingresos recurrentes.
 - **Archivos:** `modelos.py` (`TrabajoExtra`, `Gasto.id_trabajo`), `core/base_datos.py` (`_migrar_columnas_trabajos`, `id_trabajo` en `_migrar_columnas_gastos`), `servicios/trabajos.py`, `servicios/gastos.py`, `servicios/pagos_metas.py` (`quitar_gasto`), `servicios/ahorro.py` (`diagnostico`), `routers/trabajos.py`, `routers/gastos.py` (`_volver`), `templates/trabajos/index.html`, `templates/finanzas/_gasto_fijo.html`, `templates/presupuesto/index.html`, `static/js/app.js`, `diccionario_datos.md` §7 y §12, `tests/test_trabajos_extras.py`.
 
+### ADR-64 — Captura de la factura compatible con Safari (SRS OLB_BYTE v1.0, ajuste)
+- **Contexto:** en iPhone (WebKit) la imagen compartida perdía los logos y mostraba un recuadro azul sobresaliendo en la cabecera. Las dos causas son propias de la conversión a PNG en el navegador: Safari no dibuja el `border-radius` ni el `box-shadow` dentro de la captura, y no pinta las imágenes en la primera conversión. Chromium no reproduce ninguno de los dos fallos.
+- **Decisión:** la curva de la cabecera y sus dos sombras azules se dibujan en SVG en línea (`.curva-fondo` en `_hoja_factura.html`), con el mismo radio y las mismas compensaciones que tenía el CSS. `factura.js` espera 300 ms y convierte la hoja dos veces, entregando la segunda, para que Safari cargue las imágenes antes de dibujarlas.
+- **Consecuencia:** la imagen se ve igual en Chromium y WebKit. El degradado de fondo es ahora un degradado radial en SVG, una aproximación del anterior; no se nota a simple vista. Se quitó `overflow: hidden` de la cabecera para que la sombra no se recorte.
+- **Verificación:** capturas en Chromium y WebKit (Playwright) desde la lista de órdenes y desde la factura, en 390 px y 1280 px. Pendiente: prueba en un iPhone real.
+- **Archivos:** `templates/olb_byte/_hoja_factura.html`, `static/css/factura-olb.css`, `static/js/factura.js`, `static/js/sw.js` (`olb-finanzas-v83`).
+
 ### ADR-63 — Factura con el mismo diseño en pantalla y en la imagen compartida (SRS OLB_BYTE v1.0, ajuste)
 - **Contexto:** la imagen que se comparte por WhatsApp desde el celular salía con la cabecera apilada. Las reglas `@media (max-width: 760px)` se evaluaban contra el viewport del teléfono, no contra la hoja que `factura.js` captura a 850 px.
 - **Decisión:** las reglas de ancho pequeño pasan a `@container (max-width: 760px)`, con `container-type: inline-size` en `.hoja-contenedor` (pantalla, `olb_byte/factura.html`) y en el contenedor de captura de `static/js/factura.js`. La captura siempre usa el diseño de escritorio, sin importar el dispositivo. En la fila ABONADO / SALDO las celdas llenan la altura de la fila (sin franjas blancas), el valor va en una línea y el bloque de totales mide 340 px.
@@ -458,6 +465,20 @@ Recálculo en tiempo real (<100 ms) sin recargar página. Se implementa con func
 ---
 
 ## Bitácora de Cambios
+
+### 2026-11-21 — Factura en Safari: logos, curva y recuadro azul (ADR-64)
+
+- Desde el icono de WhatsApp de la lista la imagen salía sin logos en iPhone, y en la cabecera aparecía un recuadro azul sobresaliendo. Se reprodujo con Playwright en WebKit, el motor de Safari; en Chromium no pasaba.
+- La curva y sus sombras pasan a SVG; `factura.js` convierte la hoja dos veces con una pausa de 300 ms. En WebKit y Chromium la imagen de la lista y la de la factura salen iguales.
+- En la fila ABONADO / SALDO se quitó el ajuste de columnas que la hacía más corta que SUBTOTAL y TOTAL: las tres filas comparten ahora la misma columna y el valor cabe en una línea (letra de 0,78 rem). Verificado en la captura de PC.
+- `sw.js` en `olb-finanzas-v84`; **679 pruebas** en verde.
+
+### 2026-11-21 — Tabla de deudas en móvil tipo Excel (ajusta ADR-62)
+
+- La tabla dejó de ser una sola caja con cabecera sticky, que en el celular se arrastraba con el dedo. En móvil la tabla se convierte en bloques: la cabecera queda fija y solo se desplaza el cuerpo, con altura de cuatro filas (`max-height: 227px`, medido en Chromium a 390 px).
+- Periodicidad y estado pasan a una línea bajo el acreedor (`.deudas__detalle-movil`), para que las cuatro columnas quepan. Tocar una fila sigue abriendo el modal de edición, centrado.
+- Verificado: 4 filas visibles, la cabecera queda en su sitio al deslizar, `scrollY` sin cambios y sin desbordamiento horizontal. Pendiente: iPhone real.
+- `sw.js` en `olb-finanzas-v82`; prueba `test_deudas_ui_v19.py` actualizada al nuevo contrato.
 
 ### 2026-11-21 — Factura: la imagen compartida sale igual que en el PC (ADR-63)
 
