@@ -94,8 +94,11 @@ def test_los_atajos_de_mis_finanzas_abren_su_propio_modal(
     assert "Día 8" in html
     assert 'data-copiar="REF-AGUA"' in html
     assert ">Pagar</a>" in html
+    assert "<dt>Enlace de pago</dt>" not in html
 
     css = (RAIZ_APP / "static" / "css" / "estilos.css").read_text(encoding="utf-8")
+    centrado = css.split(".atajo-finanzas-modal .acciones-formulario--edicion {", 1)[1]
+    assert "justify-items: center;" in centrado.split("}", 1)[0]
     movil = css.split("@media (max-width: 640px)", 1)[1]
     assert ".lista-atajos__item[data-atajo-fila]" in movil
     assert ".lista-atajos__texto small.ayuda" in movil

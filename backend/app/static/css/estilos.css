@@ -4100,6 +4100,17 @@ strong.valor-negativo.recibo__cifra--saldo {
   display: none;
 }
 
+/* El modal de Mis Finanzas solo ofrece Pagar: queda centrado, a ancho natural. */
+.atajo-finanzas-modal .acciones-formulario--edicion {
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+}
+
+.atajo-finanzas-modal .acciones-formulario--edicion .boton {
+  width: auto;
+  min-width: 160px;
+}
+
 @media (max-width: 640px) {
   .lista-atajos__item[data-atajo-fila] {
     cursor: pointer;
