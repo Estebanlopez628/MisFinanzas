@@ -58,6 +58,7 @@ def test_la_fila_movil_y_el_modal_muestran_toda_la_informacion(
     html = cliente_admin.get("/chancucos").text
 
     assert 'class="tabla tabla--atajos"' in html
+    assert 'class="atajo-descripcion"' in html
     assert f'data-chancuco-fila data-id-chancuco="{chancuco.id_chancuco}"' in html
     assert "atajo-modal" in html
     assert "Editar atajo" in html
@@ -145,6 +146,8 @@ def test_el_css_de_movil_oculta_columnas_y_el_js_abre_el_modal() -> None:
     assert "> td:nth-child(5)" in movil
     assert "> td:nth-child(6) > a" in movil
     assert "> td:nth-child(6) > button" in movil
+    descripcion_movil = movil.split(".tabla--atajos .atajo-descripcion {", 1)[1].split("}", 1)[0]
+    assert "font-size: 0.74rem;" in descripcion_movil
     assert ">Ver</summary>" not in plantilla
     assert 'conectarFilas("tr[data-chancuco-fila]"' in javascript
     assert '[data-abrir-atajo]' in javascript

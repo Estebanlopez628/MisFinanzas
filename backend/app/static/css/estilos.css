@@ -4087,6 +4087,11 @@ strong.valor-negativo.recibo__cifra--saldo {
     display: block;
   }
 
+  /* Solo móvil y solo la descripción de Atajos guardados. */
+  .tabla--atajos .atajo-descripcion {
+    font-size: 0.74rem;
+  }
+
   .tabla--atajos tr[data-chancuco-fila] {
     display: grid;
     grid-template-columns: minmax(0, 1fr) max-content max-content;
