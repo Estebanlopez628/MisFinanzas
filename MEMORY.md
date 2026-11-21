@@ -1969,6 +1969,12 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 - El modal sigue teniendo el enlace en un `<input type="url">` con `min-width: 0; max-width: 100%; box-sizing: border-box`, para que una URL larga no ensanche la tarjeta.
 - Solo afecta a `/chancucos`; los atajos embebidos de Mis Finanzas mantienen su botón Pagar. `sw.js` pasa a `olb-finanzas-v72`; **671 pruebas** en verde.
 
+### 2026-11-20 — Mis metas y abonos: dos filas y Eliminar arriba
+
+- Escritorio: `.abonos-scroll` pasó de `max-height: 420px` (≈5 abonos) a `180px` (dos filas), manteniendo `overflow-y: auto` dentro de la tarjeta, sin opacity y sin sacar el contenido del módulo. Se actualizó el texto de ayuda.
+- Móvil (≤640 px): `.meta__cabecera` usa `flex-wrap: nowrap`, el bloque de título crece y el formulario de «Eliminar» queda `flex: 0 0 auto` arriba a la derecha, alineado con el nombre de la meta.
+- `sw.js` pasa a `olb-finanzas-v73`; **674 pruebas** en verde y `generar_guia.py --verificar` sin problemas.
+
 **Pendiente para el Paso 3:** solo la revisión visual en navegador (360/390/768/escritorio) de la dona, el consejero, los modales, el formulario de deducciones, el flujo SI/NO y el recibo; la corrección aritmética y la anti-duplicación ya están cubiertas por pruebas.
 
 

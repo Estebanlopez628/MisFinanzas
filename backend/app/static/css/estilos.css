@@ -743,11 +743,11 @@ a.tarjeta:focus-visible {
   list-style: none;
 }
 
-/* SRS v1.8: la lista de abonos se desplaza dentro de su propia caja. Con una
-   meta de 24 meses la página ya no crece: se ven unas cinco filas y el resto
-   aparece al mover el mouse o el dedo sobre la lista. */
+/* SRS v1.9: la lista de abonos se desplaza dentro de su propia caja. En
+   escritorio se ven dos filas; el resto aparece al desplazarse hacia abajo,
+   sin opacity ni desbordamiento fuera de la tarjeta de la meta. */
 .abonos-scroll {
-  max-height: 420px;
+  max-height: 180px;
   overflow-y: auto;
   padding-right: 6px;
   border-radius: var(--radio-md, 10px);
@@ -772,6 +772,22 @@ a.tarjeta:focus-visible {
 @media (max-width: 640px) {
   .abonos-scroll {
     max-height: 214px;
+  }
+
+  /* En móvil «Eliminar» va arriba a la derecha, a la altura del nombre de la
+     meta, en lugar de quedar debajo de la descripción. */
+  .meta__cabecera {
+    flex-wrap: nowrap;
+    align-items: flex-start;
+  }
+
+  .meta__cabecera > div {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .meta__cabecera form {
+    flex: 0 0 auto;
   }
 }
 
