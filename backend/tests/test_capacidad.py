@@ -304,6 +304,23 @@ def test_dona_de_trabajos_solo_cuenta_cobrado_y_gastos_del_trabajo(bd) -> None:
     assert resultado.deudas == Decimal("0")
 
 
+def test_dona_de_trabajos_no_reserva_la_base_minima(bd) -> None:
+    """Trabajos Extras no aparta los $300.000 de liquidez: todo el libre queda disponible."""
+    from app.servicios import trabajos as servicio_trabajos
+
+    id_usuario = _id_admin(bd)
+    servicio_trabajos.crear_trabajo(bd, id_usuario, "Diseño", "200.000", date(2026, 11, 1))
+    servicio_trabajos.asegurar_pagos_trabajos(bd, id_usuario, 2026, 11)
+
+    resultado = capacidad.capacidad_trabajos(bd, id_usuario, 2026, 11)
+
+    assert resultado.libre == Decimal("200000.00")
+    assert resultado.base_minima == Decimal("0")
+    assert resultado.disponible_abono == Decimal("200000.00")
+    etiquetas = [arco["etiqueta"] for arco in resultado.arcos_categoria]
+    assert "Base mínima de liquidez" not in etiquetas
+
+
 def test_credito_como_deduccion_cuenta_como_deuda(bd) -> None:
     """Una deducción que dice crédito pesa como deuda, no como gasto fijo."""
     from app.servicios import deducciones_fijas

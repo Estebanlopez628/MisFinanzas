@@ -146,25 +146,20 @@ def test_los_paneles_de_escritorio_comparten_la_misma_altura() -> None:
     assert "var(--bg-card)" not in cabecera
     assert "position: sticky;" in cabecera
 
-    # En móvil se replica la tabla «Mes a mes» de Analítica: sin alto máximo y
-    # sin cabecera sticky, para que solo el eje horizontal quede dentro de la
-    # caja y la página desplace en vertical.
+    # En móvil la caja muestra cuatro deudas (332 px = cabecera + cuatro filas,
+    # medidas en Chromium a 390 px) y el resto se alcanza deslizando dentro de ella.
+    # La cabecera sigue fija (sticky heredado de la regla general).
     movil_tabla = (
         "@media (max-width: 640px) {\n"
         "  .tabla-contenedor--deudas {\n"
-        "    max-height: none;"
+        "    max-height: 332px;"
     )
     assert movil_tabla in css
-    movil_cabecera = (
-        "  .tabla-contenedor--deudas thead th {\n"
-        "    position: static;"
-    )
-    assert movil_cabecera in css
 
     # Sin `contain: paint` la tabla ancha ensancha el layout móvil (390 → 827)
     # y la página entera se desplaza (ADR-62). La contención vive solo en el
     # bloque móvil.
-    bloque_movil = css[css.index(movil_tabla) : css.index(movil_cabecera)]
+    bloque_movil = css[css.index(movil_tabla) : css.index(movil_tabla) + 200]
     assert "contain: paint;" in bloque_movil
     assert "contain: paint;" not in tabla
 

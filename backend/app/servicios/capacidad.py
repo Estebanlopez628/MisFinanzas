@@ -635,7 +635,10 @@ def capacidad_trabajos(
     ingreso = redondear_dinero(sum((bloque["ingreso"] for bloque in bloques), start=CERO))
     gastos = redondear_dinero(sum((bloque["gastos_total"] for bloque in bloques), start=CERO))
     libre = redondear_dinero(ingreso - gastos)
-    base, disponible = repartir_libre(libre)
+    # La base mínima de liquidez ($300.000) solo aplica al salario (Mis Finanzas).
+    # Trabajos Extras no la reserva: todo el libre queda disponible para abonar.
+    base = CERO
+    disponible = max(libre, CERO)
     totales = agrupar_por_categoria(
         [
             gasto
