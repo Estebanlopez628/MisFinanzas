@@ -80,7 +80,8 @@
         var contenedor = document.createElement("div");
         contenedor.setAttribute("aria-hidden", "true");
         contenedor.style.cssText =
-          "position:fixed;left:-10000px;top:0;width:850px;background:#ffffff;";
+          "position:fixed;left:-10000px;top:0;width:850px;background:#ffffff;" +
+          "container-type:inline-size;";
         contenedor.innerHTML = html;
         document.body.appendChild(contenedor);
         var imagenes = Array.prototype.slice.call(contenedor.querySelectorAll("img"));

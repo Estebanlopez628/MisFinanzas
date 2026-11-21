@@ -327,20 +327,25 @@
 }
 
 .totales-caja {
-  width: 280px;
+  width: 340px;
   border: 1.5px solid #4c93de;
   border-radius: 10px;
   overflow: hidden;
   background: #ffffff;
 }
 
+/* Las dos celdas de cada fila llenan toda la altura: si el valor ocupa dos líneas,
+   el fondo oscuro de la etiqueta no deja franjas blancas arriba y abajo. */
 .total-fila {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  align-items: center;
+  align-items: stretch;
 }
 
 .total-etiqueta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: 6px 12px;
   color: #ffffff;
   font-weight: 700;
@@ -358,13 +363,29 @@
   font-size: 1rem;
 }
 
+/* ABONADO / SALDO: la fila reparte más ancho al valor para que "abono / saldo"
+   quepa en una sola línea. */
+.total-fila--abono {
+  grid-template-columns: 1fr 1.5fr;
+}
+
 .total-fila--abono .total-etiqueta {
   background: #1d3557;
   font-size: 0.72rem;
+  padding: 6px 8px;
   border-top: 1px solid #3c7ac4;
 }
 
+.total-fila--abono .total-valor {
+  padding: 6px 8px;
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
 .total-valor {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: 6px 12px;
   text-align: center;
   font-weight: 700;
@@ -546,8 +567,15 @@
   }
 }
 
-/* --- PANTALLAS PEQUEÑAS (solo la vista en pantalla; el PDF usa ancho de hoja Carta) --- */
-@media (max-width: 760px) {
+/* --- ANCHO DE LA HOJA ---
+   Las reglas de ancho pequeño dependen del ancho del contenedor de la hoja, no del
+   viewport. Así la imagen compartida desde el celular sale igual que desde el PC: la
+   captura se monta a 850 px y siempre usa el diseño de escritorio. */
+.hoja-contenedor {
+  container-type: inline-size;
+}
+
+@container (max-width: 760px) {
   .hoja-factura {
     font-size: 13px;
   }
@@ -654,7 +682,7 @@
   height: auto;
 }
 
-@media (max-width: 760px) {
+@container (max-width: 760px) {
   .logo-ob-imagen {
     width: 170px;
   }
