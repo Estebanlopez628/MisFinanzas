@@ -1920,6 +1920,12 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 - El modal de `/chancucos` ya no es informativo: permite editar descripción, referencia, valor a pagar, día(s), enlace (input `type="url"` con ancho controlado) y favorito; abajo Actualizar → Eliminar, sin Copiar ni Pagar. Se agregó `actualizar_chancuco()` y `POST /chancucos/{id}/editar` con auditoría. El modal de Mis Finanzas queda solo lectura + Pagar.
 - `sw.js` pasa a `olb-finanzas-v64`; **670 pruebas** en verde y `generar_guia.py --verificar` sin problemas.
 
+### 2026-11-20 — Sin etiqueta «Ver» en los modales de atajos
+
+- Se eliminó el `<summary>Ver</summary>` de `atajo-modal` (`/chancucos`) y de `atajo-finanzas-modal` (Mis Finanzas). En escritorio no debe aparecer ningún enlace «Ver» porque la tabla ya muestra todas las opciones.
+- La apertura sigue siendo exclusivamente por clic/toque en la fila (`deudas.js` → `conectarFilas`); el `<details>` sin summary se abre programáticamente con `.open = true`.
+- Se retiraron las reglas CSS que ocultaban ese summary. `sw.js` pasa a `olb-finanzas-v65`; **670 pruebas** en verde.
+
 **Pendiente para el Paso 3:** solo la revisión visual en navegador (360/390/768/escritorio) de la dona, el consejero, los modales, el formulario de deducciones, el flujo SI/NO y el recibo; la corrección aritmética y la anti-duplicación ya están cubiertas por pruebas.
 
 

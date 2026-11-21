@@ -109,7 +109,7 @@ def test_los_atajos_de_mis_finanzas_abren_su_propio_modal(
     assert ".lista-atajos__item[data-atajo-fila]" in movil
     assert ".lista-atajos__texto small.ayuda" in movil
     assert "> .lista-atajos__referencia" in movil
-    assert ".atajo-finanzas-modal > summary" in movil
+    assert ">Ver</summary>" not in html
 
     javascript = (RAIZ_APP / "static" / "js" / "deudas.js").read_text(encoding="utf-8")
     assert 'conectarFilas("li[data-atajo-fila]"' in javascript
@@ -131,7 +131,7 @@ def test_el_css_de_movil_oculta_columnas_y_el_js_abre_el_modal() -> None:
     assert "> td:nth-child(1)" in movil
     assert "> td:nth-child(5)" in movil
     assert "> td:nth-child(6) > a" in movil
-    assert ".atajo-modal > summary" in movil
+    assert ">Ver</summary>" not in plantilla
     assert 'conectarFilas("tr[data-chancuco-fila]"' in javascript
     assert "js/deudas.js" in plantilla
 

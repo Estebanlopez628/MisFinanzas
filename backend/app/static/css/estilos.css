@@ -4112,10 +4112,6 @@ strong.valor-negativo.recibo__cifra--saldo {
   .atajo-modal {
     display: block;
   }
-
-  .atajo-modal > summary {
-    display: none !important;
-  }
 }
 
 /* ---- Atajos embebidos de Mis Finanzas: solo descripción y día (SRS v1.9) -- */
@@ -4148,10 +4144,6 @@ strong.valor-negativo.recibo__cifra--saldo {
 
   .atajo-finanzas-modal {
     display: block;
-  }
-
-  .atajo-finanzas-modal > summary {
-    display: none !important;
   }
 }
 
