@@ -473,6 +473,12 @@ Recálculo en tiempo real (<100 ms) sin recargar página. Se implementa con func
 - En la fila ABONADO / SALDO se quitó el ajuste de columnas que la hacía más corta que SUBTOTAL y TOTAL: las tres filas comparten ahora la misma columna y el valor cabe en una línea (letra de 0,78 rem). Verificado en la captura de PC.
 - `sw.js` en `olb-finanzas-v84`; **679 pruebas** en verde.
 
+### 2026-11-21 — Tabla de deudas en móvil: columnas alineadas sin barra visible
+
+- Con la barra de desplazamiento visible (15 px en Windows) el cuerpo de la tabla quedaba más estrecho que la cabecera y todas las columnas se desfasaban (311 px frente a 296 px). Playwright ocultaba esa barra por defecto, por eso no se veía en las pruebas.
+- En móvil la barra del cuerpo se oculta (`scrollbar-width: none` y `::-webkit-scrollbar`). Cabecera y filas miden lo mismo y las columnas coinciden en píxeles. El desplazamiento con el dedo sigue igual y se mantienen cuatro filas visibles.
+- `sw.js` en `olb-finanzas-v85`.
+
 ### 2026-11-21 — Tabla de deudas en móvil tipo Excel (ajusta ADR-62)
 
 - La tabla dejó de ser una sola caja con cabecera sticky, que en el celular se arrastraba con el dedo. En móvil la tabla se convierte en bloques: la cabecera queda fija y solo se desplaza el cuerpo, con altura de cuatro filas (`max-height: 227px`, medido en Chromium a 390 px).
