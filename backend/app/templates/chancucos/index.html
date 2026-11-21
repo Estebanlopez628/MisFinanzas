@@ -166,6 +166,9 @@
                   {# SRS v1.9: en móvil la fila completa abre este modal centrado
                      con toda la información del atajo y las acciones abajo. #}
                   <details class="edicion-gasto edicion-gasto--modal atajo-modal">
+                    {# Sin un <summary> el navegador muestra su etiqueta "Details"
+                       por defecto encima de la fila. Se oculta visualmente. #}
+                    <summary class="sr-only" aria-hidden="true">Detalle del atajo</summary>
                     <form class="formulario formulario--compacto edicion-gasto__formulario atajo-modal__tarjeta"
                           method="post"
                           action="{{ url_for('editar_chancuco', id_chancuco=item.id_chancuco) }}"
@@ -191,18 +194,14 @@
                                value="{{ item.valor_pago | cop(false) if item.valor_pago else '' }}"
                                data-moneda />
                       </label>
-                      <div class="fila-campos">
-                        <label class="campo">
-                          <span class="campo__etiqueta">Día de pago</span>
-                          <input class="campo__control" type="number" name="dia_pago_1"
-                                 min="1" max="31" value="{{ item.dia_pago_1 or '' }}" />
-                        </label>
-                        <label class="campo">
-                          <span class="campo__etiqueta">Segundo día (opcional)</span>
-                          <input class="campo__control" type="number" name="dia_pago_2"
-                                 min="1" max="31" value="{{ item.dia_pago_2 or '' }}" />
-                        </label>
-                      </div>
+                      <label class="campo">
+                        <span class="campo__etiqueta">Día de pago</span>
+                        <input class="campo__control" type="number" name="dia_pago_1"
+                               min="1" max="31" value="{{ item.dia_pago_1 or '' }}" />
+                      </label>
+                      {# No se ofrece un segundo día en la edición, pero se conserva
+                         el valor existente para no borrarlo al actualizar. #}
+                      <input type="hidden" name="dia_pago_2" value="{{ item.dia_pago_2 or '' }}" />
                       <label class="campo">
                         <span class="campo__etiqueta">Enlace de pago (opcional)</span>
                         <input class="campo__control" type="url" name="url_pago"

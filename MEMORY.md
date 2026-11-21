@@ -1956,6 +1956,13 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 - En el panel «Atajos de pago» de Mis Finanzas (Resumen/Liquidación), la descripción y el número de referencia usan ahora el mismo `font-size: 0.85rem`; antes la descripción heredaba 1 rem y destacaba más.
 - `sw.js` pasa a `olb-finanzas-v70`; **671 pruebas** en verde y `generar_guia.py --verificar` sin problemas.
 
+### 2026-11-20 — Atajos guardados: sin «Details», letra menor y menos campos
+
+- El texto «Details» que aparecía sobre la descripción en móvil venía del `<details>` sin `<summary>`: el navegador muestra su etiqueta por defecto. Se añadió `<summary class="sr-only" aria-hidden="true">` en ambos modales y `pointer-events: none` en `.sr-only` para que no intercepte clics.
+- `.tabla--atajos` bajó a `font-size: 0.8rem`.
+- El modal de edición ya no contiene el campo «Segundo día (opcional)»; su valor se conserva en un `<input type="hidden" name="dia_pago_2">` para no perderlo al actualizar.
+- `sw.js` pasa a `olb-finanzas-v71`; **671 pruebas** en verde y `generar_guia.py --verificar` sin problemas.
+
 **Pendiente para el Paso 3:** solo la revisión visual en navegador (360/390/768/escritorio) de la dona, el consejero, los modales, el formulario de deducciones, el flujo SI/NO y el recibo; la corrección aritmética y la anti-duplicación ya están cubiertas por pruebas.
 
 

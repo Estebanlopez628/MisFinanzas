@@ -68,10 +68,15 @@ def test_la_fila_movil_y_el_modal_muestran_toda_la_informacion(
     assert 'name="url_pago"' in html
     assert ">Actualizar</button>" in html
     assert ">Eliminar</button>" in html
+    assert '<summary class="sr-only" aria-hidden="true">' in html
+    assert "Segundo día (opcional)" not in html
+    assert 'name="dia_pago_2"' in html  # se conserva oculto
 
     css = (RAIZ_APP / "static" / "css" / "estilos.css").read_text(encoding="utf-8")
     datos = css.split(".atajo-modal__datos > div {", 1)[1].split("}", 1)[0]
     assert "border-bottom" not in datos
+    tabla = css.split(".tabla--atajos {", 1)[1].split("}", 1)[0]
+    assert "font-size: 0.8rem;" in tabla
 
 
 def test_los_atajos_de_mis_finanzas_abren_su_propio_modal(
@@ -115,6 +120,7 @@ def test_los_atajos_de_mis_finanzas_abren_su_propio_modal(
     assert ".lista-atajos__texto small.ayuda" in movil
     assert "> .lista-atajos__referencia" in movil
     assert ">Ver</summary>" not in html
+    assert '<summary class="sr-only" aria-hidden="true">' in html
 
     javascript = (RAIZ_APP / "static" / "js" / "deudas.js").read_text(encoding="utf-8")
     assert 'conectarFilas("li[data-atajo-fila]"' in javascript
