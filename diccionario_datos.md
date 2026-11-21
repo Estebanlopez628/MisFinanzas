@@ -514,6 +514,9 @@ usuarios 1 ─── N deudas
 usuarios 1 ─── N chancucos
 usuarios 1 ─── N trabajos_extras
 usuarios 1 ─── N auditoria
+usuarios 1 ─── N feedback_usuarios
+deudas 1 ─── N gastos (gastos.id_deuda, ON DELETE SET NULL)
+deudas 1 ─── N deducciones_fijas (deducciones_fijas.id_deuda, ON DELETE SET NULL)
 periodos_nomina 1 ─── N registros_horas_extra
 periodos_nomina 1 ─── N gastos
 incapacidades 1 ─── N saldos_incapacidad
@@ -569,3 +572,36 @@ Bitácora de acciones sensibles (login, cierre de sesión, guardado y borrado). 
 | `entidad` | `VARCHAR(40)` | Sí | No | Tabla afectada. |
 | `detalle` | `VARCHAR(300)` | Sí | No | Contexto legible (sin datos sensibles). |
 | `fecha` | `TIMESTAMPTZ` | No | Sí | `now()`. |
+
+---
+
+## 14. `feedback_usuarios` — *Reportes de soporte* (SRS v2.0, Fase A)
+
+Reportes enviados desde «Ayuda y comentarios». Solo los módulos públicos pueden
+seleccionarse (`Finanzas`, `Gastos y presupuestos`, `Registro y Detalles de deudas`,
+`Trabajos Extras`, `Atajos de pago`, `Otro`): **OLB_BYTE y la facturación están
+prohibidos** en los textos y selectores dirigidos al usuario estándar (regla 2 de
+la SRS v2.0). Los nombres de columna siguen la convención del proyecto en español;
+entre paréntesis se indica el nombre del campo que aparece en la SRS.
+
+| Campo | Tipo | Nulo | Obligatorio | Descripción / Regla |
+| --- | --- | --- | --- | --- |
+| `id_feedback` (`id`) | `VARCHAR(32)` (PK) | No | Sí | UUID hexadecimal sin guiones. |
+| `id_usuario` (`user_id`) | `VARCHAR(32)` (FK → `usuarios`) | No | Sí | Dueño del reporte; `ON DELETE CASCADE`. |
+| `usuario_nombre` | `VARCHAR(60)` | No | Sí | Alias **snapshot** en el momento del envío. |
+| `usuario_correo` | `VARCHAR(150)` | No | Sí | Correo **snapshot** en el momento del envío. |
+| `tipo_reporte` | `VARCHAR(20)` | No | Sí | `ERROR`, `SUGERENCIA` o `CALCULO` (etiquetas: error, sugerencia, cálculos/datos). |
+| `modulo` | `VARCHAR(40)` | No | Sí | Uno de los seis módulos públicos; vacío se normaliza a `Otro`. |
+| `descripcion` | `VARCHAR(2000)` | No | Sí | Texto libre; no puede estar vacío. |
+| `dispositivo` | `VARCHAR(12)` | No | Sí | `Móvil` o `Escritorio`; lo detecta el servidor desde `User-Agent`. |
+| `estado` | `VARCHAR(20)` | No | Sí | `Pendiente` (inicial), `En revisión` o `Resuelto`; indexado para el contador. |
+| `fecha_creacion` (`created_at`) | `TIMESTAMPTZ` | No | Sí | `now()`. |
+
+**Relaciones y reglas transversales**
+
+- `id_usuario → usuarios.id_usuario` con `ON DELETE CASCADE`: al eliminar una
+  cuenta se borran sus reportes.
+- El contador de la tarjeta administrativa cuenta solo `estado = 'Pendiente'`.
+  Al pasar a `En revisión` o `Resuelto` el badge se actualiza en tiempo real.
+- La tabla se crea con `create_all` en SQLite y PostgreSQL al arrancar
+  (`aplicar_migraciones()`), sin borrar datos existentes.

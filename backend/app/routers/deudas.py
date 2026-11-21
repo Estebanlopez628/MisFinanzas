@@ -29,6 +29,15 @@ from app.servicios import auditoria, deudas
 
 router = APIRouter(tags=["Deudas"])
 
+# SRS v2.0, sección 2.2: rótulo legible del formulario que envió al usuario a
+# registrar su deuda. La clave es el valor del parámetro `volver` que ya usaba
+# la versión anterior, así que no se rompe ningún enlace existente.
+ETIQUETAS_ORIGEN: dict[str, str] = {
+    "deducciones": "Deducciones Fijas",
+    "finanzas": "Gastos Fijos - Finanzas",
+    "trabajos": "Gastos Fijos - Trabajos Extras",
+}
+
 
 def _contexto(
     usuario: UsuarioSesion,
@@ -70,6 +79,7 @@ def _contexto(
             "aplicadas": aplicadas,
             "valores": valores or {},
             "volver": volver,
+            "volver_etiqueta": ETIQUETAS_ORIGEN.get(volver or "", "") if volver else "",
             "deuda_reciente": max(lista, key=lambda deuda: deuda.fecha_creacion) if lista else None,
         }
     )

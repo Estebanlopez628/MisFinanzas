@@ -116,4 +116,32 @@
       detalles.open = true;
     });
   });
+
+  // SRS v2.0, sección 2.2: al cargar «Registro y Detalles de deudas» se verifica
+  // si hay un formulario esperando su deuda. El servidor ya pintó el banner
+  // cuando llegamos desde «Ve a registrar la deuda»; aquí solo se confirma con
+  // sessionStorage y se ajusta la etiqueta legible.
+  function pendienteDeDeuda() {
+    try {
+      return JSON.parse(sessionStorage.getItem("misfinanzas_pending_debt_link") || "null");
+    } catch (error) {
+      return null;
+    }
+  }
+
+  var pendiente = pendienteDeDeuda();
+  var banner = document.querySelector("[data-banner-volver]");
+  if (pendiente && banner) {
+    var enlace = banner.querySelector("[data-volver-origen]");
+    if (enlace && pendiente.origin_label) {
+      enlace.textContent =
+        "← Volver a " + pendiente.origin_label + " para completar el registro";
+      var reciente = banner.getAttribute("data-deuda-reciente");
+      var destino = enlace.getAttribute("data-destino") || pendiente.origin_destino || "/";
+      if (reciente) {
+        enlace.href =
+          destino + "?guardado_deuda=1&deuda_id=" + encodeURIComponent(reciente);
+      }
+    }
+  }
 })();

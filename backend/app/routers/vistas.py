@@ -25,7 +25,7 @@ from sqlalchemy.orm import Session
 from app.core import categorias as catalogo
 from app.core.base_datos import obtener_bd
 from app.core.config import obtener_configuracion, obtener_parametros
-from app.servicios import acceso_google, factura_pdf
+from app.servicios import acceso_google, factura_pdf, feedback
 from app.core.texto import (
     formatear_cop,
     formatear_fecha,
@@ -93,6 +93,19 @@ TARJETAS_DASHBOARD: list[dict[str, Any]] = [
         "solo_autorizados": False,
         "disponible": True,
         "acento": "ambar",
+    },
+    {
+        # SRS v2.0, sección 5.5: tarjeta exclusiva del administrador, al lado
+        # de «Trabajos Extras», con contador de solicitudes pendientes.
+        "clave": "comentarios",
+        "titulo": "Comentarios y Reportes",
+        "descripcion": "Gestiona las solicitudes y fallas reportadas por los usuarios.",
+        "icono": "📮",
+        "url": "/admin/comentarios",
+        "solo_autorizados": False,
+        "solo_admin": True,
+        "disponible": True,
+        "acento": "rojo",
     },
 ]
 
@@ -192,7 +205,8 @@ def ver_dashboard(
     tarjetas_visibles = [
         tarjeta
         for tarjeta in TARJETAS_DASHBOARD
-        if usuario.puede_ver_olb_byte or not tarjeta["solo_autorizados"]
+        if (usuario.puede_ver_olb_byte or not tarjeta["solo_autorizados"])
+        and (not tarjeta.get("solo_admin") or usuario.es_administrador)
     ]
 
     contexto = contexto_base(usuario)
@@ -201,6 +215,8 @@ def ver_dashboard(
             "titulo_pagina": "Panel principal",
             "tarjetas": tarjetas_visibles,
             "guardado": bool(guardado),
+            # Contador del badge circular de la tarjeta administrativa.
+            "comentarios_pendientes": feedback.contar_pendientes(bd),
         }
     )
     return plantillas.TemplateResponse(request, "dashboard.html", contexto)

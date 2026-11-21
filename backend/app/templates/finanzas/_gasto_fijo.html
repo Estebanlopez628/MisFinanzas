@@ -39,6 +39,10 @@
   {% set inhabilitado = gasto.inhabilitado_hasta is not none and gasto.inhabilitado_hasta > hoy %}
   {# Un pago de meta o de trabajo se salta; un gasto manual se elimina. #}
   {% set es_pago_recurrente = gasto.id_proyeccion or gasto.id_trabajo %}
+  {# SRS v2.0, sección 3.2: se consulta la deuda solo para tomar su cuota
+     vigente. La descripción visible sigue siendo la que escribió el usuario:
+     no se añade el nombre del acreedor para no ensanchar la fila. #}
+  {% set deuda_vinculada = gasto.deuda if gasto.id_deuda else none %}
   <li
     class="lista-gastos__item{% if inhabilitado %} lista-gastos__item--inhabilitado{% elif gasto.pagado and gasto.check_visible %} lista-gastos__item--pagado{% endif %}"
   >
@@ -48,7 +52,11 @@
         <small class="lista-gastos__estado">Inhabilitado hasta {{ gasto.inhabilitado_hasta.strftime('%d/%m') }}</small>
       {% endif %}
     </span>
-    <span class="lista-gastos__valor">{{ gasto.valor | cop }}</span>
+    {# El valor mostrado es siempre la cuota vigente de la deuda, aunque el
+       gasto se haya guardado con otro monto antes de vincularlo. #}
+    <span class="lista-gastos__valor">
+      {{ (deuda_vinculada.cuota_mensual if deuda_vinculada and deuda_vinculada.cuota_mensual else gasto.valor) | cop }}
+    </span>
     <div class="lista-gastos__acciones">
       {# Ajuste móvil (SRS v1.7): «--modal» abre la edición como ventana centrada
          con fondo oscuro, porque el desplegable absoluto se cortaba a la derecha. #}

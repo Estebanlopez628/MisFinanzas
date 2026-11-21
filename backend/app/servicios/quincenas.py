@@ -55,6 +55,9 @@ class ResumenQuincena:
         deducciones: Salud y pensión que se descuentan en este bloque.
         saldo_libre: `ingreso − gastos − deducciones − deducciones fijas`.
         gastos_detalle: Gastos que componen la suma.
+        gastos_vinculados: Gastos fijos que pagan una deuda. Se muestran en la
+            lista, pero **no** se suman aquí: su cuota ya se contabiliza en la
+            categoría 8 de la dona (SRS v2.0, sección 3.2).
         mes_completo: `True` si el bloque es mensual o si contiene gastos sin
             quincena asignada.
         deducciones_fijas: Descuentos fijos del salario aplicados a este bloque.
@@ -69,6 +72,7 @@ class ResumenQuincena:
     deducciones: Decimal
     saldo_libre: Decimal
     gastos_detalle: list[Gasto] = field(default_factory=list)
+    gastos_vinculados: list[Gasto] = field(default_factory=list)
     mes_completo: bool = False
     deducciones_fijas: Decimal = CERO
     deducciones_fijas_detalle: list[DeduccionFija] = field(default_factory=list)
@@ -121,6 +125,11 @@ def resumen_quincenas(
     # en la categoría 8 de la dona. No se restan aquí para no descontar dos veces
     # el mismo dinero del saldo libre (regla anti-duplicación).
     del_mes = servicio_gastos.listar_gastos(bd, id_usuario, anio, mes, excluir_vinculados=True)
+    # SRS v2.0: los vinculados se consultan aparte para mostrarlos en la misma
+    # lista, sin meterlos en `del_mes` (que sí alimenta los totales).
+    vinculados = servicio_gastos.listar_gastos(
+        bd, id_usuario, anio, mes, solo_vinculados=True
+    )
     fijas = servicio_deducciones.sin_vinculo(bd, id_usuario)
     total_fijas_mes = servicio_deducciones.total_por_quincena(fijas, 1) + (
         servicio_deducciones.total_por_quincena(fijas, 2)
@@ -138,6 +147,7 @@ def resumen_quincenas(
                 deducciones=CERO,
                 saldo_libre=redondear_dinero(-total - total_fijas_mes),
                 gastos_detalle=del_mes,
+                gastos_vinculados=vinculados,
                 mes_completo=True,
                 deducciones_fijas=total_fijas_mes,
                 deducciones_fijas_detalle=fijas,
@@ -168,6 +178,7 @@ def resumen_quincenas(
                     sueldo_ajustado + recargos_periodo - total - deducciones_mes - total_fijas_mes
                 ),
                 gastos_detalle=del_mes,
+                gastos_vinculados=vinculados,
                 mes_completo=True,
                 deducciones_fijas=total_fijas_mes,
                 deducciones_fijas_detalle=fijas,
@@ -178,12 +189,14 @@ def resumen_quincenas(
     # para que el total del mes no se pierda de vista.
     de_quincena_1 = [gasto for gasto in del_mes if gasto.quincena in (None, 1)]
     de_quincena_2 = [gasto for gasto in del_mes if gasto.quincena == 2]
+    vinculados_1 = [gasto for gasto in vinculados if gasto.quincena in (None, 1)]
+    vinculados_2 = [gasto for gasto in vinculados if gasto.quincena == 2]
     porcentaje_1, porcentaje_2 = perfiles.porcentajes_quincena(perfil)
 
     resumen: list[ResumenQuincena] = []
-    for numero, porcentaje, detalle in (
-        (1, porcentaje_1, de_quincena_1),
-        (2, porcentaje_2, de_quincena_2),
+    for numero, porcentaje, detalle, vinculados_quincena in (
+        (1, porcentaje_1, de_quincena_1, vinculados_1),
+        (2, porcentaje_2, de_quincena_2, vinculados_2),
     ):
         ingreso = redondear_dinero(sueldo_ajustado * porcentaje / Decimal("100"))
         # REQ-04: los recargos se liquidan en la quincena de deducciones del perfil.
@@ -209,6 +222,7 @@ def resumen_quincenas(
                     ingreso - total_gastos - deducciones - total_fijas
                 ),
                 gastos_detalle=detalle,
+                gastos_vinculados=vinculados_quincena,
                 mes_completo=any(gasto.quincena is None for gasto in detalle),
                 deducciones_fijas=total_fijas,
                 deducciones_fijas_detalle=detalle_fijas,

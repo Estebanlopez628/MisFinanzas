@@ -784,6 +784,9 @@ def _contexto_cartera(usuario: UsuarioSesion, bd: Session, *, error: str | None 
             "titulo_pagina": "Cartera y liquidez · OLB_BYTE",
             "barras": comercial.barras_balance(resumen),
             "segmentos": comercial.segmentos_dona(resumen["cartera_clientes"], resumen["deuda_proveedor"]),
+            # SRS v2.0, sección 4: datos del panel de tres bloques. Las claves
+            # `barras` y `segmentos` se conservan para no romper otras vistas.
+            "balance_bloques": comercial.balance_tres_bloques(resumen),
             "balance_texto": balance_texto,
             "balance_clase": balance_clase,
             "movimientos": comercial.listar_movimientos_proveedor(bd),

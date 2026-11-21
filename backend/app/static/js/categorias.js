@@ -16,6 +16,25 @@
   "use strict";
 
   var CATEGORIA_CREDITO = "Créditos y Obligaciones";
+  // SRS v2.0, sección 2: una sola clave para todo el ciclo de ida y vuelta.
+  var CLAVE_PENDIENTE = "misfinanzas_pending_debt_link";
+  var ORIGENES = {
+    deducciones: {
+      modulo: "deducciones_fijas",
+      etiqueta: "Deducciones Fijas",
+      destino: "/presupuesto"
+    },
+    finanzas: {
+      modulo: "finanzas_gastos_fijos",
+      etiqueta: "Gastos Fijos - Finanzas",
+      destino: "/finanzas"
+    },
+    trabajos: {
+      modulo: "trabajos_extras_gastos_fijos",
+      etiqueta: "Gastos Fijos - Trabajos Extras",
+      destino: "/trabajos-extras"
+    }
+  };
 
   function datosFormulario(formulario) {
     var datos = {};
@@ -206,7 +225,94 @@
     sincronizar();
   });
 
-  // Ir a registrar la deuda: se guardan los datos y el módulo de origen.
+  // SRS v2.0, sección 3.2: al elegir una deuda el valor se autocompleta con su
+  // cuota oficial y queda bloqueado mientras siga vinculado. Si se cambia a
+  // otra deuda se toma la nueva cuota; si se desvincula (checkbox sin marcar,
+  // respuesta NO o categoría distinta) vuelve a ser editable.
+  document.querySelectorAll("[data-deuda-opciones]").forEach(function (selectorDeuda) {
+    var formulario = selectorDeuda.closest("form");
+    var campoValor = formulario && formulario.querySelector('input[name="valor"]');
+    if (!campoValor) {
+      return;
+    }
+    var contenedor = selectorDeuda.closest(
+      "[data-vinculo-deuda], [data-vinculo-condicional]"
+    );
+    var caja = contenedor && contenedor.querySelector("[data-vincular-deuda]");
+    var opcionNo = contenedor && contenedor.querySelector("[data-vincular-no]");
+    var opcionSi = contenedor && contenedor.querySelector("[data-vincular-si]");
+    var nota = contenedor && contenedor.querySelector("[data-nota-sincronizada]");
+    var notaAcreedor = nota && nota.querySelector("[data-nota-acreedor]");
+    var entradaCategoria = formulario && formulario.querySelector("[data-categoria-entrada]");
+
+    function vinculado() {
+      if (!selectorDeuda.value) {
+        return false;
+      }
+      if (caja && !caja.checked) {
+        return false;
+      }
+      if (opcionNo && opcionNo.checked) {
+        return false;
+      }
+      return true;
+    }
+
+    function sincronizarValor() {
+      // En la edición de un gasto, cambiar a otra categoría desvincula la
+      // deuda y devuelve el valor al usuario (SRS v2.0, 3.2). Se limita a los
+      // formularios de gastos para no alterar las libranzas de deducciones.
+      var accion = formulario && formulario.getAttribute("action");
+      var esEdicionGasto = accion && accion.indexOf("/gastos/") !== -1;
+      if (
+        esEdicionGasto &&
+        entradaCategoria &&
+        entradaCategoria.value !== CATEGORIA_CREDITO &&
+        selectorDeuda.value
+      ) {
+        selectorDeuda.value = "";
+        if (caja) {
+          caja.checked = false;
+          caja.dispatchEvent(new Event("change", { bubbles: true }));
+        }
+      }
+      var loEsta = vinculado();
+      var opcion = selectorDeuda.options[selectorDeuda.selectedIndex];
+      if (loEsta && opcion) {
+        var cuota = opcion.getAttribute("data-cuota");
+        if (cuota) {
+          campoValor.value = cuota;
+        }
+        if (nota) {
+          nota.hidden = false;
+          if (notaAcreedor) {
+            notaAcreedor.textContent = opcion.textContent.split("·")[0].trim();
+          }
+        }
+      } else if (nota) {
+        nota.hidden = true;
+      }
+      campoValor.readOnly = loEsta;
+    }
+
+    selectorDeuda.addEventListener("change", sincronizarValor);
+    if (caja) {
+      caja.addEventListener("change", sincronizarValor);
+    }
+    if (opcionNo) {
+      opcionNo.addEventListener("change", sincronizarValor);
+    }
+    if (opcionSi) {
+      opcionSi.addEventListener("change", sincronizarValor);
+    }
+    if (entradaCategoria) {
+      entradaCategoria.addEventListener("change", sincronizarValor);
+    }
+    sincronizarValor();
+  });
+
+  // Ir a registrar la deuda: se serializa el formulario y se guarda el módulo,
+  // la etiqueta legible y todos los valores diligenciados (SRS v2.0, 2.1).
   document.querySelectorAll("[data-ir-a-deudas]").forEach(function (enlace) {
     enlace.addEventListener("click", function () {
       var formulario = enlace.closest("form");
@@ -214,10 +320,23 @@
       if (!formulario || !modulo) {
         return;
       }
+      var origen = ORIGENES[modulo] || {
+        modulo: modulo,
+        etiqueta: modulo,
+        destino: "/"
+      };
+      var pendiente = {
+        origin_module: origen.modulo,
+        origin_label: origen.etiqueta,
+        origin_destino: origen.destino,
+        form_data: datosFormulario(formulario)
+      };
       try {
+        sessionStorage.setItem(CLAVE_PENDIENTE, JSON.stringify(pendiente));
+        // Clave heredada: conserva el respaldo sin JS de versiones anteriores.
         sessionStorage.setItem(
           "deuda-origen:" + modulo,
-          JSON.stringify(datosFormulario(formulario))
+          JSON.stringify(pendiente.form_data)
         );
       } catch (error) {
         // Sin sessionStorage el formulario sigue funcionando igual.
@@ -225,9 +344,15 @@
     });
   });
 
-  // Restauración al volver de registrar la deuda.
+  // Restauración al volver de registrar la deuda (SRS v2.0, 2.3).
   var parametros = new URLSearchParams(location.search);
   if (parametros.has("guardado_deuda")) {
+    var pendiente = null;
+    try {
+      pendiente = JSON.parse(sessionStorage.getItem(CLAVE_PENDIENTE) || "null");
+    } catch (error) {
+      pendiente = null;
+    }
     document.querySelectorAll("form[data-origen-modulo]").forEach(function (formulario) {
       var modulo = formulario.getAttribute("data-origen-modulo");
       var clave = "deuda-origen:" + modulo;
@@ -237,12 +362,17 @@
       } catch (error) {
         guardado = null;
       }
+      // La clave nueva manda; la antigua es solo respaldo.
+      if (pendiente && pendiente.form_data) {
+        guardado = pendiente.form_data;
+      }
       if (!guardado) {
         return;
       }
       restaurarDatos(formulario, guardado);
 
-      // La especificación pide marcar SI por defecto al regresar.
+      // La especificación pide marcar SI por defecto al regresar. No se toca la
+      // validación de categoría: solo se preselecciona la respuesta.
       var opcionSi = formulario.querySelector("[data-vincular-si]");
       if (opcionSi) {
         opcionSi.checked = true;
@@ -252,6 +382,7 @@
       var selectorDeuda = formulario.querySelector("[data-deuda-opciones]");
       if (selectorDeuda && deudaId) {
         selectorDeuda.value = deudaId;
+        selectorDeuda.dispatchEvent(new Event("change", { bubbles: true }));
       }
       try {
         sessionStorage.removeItem(clave);
@@ -259,6 +390,12 @@
         // Nada que limpiar si el almacenamiento no está disponible.
       }
     });
+    // La restauración terminó: la clave se elimina una sola vez.
+    try {
+      sessionStorage.removeItem(CLAVE_PENDIENTE);
+    } catch (error) {
+      // Sin almacenamiento no hay nada que limpiar.
+    }
   }
 
   // Conservación ante errores de validación del propio formulario.

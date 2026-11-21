@@ -100,14 +100,17 @@ contenido %}
       eliminar. #}
       <div class="bloque-gastos-quincena">
         <h4 class="bloque-gastos__subtitulo">Gastos fijos asignados</h4>
-        {% if quincena.gastos_detalle %}
+        {# SRS v2.0, sección 3.1: los vinculados a deuda se pintan en la misma
+           lista; el total de la quincena sigue sin contarlos dos veces. #}
+        {% set gastos_visibles = quincena.gastos_detalle + quincena.gastos_vinculados %}
+        {% if gastos_visibles %}
         <ul class="lista-gastos">
-          {% for gasto in quincena.gastos_detalle %}
+          {% for gasto in gastos_visibles %}
           {# SRS v1.7: misma fila que usa Trabajos Extras (componente DRY). #}
           {{ fila_gasto(gasto, hoy, 'finanzas') }}
           {% endfor %}
         </ul>
-        {% if quincena.gastos_detalle | selectattr('pagado') | selectattr('check_visible') | list %}
+        {% if gastos_visibles | selectattr('pagado') | selectattr('check_visible') | list %}
         {# SRS v1.7: acción masiva visible, con confirmación, y los pagos se conservan. #}
         <form class="acciones-formulario" method="post"
               action="{{ url_for('limpiar_pagos_gastos') }}" data-proteccion

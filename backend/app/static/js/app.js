@@ -143,6 +143,16 @@
         contenedor.close();
       }
     }
+    // SRS v2.0, sección 5.2: invitación exclusiva de móvil. El enlace universal
+    // sin destinatario abre la lista de contactos de WhatsApp.
+    var invitar = objetivo.closest("[data-invitar-amigos]");
+    if (invitar) {
+      evento.preventDefault();
+      var mensaje =
+        "Acabo de probar esta aplicación y es súper buena, quiero invitarte a que la utilices y lleves el control de tus finanzas: " +
+        window.location.origin;
+      window.open("https://wa.me/?text=" + encodeURIComponent(mensaje), "_blank");
+    }
   });
 
   // ------------------- Ediciones en línea y confirmaciones ----------------

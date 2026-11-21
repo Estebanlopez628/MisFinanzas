@@ -279,9 +279,12 @@ class Gasto(Base):
     # SRS v1.9: el gasto es la cuota de una deuda registrada. Su valor ya se
     # contabiliza en la categoría 8 de la dona, así que no se suma como egreso
     # propio ni se resta dos veces del dinero libre (regla anti-duplicación).
+    # SRS v2.0 (Fase A): la relación se carga con `joinedload` en los GET de
+    # gastos para traer `cuota_mensual` y `acreedor` sin consultas extra.
     id_deuda: Mapped[str | None] = mapped_column(
         ForeignKey("deudas.id_deuda", ondelete="SET NULL"), nullable=True, index=True
     )
+    deuda: Mapped["Deuda | None"] = relationship(foreign_keys=[id_deuda])
     pagado: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     pagado_en: Mapped[date | None] = mapped_column(Date, nullable=True)
     monto_pagado: Mapped[Decimal | None] = mapped_column(Numeric(14, 2), nullable=True)
@@ -761,5 +764,55 @@ class Auditoria(Base):
     entidad: Mapped[str | None] = mapped_column(String(40), nullable=True)
     detalle: Mapped[str | None] = mapped_column(String(300), nullable=True)
     fecha: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+
+class FeedbackUsuario(Base):
+    """Reporte de soporte enviado desde «Ayuda y comentarios» (SRS v2.0).
+
+    El usuario estándar reporta errores, sugerencias o problemas de cálculo.
+    El administrador consulta el listado y cambia el estado. Se guardan además
+    el alias y el correo **snapshot** para que el reporte siga siendo legible
+    aunque la cuenta cambie de nombre o se elimine más adelante.
+
+    Los valores de `tipo_reporte`, `dispositivo`, `modulo` y `estado` son los
+    textos literales de la SRS, de modo que el selector del modal y lo que se
+    persiste coinciden sin traducciones.
+    """
+
+    __tablename__ = "feedback_usuarios"
+    __table_args__ = (
+        CheckConstraint(
+            "tipo_reporte IN ('ERROR', 'SUGERENCIA', 'CALCULO')",
+            name="ck_feedback_tipo",
+        ),
+        CheckConstraint(
+            "dispositivo IN ('Móvil', 'Escritorio')",
+            name="ck_feedback_dispositivo",
+        ),
+        CheckConstraint(
+            "estado IN ('Pendiente', 'En revisión', 'Resuelto')",
+            name="ck_feedback_estado",
+        ),
+    )
+
+    id_feedback: Mapped[str] = mapped_column(String(32), primary_key=True, default=nuevo_id)
+    id_usuario: Mapped[str] = mapped_column(
+        ForeignKey("usuarios.id_usuario", ondelete="CASCADE"), nullable=False, index=True
+    )
+    # Copia del alias y el correo en el momento del envío (trazabilidad).
+    usuario_nombre: Mapped[str] = mapped_column(String(60), nullable=False)
+    usuario_correo: Mapped[str] = mapped_column(String(150), nullable=False)
+    tipo_reporte: Mapped[str] = mapped_column(String(20), nullable=False)
+    modulo: Mapped[str] = mapped_column(String(40), nullable=False, default="Otro")
+    descripcion: Mapped[str] = mapped_column(String(2000), nullable=False)
+    dispositivo: Mapped[str] = mapped_column(
+        String(12), nullable=False, default="Escritorio"
+    )
+    estado: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="Pendiente", index=True
+    )
+    fecha_creacion: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )

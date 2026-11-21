@@ -212,6 +212,33 @@
   }
 
   /**
+   * Extrae el destinatario de un enlace `wa.me` y lo normaliza a Colombia.
+   *
+   * Se limpian espacios, guiones, paréntesis y el signo `+`. Con 10 dígitos se
+   * antepone el indicativo 57; con 12 dígitos que ya empiezan por 57 se conserva.
+   * Cualquier otro formato se rechaza para no abrir un chat equivocado.
+   *
+   * @param {string} enlace URL `wa.me` construida con el celular de la orden.
+   * @returns {string} Número listo para `wa.me`, o cadena vacía si no es válido.
+   */
+  function numeroDelEnlace(enlace) {
+    try {
+      var partes = new URL(enlace).pathname.split("/").filter(Boolean);
+      var destino = partes.length ? partes[partes.length - 1] : "";
+      var limpio = destino.replace(/[\s\-()\+]/g, "");
+      if (/^\d{10}$/.test(limpio)) {
+        return "57" + limpio;
+      }
+      if (/^57\d{10}$/.test(limpio)) {
+        return limpio;
+      }
+      return "";
+    } catch (error) {
+      return "";
+    }
+  }
+
+  /**
    * Abre la hoja de compartir del sistema con el PNG adjunto (móvil).
    *
    * Debe llamarse dentro del clic: el navegador exige un gesto del usuario.
@@ -245,11 +272,18 @@
     var whatsapp = boton.getAttribute("data-whatsapp") || "";
     var texto = boton.getAttribute("data-texto") || mensajeDelEnlace(whatsapp);
     var etiqueta = boton.textContent;
+    // SRS v2.0, sección 1: el destinatario se toma del celular registrado en la
+    // factura activa (ya presente en `data-whatsapp`) y se sanea aquí, en el
+    // único punto que abre el chat. El mensaje no se toca: se reutiliza el mismo
+    // texto y solo se vuelve a codificar al construir la URL dirigida.
+    var numero = numeroDelEnlace(whatsapp);
 
-    if (boton.hasAttribute("data-sin-celular")) {
-      window.alert("Esta orden no tiene celular del cliente. Agrégalo en su ficha para abrir el chat.");
+    if (!numero) {
+      window.alert("El cliente no tiene un número de celular registrado. Agrégalo en su ficha para abrir el chat.");
       return;
     }
+
+    var enlaceDirecto = "https://wa.me/" + numero + "?text=" + encodeURIComponent(texto);
 
     if (imagenesListas[url] && compartirArchivo(imagenesListas[url], nombre, texto)) {
       return;
@@ -259,7 +293,7 @@
     boton.textContent = "Preparando…";
     var promesaImagen = imagenDe(url);
     var copiada = copiarImagen(promesaImagen);
-    window.open(whatsapp, "_blank");
+    window.open(enlaceDirecto, "_blank");
 
     Promise.all([promesaImagen, copiada])
       .then(function (resultado) {

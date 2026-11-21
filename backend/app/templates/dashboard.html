@@ -26,6 +26,12 @@
             <h3 class="tarjeta__titulo">{{ tarjeta.titulo }}</h3>
             <p class="tarjeta__descripcion">{{ tarjeta.descripcion }}</p>
             <span class="tarjeta__accion">Abrir módulo →</span>
+            {% if tarjeta.clave == 'comentarios' %}
+              {# SRS v2.0, sección 5.5: badge circular con los pendientes. #}
+              <span class="tarjeta__badge{% if comentarios_pendientes > 0 %} tarjeta__badge--activo{% endif %}"
+                    data-contador-comentarios
+                    aria-label="{{ comentarios_pendientes }} solicitudes pendientes">{{ comentarios_pendientes }}</span>
+            {% endif %}
           </a>
         {% else %}
           <article class="tarjeta tarjeta--{{ tarjeta.acento }} tarjeta--inactiva" aria-disabled="true">
@@ -49,4 +55,21 @@
       <li><span>Tope auxilio de transporte</span><strong>{{ parametros.tope_auxilio_transporte | cop }}</strong></li>
     </ul>
   </section>
+
+  {# SRS v2.0, sección 5.1: fila inferior centrada solo para usuarios estándar.
+     En móvil se ven las dos opciones separadas por una línea; en escritorio
+     solo «Ayuda y comentarios». No se toca la navegación superior. #}
+  {% if not usuario.es_administrador %}
+    <section class="ayuda-inicio" aria-label="Ayuda e invitaciones">
+      <a class="ayuda-inicio__opcion" href="{{ url_for('ver_ayuda') }}">
+        <span class="ayuda-inicio__icono" aria-hidden="true">?</span>
+        Ayuda y comentarios <span class="ayuda-inicio__flecha" aria-hidden="true">›</span>
+      </a>
+      <span class="ayuda-inicio__separador" aria-hidden="true"></span>
+      <button class="ayuda-inicio__opcion ayuda-inicio__opcion--movil" type="button" data-invitar-amigos>
+        <span class="ayuda-inicio__icono" aria-hidden="true">♡</span>
+        Invitar amigos <span class="ayuda-inicio__flecha" aria-hidden="true">›</span>
+      </button>
+    </section>
+  {% endif %}
 {% endblock %}

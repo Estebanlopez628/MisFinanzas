@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block titulo %}Comentarios y Reportes{% endblock %}
+
+{% block contenido %}
+  <section class="heroe heroe--compacto">
+    <h1 class="heroe__titulo">📮 Comentarios y Reportes</h1>
+    <p class="heroe__subtitulo">
+      Solicitudes y fallas reportadas por los usuarios. Pendientes: <strong data-pendientes>{{ pendientes }}</strong>.
+    </p>
+  </section>
+
+  <div class="acciones-formulario acciones-volver">
+    <a class="boton boton--secundario boton--pequeno" href="{{ url_for('ver_dashboard') }}">← Volver al inicio</a>
+  </div>
+
+  {% if reportes %}
+    <div class="tabla-contenedor tabla-escritorio">
+      <table class="tabla tabla--tarjetas tabla--comentarios">
+        <thead>
+          <tr>
+            <th scope="col">Usuario</th>
+            <th scope="col">Fecha</th>
+            <th scope="col">Tipo</th>
+            <th scope="col">Módulo</th>
+            <th scope="col">Dispositivo</th>
+            <th scope="col">Descripción</th>
+            <th scope="col">Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for reporte in reportes %}
+            <tr data-reporte-fila data-id="{{ reporte.id }}">
+              <td data-etiqueta="Usuario">
+                <strong>{{ reporte.usuario }}</strong><br />
+                <small>{{ reporte.correo }}</small>
+              </td>
+              <td data-etiqueta="Fecha">{{ reporte.fecha_creacion[:10] }}</td>
+              <td data-etiqueta="Tipo">{{ etiquetas_tipo.get(reporte.tipo_reporte, reporte.tipo_reporte) }}</td>
+              <td data-etiqueta="Módulo">{{ reporte.modulo }}</td>
+              <td data-etiqueta="Dispositivo">{{ reporte.dispositivo }}</td>
+              <td data-etiqueta="Descripción">{{ reporte.descripcion }}</td>
+              <td data-etiqueta="Estado">
+                <select class="campo__control campo__control--compacto" data-estado-reporte
+                        aria-label="Estado del reporte de {{ reporte.usuario }}">
+                  {% for estado in estados %}
+                    <option value="{{ estado }}" {% if estado == reporte.estado %}selected{% endif %}>{{ estado }}</option>
+                  {% endfor %}
+                </select>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="tabla__vacia">Aún no hay reportes de usuarios.</p>
+  {% endif %}
+
+  <div class="alerta alerta--error" data-comentario-error role="alert" hidden></div>
+{% endblock %}
+
+{% block scripts %}
+  <script src="{{ url_for('estaticos', path='js/comentarios.js') }}" defer></script>
+{% endblock %}

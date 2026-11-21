@@ -21,72 +21,117 @@
     <div class="alerta alerta--error" role="alert">{{ error }}</div>
   {% endif %}
 
-  <div class="rejilla-paneles">
-    <section class="panel">
-      <h2 class="panel__titulo">Balance de cartera</h2>
-      <p class="panel__descripcion">
-        Cada barra muestra un valor en pesos. Los déficits salen a la izquierda, en rojo, con signo menos.
-      </p>
-      <ul class="barras-balance">
-        {% for barra in barras %}
-          <li class="barra-balance">
-            <div class="barra-balance__cabecera">
-              <span>{{ barra.etiqueta }}</span>
-              <strong class="{{ barra.clase }}">{{ barra.texto }}</strong>
-            </div>
-            <div class="barra-balance__pista{% if barra.hay_negativos %} barra-balance__pista--centro{% endif %}"
-                 role="img" aria-label="{{ barra.etiqueta }}: {{ barra.texto }}">
-              <span class="barra-balance__barra"
-                    style="left: {{ barra.izquierda }}%; width: {{ barra.ancho }}%; background: {{ barra.color }}"></span>
-            </div>
-          </li>
-        {% endfor %}
-      </ul>
-    </section>
+  {# SRS v2.0, sección 4: tarjeta única con tres bloques. En escritorio A y B
+     van lado a lado y C ocupa toda la fila inferior; en móvil se apilan. #}
+  <section class="panel panel--balance-cartera">
+    <h2 class="panel__titulo">BALANCE DE CARTERA Y EFECTIVO</h2>
+    <p class="panel__descripcion">Análisis de lo que tienes en la calle y tu dinero en caja.</p>
 
-    <section class="panel">
-      <h2 class="panel__titulo">Cartera frente a deuda</h2>
-      {% if segmentos %}
-        <div class="dona-contenedor" data-dona-contenedor>
-          <div class="dona">
-            <svg viewBox="0 0 42 42" class="dona__svg" role="img"
-                 aria-label="Cartera por cobrar frente a deuda con el proveedor">
-              <circle cx="21" cy="21" r="15.9155" fill="transparent" class="dona__fondo" stroke-width="6" />
-              {% for arco in segmentos %}
-                <circle class="dona__arco" tabindex="0" cx="21" cy="21" r="15.9155" fill="transparent" stroke-width="6"
-                        style="stroke: {{ arco.color }}"
-                        stroke-dasharray="{{ arco.longitud }} {{ 100 - arco.longitud }}"
-                        stroke-dashoffset="{{ arco.desplazamiento }}"
-                        transform="rotate(-90 21 21)"
-                        data-etiqueta="{{ arco.etiqueta }}"
-                        data-porcentaje="{{ arco.porcentaje }} %"
-                        data-valor="{{ arco.valor }}">
-                  <title>{{ arco.etiqueta }}: {{ arco.valor }} ({{ arco.porcentaje }} %)</title>
-                </circle>
-              {% endfor %}
-            </svg>
-            {# El balance va al centro con signo y color: verde a favor, rojo en déficit. #}
-            <div class="dona__centro">
-              <strong class="dona__centro-valor {{ balance_clase }}" data-centro-valor
-                      data-valor-defecto="{{ balance_texto }}">{{ balance_texto }}</strong>
-              <span class="dona__centro-etiqueta" data-centro-etiqueta data-etiqueta-defecto="balance">balance</span>
-              <span class="dona__centro-detalle" data-centro-detalle></span>
-            </div>
-          </div>
-          <ul class="dona__leyenda">
-            {% for arco in segmentos %}
-              <li data-leyenda-etiqueta="{{ arco.etiqueta }}">
-                <span class="dona__muestra" style="background: {{ arco.color }}"></span>
-                {{ arco.etiqueta }}: <strong class="{{ arco.clase }}">{{ arco.valor }}</strong> ({{ arco.porcentaje }} %)
-              </li>
-            {% endfor %}
-          </ul>
+    <div class="balance-cartera">
+      <section class="balance-bloque" aria-labelledby="titulo-bloque-a">
+        <h3 class="balance-bloque__titulo" id="titulo-bloque-a">LO QUE ESTÁ EN LA CALLE (Cuentas)</h3>
+        <ul class="balance-barras">
+          {% for barra in balance_bloques.bloque_a %}
+            <li class="balance-barra">
+              <div class="balance-barra__cabecera">
+                <span>{{ barra.etiqueta }}</span>
+                <strong class="{{ barra.clase }}">{{ barra.texto }}</strong>
+              </div>
+              <div class="balance-barra__pista" role="img" aria-label="{{ barra.etiqueta }}: {{ barra.texto }}">
+                <span class="balance-barra__eje" aria-hidden="true"></span>
+                <span class="balance-barra__barra balance-barra__barra--{{ barra.direccion }}"
+                      style="width: {{ barra.ancho }}%; background: {{ barra.color }}"></span>
+              </div>
+              {% if barra.nota %}<p class="balance-barra__nota">{{ barra.nota }}</p>{% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+      </section>
+
+      <section class="balance-bloque" aria-labelledby="titulo-bloque-b">
+        <h3 class="balance-bloque__titulo" id="titulo-bloque-b">TU BOLSILLO (Efectivo hoy)</h3>
+        <ul class="balance-barras">
+          {% for barra in balance_bloques.bloque_b %}
+            <li class="balance-barra">
+              <div class="balance-barra__cabecera">
+                <span>{{ barra.etiqueta }}</span>
+                <strong class="{{ barra.clase }}">{{ barra.texto }}</strong>
+              </div>
+              <div class="balance-barra__pista" role="img" aria-label="{{ barra.etiqueta }}: {{ barra.texto }}">
+                <span class="balance-barra__eje" aria-hidden="true"></span>
+                <span class="balance-barra__barra balance-barra__barra--{{ barra.direccion }}"
+                      style="width: {{ barra.ancho }}%; background: {{ barra.color }}"></span>
+              </div>
+            </li>
+          {% endfor %}
+        </ul>
+      </section>
+
+      <section class="balance-bloque balance-bloque--final" aria-labelledby="titulo-bloque-c">
+        <h3 class="balance-bloque__titulo" id="titulo-bloque-c">RESULTADO FINAL ESPERADO</h3>
+        <div class="balance-final">
+          <span>{{ balance_bloques.bloque_c.etiqueta }}</span>
+          <strong class="balance-final__valor {{ balance_bloques.bloque_c.clase }}">{{ balance_bloques.bloque_c.texto }}</strong>
         </div>
-      {% else %}
-        <p class="tabla__vacia">Aún no hay cartera ni deuda con el proveedor para graficar.</p>
-      {% endif %}
-    </section>
-  </div>
+        <div class="balance-barra__pista" role="img"
+             aria-label="{{ balance_bloques.bloque_c.etiqueta }}: {{ balance_bloques.bloque_c.texto }}">
+          <span class="balance-barra__eje" aria-hidden="true"></span>
+          <span class="balance-barra__barra balance-barra__barra--{{ balance_bloques.bloque_c.direccion }}"
+                style="width: {{ balance_bloques.bloque_c.ancho }}%; background: {{ balance_bloques.bloque_c.color }}"></span>
+        </div>
+        <p class="balance-final__mensaje">{{ balance_bloques.mensaje }}</p>
+      </section>
+    </div>
+  </section>
+
+  {# Comparativa temporal cartera/deuda: se conserva el indicador histórico de
+     la vista (dona y balance con signo) junto al panel de tres bloques. #}
+  <section class="panel">
+    <h2 class="panel__titulo">Cartera frente a deuda</h2>
+    {% if segmentos %}
+      <div class="dona-contenedor" data-dona-contenedor>
+        <div class="dona">
+          <svg viewBox="0 0 42 42" class="dona__svg" role="img"
+               aria-label="Cartera por cobrar frente a deuda con el proveedor">
+            <circle cx="21" cy="21" r="15.9155" fill="transparent" class="dona__fondo" stroke-width="6" />
+            {% for arco in segmentos %}
+              <circle class="dona__arco" tabindex="0" cx="21" cy="21" r="15.9155" fill="transparent" stroke-width="6"
+                      style="stroke: {{ arco.color }}"
+                      stroke-dasharray="{{ arco.longitud }} {{ 100 - arco.longitud }}"
+                      stroke-dashoffset="{{ arco.desplazamiento }}"
+                      transform="rotate(-90 21 21)"
+                      data-etiqueta="{{ arco.etiqueta }}"
+                      data-porcentaje="{{ arco.porcentaje }} %"
+                      data-valor="{{ arco.valor }}">
+                <title>{{ arco.etiqueta }}: {{ arco.valor }} ({{ arco.porcentaje }} %)</title>
+              </circle>
+            {% endfor %}
+          </svg>
+          <div class="dona__centro">
+            <strong class="dona__centro-valor {{ balance_clase }}" data-centro-valor
+                    data-valor-defecto="{{ balance_texto }}">{{ balance_texto }}</strong>
+            <span class="dona__centro-etiqueta" data-centro-etiqueta data-etiqueta-defecto="balance">balance</span>
+            <span class="dona__centro-detalle" data-centro-detalle></span>
+          </div>
+        </div>
+        <ul class="dona__leyenda">
+          {% for arco in segmentos %}
+            <li data-leyenda-etiqueta="{{ arco.etiqueta }}">
+              <span class="dona__muestra" style="background: {{ arco.color }}"></span>
+              {{ arco.etiqueta }}: <strong class="{{ arco.clase }}">{{ arco.valor }}</strong> ({{ arco.porcentaje }} %)
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% else %}
+      <p class="tabla__vacia">Aún no hay cartera ni deuda con el proveedor para graficar.</p>
+    {% endif %}
+    <div class="barras-balance" hidden aria-hidden="true">
+      {% for barra in barras %}
+        <span>{{ barra.etiqueta }} {{ barra.texto }}</span>
+      {% endfor %}
+    </div>
+  </section>
 
   <div class="rejilla-paneles">
     <section class="panel">

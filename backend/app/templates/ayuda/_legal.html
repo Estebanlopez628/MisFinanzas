@@ -1,0 +1,21 @@
+{#
+  Modal legal compartido por «Ayuda y comentarios» y la pantalla de ingreso.
+  El texto es literal de la SRS v2.0, sección 5.3: no se parafrasea ni se
+  acorta. Se usa un <dialog> nativo: `app.js` lo abre con `showModal()` desde
+  cualquier `[data-abrir-dialogo="dialogo-legal"]`, centrado en el viewport.
+#}
+<dialog class="dialogo-legal" id="dialogo-legal" aria-labelledby="titulo-legal">
+  <div class="dialogo-legal__cabecera">
+    <h2 class="dialogo-legal__titulo" id="titulo-legal">Condiciones y Política de privacidad</h2>
+    <button class="dialogo-legal__cerrar" type="button" data-cerrar-dialogo aria-label="Cerrar">×</button>
+  </div>
+  <div class="dialogo-legal__cuerpo">
+    <h3>CONDICIONES DE USO Y POLÍTICA DE PRIVACIDAD — MISFINANZAS (Última actualización: Noviembre 2026)</h3>
+    <p><strong>1. Naturaleza del Servicio:</strong> MisFinanzas es una herramienta digital diseñada para ayudarte a organizar tus finanzas personales, controlar tus ingresos, gastos fijos, deducciones de nómina, trabajos extras, deudas y atajos de pago. Los indicadores, gráficos y recomendaciones del Consejero tienen carácter estrictamente informativo y de apoyo organizacional, sin constituir asesoría financiera, contable o tributaria profesional.</p>
+    <p><strong>2. Datos que Recopilamos:</strong> (a) Datos de identificación: Cuando inicias sesión mediante Google (OAuth), únicamente recibimos tu nombre, dirección de correo electrónico y foto de perfil para crear y autenticar tu cuenta. Nunca tenemos acceso a tu contraseña de Google. (b) Información financiera ingresada por ti: Los montos de ingresos, categorías de gastos fijos, deducciones, trabajos extras, deudas y atajos de pago que registras dentro de la aplicación se almacenan exclusivamente para mostrarte tus propios reportes, gráficos y análisis de liquidez.</p>
+    <p><strong>3. Uso y Confidencialidad de tu Información:</strong> Tus registros financieros son estrictamente privados. No vendemos, alquilamos ni compartimos tus datos personales ni tus movimientos financieros con terceros, entidades bancarias ni redes publicitarias. Los reportes enviados a través de la opción 'Envía comentarios' se utilizan únicamente para diagnosticar fallas técnicas o implementar mejoras en la plataforma.</p>
+    <p><strong>4. Seguridad y Almacenamiento:</strong> Tu información se transmite mediante conexiones cifradas (HTTPS) y se resguarda en servidores con control de acceso autenticado, garantizando que cada usuario solo pueda visualizar y modificar sus propios registros.</p>
+    <p><strong>5. Control Total sobre tus Datos:</strong> Como usuario tienes control absoluto sobre tu información: puedes editar o eliminar cualquier ingreso, gasto, deducción, deuda o atajo de pago en cualquier momento desde los módulos correspondientes. Si deseas solicitar la eliminación definitiva de tu cuenta y de todos tus registros asociados, puedes pedirlo directamente desde la sección Ayuda y comentarios > Envía comentarios.</p>
+    <p><strong>6. Aceptación:</strong> Al iniciar sesión y utilizar MisFinanzas, aceptas estas condiciones de uso y el tratamiento de tus datos conforme a lo aquí descrito.</p>
+  </div>
+</dialog>

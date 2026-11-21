@@ -13,7 +13,7 @@ from datetime import date
 from decimal import Decimal
 
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.core import categorias as catalogo
 from app.core.numeros import redondear_dinero
@@ -143,6 +143,7 @@ def listar_gastos(
     mes: int | None = None,
     quincena: int | None = None,
     excluir_vinculados: bool = False,
+    solo_vinculados: bool = False,
 ) -> list[Gasto]:
     """Lista los gastos del usuario, opcionalmente filtrados por mes y quincena.
 
@@ -154,11 +155,16 @@ def listar_gastos(
         quincena: `1` o `2` para limitar a esa quincena; `None` sin filtro.
         excluir_vinculados: Si es `True`, omite los gastos que pagan una deuda:
             su cuota ya se contabiliza en la categoría 8 de la dona.
+        solo_vinculados: Si es `True`, devuelve únicamente los gastos con
+            `id_deuda`. Sirve para mostrarlos en la lista sin sumarlos dos veces.
 
     Returns:
-        Lista ordenada por fecha descendente.
+        Lista ordenada por fecha descendente. La deuda vinculada viene cargada
+        con un `LEFT OUTER JOIN`, de modo que `gasto.deuda` expone `acreedor` y
+        `cuota_mensual` sin una consulta por fila. La carga es de uno a uno, así
+        que no duplica filas ni montos.
     """
-    consulta = select(Gasto).where(
+    consulta = select(Gasto).options(joinedload(Gasto.deuda)).where(
         Gasto.id_usuario == id_usuario,
         # SRS v1.7: los pagos de trabajos extras viven en `gastos` solo para
         # reutilizar la fila con check; no son gastos ni restan del sueldo.
@@ -172,8 +178,69 @@ def listar_gastos(
         consulta = consulta.where(Gasto.quincena == quincena)
     if excluir_vinculados:
         consulta = consulta.where(Gasto.id_deuda.is_(None))
+    if solo_vinculados:
+        consulta = consulta.where(Gasto.id_deuda.is_not(None))
     consulta = consulta.order_by(Gasto.fecha.desc())
     return list(bd.scalars(consulta))
+
+
+def serializar_gasto(gasto: Gasto) -> dict[str, object]:
+    """Expone un gasto fijo con los datos de la deuda vinculada (SRS v2.0).
+
+    El valor devuelto es el de la **deuda** cuando existe vínculo: así la lista
+    siempre muestra la cuota vigente aunque el gasto se haya guardado con otro
+    monto antes de vincularlo. Los totales de dona y consejero no se recalculan
+    aquí; siguen usando `excluir_vinculados=True` en `capacidad.py` y
+    `quincenas.py` para no contar la cuota dos veces.
+
+    Args:
+        gasto: Gasto con la relación `deuda` cargada.
+
+    Returns:
+        Diccionario con los campos visibles en la lista y los de la deuda.
+    """
+    deuda = gasto.deuda
+    return {
+        "id_gasto": gasto.id_gasto,
+        "descripcion": gasto.descripcion,
+        "categoria": gasto.categoria,
+        "valor": str(deuda.cuota_mensual) if deuda and deuda.cuota_mensual else str(gasto.valor),
+        "es_fijo": gasto.es_fijo,
+        "fecha": gasto.fecha.isoformat(),
+        "quincena": gasto.quincena,
+        "id_deuda": gasto.id_deuda,
+        "acreedor_deuda": deuda.acreedor if deuda else None,
+        "cuota_deuda": str(deuda.cuota_mensual) if deuda and deuda.cuota_mensual else None,
+        "pagado": gasto.pagado,
+        "check_visible": gasto.check_visible,
+    }
+
+
+def listar_gastos_con_deuda(
+    bd: Session,
+    id_usuario: str,
+    anio: int | None = None,
+    mes: int | None = None,
+) -> list[dict[str, object]]:
+    """Lista los gastos fijos del usuario con la cuota de su deuda vinculada.
+
+    Es la forma que deben usar los endpoints GET que alimentan la interfaz:
+    incluye los registros con `id_deuda` (que antes parecían desaparecer) y trae
+    `cuota_mensual` y `acreedor` mediante el `JOIN` de `listar_gastos`.
+
+    Args:
+        bd: Sesión de base de datos.
+        id_usuario: Dueño de los gastos.
+        anio: Año a filtrar; `None` para todos.
+        mes: Mes a filtrar (1–12); requiere `anio`.
+
+    Returns:
+        Lista de diccionarios serializados.
+    """
+    return [
+        serializar_gasto(gasto)
+        for gasto in listar_gastos(bd, id_usuario, anio, mes)
+    ]
 
 
 def total_gastos_mes(bd: Session, id_usuario: str, anio: int, mes: int) -> Decimal:

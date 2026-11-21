@@ -28,8 +28,10 @@ from app.dependencias import OnboardingRequerido, SesionRequerida
 from app.routers import (
     admin,
     auth,
+    ayuda,
     chancucos,
     deudas,
+    feedback,
     finanzas,
     gastos,
     incapacidades,
@@ -201,6 +203,7 @@ def crear_aplicacion() -> FastAPI:
     aplicacion.include_router(vistas.router)
     aplicacion.include_router(pwa.router)
     aplicacion.include_router(auth.router)
+    aplicacion.include_router(ayuda.router)
     aplicacion.include_router(perfil.router)
     aplicacion.include_router(admin.router)
     aplicacion.include_router(finanzas.router)
@@ -211,6 +214,7 @@ def crear_aplicacion() -> FastAPI:
     aplicacion.include_router(deudas.router)
     aplicacion.include_router(trabajos.router)
     aplicacion.include_router(olb_byte.router)
+    aplicacion.include_router(feedback.router)
 
     return aplicacion
 

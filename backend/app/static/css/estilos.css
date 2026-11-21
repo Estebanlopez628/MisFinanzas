@@ -1256,6 +1256,12 @@ a.tarjeta:focus-visible {
   font-weight: 600;
 }
 
+.vinculo-deuda__nota {
+  margin: 8px 0 0;
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
 .edicion-gasto__formulario {
   position: absolute;
   right: 0;
@@ -2222,6 +2228,39 @@ textarea.campo__control {
   border-left-color: var(--accent-amber);
   background: rgba(245, 158, 11, 0.08);
   color: #fde68a;
+}
+
+/* SRS v2.0, sección 2.2: banner de regreso al formulario de origen. */
+.banner-volver-deuda {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  margin-bottom: 18px;
+  border: 1px solid rgba(2, 132, 199, 0.55);
+  border-left: 4px solid var(--accent-blue);
+  border-radius: 12px;
+  background: rgba(2, 132, 199, 0.12);
+}
+
+.banner-volver-deuda__texto {
+  margin: 0;
+  flex: 1 1 260px;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+}
+
+@media (max-width: 640px) {
+  .banner-volver-deuda {
+    align-items: stretch;
+  }
+
+  .banner-volver-deuda .boton {
+    width: 100%;
+    text-align: center;
+  }
 }
 
 .resultado-principal--compacto {
@@ -3418,6 +3457,124 @@ strong.valor-negativo.recibo__cifra--saldo {
   background: rgba(248, 250, 252, 0.6);
 }
 
+/* SRS v2.0, sección 4: balance de cartera y efectivo en tres bloques. */
+.panel--balance-cartera {
+  margin-bottom: 18px;
+}
+
+.balance-cartera {
+  display: grid;
+  gap: 22px;
+}
+
+.balance-bloque {
+  min-width: 0;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.balance-bloque__titulo {
+  margin: 0 0 14px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--accent-blue);
+  text-transform: uppercase;
+}
+
+.balance-barras {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 14px;
+}
+
+.balance-barra__cabecera {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 6px;
+  font-size: 0.88rem;
+}
+
+.balance-barra__cabecera strong {
+  white-space: nowrap;
+  font-size: 0.95rem;
+}
+
+.balance-barra__pista {
+  position: relative;
+  height: 14px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.15);
+}
+
+.balance-barra__eje {
+  position: absolute;
+  left: 50%;
+  top: -3px;
+  bottom: -3px;
+  width: 2px;
+  background: rgba(248, 250, 252, 0.55);
+}
+
+.balance-barra__barra {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  min-width: 2px;
+  border-radius: 999px;
+}
+
+.balance-barra__barra--derecha {
+  left: 50%;
+}
+
+.balance-barra__barra--izquierda {
+  right: 50%;
+}
+
+.balance-barra__nota {
+  margin: 6px 0 0;
+  font-size: 0.74rem;
+  color: var(--text-muted);
+}
+
+.balance-final {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 8px;
+  font-size: 0.95rem;
+}
+
+.balance-final__valor {
+  font-size: 1.25rem;
+}
+
+.balance-final__mensaje {
+  margin: 12px 0 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--text-primary);
+}
+
+@media (min-width: 768px) {
+  .balance-cartera {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .balance-bloque--final {
+    grid-column: 1 / -1;
+    border-top: 1px solid rgba(148, 163, 184, 0.25);
+  }
+}
+
 @media (max-width: 760px) {
   .cobro-opciones {
     grid-template-columns: minmax(0, 1fr);
@@ -4499,4 +4656,237 @@ dialog.detalle-orden {
   z-index: 50;
   max-width: calc(100vw - 2rem);
   max-height: calc(100vh - 2rem);
+}
+
+/* ---------- SRS v2.0: ayuda, badge administrativo e invitación ---------- */
+.tarjeta {
+  position: relative;
+}
+
+.tarjeta__badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.25);
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 26px;
+  text-align: center;
+}
+
+.tarjeta__badge--activo {
+  background: var(--accent-red);
+  color: #fff;
+}
+
+.ayuda-inicio {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin: 24px auto 8px;
+  padding: 12px 16px;
+  width: fit-content;
+  max-width: 100%;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 999px;
+  background: rgba(30, 41, 59, 0.6);
+}
+
+.ayuda-inicio__opcion {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  border: 0;
+  background: none;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.ayuda-inicio__icono {
+  color: var(--accent-blue);
+  font-weight: 700;
+}
+
+.ayuda-inicio__flecha {
+  color: var(--text-muted);
+}
+
+.ayuda-inicio__separador {
+  width: 1px;
+  height: 20px;
+  background: rgba(148, 163, 184, 0.4);
+}
+
+@media (min-width: 768px) {
+  .ayuda-inicio__opcion--movil,
+  .ayuda-inicio__separador {
+    display: none;
+  }
+}
+
+.ayuda-cabecera {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 18px;
+  text-align: center;
+}
+
+.ayuda-cabecera__logo {
+  width: 72px;
+  height: 72px;
+  border-radius: 16px;
+}
+
+.ayuda-cabecera__nombre {
+  margin: 0;
+  font-size: 1.6rem;
+}
+
+.ayuda-cabecera__version {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.ayuda-tarjeta {
+  margin-bottom: 16px;
+}
+
+.ayuda-tarjeta--legal {
+  background: rgba(15, 23, 42, 0.55);
+}
+
+.ayuda-opcion + .ayuda-opcion {
+  border-top: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.ayuda-opcion__boton {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 4px;
+  border: 0;
+  background: none;
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+}
+
+.ayuda-opcion__boton span:first-child {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.ayuda-opcion__boton small {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.ayuda-pie {
+  margin: 16px 0 0;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+dialog.dialogo-ayuda,
+dialog.dialogo-legal {
+  z-index: 50;
+  width: min(680px, calc(100vw - 2rem));
+  max-width: calc(100vw - 2rem);
+  max-height: calc(100vh - 2rem);
+  padding: 0;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 14px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+.dialogo-legal__cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.dialogo-legal__titulo {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.dialogo-legal__cerrar {
+  border: 0;
+  background: none;
+  color: var(--text-muted);
+  font-size: 1.3rem;
+  cursor: pointer;
+}
+
+.dialogo-legal__cuerpo {
+  padding: 16px 18px;
+  overflow-y: auto;
+  line-height: 1.55;
+  font-size: 0.9rem;
+}
+
+.dialogo-legal__cuerpo p {
+  margin: 0 0 12px;
+}
+
+.ayuda-acordeon {
+  margin-bottom: 12px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.ayuda-acordeon summary {
+  padding: 8px 0;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.acceso-nuevo__legal {
+  margin: 14px 0 0;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  text-align: center;
+}
+
+.enlace {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--accent-blue);
+  text-decoration: underline;
+  cursor: pointer;
+  font: inherit;
+}
+
+.tabla--comentarios {
+  min-width: 0;
+}
+
+.tabla--comentarios td {
+  vertical-align: top;
+}
+
+.campo__control--compacto {
+  min-height: 34px;
+  padding: 4px 8px;
+  font-size: 0.82rem;
 }

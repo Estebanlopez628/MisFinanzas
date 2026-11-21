@@ -1008,6 +1008,11 @@ def resumen_cartera(bd: Session) -> dict[str, Decimal]:
         "balance": redondear_dinero(cartera_clientes - deuda),
         "caja_recaudada": redondear_dinero(caja),
         "efectivo_libre": redondear_dinero(caja - deuda),
+        # SRS v2.0, sección 4: se exponen las dos piernas del efectivo para
+        # calcular «dinero neto en caja» sin contar las devoluciones, que son un
+        # indicador distinto. Los cinco indicadores anteriores no se tocan.
+        "abonos_clientes": redondear_dinero(abonos_clientes),
+        "abonos_proveedor": redondear_dinero(abonos_proveedor),
     }
 
 
@@ -1047,6 +1052,137 @@ def clasificar_saldo(valor: Decimal) -> tuple[str, str]:
     if valor == CERO:
         return formatear_pesos(valor), ""
     return formatear_pesos(valor), "valor-positivo"
+
+
+def _barra_divergente(
+    etiqueta: str,
+    valor: Decimal,
+    color: str,
+    color_negativo: str,
+    referencia: Decimal,
+    nota: str = "",
+) -> dict[str, object]:
+    """Prepara una barra horizontal respecto al eje central $0.
+
+    Args:
+        etiqueta: Texto visible a la izquierda de la barra.
+        valor: Monto con signo; negativo apunta a la izquierda y se pinta en rojo.
+        color: Color de la barra cuando el valor es positivo o cero.
+        color_negativo: Color obligatorio cuando el valor es negativo.
+        referencia: Valor mayor del bloque, para escalar el ancho.
+        nota: Texto auxiliar opcional bajo la barra.
+
+    Returns:
+        Diccionario con etiqueta, texto, color, ancho y dirección.
+    """
+    negativo = valor < CERO
+    ancho = 0
+    if referencia > CERO:
+        # El eje está al 50 %: el ancho máximo de cada lado es 50 %.
+        ancho = int(min(abs(valor) / referencia * 50, 50))
+    texto, clase = clasificar_saldo(valor)
+    return {
+        "etiqueta": etiqueta,
+        "texto": texto,
+        "clase": clase,
+        "color": color_negativo if negativo else color,
+        "ancho": ancho,
+        "direccion": "izquierda" if negativo else "derecha",
+        "nota": nota,
+    }
+
+
+def balance_tres_bloques(resumen: dict[str, Decimal]) -> dict[str, object]:
+    """Construye los datos del panel «Balance de Cartera y Efectivo» (SRS v2.0).
+
+    Bloque A (cuentas): cartera por cobrar, deuda con el proveedor y saldo neto.
+    Bloque B (efectivo): entradas menos salidas, y caja menos deudas.
+    Bloque C: utilidad proyectada al liquidar las cuentas pendientes.
+
+    Los saldos negativos apuntan a la izquierda y se pintan siempre en rojo; el
+    resto apunta a la derecha. El texto del bloque C se elige según el estado de
+    la cartera y la caja, con los importes literales de la SRS.
+
+    Args:
+        resumen: Indicadores devueltos por `resumen_cartera`.
+
+    Returns:
+        Diccionario con los tres bloques y el mensaje explicativo final.
+    """
+    cartera = redondear_dinero(resumen["cartera_clientes"])
+    deuda = redondear_dinero(resumen["deuda_proveedor"])
+    saldo_cartera = redondear_dinero(cartera - deuda)
+    caja = redondear_dinero(
+        resumen["abonos_clientes"] - resumen["abonos_proveedor"]
+    )
+    disponible = redondear_dinero(caja - deuda)
+    ganancia = redondear_dinero(saldo_cartera + caja)
+
+    referencia_a = max(cartera, deuda, abs(saldo_cartera), CERO)
+    referencia_b = max(abs(caja), abs(disponible), CERO)
+    bloque_a = [
+        _barra_divergente("Por cobrar a clientes", cartera, "#3B82F6", "#EF4444", referencia_a),
+        _barra_divergente("Por pagar a proveedores", deuda, "#F59E0B", "#EF4444", referencia_a),
+        _barra_divergente(
+            "Saldo neto de cartera",
+            saldo_cartera,
+            "#10B981",
+            "#EF4444",
+            referencia_a,
+            "Resultado de lo que te deben menos lo que debes",
+        ),
+    ]
+    bloque_b = [
+        _barra_divergente(
+            "Dinero neto en caja (Entradas - Salidas)",
+            caja,
+            "#10B981",
+            "#EF4444",
+            referencia_b,
+        ),
+        _barra_divergente(
+            "Disponible real (Caja - Deudas)",
+            disponible,
+            "#10B981",
+            "#EF4444",
+            referencia_b,
+        ),
+    ]
+    signo = "+" if ganancia >= CERO else "−"
+    texto_ganancia = f"{signo}{formatear_pesos(abs(ganancia))}"
+    bloque_c = {
+        "etiqueta": "Ganancia final proyectada",
+        "texto": texto_ganancia,
+        "clase": "valor-positivo" if ganancia >= CERO else "valor-negativo",
+        "color": "#10B981" if ganancia >= CERO else "#EF4444",
+        "direccion": "derecha" if ganancia >= CERO else "izquierda",
+        "ancho": 50,
+    }
+
+    if cartera > CERO and caja < CERO:
+        mensaje = (
+            f"Al cobrar los {formatear_pesos(cartera)} pendientes, recuperarás "
+            f"tu inversión adelantada de {formatear_pesos(abs(caja))} y te "
+            f"quedarán {formatear_pesos(ganancia)} de ganancia"
+        )
+    elif cartera == CERO:
+        mensaje = (
+            f"Has recaudado el 100% de tus ventas; tu utilidad real obtenida "
+            f"es de {formatear_pesos(ganancia)}"
+        )
+    else:
+        mensaje = (
+            f"Te faltan {formatear_pesos(cartera)} por cobrar y tienes "
+            f"{formatear_pesos(caja)} en caja; tu utilidad proyectada es de "
+            f"{formatear_pesos(ganancia)}"
+        )
+
+    return {
+        "bloque_a": bloque_a,
+        "bloque_b": bloque_b,
+        "bloque_c": bloque_c,
+        "mensaje": mensaje,
+    }
 
 
 def barras_balance(resumen: dict[str, Decimal]) -> list[dict[str, object]]:

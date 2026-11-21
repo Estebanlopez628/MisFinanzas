@@ -68,7 +68,8 @@
       <select class="campo__control" name="id_deuda" data-deuda-opciones>
         <option value="">Elige una deuda…</option>
         {% for deuda in deudas %}
-          <option value="{{ deuda.id_deuda }}" {% if deuda.id_deuda == seleccionada %}selected{% endif %}>
+          <option value="{{ deuda.id_deuda }}" data-cuota="{{ (deuda.cuota_mensual or 0) | cop(false) }}"
+                  {% if deuda.id_deuda == seleccionada %}selected{% endif %}>
             {{ deuda.acreedor }} · cuota {{ (deuda.cuota_mensual or 0) | cop }} · {{ deuda.cuotas_pendientes }} cuota(s)
           </option>
         {% endfor %}
@@ -99,7 +100,8 @@
       <select class="campo__control" name="id_deuda" data-deuda-opciones>
         <option value="">Elige una deuda…</option>
         {% for deuda in deudas %}
-          <option value="{{ deuda.id_deuda }}" {% if deuda.id_deuda == seleccionada %}selected{% endif %}>
+          <option value="{{ deuda.id_deuda }}" data-cuota="{{ (deuda.cuota_mensual or 0) | cop(false) }}"
+                  {% if deuda.id_deuda == seleccionada %}selected{% endif %}>
             {{ deuda.acreedor }} · cuota {{ (deuda.cuota_mensual or 0) | cop }} · {{ deuda.cuotas_pendientes }} cuota(s)
           </option>
         {% endfor %}
@@ -109,6 +111,13 @@
         se cuenta una sola vez dentro de «Créditos y Obligaciones».
       </span>
     </label>
+    {# SRS v2.0, sección 3.2: la cuota se edita en el módulo de deudas, nunca aquí. #}
+    <p class="ayuda vinculo-deuda__nota" data-nota-sincronizada hidden>
+      El valor de este gasto está sincronizado con tu deuda
+      <strong data-nota-acreedor></strong>. Para modificar el monto de la cuota,
+      edítalo directamente en
+      <a class="enlace" href="/deudas">Registro y Detalles de deudas</a>.
+    </p>
     {% if not deudas %}
       <span class="ayuda">Aún no hay deudas mensuales activas que puedas vincular.</span>
     {% endif %}

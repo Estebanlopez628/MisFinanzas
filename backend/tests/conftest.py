@@ -53,6 +53,7 @@ from app.modelos import (
     DeduccionFija,
     Deuda,
     DevolucionCliente,
+    FeedbackUsuario,
     Gasto,
     GarantiaProveedor,
     Incapacidad,
@@ -102,6 +103,7 @@ MODELOS_TRANSACCIONALES = (
     Chancuco,
     TrabajoExtra,
     PerfilFinanciero,
+    FeedbackUsuario,
     Auditoria,
 )
 

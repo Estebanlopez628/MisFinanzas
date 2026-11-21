@@ -94,6 +94,31 @@ def ver_gastos(
     return plantillas.TemplateResponse(request, "gastos/index.html", contexto)
 
 
+@router.get("/gastos/api/fijos", name="api_gastos_fijos")
+def api_gastos_fijos(
+    usuario: UsuarioSesion = Depends(obtener_usuario_actual),
+    bd: Session = Depends(obtener_bd),
+    anio: int | None = None,
+    mes: int | None = None,
+) -> dict[str, object]:
+    """Devuelve los gastos fijos, incluidos los vinculados a deudas (SRS v2.0).
+
+    La consulta trae la cuota y el acreedor de la deuda mediante el `JOIN` de
+    `gastos.listar_gastos`. La anti-duplicación de la dona y el consejero no se
+    toca: esos servicios siguen excluyendo los vínculos de sus propios totales.
+
+    Args:
+        usuario: Usuario autenticado.
+        bd: Sesión de base de datos.
+        anio: Año a filtrar; si falta se listan todos.
+        mes: Mes a filtrar; requiere `anio`.
+
+    Returns:
+        Diccionario con la lista ``gastos`` serializada.
+    """
+    return {"gastos": gastos.listar_gastos_con_deuda(bd, usuario.id_usuario, anio, mes)}
+
+
 @router.post("/gastos", name="crear_gasto", response_model=None)
 def crear_gasto(
     request: Request,

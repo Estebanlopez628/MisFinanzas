@@ -105,8 +105,8 @@ Principios que explican el resto del código:
 
 ### Resumen del inventario
 
-- **106 archivos** documentados: 53 Python, 37 plantillas Jinja2 y 16 recursos estáticos.
-- **66 clases**, **572 funciones** y **40 métodos** de clase.
+- **114 archivos** documentados: 56 Python, 40 plantillas Jinja2 y 18 recursos estáticos.
+- **69 clases**, **594 funciones** y **43 métodos** de clase.
 
 ### Detalle por archivo
 
@@ -116,13 +116,13 @@ Principios que explican el resto del código:
 - **`dependencias.py`** · 226 líneas — Dependencias de sesión y autorización (RBAC).
   - Clases: `SesionRequerida`, `OnboardingRequerido`, `UsuarioSesion`
   - Funciones: `_usuario_desde_token`, `usuario_opcional`, `obtener_usuario_actual`, `obtener_usuario_sin_onboarding`, `exigir_administrador`, `exigir_olb_byte`
-- **`esquemas.py`** · 405 líneas — Esquemas Pydantic de las entradas de gastos, deducciones y deudas.
-  - Clases: `_FormularioBase`, `GastoNuevo`, `GastoEditar`, `DeduccionNueva`, `DeduccionEditar`, `DeudaNueva`, `DeudaEditar`
+- **`esquemas.py`** · 482 líneas — Esquemas Pydantic de las entradas de gastos, deducciones y deudas.
+  - Clases: `_FormularioBase`, `GastoNuevo`, `GastoEditar`, `DeduccionNueva`, `DeduccionEditar`, `DeudaNueva`, `DeudaEditar`, `FeedbackNuevo`
   - Funciones: `_categoria_cerrada`, `_exigir_deuda_si_es_credito`, `validar_formulario`
-- **`main.py`** · 220 líneas — Punto de entrada de la aplicación **Finanzas y OLB_BYTE**.
+- **`main.py`** · 224 líneas — Punto de entrada de la aplicación **Finanzas y OLB_BYTE**.
   - Funciones: `_pide_json`, `_manejar_sesion_requerida`, `_manejar_onboarding`, `_pagina_dato_invalido`, `_manejar_dato_invalido`, `crear_aplicacion`
-- **`modelos.py`** · 766 líneas — Modelos SQLAlchemy derivados de `diccionario_datos.md`.
-  - Clases: `Usuario`, `PerfilFinanciero`, `PeriodoNomina`, `RegistroHorasExtra`, `Incapacidad`, `SaldoIncapacidad`, `Gasto`, `Deuda`, `PagoDeuda`, `Chancuco`, `ProyeccionAhorro`, `AbonoProyeccion`, `DeduccionFija`, `Cliente`, `Producto`, `Venta`, `VentaDetalle`, `Abono`, `DevolucionCliente`, `MovimientoProveedor`, `GarantiaProveedor`, `TrabajoExtra`, `Auditoria`
+- **`modelos.py`** · 819 líneas — Modelos SQLAlchemy derivados de `diccionario_datos.md`.
+  - Clases: `Usuario`, `PerfilFinanciero`, `PeriodoNomina`, `RegistroHorasExtra`, `Incapacidad`, `SaldoIncapacidad`, `Gasto`, `Deuda`, `PagoDeuda`, `Chancuco`, `ProyeccionAhorro`, `AbonoProyeccion`, `DeduccionFija`, `Cliente`, `Producto`, `Venta`, `VentaDetalle`, `Abono`, `DevolucionCliente`, `MovimientoProveedor`, `GarantiaProveedor`, `TrabajoExtra`, `Auditoria`, `FeedbackUsuario`
   - Funciones: `nuevo_id`
 
 #### `backend/app/core/`
@@ -156,18 +156,23 @@ Principios que explican el resto del código:
   - Funciones: `_contexto_admin`, `ver_usuarios`, `cambiar_rol_usuario`, `cambiar_estado_usuario`
 - **`auth.py`** · 569 líneas — Rutas de autenticación: login, registro y cierre de sesión.
   - Funciones: `_clave_intento`, `_establecer_cookie`, `ver_login`, `procesar_login`, `cerrar_sesion`, `ver_registro`, `procesar_registro`, `ver_olvide_contrasena`, `_login_con_error`, `iniciar_google`, `callback_google`, `_base_publica`, `_pagina_olvide`, `_cuenta_del_enlace`, `_pagina_restablecer`, `procesar_olvide_contrasena`, `ver_restablecer_contrasena`, `procesar_restablecer_contrasena`
+- **`ayuda.py`** · 50 líneas — Vista «Ayuda y comentarios» del usuario estándar (SRS v2.0, Fase C).
+  - Funciones: `ver_ayuda`
 - **`chancucos.py`** · 250 líneas — Panel de Chancucos: referencias de pago con copiado y botón *Pagar*.
   - Funciones: `ver_chancucos`, `crear_chancuco`, `editar_chancuco`, `alternar_favorito`, `eliminar_chancuco`
-- **`deudas.py`** · 281 líneas — Rutas del módulo "Registro y Detalles de deudas".
+- **`deudas.py`** · 291 líneas — Rutas del módulo "Registro y Detalles de deudas".
   - Funciones: `_contexto`, `ver_deudas`, `crear_deuda`, `editar_deuda`, `eliminar_deuda`
+- **`feedback.py`** · 211 líneas — API de reportes de soporte «Ayuda y comentarios» (SRS v2.0, Fase A).
+  - Clases: `CambioEstado`
+  - Funciones: `enviar_feedback`, `contar_feedback_pendiente`, `listar_feedback`, `actualizar_estado_feedback`, `ver_comentarios`
 - **`finanzas.py`** · 1084 líneas — Módulo "Mis Finanzas": liquidación, guardado e historial.
   - Clases: `EntradaFinanzas`
   - Funciones: `_texto`, `_entero`, `_descuento_por_fechas`, `_leer_entradas`, `_liquidar`, `_deducciones_segun_quincena`, `_datos_formateados`, `_detalle_formateado`, `_detalle_incapacidad_json`, `_fijas_del_periodo`, `_total_fijas`, `_total_deducciones_ley`, `_saldos_quincenas`, `_contexto_calculadora`, `ver_finanzas`, `procesar_finanzas`, `calcular_finanzas_json`, `guardar_liquidacion`, `_filas_historial`, `_etiqueta_periodo`, `ver_historial`, `exportar_historial_csv`, `imprimir_periodo`, `eliminar_periodo`
-- **`gastos.py`** · 504 líneas — Rutas del presupuesto de gastos.
-  - Funciones: `_etiquetas_quincena`, `_parsear_fecha`, `ver_gastos`, `crear_gasto`, `editar_gasto`, `_volver`, `eliminar_gasto`, `marcar_pagado_gasto`, `desmarcar_pagado_gasto`, `registrar_abono_gasto`, `limpiar_pagos_gastos`
+- **`gastos.py`** · 529 líneas — Rutas del presupuesto de gastos.
+  - Funciones: `_etiquetas_quincena`, `_parsear_fecha`, `ver_gastos`, `api_gastos_fijos`, `crear_gasto`, `editar_gasto`, `_volver`, `eliminar_gasto`, `marcar_pagado_gasto`, `desmarcar_pagado_gasto`, `registrar_abono_gasto`, `limpiar_pagos_gastos`
 - **`incapacidades.py`** · 310 líneas — Rutas del módulo de incapacidades.
   - Funciones: `_valores_del_formulario`, `_parsear_fecha`, `_validar`, `_contexto`, `ver_incapacidades`, `calcular_incapacidad_formulario`, `guardar_incapacidad`, `eliminar_incapacidad`
-- **`olb_byte.py`** · 1268 líneas — Módulo comercial OLB_BYTE: ventas a crédito, cobros, anulaciones y factura.
+- **`olb_byte.py`** · 1271 líneas — Módulo comercial OLB_BYTE: ventas a crédito, cobros, anulaciones y factura.
   - Clases: `DetalleVenta`
   - Funciones: `_detalle_de_venta`, `_filas_del_formulario`, `_lineas_desde_filas`, `_contexto`, `_contexto_pendientes`, `_pagina_con_error`, `ver_olb_byte`, `_datos_pago`, `_pago_desde_datos`, `registrar_venta`, `registrar_abono`, `_contexto_cobro`, `ver_cobro`, `ver_pendientes`, `ver_recibo`, `anular_venta`, `registrar_devolucion`, `ver_factura_hoja`, `ver_recibo_hoja`, `ver_factura`, `_contexto_cartera`, `ver_cartera`, `registrar_abono_proveedor`, `_pagina_error_pdf`, `_entero_opcional`, `_filtro_desde_url`, `_parametros_filtro`, `_url_analitica`, `ver_analitica`, `exportar_analitica_csv`, `_contexto_garantias`, `ver_garantias`, `registrar_garantia`, `actualizar_garantia`
 - **`perfil.py`** · 310 líneas — Rutas del perfil financiero y del cambio de contraseña.
@@ -178,7 +183,7 @@ Principios que explican el resto del código:
   - Funciones: `manifiesto`, `service_worker`, `favicon`
 - **`trabajos.py`** · 317 líneas — Rutas del módulo "Trabajos Extras".
   - Funciones: `_fecha_opcional`, `_contexto`, `ver_trabajos_extras`, `crear_trabajo`, `cambiar_estado`, `eliminar_trabajo`, `agregar_gasto_trabajo`
-- **`vistas.py`** · 207 líneas — Rutas de navegación principal y endpoint de salud.
+- **`vistas.py`** · 223 líneas — Rutas de navegación principal y endpoint de salud.
   - Funciones: `iniciales_alias`, `contexto_base`, `verificar_salud`, `ver_dashboard`
 
 #### `backend/app/servicios/`
@@ -203,9 +208,9 @@ Principios que explican el resto del código:
   - Funciones: `repartir_libre`, `es_credito`, `_porcentaje`, `agrupar_por_categoria`, `resumen_categorias`, `_arcos_categoria`, `_repartir_arcos`, `_meses_equivalentes`, `_etiqueta_mes`, `_mover_mes`, `meses_siguientes`, `deudas_por_terminar`, `proyeccion_capacidad`, `_mensaje_semaforo`, `capacidad_trabajos`, `capacidad_endeudamiento`
 - **`chancucos.py`** · 276 líneas — Referencias de pago rápido ("Chancucos").
   - Funciones: `_normalizar_dia`, `_normalizar_dias`, `_validar_url`, `crear_chancuco`, `actualizar_chancuco`, `listar_chancucos`, `alternar_favorito`, `eliminar_chancuco`
-- **`comercial.py`** · 1451 líneas — Operación comercial de OLB_BYTE: ventas a crédito, cartera y deuda con proveedor.
+- **`comercial.py`** · 1587 líneas — Operación comercial de OLB_BYTE: ventas a crédito, cartera y deuda con proveedor.
   - Clases: `LineaVenta`, `PagoInicial`
-  - Funciones: `ahora_tienda`, `normalizar_telefono`, `_dinero`, `_sumar_meses`, `_texto_garantia`, `_validar_linea`, `_cliente_para_venta`, `_siguiente_numero_orden`, `deuda_proveedor`, `_registrar_movimiento_proveedor`, `registrar_cliente`, `listar_clientes`, `buscar_clientes`, `registrar_venta`, `obtener_venta`, `_venta_activa`, `_recalcular_estado_pago`, `_validar_metodo`, `registrar_abono`, `_devuelto`, `_registrar_devolucion`, `anular_venta`, `registrar_devolucion`, `pendiente_devolver`, `obtener_abono`, `abonos_de_venta`, `buscar_cartera`, `registrar_abono_proveedor`, `listar_movimientos_proveedor`, `_texto_busqueda`, `filtrar_ventas`, `listar_ventas`, `cartera`, `resumen_cartera`, `estado_garantia`, `clasificar_saldo`, `barras_balance`, `segmentos_dona`, `etiqueta_producto`, `opciones_garantia`, `registrar_garantia`, `actualizar_estado_garantia`, `listar_garantias`, `garantia_vigente_al_reclamo`, `ranking_fallas`, `formatear_pesos`, `texto_compartir_factura`, `enlace_whatsapp_factura`, `enlace_whatsapp_recibo`, `enlace_whatsapp_cobro`, `_enlace_wa`
+  - Funciones: `ahora_tienda`, `normalizar_telefono`, `_dinero`, `_sumar_meses`, `_texto_garantia`, `_validar_linea`, `_cliente_para_venta`, `_siguiente_numero_orden`, `deuda_proveedor`, `_registrar_movimiento_proveedor`, `registrar_cliente`, `listar_clientes`, `buscar_clientes`, `registrar_venta`, `obtener_venta`, `_venta_activa`, `_recalcular_estado_pago`, `_validar_metodo`, `registrar_abono`, `_devuelto`, `_registrar_devolucion`, `anular_venta`, `registrar_devolucion`, `pendiente_devolver`, `obtener_abono`, `abonos_de_venta`, `buscar_cartera`, `registrar_abono_proveedor`, `listar_movimientos_proveedor`, `_texto_busqueda`, `filtrar_ventas`, `listar_ventas`, `cartera`, `resumen_cartera`, `estado_garantia`, `clasificar_saldo`, `_barra_divergente`, `balance_tres_bloques`, `barras_balance`, `segmentos_dona`, `etiqueta_producto`, `opciones_garantia`, `registrar_garantia`, `actualizar_estado_garantia`, `listar_garantias`, `garantia_vigente_al_reclamo`, `ranking_fallas`, `formatear_pesos`, `texto_compartir_factura`, `enlace_whatsapp_factura`, `enlace_whatsapp_recibo`, `enlace_whatsapp_cobro`, `_enlace_wa`
 - **`consejero.py`** · 526 líneas — Consejero financiero del excedente mensual (SRS v1.8).
   - Clases: `Consejo`, `_EstadoDeuda`
   - Funciones: `_cuotas_mensuales`, `_estados`, `_ordenar`, `_simular`, `_altura`, `_serie_comparada`, `_meses_de_texto`, `_consejo_deuda`, `_consejo_ahorro`, `consejo_financiero`
@@ -218,8 +223,10 @@ Principios que explican el resto del código:
   - Funciones: `_limpiar_periodicidad`, `_sumar_periodo`, `_periodos_transcurridos`, `_validar_datos_plan`, `validar_plan`, `_valor_presente`, `tasa_implicita_simulada`, `amortizacion_simulada`, `deuda_vinculable`, `crear_deuda`, `actualizar_deuda`, `listar_deudas`, `listar_vinculables`, `listar_pagos`, `_aplicar_pago`, `aplicar_cuotas_vencidas`, `proyeccion_deuda`, `cuota_mensual_equivalente`, `eliminar_deuda`, `resumen_deudas`
 - **`factura_pdf.py`** · 159 líneas — Factura de OLB_BYTE: datos, logos, diseño compartido y conversión a PDF (ADR-36).
   - Funciones: `nombre_archivo`, `logo_como_data_uri`, `datos_factura`
-- **`gastos.py`** · 359 líneas — Gastos y presupuesto del usuario.
-  - Funciones: `valor_computable`, `crear_gasto`, `_normalizar_quincena`, `listar_gastos`, `total_gastos_mes`, `total_gastos_quincena`, `total_gastos_periodo`, `resumen_por_categoria`, `eliminar_gasto`, `actualizar_gasto`
+- **`feedback.py`** · 222 líneas — Reportes de soporte del módulo «Ayuda y comentarios» (SRS v2.0, Fase A).
+  - Funciones: `detectar_dispositivo`, `tipos_reporte_para_ui`, `crear_reporte`, `contar_pendientes`, `listar_reportes`, `cambiar_estado`, `serialize`
+- **`gastos.py`** · 426 líneas — Gastos y presupuesto del usuario.
+  - Funciones: `valor_computable`, `crear_gasto`, `_normalizar_quincena`, `listar_gastos`, `serializar_gasto`, `listar_gastos_con_deuda`, `total_gastos_mes`, `total_gastos_quincena`, `total_gastos_periodo`, `resumen_por_categoria`, `eliminar_gasto`, `actualizar_gasto`
 - **`incapacidad.py`** · 361 líneas — Incapacidades laborales y reparto de días por mes calendario (Tarea 4).
   - Clases: `_AcumuladorMes`, `TramoMensual`, `SaldoIncapacidad`, `LiquidacionIncapacidad`, `ResultadoMesIncapacidad`
   - Funciones: `_validar_rango`, `calcular_incapacidad`, `liquidar_mes_incapacidad`
@@ -232,7 +239,7 @@ Principios que explican el resto del código:
   - Funciones: `obtener_perfil`, `perfil_configurado`, `_validar_porcentaje`, `parsear_dia_quincena`, `validar_dias_quincena`, `dias_quincena`, `etiquetas_quincena`, `validar_quincenas`, `calcular_quincenas_desde_neto`, `guardar_perfil`, `porcentajes_quincena`, `sueldo_del_periodo`
 - **`periodos.py`** · 191 líneas — Persistencia y consulta de periodos de nómina.
   - Funciones: `obtener_periodo`, `listar_periodos`, `horas_del_periodo`, `guardar_liquidacion`, `eliminar_periodo`
-- **`quincenas.py`** · 232 líneas — Resumen de quincenas para el panel izquierdo de "Mis Finanzas".
+- **`quincenas.py`** · 246 líneas — Resumen de quincenas para el panel izquierdo de "Mis Finanzas".
   - Clases: `ResumenQuincena`
   - Funciones: `_etiqueta`, `resumen_quincenas`, `_a_decimal`
 - **`recibo_imagen.py`** · 74 líneas — Recibo de abono de OLB_BYTE como imagen PNG para compartir por WhatsApp (RF-07).
@@ -250,21 +257,23 @@ Principios que explican el resto del código:
 
 #### `backend/app/static/css/`
 
-- **`estilos.css`** · 4569 líneas — Fondo y superficies
+- **`estilos.css`** · 4902 líneas — Fondo y superficies
 - **`factura-olb.css`** · 711 líneas — Sello de Anulada si aplica
 
 #### `backend/app/static/js/`
 
-- **`app.js`** · 360 líneas — Mejoras progresivas globales.
+- **`app.js`** · 370 líneas — Mejoras progresivas globales.
   - Funciones: `restaurarBotonCopiar`, `confirmarCopia`, `copiar`, `seleccionarManual`, `cerrarEdicion`
-- **`categorias.js`** · 296 líneas — Selector cerrado de categorías, vinculación con deudas y conservación de
-  - Funciones: `datosFormulario`, `restaurarDatos`, `cerrar`, `abrir`, `alternar`, `sincronizar`, `sincronizar`
-- **`deudas.js`** · 120 líneas — Interacción de filas con modal centrado (SRS v1.9, secciones 2.3 y 3.3).
-  - Funciones: `esMovil`, `sacarDeLaTabla`, `devolverALaTabla`, `vigilarPortabilidad`, `cerrarOtras`, `conectarFilas`
+- **`ayuda.js`** · 61 líneas — Envío de reportes desde «Ayuda y comentarios» (SRS v2.0, sección 5.3).
+- **`categorias.js`** · 433 líneas — Selector cerrado de categorías, vinculación con deudas y conservación de
+  - Funciones: `datosFormulario`, `restaurarDatos`, `cerrar`, `abrir`, `alternar`, `sincronizar`, `sincronizar`, `vinculado`, `sincronizarValor`
+- **`comentarios.js`** · 46 líneas — Cambio de estado en el panel administrativo de reportes (SRS v2.0, 5.5).
+- **`deudas.js`** · 148 líneas — Interacción de filas con modal centrado (SRS v1.9, secciones 2.3 y 3.3).
+  - Funciones: `esMovil`, `sacarDeLaTabla`, `devolverALaTabla`, `vigilarPortabilidad`, `cerrarOtras`, `conectarFilas`, `pendienteDeDeuda`
 - **`dona.js`** · 122 líneas — Interacción de las gráficas tipo dona (capacidad de endeudamiento y cartera).
   - Funciones: `centro`, `mostrar`, `restaurar`, `iniciar`
-- **`factura.js`** · 330 líneas — Factura y recibo de abono de OLB_BYTE como imagen PNG (ADR-50).
-  - Funciones: `descargar`, `esperar`, `esperarImagen`, `montarHoja`, `crearPng`, `imagenDe`, `copiarImagen`, `mensajeDelEnlace`, `compartirArchivo`, `enviarPorWhatsapp`, `descargarImagen`
+- **`factura.js`** · 364 líneas — Factura y recibo de abono de OLB_BYTE como imagen PNG (ADR-50).
+  - Funciones: `descargar`, `esperar`, `esperarImagen`, `montarHoja`, `crearPng`, `imagenDe`, `copiarImagen`, `mensajeDelEnlace`, `numeroDelEnlace`, `compartirArchivo`, `enviarPorWhatsapp`, `descargarImagen`
 - **`finanzas.js`** · 540 líneas — Mejora progresiva de "Mis Finanzas".
   - Funciones: `leerFormulario`, `pintarCampo`, `pintarDeduccion`, `pintarValorAuxilio`, `pintarErrores`, `pintarDetalle`, `pintarAuxilio`, `aplicarResultado`, `pintarTramos`, `pintarIncapacidad`, `pintarQuincenas`, `pintarTexto`, `calcular`, `programarCalculo`, `marcarCambios`, `aplicarPlantilla`
 - **`incapacidades.js`** · 129 líneas — Cálculo automático del módulo de incapacidades (SRS v1.5).
@@ -277,7 +286,7 @@ Principios que explican el resto del código:
   - Funciones: `alternarSubgrupo`, `conocePorcentajes`, `actualizar`, `leerPorcentaje`, `escribirPorcentaje`
 - **`presupuesto.js`** · 170 líneas — Mejora progresiva de "Gastos y Presupuesto" (SRS v1.3, bloque 3).
   - Funciones: `aNumero`, `formatear`, `usaAmbasQuincenas`, `duplicaElMonto`, `sincronizarModo`, `actualizarTotal`
-- **`sw.js`** · 82 líneas — Service worker de la PWA.
+- **`sw.js`** · 84 líneas — Service worker de la PWA.
 
 #### `backend/app/static/js/vendor/`
 
@@ -285,17 +294,23 @@ Principios que explican el resto del código:
 
 #### `backend/app/templates/`
 
-- **`_categorias.html`** · 117 líneas
+- **`_categorias.html`** · 126 líneas
 - **`base.html`** · 120 líneas — Vista previa al compartir el enlace (WhatsApp, redes). La URL pública sale de APP_URL;
-- **`dashboard.html`** · 53 líneas — Plantilla: Panel principal
-- **`login.html`** · 88 líneas — Plantilla: Iniciar sesión
+- **`dashboard.html`** · 76 líneas — Plantilla: Panel principal
+- **`login.html`** · 95 líneas — Plantilla: Iniciar sesión
 - **`olvide_contrasena.html`** · 29 líneas — Plantilla: Recuperar contraseña
 - **`registro.html`** · 59 líneas — Plantilla: Crear cuenta
 - **`restablecer_contrasena.html`** · 37 líneas — Plantilla: Nueva contraseña
 
 #### `backend/app/templates/admin/`
 
+- **`comentarios.html`** · 65 líneas — Plantilla: Comentarios y Reportes
 - **`usuarios.html`** · 76 líneas — Plantilla: Usuarios
+
+#### `backend/app/templates/ayuda/`
+
+- **`_legal.html`** · 22 líneas
+- **`index.html`** · 134 líneas — Plantilla: Ayuda y comentarios
 
 #### `backend/app/templates/chancucos/`
 
@@ -308,14 +323,14 @@ Principios que explican el resto del código:
 
 #### `backend/app/templates/deudas/`
 
-- **`index.html`** · 224 líneas — Plantilla: Registro y Detalles de deudas
+- **`index.html`** · 232 líneas — Plantilla: Registro y Detalles de deudas
 
 #### `backend/app/templates/finanzas/`
 
 - **`_capacidad.html`** · 132 líneas
-- **`_gasto_fijo.html`** · 194 líneas
+- **`_gasto_fijo.html`** · 206 líneas
 - **`_subnav.html`** · 27 líneas — Subnavegación interna del módulo "Mis Finanzas" (SRS v1.3, bloque 1).
-- **`index.html`** · 757 líneas — Plantilla: Mis Finanzas
+- **`index.html`** · 760 líneas — Plantilla: Mis Finanzas
 
 #### `backend/app/templates/gastos/`
 
@@ -338,7 +353,7 @@ Principios que explican el resto del código:
 - **`_recibo.html`** · 47 líneas
 - **`_subnav.html`** · 30 líneas — Subnavegación de OLB_BYTE con el mismo componente que Mis Finanzas (subnav-finanzas).
 - **`analitica.html`** · 315 líneas — Plantilla: Analítica
-- **`cartera.html`** · 178 líneas — Plantilla: Cartera y liquidez
+- **`cartera.html`** · 223 líneas — Plantilla: Cartera y liquidez
 - **`cobro.html`** · 93 líneas — Plantilla: Gestionar cobro
 - **`factura.html`** · 38 líneas — Plantilla: Factura No.
 - **`garantias.html`** · 148 líneas — Plantilla: Garantías
@@ -649,6 +664,22 @@ garantía; `registrar_venta` lee las filas del formulario (`_filas_del_formulari
 Sirve `manifest.webmanifest`, el service worker (`Cache-Control: no-cache` para
 que la actualización llegue) y el favicon.
 
+### `backend/app/routers/feedback.py`
+
+API del módulo «Ayuda y comentarios» (SRS v2.0, Fase A). `enviar_feedback` recibe
+el reporte en JSON y detecta el dispositivo desde el `User-Agent`, sin fiarse del
+cliente. `contar_feedback_pendiente` alimenta el badge circular de la tarjeta
+administrativa; `listar_feedback` y `actualizar_estado_feedback` gestionan el
+panel. Las tres rutas de administrador exigen `ADMIN_OLB` en servidor. Además
+sirve `GET /admin/comentarios`, la vista HTML del panel con el contador.
+
+### `backend/app/routers/ayuda.py`
+
+Vista «Ayuda y comentarios» (SRS v2.0, sección 5). `ver_ayuda` entrega la
+versión de la app, los tipos de reporte y el catálogo de módulos públicos del
+servicio de soporte; OLB_BYTE y facturación quedan fuera. El envío lo hace la
+API de `routers/feedback.py`.
+
 ### 5.4 Servicios de dominio
 
 ### `backend/app/servicios/__init__.py`
@@ -707,7 +738,9 @@ Panel izquierdo de Mis Finanzas. `resumen_quincenas` reparte el sueldo por los
 porcentajes del perfil, suma recargos en la quincena configurada, resta
 incapacidad, deducciones de ley (solo en la quincena marcada), fijas y gastos, y
 devuelve una `ResumenQuincena` por pago con saldo libre. `_etiqueta` nombra cada
-pago y `_a_decimal` normaliza entradas.
+pago y `_a_decimal` normaliza entradas. SRS v2.0: `gastos_vinculados` expone los
+gastos con `id_deuda` para que se pinten en la lista sin volver a sumarlos a
+`gastos` (anti-duplicación).
 
 ### `backend/app/servicios/gastos.py`
 
@@ -715,7 +748,11 @@ CRUD y agregados de gastos. `crear_gasto` valida monto/fecha y
 `_normalizar_quincena` acepta 1, 2 o `NULL` («todo el mes»). `listar_gastos`,
 `total_gastos_mes`, `total_gastos_quincena`, `total_gastos_periodo` y
 `resumen_por_categoria` alimentan vistas y diagnóstico; `actualizar_gasto`
-mantiene la quincena al editar.
+mantiene la quincena al editar. SRS v2.0 (Fase A): `listar_gastos` carga
+`Gasto.deuda` con `joinedload` (un `LEFT JOIN`, sin duplicar filas) y
+`serializar_gasto`/`listar_gastos_con_deuda` exponen `cuota_mensual` y `acreedor`
+en los GET, incluidos los registros con `id_deuda`. La anti-duplicación sigue en
+`capacidad.py` y `quincenas.py` vía `excluir_vinculados=True`.
 
 ### `backend/app/servicios/deducciones_fijas.py`
 
@@ -849,6 +886,15 @@ Bitácora de acciones sensibles. `registrar` inserta el evento (usuario, acción
 tabla, detalle) y `listar_eventos` los devuelve para consulta. Se llama desde los
 routers tras cada cambio relevante.
 
+### `backend/app/servicios/feedback.py`
+
+Reportes de soporte (SRS v2.0, Fase A). `detectar_dispositivo` lee el
+`User-Agent`; `crear_reporte` guarda tipo, módulo público, descripción,
+dispositivo y un snapshot de alias/correo con estado «Pendiente».
+`contar_pendientes`, `listar_reportes`, `cambiar_estado` y `serialize` sirven al
+panel administrativo. El catálogo de módulos excluye OLB_BYTE y facturación por
+la regla de separación estricta por rol.
+
 ### 5.5 Estáticos (`static/`)
 
 ### `backend/app/static/css/estilos.css`
@@ -879,7 +925,9 @@ el mismo `<details class="edicion-gasto--modal">`: `esMovil` limita el
 comportamiento a 640 px, `conectarFilas` conecta ambas filas, `cerrarOtras`
 evita apilar ventanas y se ignoran los clics dentro de formularios o controles.
 El cierre con «Cancelar», Escape o fondo lo hace `app.js`. Se carga en deudas y
-presupuesto, y se cachea en `sw.js`.
+presupuesto, y se cachea en `sw.js`. SRS v2.0 (sección 2.2): al cargar la vista
+lee `misfinanzas_pending_debt_link` y ajusta la etiqueta del banner de regreso
+con `origin_label`, sin alterar el `volver` que pinta el servidor.
 
 ### `backend/app/static/js/categorias.js`
 
@@ -892,7 +940,11 @@ guardar y muestra el acceso rápido a deudas. Al pulsar «Ve a registrar la deud
 se guardan los campos y el módulo de origen en `sessionStorage`; al volver con
 `?guardado_deuda=1` se restauran, se marca SI y se selecciona la deuda recién
 creada. Los formularios con `data-guardar-formulario` también conservan valores
-ante `?error…`. Sin JavaScript el servidor vuelve a validar todo.
+ante `?error…`. Sin JavaScript el servidor vuelve a validar todo. SRS v2.0: el
+ciclo usa una sola clave `misfinanzas_pending_debt_link` con
+`{origin_module, origin_label, origin_destino, form_data}` (la clave heredada
+`deuda-origen:` se sigue escribiendo como respaldo); al elegir deuda se copia su
+`data-cuota` al campo valor, que queda `readOnly` mientras haya vínculo.
 
 ### `backend/app/static/js/moneda.js`
 
@@ -987,7 +1039,18 @@ producción solo registra el fallo, sin contenido ni enlaces.
 
 ### `backend/app/static/js/factura.js`
 
-Acciones de la factura. Captura la hoja como PNG con `html-to-image` en el navegador (ADR-50). La imagen se prepara al cargar la página. «Compartir por WhatsApp»: en móvil abre la hoja de compartir del sistema con el PNG adjunto y el mensaje; en escritorio copia el PNG al portapapeles en el mismo clic, abre la conversación del número del cliente (wa.me/57…) y descarga el PNG. WhatsApp Web no admite adjuntos desde un enlace, por eso se pega con Ctrl+V. Si la orden no tiene celular, el botón avisa y no abre nada. «Descargar imagen» solo descarga el PNG (SRS v1.8).
+Acciones de la factura. Captura la hoja como PNG con `html-to-image` en el navegador (ADR-50). La imagen se prepara al cargar la página. «Compartir por WhatsApp»: en móvil abre la hoja de compartir del sistema con el PNG adjunto y el mensaje; en escritorio copia el PNG al portapapeles en el mismo clic, abre la conversación del número del cliente (wa.me/57…) y descarga el PNG. WhatsApp Web no admite adjuntos desde un enlace, por eso se pega con Ctrl+V. Si la orden no tiene celular, el botón avisa y no abre nada. «Descargar imagen» solo descarga el PNG (SRS v1.8). SRS v2.0 (sección 1): `numeroDelEnlace` limpia espacios, guiones, paréntesis y `+`, antepone `57` a los 10 dígitos y conserva los 12 que ya empiezan por 57; `enviarPorWhatsapp` abre `https://wa.me/<numero>?text=<encodeURIComponent(texto)>` con el mismo mensaje de siempre.
+
+### `backend/app/static/js/ayuda.js`
+
+Envía el formulario de «Envía comentarios» a `POST /feedback` con `fetch`, muestra
+el aviso de éxito o el error del servidor y deshabilita el botón mientras espera.
+El dispositivo lo detecta el servidor; aquí no se envía.
+
+### `backend/app/static/js/comentarios.js`
+
+Cambia el estado de un reporte desde el panel administrativo y actualiza en vivo
+el contador del badge de la tarjeta del dashboard al resolverse una solicitud.
 
 ### `backend/app/static/js/vendor/html-to-image.js`
 
@@ -1204,7 +1267,30 @@ eliminación o salto y ✔ de pago reversible. El desplegable lleva la clase
 `edicion-gasto--modal`, que en el celular lo convierte en una ventana centrada
 con fondo oscuro. No aplica reglas de negocio: solo
 pinta el estado que calculó el servidor. Lo consumen `finanzas/index.html` y
-`trabajos/index.html` para que ambas vistas sean idénticas.
+`trabajos/index.html` para que ambas vistas sean idénticas. SRS v2.0: cuando
+`gasto.id_deuda` existe muestra `gasto.deuda.cuota_mensual` como valor y
+conserva la descripción escrita por el usuario, sin añadir el acreedor a la fila
+(para no ensancharla); conserva check, lápiz y ×.
+
+### `backend/app/templates/ayuda/index.html`
+
+Vista «Ayuda y comentarios» (SRS v2.0, sección 5.3): cabecera con logo, nombre y
+versión; tarjeta de soporte con el acordeón del centro de ayuda (GUÍA A de
+instalación PWA y GUÍA B de preguntas frecuentes) y el modal de reportes; tarjeta
+legal con los modales de condiciones/privacidad y licencias; pie «© 2026
+MisFinanzas». Todos los textos son literales y solo mencionan módulos públicos.
+
+### `backend/app/templates/ayuda/_legal.html`
+
+Modal `<dialog>` compartido por la vista de ayuda y la pantalla de ingreso con el
+texto literal «CONDICIONES DE USO Y POLÍTICA DE PRIVACIDAD — MISFINANZAS».
+`app.js` lo abre desde cualquier `[data-abrir-dialogo="dialogo-legal"]`.
+
+### `backend/app/templates/admin/comentarios.html`
+
+Panel administrativo de reportes (SRS v2.0, 5.5): tabla con usuario y correo,
+fecha, tipo, módulo, dispositivo, descripción y selector de estado. Cada cambio
+llama a la API y actualiza el contador de pendientes del dashboard.
 
 ### `backend/app/templates/_categorias.html`
 

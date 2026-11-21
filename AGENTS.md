@@ -31,7 +31,7 @@ Plataforma web/móvil híbrida (PWA) con backend y frontend **100% Python**, arq
 
 ## 3. Roles & Control de Acceso
 
-- **`ADMIN_OLB`**: Propietario del sistema. Acceso total a los 4 módulos (`Mis Finanzas`, `OLB_BYTE`, `Registro y Detalles de deudas`, `Trabajos Extras`). La administración de cuentas se abre desde `Mi Perfil`. Desde SRS v1.8 los **Chancucos** (Atajos de Pago) ya no son exclusivos: cada usuario administra los suyos.
+- **`ADMIN_OLB`**: Propietario del sistema. Acceso total a los 4 módulos (`Mis Finanzas`, `OLB_BYTE`, `Registro y Detalles de deudas`, `Trabajos Extras`). La administración de cuentas se abre desde `Mi Perfil`. Desde SRS v1.8 los **Chancucos** (Atajos de Pago) ya no son exclusivos: cada usuario administra los suyos. Desde SRS v2.0 gestiona además **Comentarios y Reportes**, con un badge circular de solicitudes pendientes (UI en Fase C).
 - **`USER_FINANZAS`**: Usuario público. Acceso a `Mis Finanzas` (incluye sus submódulos, entre ellos **Configurar Atajos de Pago**), `Registro y Detalles de deudas` y `Trabajos Extras`, con anuncios no invasivos. `OLB_BYTE` sigue bloqueado a nivel de UI **y** de endpoint (403).
 - **Navegación (SRS v1.2):** el header contiene únicamente `Inicio`, `Mi Perfil` y `Salir`. El dashboard muestra 4 tarjetas; `OLB_BYTE` se omite por completo para `USER_FINANZAS`.
 
@@ -46,11 +46,12 @@ Plataforma web/móvil híbrida (PWA) con backend y frontend **100% Python**, arq
 ├── spec.md                             # Spec activa (corto alcance)
 ├── tasks.md                            # Backlog atómico activo
 ├── MEMORY.md                           # ADRs, decisiones y bitácora
-├── Guia.md                             # Manual por archivo y función (se regenera)
+├── Guia.md                             # Manual técnico por archivo y función (se regenera)
+├── USER_GUIDE.md                       # Manual de usuario (SRS v2.0, Fase D)
 ├── AGENTS.md                           # Este archivo
 ├── DESPLIEGUE.md                       # Guía de producción, respaldos y rollback
 ├── diccionario_datos.md                # Diccionario de datos (fuente para BD)
-├── especificaci_n_de_requisitos_de_software_srs.md   # SRS (v1.1.0 + v1.9)
+├── especificaci_n_de_requisitos_de_software_srs.md   # SRS (v1.1.0 + v1.9 + v2.0, §7)
 ├── .github/workflows/ci.yml            # compileall + pytest + prueba de respaldo
 └── backend/
     ├── requirements.txt
@@ -78,6 +79,8 @@ Plataforma web/móvil híbrida (PWA) con backend y frontend **100% Python**, arq
         ├── routers/
         │   ├── vistas.py               # Dashboard y `/salud`
         │   ├── auth.py                 # Login, registro, salida, rate limit y auditoría
+        │   ├── ayuda.py                # Vista «Ayuda y comentarios» (SRS v2.0)
+        │   ├── feedback.py             # API de reportes y panel administrativo (SRS v2.0)
         │   ├── perfil.py               # Onboarding y cambio de contraseña
         │   ├── admin.py                # Roles y estado de las cuentas
         │   ├── finanzas.py             # Calculadora, quincenas, historial y CSV
@@ -99,6 +102,7 @@ Plataforma web/móvil híbrida (PWA) con backend y frontend **100% Python**, arq
         │   ├── ahorro.py               # Metas de ahorro y alerta de liquidez (v1.3)
         │   ├── registro_incapacidades.py
         │   ├── gastos.py
+        │   ├── feedback.py             # Catálogo y persistencia de reportes (SRS v2.0)
         │   ├── chancucos.py
         │   ├── deudas.py
         │   ├── trabajos.py
@@ -115,6 +119,9 @@ Plataforma web/móvil híbrida (PWA) con backend y frontend **100% Python**, arq
         │   ├── dashboard.html
         │   ├── perfil/index.html
         │   ├── admin/usuarios.html
+        │   ├── admin/comentarios.html   # Panel de reportes (SRS v2.0)
+        │   ├── ayuda/index.html         # Centro de ayuda y textos legales (SRS v2.0)
+        │   ├── ayuda/_legal.html        # Modal legal compartido con el login
         │   ├── gastos/index.html
         │   ├── presupuesto/index.html  # Planificador de ahorro (v1.3)
         │   ├── historial/index.html    # Historial cronológico + versión imprimible
@@ -135,6 +142,8 @@ Plataforma web/móvil híbrida (PWA) con backend y frontend **100% Python**, arq
             ├── js/app.js               # Portapapeles, filas y service worker
             ├── js/perfil.js            # Modalidad quincenal y avisos
             ├── js/presupuesto.js       # Total proyectado y duración de la meta
+            ├── js/ayuda.js             # Envío de reportes (SRS v2.0)
+            ├── js/comentarios.js       # Cambio de estado y badge (SRS v2.0)
             ├── js/sw.js                # Caché solo de estáticos
             ├── manifest.webmanifest
             └── img/                    # Favicon e íconos PWA
@@ -151,6 +160,15 @@ Plataforma web/móvil híbrida (PWA) con backend y frontend **100% Python**, arq
 5. **Trazabilidad**: todo cambio relevante se registra en `MEMORY.md` (bitácora + ADR si aplica) y en este archivo (estado verificado).
 6. **El diccionario de datos (`diccionario_datos.md`) es la fuente única** para crear la base de datos. Ninguna tabla se crea sin estar documentada allí.
 7. **`Guia.md` es obligatoria y viva**: se reescribe en cada cambio con una ficha por archivo (propósito, reglas, dependencias) y el inventario automático de clases, funciones y métodos. Antes de cerrar cualquier bloque se ejecuta `python scripts\generar_guia.py` y `python scripts\generar_guia.py --verificar`; el verificador falla si un módulo, clase, función o método no tiene docstring, o si un archivo carece de ficha. Nunca se edita a mano el bloque entre `<!-- INVENTARIO:INICIO -->` y `<!-- INVENTARIO:FIN -->`.
+
+### 5.1 Reglas de no regresión (SRS v2.0, obligatorias)
+
+1. **Factura OLB_BYTE intacta:** no modificar diseño, cálculos, estados ni una sola palabra del mensaje compartido. Solo se saneó el destinatario del enlace de WhatsApp.
+2. **Vinculación de deudas intacta:** no tocar la pregunta SI/NO ni la validación de la categoría «Créditos y Obligaciones».
+3. **Separación por rol:** OLB_BYTE y facturación son exclusivos del administrador. Ninguna guía, FAQ, selector de reporte ni texto legal dirigido a `USER_FINANZAS` los menciona.
+4. **Anti-duplicación:** los gastos fijos con `id_deuda` se ven en todas las listas, pero su cuota no se suma dos veces en la dona ni en el consejero (`excluir_vinculados=True`).
+5. **Valor sincronizado:** el campo valor de un gasto vinculado se autocompleta con `cuota_mensual` y queda de solo lectura mientras exista el vínculo. La fila conserva la descripción del usuario y **no muestra el acreedor** para no ensanchar el cuadro.
+6. **Ubicación de ayuda:** fila inferior de Inicio («Ayuda y comentarios» | «Invitar amigos») solo para usuarios estándar; tarjeta «Comentarios y Reportes» con contador circular solo para el administrador, junto a «Trabajos Extras».
 
 ---
 
@@ -308,7 +326,7 @@ La configuración vive en `.vscode/launch.json`. También existe **Pruebas (pyte
 - [x] Verificación SRS v1.7: `python -m compileall` OK, **478 pruebas** con `pytest` en verde, `generar_guia.py --verificar` sin problemas (88 archivos con ficha). `sw.js` en `olb-finanzas-v16`.
 - [x] **Chancucos (Atajos de Pago) para todos los usuarios (2026-11-19):** rutas con `obtener_usuario_actual`, enlace del submenú visible a todos, cada usuario ve solo sus atajos. 521 pruebas en verde.
 - [x] **Acceso a OLB_BYTE por correo e inicio con Gmail (ADR-48, 2026-11-18):** `CORREOS_OLB_BYTE` y `exigir_olb_byte`; OAuth con Google sin dependencias nuevas.
-- [ ] **Despliegue en Render:** faltan variables de producción (`ENTORNO=produccion`, `CLAVE_SECRETA`, credenciales de Google) y migrar a PostgreSQL (Neon).
+- [x] **Despliegue en Render:** variables de producción configuradas por el propietario (`ENTORNO=produccion`, `CLAVE_SECRETA`, credenciales de Google) y base PostgreSQL en Neon con las migraciones aplicadas.
 - [x] **Ajuste móvil de la edición de gastos (ADR-30):** en pantallas de 640 px o menos el lápiz abre la edición como **ventana centrada** (fondo oscuro, scroll propio, cierre al tocar el fondo o con Escape) en vez del desplegable pegado a la derecha que se cortaba; `edicion-gasto--modal` en la macro `fila_gasto` y en las deducciones fijas, `sw.js` en `olb-finanzas-v17`. Medido en Chromium a 360/390/768/1280 px.
 - [ ] **SRS v1.7 — Revisión visual pendiente:** bloques A a G en 360/390/768/escritorio, incluida la gráfica del consejero en celular.
 - [x] **SRS OLB_BYTE v1.0 — Fase 0 (decisiones):** modelo sin inventario, anulación con devolución y sin reversa de deuda con proveedor, consecutivo desde 1, productos escritos a mano y motor PDF Playwright (ADR-35 y ADR-36, `diccionario_datos.md` §10).
@@ -360,8 +378,8 @@ La configuración vive en `.vscode/launch.json`. También existe **Pruebas (pyte
 - [ ] **Colores de la dona — revisión visual pendiente:** leyenda y centro de la dona en 360/390/1280 px.
 - [x] **SRS v1.8 — Base mínima de liquidez, deudas sin intereses y blindaje de entradas (ADR-53):** `BASE_MINIMA_LIQUIDEZ = $300.000` compartida por la dona, el consejero y el planificador; la dona muestra «Base mínima de liquidez» y «Disponible para abonar», y el consejo solo usa el remanente (por debajo se apaga con el mensaje de emergencia). Deudas sin tasa ni intereses: `cuota × cuotas` debe cuadrar con el total adeudado (tolerancia $1 por cuota). Orden por flujo de caja (más cuotas por delante si se cancela completa; si no, menor saldo). `parsear_porcentaje()` acepta «60», «60 %» y «60,5»; manejador global de `ValueError` y guardia numérica en `app.js`; abono de OLB_BYTE con saldo pendiente en el mensaje. Metas: «Quincena donde aplicaremos los pagos», selector de modo alineado y cinco abonos con scroll. Verificación: `compileall` OK y **559 pruebas** en verde. `sw.js` en `olb-finanzas-v35`.
 - [ ] **SRS v1.8 — Revisión visual pendiente:** alineación del selector de modo de «Ambas quincenas» y la caja de cinco abonos en 360/390/768/escritorio.
-- [x] **Neon — clave rotada y migraciones aplicadas (2026-11-20):** nueva `DATABASE_URL` guardada en `backend/.env` (no versionada); `aplicar_migraciones()` ejecutado contra Neon con conexión verificada y columnas `gastos.id_deuda`, `deducciones_fijas.categoria` e `id_deuda` confirmadas en `information_schema`. **[ ] Pendiente:** actualizar la variable `DATABASE_URL` en Render.
-- [ ] **Recuperación de contraseña — configuración pendiente:** definir en Render `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` y `APP_URL`; probar el correo real.
+- [x] **Neon — clave rotada y migraciones aplicadas (2026-11-20):** nueva `DATABASE_URL` guardada en `backend/.env` (no versionada) y en Render (confirmado por el propietario); `aplicar_migraciones()` ejecutado contra Neon con conexión verificada y columnas `gastos.id_deuda`, `deducciones_fijas.categoria` e `id_deuda` confirmadas en `information_schema`.
+- [x] **Recuperación de contraseña — configuración completada por el propietario:** `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` y `APP_URL` definidos en Render.
 - [ ] **OLB_BYTE — revisión visual pendiente:** Android con Chrome en HTTPS (contactos y compartir PDF) y la impresión de la factura.
 - [ ] **Fase 3 (opcional)** — Migración a PostgreSQL con Alembic y despliegue multi-instancia (ver `DESPLIEGUE.md` §11).
 - [x] **SRS v1.9 — Paso 1 (backend y base de datos, ADR-57):** catálogo cerrado de 8 categorías con colores exactos en `core/categorias.py`; columnas `gastos.id_deuda` y `deducciones_fijas.categoria`; migración idempotente en SQLite y PostgreSQL (`aplicar_migraciones()`, también usada por `migrar_a_neon.py`); esquemas Pydantic en `app/esquemas.py`; tasa implícita **simulada** por bisección sin cambiar la amortización (matizado después por ADR-58); dona agrupada por categorías con la categoría 8 alimentada por deudas activas y anti-duplicación de cuotas vinculadas; base mínima de $300.000 intacta en dona y consejero. Migraciones ejecutadas y verificadas en Neon con la URL nueva. Verificación: `compileall` OK, **630 pruebas** en verde y `generar_guia.py --verificar` sin problemas (103 archivos con ficha).
@@ -402,3 +420,8 @@ La configuración vive en `.vscode/launch.json`. También existe **Pruebas (pyte
 - [x] **Factura compatible con Safari (ADR-64) y tabla de deudas tipo Excel en móvil (2026-11-21):** la curva de la cabecera pasa a SVG y la hoja se convierte dos veces para que WebKit dibuje los logos; en móvil la cabecera de deudas queda fija y solo se desplaza el cuerpo (cuatro filas). `sw.js` en `olb-finanzas-v84`. Verificación: **679 pruebas** en verde, capturas en Chromium y WebKit. Pendiente: prueba en iPhone real y en Android.
 - [x] **Factura igual en PC y WhatsApp (ADR-63), tabla de deudas con cuatro filas en móvil y base mínima fuera de Trabajos Extras (2026-11-21):** la imagen compartida usa el diseño de escritorio (`@container`); en móvil la caja de deudas muestra cuatro filas con scroll interno y cabecera fija (ajusta ADR-62); la dona de Trabajos Extras ya no reserva los $300.000. `sw.js` en `olb-finanzas-v81`. Verificación: **679 pruebas** en verde. Pendiente: prueba en iPhone y Android.
 - [x] **Tabla de deudas contenida en móvil (ADR-61 y ADR-62):** en iOS la tabla se arrastraba fuera del panel. ADR-61 alineó el gesto con Analítica (`max-height: none`, cabecera `static`, sin `touch-action`), pero la causa real era el ensanche del layout: a 390 px, `window.innerWidth` y `documentElement.scrollWidth` pasaban a **827** aunque la caja recortara la tabla de 807 px, así que la página entera se paneaba y los toques se desviaban. ADR-62 aplica `contain: paint` en la caja dentro de `@media (max-width: 640px)` y `deudas.js` traslada el `<details>` de edición al `body` al abrirse y lo devuelve a su fila al cerrarse. Verificado contra la app real en 360/390/768/1280 px: viewport correcto, `scrollX = 0`, modal centrado y restaurado. `sw.js` en `olb-finanzas-v79`. Verificación: **678 pruebas** en verde.
+- [x] **SRS v2.0 — Fase A (backend y PostgreSQL, ADR-65):** tabla `feedback_usuarios` (diccionario §14) con snapshot de alias/correo, dispositivo detectado del `User-Agent` y estados `Pendiente`/`En revisión`/`Resuelto`. API `POST /feedback`, `GET /feedback/pendientes`, `GET /feedback` y `POST /feedback/{id}/estado` con RBAC estricto (403 para `USER_FINANZAS`). Catálogo de módulos sin OLB_BYTE ni facturación. `Gasto.deuda` se carga con `joinedload`; `listar_gastos_con_deuda()` y `GET /gastos/api/fijos` incluyen los vinculados con `cuota_mensual` y `acreedor`, sin tocar la anti-duplicación de dona/consejero. URL de Neon rotada en `backend/.env` (no versionada) y migraciones aplicadas en PostgreSQL. Verificación: `compileall` OK, **688 pruebas** en verde y `generar_guia.py --verificar` correcto (108 fichas).
+- [x] **SRS v2.0 — Fase B (correcciones frontend, ADR-66):** WhatsApp de la factura abre `wa.me/<numero normalizado +57>?text=<mensaje original>` sin cambiar diseño, cálculos, estados ni texto; retorno de deudas con `misfinanzas_pending_debt_link` y banner «← Volver a [origen] para completar el registro»; gastos vinculados visibles en Finanzas, Gastos y Trabajos Extras con la descripción del usuario y la cuota vigente (sin mostrar el acreedor en la fila, para no ensancharla), valor autocompletado y bloqueado en edición, sin duplicar importes en quincenas/dona/consejero. Prenda SI/NO y validación de categoría intactas. `sw.js` en `olb-finanzas-v88`. Verificación: **696 pruebas** en verde, `node --check` OK y `generar_guia.py --verificar` correcto.
+- [x] **SRS v2.0 — Fase C (nuevas vistas, textos y gráfica, ADR-67):** panel «BALANCE DE CARTERA Y EFECTIVO» de 3 bloques (cuentas, efectivo, utilidad proyectada) con barras divergentes desde $0 y mensaje dinámico; vista `/ayuda` con guías PWA, preguntas frecuentes, envío de reportes y textos legales literales; modal legal compartido con el login; fila inferior de Inicio «Ayuda y comentarios | Invitar amigos» solo para `USER_FINANZAS`; tarjeta «Comentarios y Reportes» exclusiva de `ADMIN_OLB` junto a Trabajos Extras con badge de pendientes. Ninguna guía ni selector para el usuario estándar menciona OLB_BYTE ni facturación. `sw.js` en `olb-finanzas-v89`. Verificación: **705 pruebas** en verde, `node --check` OK y `generar_guia.py --verificar` correcto (114 fichas).
+- [x] **SRS v2.0 — Fase D (cierre documental):** `AGENTS.md` con reglas de no regresión (§5.1) y estructura actualizada; `MEMORY.md` con ADR-65 a ADR-67 y bitácoras; `diccionario_datos.md` §14 y relaciones; `Guia.md` con 114 fichas e inventario regenerado; nuevo `USER_GUIDE.md` con guías PWA, gastos fijos, colchón de $300.000, flujo de retorno y ayuda; SRS del repositorio con la sección 7 (v2.0) y `constitution.md` (SRS activa v2.0, corte mensual de incapacidades sin rollover y principios de no regresión 9 y 10). Ajuste final del propietario: la fila del gasto vinculado no muestra el acreedor, solo la descripción y la cuota vigente (`sw.js` en `olb-finanzas-v90`). **SRS v2.0 cerrada y sincronizada.**
+- [ ] **SRS v2.0 — revisión visual pendiente:** comprobar en 360/390/768/1280 px el panel de 3 bloques, la fila del gasto vinculado sin acreedor, el banner de regreso en deudas, los modales de `/ayuda` y el badge de la tarjeta administrativa. La comprobación programática ya está cubierta por 26 pruebas nuevas.

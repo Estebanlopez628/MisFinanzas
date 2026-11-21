@@ -26,6 +26,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_valida
 
 from app.core import categorias as catalogo
 from app.servicios import deudas as servicio_deudas
+from app.servicios import feedback as servicio_feedback
 
 Modelo = TypeVar("Modelo", bound=BaseModel)
 
@@ -378,6 +379,82 @@ class DeudaEditar(DeudaNueva):
     saldo_total: str = Field(min_length=1)
     cuota: str = Field(min_length=1)
     cuotas_pendientes: str = Field(min_length=1)
+
+
+class FeedbackNuevo(_FormularioBase):
+    """Datos válidos para enviar un reporte desde «Ayuda y comentarios».
+
+    Attributes:
+        tipo_reporte: Clave del catálogo cerrado de tipos de reporte.
+        modulo: Módulo público implicado; vacío se normaliza a «Otro».
+        descripcion: Texto libre del reporte.
+        dispositivo: Se acepta pero se ignora: el servidor lo detecta del
+            ``User-Agent`` para que no pueda falsearse desde el navegador.
+    """
+
+    tipo_reporte: str
+    modulo: str = "Otro"
+    descripcion: str
+    dispositivo: str = "Escritorio"  # Se ignora; se detecta del User-Agent.
+
+    @field_validator("tipo_reporte")
+    @classmethod
+    def _tipo_valido(cls, valor: str) -> str:
+        """Acepta solo los tipos de reporte de la SRS.
+
+        Args:
+            valor: Clave recibida del selector.
+
+        Returns:
+            Clave normalizada en mayúsculas.
+
+        Raises:
+            ValueError: Si la clave no pertenece al catálogo.
+        """
+        clave = valor.strip().upper()
+        if clave not in {tipo for tipo, _ in servicio_feedback.TIPOS_REPORTE}:
+            raise ValueError("Selecciona un tipo de reporte válido.")
+        return clave
+
+    @field_validator("modulo")
+    @classmethod
+    def _modulo_valido(cls, valor: str) -> str:
+        """Acepta solo módulos públicos, nunca OLB_BYTE ni facturación.
+
+        Args:
+            valor: Texto recibido del selector; vacío significa «Otro».
+
+        Returns:
+            Módulo canónico del catálogo.
+
+        Raises:
+            ValueError: Si el módulo no está permitido para el usuario estándar.
+        """
+        modulo = valor.strip() or "Otro"
+        if modulo not in servicio_feedback.MODULOS:
+            raise ValueError("Selecciona un módulo válido.")
+        return modulo
+
+    @field_validator("descripcion")
+    @classmethod
+    def _descripcion_requerida(cls, valor: str) -> str:
+        """Exige un texto mínimo y acota el tamaño del reporte.
+
+        Args:
+            valor: Texto recibido.
+
+        Returns:
+            Descripción recortada.
+
+        Raises:
+            ValueError: Si está vacía o supera los 2000 caracteres.
+        """
+        texto = valor.strip()
+        if not texto:
+            raise ValueError("Escribe una descripción para enviar el reporte.")
+        if len(texto) > 2000:
+            raise ValueError("La descripción no puede superar los 2000 caracteres.")
+        return texto
 
 
 def validar_formulario(modelo: type[Modelo], **datos: object) -> Modelo:

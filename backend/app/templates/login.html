@@ -77,6 +77,13 @@
         </div>
       {% endif %}
 
+      {# SRS v2.0, sección 5.4: enlace legal previo al ingreso. #}
+      <p class="acceso-nuevo__legal">
+        Al continuar, aceptas nuestras
+        <button class="enlace" type="button" data-abrir-dialogo="dialogo-legal">Condiciones y Política de privacidad</button>
+      </p>
+      {% include "ayuda/_legal.html" %}
+
       <svg class="acceso-nuevo__onda acceso-nuevo__onda--inferior" viewBox="0 0 400 90" preserveAspectRatio="none" aria-hidden="true" focusable="false">
         <path d="M0,40 C110,0 240,90 400,35 L400,90 L0,90 Z" fill="#00a8ff" fill-opacity="0.35" />
         <path d="M0,62 C140,30 270,92 400,58 L400,90 L0,90 Z" fill="#0066cc" />
