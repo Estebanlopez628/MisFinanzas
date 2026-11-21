@@ -1210,7 +1210,8 @@ pinta el estado que calculó el servidor. Lo consumen `finanzas/index.html` y
 
 Macros reutilizables del catálogo cerrado (SRS v1.9). `selector_categoria` pinta
 un cuadro de solo lectura con `name="categoria"` y un botón que despliega las
-ocho opciones con sus colores, incluida «Créditos y Obligaciones».
+ocho opciones, marcadas con un punto neutro (sin cuadrito de color), incluida
+«Créditos y Obligaciones». Los colores exactos siguen en la dona.
 `vinculo_condicional` muestra la pregunta SI/NO de la sección 3.2 con el texto
 propio de cada módulo, el desplegable «Deudas registradas» con todas las deudas
 activas y el acceso «Ve a registrar la deuda». `vinculo_deuda` es la versión

@@ -4090,6 +4090,15 @@ strong.valor-negativo.recibo__cifra--saldo {
   box-shadow: var(--sombra-tarjeta, 0 12px 28px rgba(0, 0, 0, 0.35));
 }
 
+.selector-categoria__punto {
+  display: inline-block;
+  width: 12px;
+  margin-right: 6px;
+  color: var(--text-muted);
+  text-align: center;
+  vertical-align: middle;
+}
+
 .selector-categoria__opcion {
   display: block;
   width: 100%;

@@ -4,11 +4,12 @@
   La entrada es de solo lectura: al hacer clic se despliegan las ocho opciones
   del catálogo y al elegir una se pega su nombre exacto. Así se bloquea el texto
   libre inválido en el navegador; el backend vuelve a validarlo con Pydantic.
+  El desplegable usa un punto neutro en lugar del cuadrito de color: los
+  colores exactos siguen en los arcos y la leyenda de la dona.
   `vinculo_condicional` muestra la pregunta SI/NO al elegir «Créditos y
   Obligaciones» y, con NO, ofrece el acceso rápido al módulo de deudas.
 
-  La vinculación con deuda usa el mismo patrón que ya existía en deducciones
-  fijas, y solo lista deudas mensuales activas (las que acepta el servidor).
+  La vinculación con deuda lista todas las deudas activas registradas.
 #}
 
 {% macro selector_categoria(valor='', nombre='categoria') -%}
@@ -38,7 +39,7 @@
             type="button"
             data-categoria-opcion="{{ categoria.nombre }}"
           >
-            <span class="dona__muestra" style="background: {{ categoria.color }}"></span>{{ categoria.nombre }}
+            <span class="selector-categoria__punto" aria-hidden="true">•</span>{{ categoria.nombre }}
           </button>
         </li>
       {% endfor %}

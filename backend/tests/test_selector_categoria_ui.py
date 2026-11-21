@@ -53,8 +53,10 @@ def test_los_formularios_de_gastos_ofrecen_el_catalogo_cerrado(
     assert "readonly" in html
     for categoria in catalogo.CATEGORIAS:
         assert f'data-categoria-opcion="{categoria.nombre}"' in html
-        assert categoria.color in html
+        # El selector ya no pinta el cuadrito de color: usa un punto neutro.
+        assert categoria.color not in html
     assert html.count("data-categoria-opcion=") >= 8
+    assert html.count("selector-categoria__punto") >= 8
 
 
 def test_el_formulario_de_deducciones_tiene_categoria_y_vinculo(

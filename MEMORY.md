@@ -1888,6 +1888,12 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 - El lápiz de edición es el `<summary>` del `<details>` y no un hijo directo de `.lista-gastos__acciones`; por eso la regla anterior `> .lista-gastos__acciones > summary` no lo ocultaba. Se cambió a `> .lista-gastos__acciones > details > summary` con `display: none !important`. La «×» de borrado (formulario hijo directo) ya se ocultaba.
 - El toque sobre la fila sigue abriendo el modal centrado (`deudas.js`). `sw.js` pasa a `olb-finanzas-v59`; **665 pruebas** en verde.
 
+### 2026-11-20 — Selector de categorías sin cuadrito de color
+
+- En `templates/_categorias.html`, las opciones del desplegable ya no pintan `<span class="dona__muestra" style="background: color">`; llevan un punto neutro `•` con `.selector-categoria__punto` en `--text-muted`.
+- Los colores hexadecimales siguen intactos en `core/categorias.py`, en los arcos SVG y en la leyenda de la dona. El nombre exacto se sigue pegando al cuadro de solo lectura al elegir.
+- Aplica a todos los formularios que usan el selector (Finanzas, Gastos, Trabajos Extras y Deducciones Fijas). `sw.js` pasa a `olb-finanzas-v60`; **665 pruebas** en verde.
+
 **Pendiente para el Paso 3:** solo la revisión visual en navegador (360/390/768/escritorio) de la dona, el consejero, los modales, el formulario de deducciones, el flujo SI/NO y el recibo; la corrección aritmética y la anti-duplicación ya están cubiertas por pruebas.
 
 
