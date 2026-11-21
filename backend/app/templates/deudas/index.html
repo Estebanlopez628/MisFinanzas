@@ -133,7 +133,7 @@
                 <th scope="col">Acreedor</th>
                 <th scope="col">Total Adeudado</th>
                 <th scope="col">Cuota</th>
-                <th scope="col">No. Cuotas Pendientes</th>
+                <th scope="col" class="deudas__cuotas">No. de<br />cuotas<br />pendientes</th>
                 <th scope="col">Periodicidad</th>
                 <th scope="col">Estado</th>
                 <th scope="col" class="deudas__acciones"><span class="sr-only">Acciones</span></th>
@@ -152,10 +152,11 @@
                   <td class="tabla__numero">
                     {{ deuda.cuota_mensual | cop if deuda.cuota_mensual else '—' }}
                   </td>
-                  <td class="tabla__numero">{{ deuda.cuotas_pendientes }}</td>
+                  <td class="tabla__numero deudas__cuotas">{{ deuda.cuotas_pendientes }}</td>
                   <td>{{ deuda.periodicidad | capitalize }}</td>
                   <td>{{ deuda.estado | capitalize }}</td>
                   <td class="deudas__acciones">
+                    <div class="deudas__acciones-contenido">
                     {# SRS v1.9, 2.3: el lápiz abre la misma ventana centrada que
                        se usa en el resto de módulos (app.js cierra con Escape o
                        tocando el fondo). En móvil se oculta y abre al tocar la fila. #}
@@ -202,6 +203,7 @@
                       <button class="boton boton--peligro boton-circular" type="submit"
                               aria-label="Eliminar {{ deuda.acreedor }}" title="Eliminar deuda">×</button>
                     </form>
+                    </div>
                   </td>
                 </tr>
               {% endfor %}

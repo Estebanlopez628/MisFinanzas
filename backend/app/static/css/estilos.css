@@ -4174,11 +4174,25 @@ strong.valor-negativo.recibo__cifra--saldo {
   z-index: 2;
 }
 
+/* La celda sigue siendo `table-cell` para centrarse verticalmente con la línea
+   divisoria de la fila; el flex va en un envoltorio interior. */
 .tabla--deudas td.deudas__acciones {
-  display: flex;
+  vertical-align: middle;
+  text-align: right;
+}
+
+.deudas__acciones-contenido {
+  display: inline-flex;
   align-items: center;
   justify-content: flex-end;
   gap: 8px;
+}
+
+/* Columna de cuotas: encabezado en varias líneas y poco ancho. */
+.tabla--deudas .deudas__cuotas {
+  width: 92px;
+  min-width: 92px;
+  text-align: center;
 }
 
 @media (max-width: 640px) {
@@ -4188,9 +4202,9 @@ strong.valor-negativo.recibo__cifra--saldo {
 
   /* Se ocultan los iconos de la fila, pero no el `<details>`: su formulario
      sigue abriéndose como ventana centrada al tocar cualquier parte de la fila. */
-  .tabla--deudas .fila-deuda > .deudas__acciones > summary,
-  .tabla--deudas .fila-deuda > .deudas__acciones > form {
-    display: none;
+  .tabla--deudas .fila-deuda > .deudas__acciones > .deudas__acciones-contenido > details > summary,
+  .tabla--deudas .fila-deuda > .deudas__acciones > .deudas__acciones-contenido > form {
+    display: none !important;
   }
 }
 

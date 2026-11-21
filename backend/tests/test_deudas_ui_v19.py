@@ -56,7 +56,7 @@ def test_la_tabla_tipo_excel_no_muestra_próximas_cuotas_ni_intereses(
         "Acreedor",
         "Total Adeudado",
         "Cuota",
-        "No. Cuotas Pendientes",
+        "No. de",
         "Periodicidad",
         "Estado",
     ):
@@ -66,6 +66,8 @@ def test_la_tabla_tipo_excel_no_muestra_próximas_cuotas_ni_intereses(
     assert "Esta deuda no tiene cuotas aplicadas." not in html
     assert "fila-detalle-deuda" not in html
     assert "tabla-contenedor--deudas" in html
+    assert 'class="deudas__cuotas"' in html
+    assert "deudas__acciones-contenido" in html
     assert 'name="tasa_interes"' not in html
     assert "interés" not in html.lower().replace("sin simular intereses", "")
 
@@ -103,7 +105,10 @@ def test_la_fila_completa_es_táctil_en_móvil_y_el_modal_está_en_la_caché() -
 
     assert ".tabla--deudas .fila-deuda" in css
     assert "cursor: pointer;" in css
-    assert ".tabla--deudas .fila-deuda > .deudas__acciones > summary" in css
+    assert ".deudas__acciones-contenido {" in css
+    assert "vertical-align: middle;" in css
+    assert ".tabla--deudas .deudas__cuotas {" in css
+    assert ".tabla--deudas .fila-deuda > .deudas__acciones > .deudas__acciones-contenido > details > summary" in css
     assert "data-deuda-fila" in javascript
     assert "matchMedia" in javascript
     assert "js/deudas.js" in service_worker

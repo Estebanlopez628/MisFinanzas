@@ -1939,6 +1939,12 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 - `.tabla-contenedor--deudas` fija `max-height: 280px` (≈4 deudas visibles) con `overflow: auto`, cabecera `position: sticky` y scroll horizontal para ver el resto de columnas.
 - `sw.js` pasa a `olb-finanzas-v67`; **671 pruebas** en verde y `generar_guia.py --verificar` sin problemas.
 
+### 2026-11-20 — Alineación de botones de deuda y columna de cuotas
+
+- El `<td class="deudas__acciones">` dejó de ser `display:flex` (eso rompía el centrado vertical de la celda). Ahora los botones van en `<div class="deudas__acciones-contenido">` con flex interno y la celda mantiene `vertical-align: middle`, así el lápiz y la × quedan alineados con la línea divisoria de cada deuda en móvil y escritorio.
+- El encabezado «No. Cuotas Pendientes» se parte en tres líneas («No. de / cuotas / pendientes») y la columna mide 92 px centrada, en vez de ocupar un ancho excesivo para un solo número.
+- Se ajustaron los selectores móviles que ocultan el lápiz/× para el nuevo envoltorio. `sw.js` pasa a `olb-finanzas-v68`; **671 pruebas** en verde.
+
 **Pendiente para el Paso 3:** solo la revisión visual en navegador (360/390/768/escritorio) de la dona, el consejero, los modales, el formulario de deducciones, el flujo SI/NO y el recibo; la corrección aritmética y la anti-duplicación ya están cubiertas por pruebas.
 
 
