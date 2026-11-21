@@ -473,6 +473,14 @@ Recálculo en tiempo real (<100 ms) sin recargar página. Se implementa con func
 - En la fila ABONADO / SALDO se quitó el ajuste de columnas que la hacía más corta que SUBTOTAL y TOTAL: las tres filas comparten ahora la misma columna y el valor cabe en una línea (letra de 0,78 rem). Verificado en la captura de PC.
 - `sw.js` en `olb-finanzas-v84`; **679 pruebas** en verde.
 
+### 2026-11-21 — Tabla de deudas en móvil: vuelta a todas las filas (revierte la versión de cuatro filas)
+
+- La versión de cuatro filas con cabecera fija y cuerpo desplazable no fue aceptada en el iPhone. Se vuelve a la configuración de ADR-62: en móvil se muestran todas las deudas y todas las columnas, sin altura máxima ni desplazamiento vertical dentro de la tabla; la caja solo desplaza en horizontal y `contain: paint` sigue evitando que la página se mueva.
+- Se retiran la línea de periodicidad y estado bajo el acreedor, el cuerpo de altura fija y la barra oculta. La prueba `test_deudas_ui_v19.py` vuelve al contrato de ADR-62.
+- Verificado en Chromium a 390 px: 8 de 8 filas visibles dentro de la caja, sin desplazamiento vertical, `anchoPagina` = 390 y desplazamiento horizontal solo dentro de la caja.
+- `sw.js` en `olb-finanzas-v87`.
+- Pendiente de decidir: si quieres que todas las columnas quepan sin desplazamiento horizontal, habrá que reducir letra y columnas en móvil; hoy la tabla es más ancha que la pantalla.
+
 ### 2026-11-21 — Icono de pantalla de inicio en iPhone con el logo OLB
 
 - iOS no usa SVG en `apple-touch-icon`: al añadir la app a la pantalla de inicio mostraba una «O» de respaldo. El icono ahora es PNG.
