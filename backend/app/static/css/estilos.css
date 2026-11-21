@@ -4296,10 +4296,17 @@ strong.valor-negativo.recibo__cifra--saldo {
     min-width: 0;
   }
 
+  /* La barra oculta no ocupa ancho: cabecera y filas tienen el mismo ancho y las
+     columnas quedan alineadas (con la barra visible, de 15 px, se desfasaban). */
   .tabla--deudas tbody {
     max-height: 227px;
     overflow-y: auto;
     overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+
+  .tabla--deudas tbody::-webkit-scrollbar {
+    display: none;
   }
 
   .deudas__detalle-movil {
