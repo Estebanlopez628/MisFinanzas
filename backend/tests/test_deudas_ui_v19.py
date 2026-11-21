@@ -146,24 +146,18 @@ def test_los_paneles_de_escritorio_comparten_la_misma_altura() -> None:
     assert "var(--bg-card)" not in cabecera
     assert "position: sticky;" in cabecera
 
-    # En móvil la cabecera no participa del desplazamiento: solo el cuerpo se
-    # mueve dentro de su caja de 227 px (cuatro filas de 56,7 px, medidas en
-    # Chromium a 390 px). La tabla pasa a bloques para que las filas sean
-    # cuadrículas tipo Excel.
+    # En móvil se muestran todas las deudas, sin altura máxima ni desplazamiento
+    # vertical dentro de la tabla (ADR-62). La contención vive solo en el bloque móvil.
     movil_tabla = (
         "@media (max-width: 640px) {\n"
         "  .tabla-contenedor--deudas {\n"
-        "    max-height: none;\n"
-        "    overflow: hidden;\n"
-        "    contain: paint;"
+        "    max-height: none;"
     )
     assert movil_tabla in css
-    assert "  .tabla--deudas tbody {\n    max-height: 227px;" in css
-
-    # Sin `contain: paint` la tabla ancha ensancha el layout móvil (390 → 827)
-    # y la página entera se desplaza (ADR-62). La contención vive solo en el
-    # bloque móvil.
+    bloque_movil = css[css.index(movil_tabla) : css.index(movil_tabla) + 200]
+    assert "contain: paint;" in bloque_movil
     assert "contain: paint;" not in tabla
+    assert "max-height: 227px" not in css
 
 
 def test_el_modal_sale_de_la_tabla_contenida_al_abrirse() -> None:
