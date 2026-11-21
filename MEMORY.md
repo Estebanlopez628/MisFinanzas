@@ -473,6 +473,13 @@ Recálculo en tiempo real (<100 ms) sin recargar página. Se implementa con func
 - En la fila ABONADO / SALDO se quitó el ajuste de columnas que la hacía más corta que SUBTOTAL y TOTAL: las tres filas comparten ahora la misma columna y el valor cabe en una línea (letra de 0,78 rem). Verificado en la captura de PC.
 - `sw.js` en `olb-finanzas-v84`; **679 pruebas** en verde.
 
+### 2026-11-21 — Icono de pantalla de inicio en iPhone con el logo OLB
+
+- iOS no usa SVG en `apple-touch-icon`: al añadir la app a la pantalla de inicio mostraba una «O» de respaldo. El icono ahora es PNG.
+- Se generaron `icono-180.png` (apple-touch-icon), `icono-192.png`, `icono-512.png` y `icono-512-maskable.png` a partir de `assets/Nuevo Logo5.png`. El logo tiene fondo casi negro, así que se le resta un umbral de 36 y se mezcla en modo pantalla sobre `#0F172A`, el color de la app.
+- `manifest.webmanifest` y `base.html` apuntan a los PNG; `sw.js` en `olb-finanzas-v86`. La prueba de PWA verifica el PNG de 180 px.
+- Para ver el cambio en el iPhone hay que quitar la app de la pantalla de inicio y volver a añadirla, porque iOS guarda el icono al crearlo.
+
 ### 2026-11-21 — Tabla de deudas en móvil: columnas alineadas sin barra visible
 
 - Con la barra de desplazamiento visible (15 px en Windows) el cuerpo de la tabla quedaba más estrecho que la cabecera y todas las columnas se desfasaban (311 px frente a 296 px). Playwright ocultaba esa barra por defecto, por eso no se veía en las pruebas.
