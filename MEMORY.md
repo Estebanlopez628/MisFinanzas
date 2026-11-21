@@ -1993,6 +1993,13 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 - Se amplió a cuatro deudas visibles **solo en escritorio** (`max-height: 340px`); en móvil se conservan los `280px` anteriores mediante un `@media`.
 - Se mantiene `align-items: stretch` (ambos paneles siguen igual de altos). `sw.js` pasa a `olb-finanzas-v76`; **674 pruebas** en verde.
 
+### 2026-11-20 — Cabecera contrastada y gesto táctil en deudas
+
+- La cabecera sticky deja `var(--bg-card)` (casi igual al panel) y usa `var(--bg-primary)` (#0F172A), opaco y más oscuro, con línea inferior sutil.
+- Para que el dedo no arrastre la tabla completa, el contenedor añade `touch-action: pan-x pan-y`, `overscroll-behavior(-x/-y): contain` y `-webkit-overflow-scrolling: touch`. El scroll sigue siendo solo dentro de la caja.
+- **No** se aplicó `contain: paint` aunque estaba en el plan: el modal de edición de deudas vive dentro de la tabla y ese confinamiento lo sacaría del centro del viewport.
+- `sw.js` pasa a `olb-finanzas-v77`; **674 pruebas** en verde y `generar_guia.py --verificar` sin problemas.
+
 **Pendiente para el Paso 3:** solo la revisión visual en navegador (360/390/768/escritorio) de la dona, el consejero, los modales, el formulario de deducciones, el flujo SI/NO y el recibo; la corrección aritmética y la anti-duplicación ya están cubiertas por pruebas.
 
 

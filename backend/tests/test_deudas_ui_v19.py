@@ -134,10 +134,14 @@ def test_los_paneles_de_escritorio_comparten_la_misma_altura() -> None:
     assert "max-height: 340px;" in tabla  # cuatro deudas en escritorio
     assert "overflow: auto;" in tabla
     assert "overscroll-behavior: contain;" in tabla
+    assert "touch-action: pan-x pan-y;" in tabla
+    assert "-webkit-overflow-scrolling: touch;" in tabla
     assert "max-width: 100%;" in tabla
+    assert "\n  contain: paint;" not in tabla  # rompería el modal dentro de la tabla
 
     cabecera = css.split(".tabla-contenedor--deudas thead th {", 1)[1].split("}", 1)[0]
-    assert "background: var(--bg-card);" in cabecera
+    assert "background: var(--bg-primary);" in cabecera
+    assert "var(--bg-card)" not in cabecera
     assert "position: sticky;" in cabecera
 
     movil_tabla = (

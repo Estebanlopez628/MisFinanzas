@@ -4208,14 +4208,22 @@ strong.valor-negativo.recibo__cifra--saldo {
   max-height: 340px;
   overflow: auto;
   overscroll-behavior: contain;
+  overscroll-behavior-x: contain;
+  overscroll-behavior-y: contain;
+  /* El dedo solo desplaza la caja en ambos ejes; no arrastra el panel ni la
+     página. No se usa `contain: paint` porque el modal de edición vive dentro
+     de la tabla y dejaría de centrarse en el viewport. */
+  touch-action: pan-x pan-y;
+  -webkit-overflow-scrolling: touch;
 }
 
-/* Fondo opaco: la cabecera sticky debe tapar las filas que pasan por debajo. */
+/* Fondo opaco y más oscuro que el cuerpo: la cabecera sticky tapa las filas
+   que pasan por debajo sin confundirse con el fondo del panel. */
 .tabla-contenedor--deudas thead th {
   position: sticky;
   top: 0;
   z-index: 2;
-  background: var(--bg-card);
+  background: var(--bg-primary);
   box-shadow: 0 1px 0 var(--borde-suave);
 }
 
