@@ -58,6 +58,11 @@ CATEGORIAS: tuple[Categoria, ...] = (
 CATEGORIA_CREDITOS = "Créditos y Obligaciones"
 CATEGORIA_OTROS = "Otros Gastos Fijos"
 CATEGORIA_OTROS_COLOR = "#64748B"
+# Categoría técnica de los pagos generados por «Trabajos Extras». No pertenece
+# al catálogo cerrado de ocho y la migración de datos históricos debe respetarla:
+# si se normalizara a «Otros Gastos Fijos», la idempotencia de los pagos dejaría
+# de encontrarlos y crearían duplicados en cada arranque (ADR-60).
+CATEGORIA_TRABAJO = "Trabajo extra"
 NOMBRES_CATEGORIAS: frozenset[str] = frozenset(c.nombre for c in CATEGORIAS)
 
 # Los textos libres históricos se traducen a su categoría canónica. «Ahorro» y

@@ -750,6 +750,9 @@ def _migrar_categorias_y_vinculos() -> None:
 
     La categoría 8 se deja intacta en los datos heredados: se deriva de las
     deudas activas en tiempo de cálculo, no se guarda en cada gasto.
+
+    Los pagos de «Trabajos Extras» llevan la categoría técnica «Trabajo extra»
+    y se excluyen de la normalización; ver `ADR-60`.
     """
     if _conexion_sqlite:
         with motor.begin() as conexion:
@@ -795,16 +798,24 @@ def _migrar_categorias_y_vinculos() -> None:
     # la sentencia es segura en ambos motores (sin parámetros dependientes del
     # dialecto). Se hace en una transacción aparte para no repetir el DDL.
     with motor.begin() as conexion:
+        # La cuarta columna excluye de la normalización una categoría técnica:
+        # los pagos de «Trabajos Extras» usan «Trabajo extra», que no pertenece
+        # al catálogo cerrado. Si se normalizara a «Otros Gastos Fijos», la
+        # comprobación de idempotencia de los pagos dejaría de encontrarlos y
+        # crearía duplicados en cada arranque (ADR-60).
         consultas = (
-            ("gastos", "id_gasto", False),
-            ("deducciones_fijas", "id_deduccion", True),
+            ("gastos", "id_gasto", False, catalogo.CATEGORIA_TRABAJO),
+            ("deducciones_fijas", "id_deduccion", True, None),
         )
-        for tabla, columna_id, tiene_descripcion in consultas:
+        for tabla, columna_id, tiene_descripcion, categoria_excluida in consultas:
             seleccion = f"SELECT {columna_id}, categoria"
+            filtro = ""
             if tiene_descripcion:
                 seleccion += ", descripcion"
+            if categoria_excluida is not None:
+                filtro = f" WHERE categoria <> '{categoria_excluida}'"
             filas = conexion.exec_driver_sql(
-                f"{seleccion} FROM {tabla}"
+                f"{seleccion} FROM {tabla}{filtro}"
             ).fetchall()
             for fila in filas:
                 identificador, categoria = fila[0], fila[1]

@@ -1794,6 +1794,38 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 - **Consecuencias:** se conserva la anti-duplicación por `id_deuda` y la liquidez mínima de $300.000; los cambios son de presentación y no alteran cálculos ni migraciones.
 - **Archivos:** `static/css/estilos.css`, `static/js/app.js`, `static/js/deudas.js`, `static/js/categorias.js`, `templates/_categorias.html`, `templates/deudas/index.html`, `templates/presupuesto/index.html`, `templates/chancucos/index.html`, `templates/finanzas/index.html`, `templates/olb_byte/_recibo.html`.
 
+### ADR-60 — La categoría técnica «Trabajo extra» queda fuera de la migración de categorías
+
+- **Contexto:** la migración de SRS v1.9 (`_migrar_categorias_y_vinculos()`) normaliza `gastos.categoria` al catálogo cerrado de ocho en **cada arranque**. Los pagos que genera «Trabajos Extras» usan una categoría técnica, `Trabajo extra`, que no pertenece al catálogo; la migración los reescribía como `Otros Gastos Fijos`. Como `asegurar_pagos_trabajos()` comprueba la idempotencia buscando `categoria == "Trabajo extra"`, dejaba de encontrarlos y creaba un pago nuevo por cada reinicio: en Neon había 96 filas para un solo contrato (84 reclasificadas y 12 correctas).
+- **Decisión:**
+  - `CATEGORIA_TRABAJO = "Trabajo extra"` vive en `core/categorias.py` junto al catálogo, con el comentario que explica por qué la migración debe respetarla. `servicios/trabajos.py` la importa en vez de definirla.
+  - `_migrar_categorias_y_vinculos()` añade `WHERE categoria <> 'Trabajo extra'` a la consulta de `gastos`. Se filtra por categoría y no por `id_trabajo` para no exigir esa columna en las bases mínimas de las pruebas de migración.
+  - `reparar_pagos_duplicados()` (en `servicios/trabajos.py`) devuelve a `Trabajo extra` las filas con `id_trabajo` y descripción con el prefijo `Trabajo · ` y conserva un solo pago por contrato, año, mes y quincena; prefiere el cobrado y, entre los pendientes, el que no esté inhabilitado con la ×. Es idempotente.
+  - `scripts/reparar_pagos_trabajos.py` la ejecuta con `--simular` opcional y aplica antes las migraciones.
+- **Consecuencias:** los pagos de trabajo dejan de multiplicarse en cada arranque. Las categorías del catálogo siguen normalizándose igual y los gastos fijos del trabajo (categoría real, descripción propia) no se tocan. La reparación ya se ejecutó en Neon: 84 filas restauradas y 84 duplicados eliminados; quedan 12 pagos, uno por mes.
+- **Archivos:** `core/categorias.py`, `core/base_datos.py`, `servicios/trabajos.py`, `scripts/reparar_pagos_trabajos.py`, `tests/test_pagos_trabajos_migracion.py`.
+
+### ADR-61 — Tabla de deudas en móvil con la misma estrategia que Analítica
+
+- **Contexto:** en iOS la tabla «Deudas registradas» se arrastraba fuera de su panel en vez de desplazarse dentro. La tabla «Mes a mes» de Analítica, con un `.tabla-contenedor` simple (`overflow-x: auto`, sin alto máximo, sin cabecera sticky y sin `touch-action`), sí funcionaba. La caja de deudas acumulaba scroll vertical anidado, cabecera sticky y `touch-action`/`-webkit-overflow-scrolling`, combinación que en WebKit se queda con el gesto.
+- **Decisión:**
+  - En móvil (≤ 640 px) la caja usa `max-height: none` y la cabecera `position: static`: solo el eje horizontal vive dentro de la caja y la página desplaza en vertical, igual que Analítica. Se conservan `overflow: auto`, `overscroll-behavior: contain` y `max-width: 100%`.
+  - Se retiran `touch-action: pan-x pan-y` y `-webkit-overflow-scrolling: touch` del contenedor: el gesto vuelve al navegador y ya no compite con el scroll de la página.
+  - En escritorio se mantienen los 340 px de alto, la cabecera sticky contrastada y el modal centrado dentro de la tabla.
+- **Consecuencias:** alinea el gesto con el resto del sitio, pero **no fue suficiente**: el problema real era el ensanche del layout móvil (ver ADR-62). Se conserva porque evita el scroll vertical anidado.
+- **Archivos:** `static/css/estilos.css`, `tests/test_deudas_ui_v19.py`.
+
+### ADR-62 — Contención de la tabla de deudas y modal fuera de la caja
+
+- **Contexto:** con ADR-61 la tabla seguía «saliéndose» en el celular. La medición real con la app servida a 390 px mostró `window.visualViewport.width = 390` pero `window.innerWidth = 827` y `documentElement.scrollWidth = 827`: aunque la caja recortaba visualmente la tabla, Chrome móvil ensanchaba el layout hasta el ancho del contenido (807 px) para permitir el zoom-out. Efectos: la página entera se podía panear en horizontal y los toques caían en coordenadas desviadas (Playwright no lograba pulsar una fila). `body.scrollWidth` sí era 390, así que el desbordamiento venía de un descendiente y no del documento.
+- **Diagnóstico por variantes:** ni `overflow: hidden` ni `min-width: 0` ni `contain: layout` sobre el panel evitaban el ensanche; `contain: paint`, `contain: layout`, `content-visibility: auto`, `will-change: transform` o `transform: translateZ(0)` en la caja sí lo evitaban, pero todos crean bloque contenedor para `position: fixed` y dejaban el modal descentrado o recortado.
+- **Decisión:**
+  - La caja de deudas usa `contain: paint` **solo dentro de `@media (max-width: 640px)`**: es donde Chrome ensancha el layout; en escritorio la tabla ya se recorta sin ensanchar y no hace falta contención.
+  - El modal de edición se saca de la caja al abrirse: `deudas.js` traslada el `<details>` al `body` (con un comentario marcador en su fila) cuando se abre en móvil y lo devuelve al cerrarse. Así `contain: paint` no recorta el modal, que sigue centrado en el viewport y conserva su formulario.
+  - Se mantiene ADR-61 (`max-height: none`, cabecera `static`, sin `touch-action` ni `-webkit-overflow-scrolling`) para que el gesto vertical sea el de la página.
+- **Consecuencias:** a 360/390 px `innerWidth` y `documentElement.scrollWidth` quedan iguales al viewport; el deslizamiento horizontal solo mueve `scrollLeft` de la caja y la página no se desplaza (`scrollX = 0`). El modal abre centrado (a 390 px: 16–374 px de ancho y 255 px de alto) y al cerrar regresa a su fila. En 768/1280 px no cambia nada y el modal sigue centrado.
+- **Archivos:** `static/css/estilos.css`, `static/js/deudas.js`, `tests/test_deudas_ui_v19.py`.
+
 ### 2026-11-20 — Sección 2.2: validación de cuotas con interés implícito (backend)
 
 **Cambios realizados**
@@ -2013,6 +2045,21 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 - `sw.js` pasa a `olb-finanzas-v77`; **674 pruebas** en verde y `generar_guia.py --verificar` sin problemas.
 
 **Pendiente para el Paso 3:** solo la revisión visual en navegador (360/390/768/escritorio) de la dona, el consejero, los modales, el formulario de deducciones, el flujo SI/NO y el recibo; la corrección aritmética y la anti-duplicación ya están cubiertas por pruebas.
+
+### 2026-11-21 — Trabajos Extras dejaba de duplicar pagos (ADR-60)
+
+- La migración de categorías reescribía `Trabajo extra` como `Otros Gastos Fijos` en cada arranque; como el módulo comprobaba la idempotencia por esa categoría, creaba un pago nuevo cada vez. En Neon había **96 filas** para un solo contrato: 84 reclasificadas y 12 correctas.
+- Se excluyen esos pagos de la normalización (`WHERE categoria <> 'Trabajo extra'`), la constante pasa a `core/categorias.py` y se añade `reparar_pagos_duplicados()` con `scripts/reparar_pagos_trabajos.py` (`--simular` incluido).
+- Antes de reparar se respaldaron las 96 filas en `backend/respaldos/pagos_trabajos_20261121_001200.json`. La reparación restauró **84** filas y eliminó **84** duplicados; quedan **12 pagos**, uno por mes, y una segunda pasada devuelve `0/0`.
+- Pruebas de regresión en `tests/test_pagos_trabajos_migracion.py`: la migración no reclasifica (dos pasadas), `asegurar_pagos_trabajos()` no crea copias tras migrar y la reparación restaura y deduplica.
+
+### 2026-11-21 — Tabla de deudas contenida en móvil (ADR-61 y ADR-62)
+
+- Primer intento (ADR-61): se replicó la tabla «Mes a mes» de Analítica en `@media (max-width: 640px)` con `max-height: none` y cabecera `position: static`, y se retiraron `touch-action` y `-webkit-overflow-scrolling`. El scroll vertical anidado desapareció, pero **la tabla seguía moviéndose**.
+- Causa real (ADR-62): con la app servida a 390 px, `visualViewport.width` era 390 pero `window.innerWidth` y `documentElement.scrollWidth` eran **827**. Aunque la caja recortaba la tabla de 807 px, Chrome móvil ensanchaba el layout y permitía panear toda la página; los toques quedaban desviados.
+- Solución: `contain: paint` en la caja dentro del bloque móvil y traslado del `<details>` de edición al `body` al abrirse (y de vuelta a su fila al cerrarse) desde `deudas.js`, para que la contención no recorte el modal.
+- Verificación en Chromium contra la app real: 360/390 px → `innerWidth` = viewport, `scrollX` = 0 tras deslizar, `scrollLeft` de la caja 205 px, modal abierto centrado (16–374 px, alto 255 px) en el `body` y restaurado al cerrar. 768/1280 px sin cambios.
+- `sw.js` pasa a `olb-finanzas-v79`; **678 pruebas** en verde y `generar_guia.py --verificar` sin problemas.
 
 
 

@@ -12,12 +12,58 @@
  *   Solo se abre uno a la vez para no apilar fondos.
  *
  * El cierre con «Cancelar», Escape o tocando el fondo lo hace `app.js`.
+ *
+ * Contención de la tabla (ADR-62)
+ * -------------------------------
+ * La caja de deudas usa `contain: paint` para que la tabla ancha no ensanche el
+ * layout del navegador móvil. Como la contención recortaría el modal, al abrir
+ * uno de sus `<details>` en móvil se traslada al `body` y al cerrarse vuelve a
+ * su fila mediante un marcador; así el modal sigue centrado en el viewport.
  */
 (function () {
   "use strict";
 
+  var marcadores = new WeakMap();
+
   function esMovil() {
     return window.matchMedia && window.matchMedia("(max-width: 640px)").matches;
+  }
+
+  function sacarDeLaTabla(detalles) {
+    // Solo los modales de la tabla de deudas viven dentro de una caja con
+    // `contain: paint`; el resto se queda en su sitio.
+    if (!esMovil() || !detalles.closest(".tabla-contenedor--deudas")) {
+      return;
+    }
+    if (marcadores.has(detalles)) {
+      return;
+    }
+    var marcador = document.createComment("modal-deuda");
+    detalles.parentNode.insertBefore(marcador, detalles);
+    marcadores.set(detalles, marcador);
+    document.body.appendChild(detalles);
+  }
+
+  function devolverALaTabla(detalles) {
+    var marcador = marcadores.get(detalles);
+    if (!marcador) {
+      return;
+    }
+    if (marcador.parentNode) {
+      marcador.parentNode.insertBefore(detalles, marcador);
+      marcador.parentNode.removeChild(marcador);
+    }
+    marcadores.delete(detalles);
+  }
+
+  function vigilarPortabilidad(detalles) {
+    detalles.addEventListener("toggle", function () {
+      if (detalles.open) {
+        sacarDeLaTabla(detalles);
+      } else {
+        devolverALaTabla(detalles);
+      }
+    });
   }
 
   function cerrarOtras(actual) {
@@ -53,6 +99,10 @@
   conectarFilas("li[data-deduccion-fila]", "details.edicion-gasto--modal");
   conectarFilas("tr[data-chancuco-fila]", "details.atajo-modal");
   conectarFilas("li[data-atajo-fila]", "details.atajo-finanzas-modal");
+
+  document
+    .querySelectorAll(".tabla--deudas details.edicion-gasto--modal")
+    .forEach(vigilarPortabilidad);
 
   // Escritorio: el botón «Actualizar» de cada fila abre su modal de edición.
   document.querySelectorAll("[data-abrir-atajo]").forEach(function (boton) {

@@ -4199,9 +4199,9 @@ strong.valor-negativo.recibo__cifra--saldo {
   pointer-events: none;
 }
 
-/* SRS v1.9: se ven cuatro deudas; el resto se alcanza deslizando hacia abajo.
-   El desplazamiento horizontal queda contenido en la caja, sin arrastrar el
-   panel ni la página. */
+/* SRS v1.9: en escritorio se ven cuatro deudas; el resto se alcanza deslizando
+   hacia abajo. El desplazamiento horizontal queda contenido en la caja, sin
+   arrastrar el panel ni la página. */
 .tabla-contenedor--deudas {
   width: 100%;
   max-width: 100%;
@@ -4210,11 +4210,6 @@ strong.valor-negativo.recibo__cifra--saldo {
   overscroll-behavior: contain;
   overscroll-behavior-x: contain;
   overscroll-behavior-y: contain;
-  /* El dedo solo desplaza la caja en ambos ejes; no arrastra el panel ni la
-     página. No se usa `contain: paint` porque el modal de edición vive dentro
-     de la tabla y dejaría de centrarse en el viewport. */
-  touch-action: pan-x pan-y;
-  -webkit-overflow-scrolling: touch;
 }
 
 /* Fondo opaco y más oscuro que el cuerpo: la cabecera sticky tapa las filas
@@ -4231,11 +4226,25 @@ strong.valor-negativo.recibo__cifra--saldo {
   min-width: 0;
 }
 
-/* El aumento a cuatro deudas es solo de escritorio. En móvil se conserva la
-   altura anterior para no hacer más larga la tarjeta. */
+/* En móvil se usa la misma configuración que la tabla «Mes a mes» de Analítica:
+   la caja solo desplaza en horizontal y la página en vertical. El scroll
+   anidado con cabecera sticky y `-webkit-overflow-scrolling` arrastraba la
+   tabla fuera del panel en iOS; esta configuración es la que ya funciona en el
+   resto del sitio. */
 @media (max-width: 640px) {
   .tabla-contenedor--deudas {
-    max-height: 280px;
+    max-height: none;
+    /* Sin `contain: paint`, el desbordamiento interno de la tabla (más de
+       800 px) hace que Chrome móvil ensanche el layout aunque la caja recorte:
+       `window.innerWidth` pasa de 390 a 827, la página entera se desplaza y el
+       toque se desvía (ADR-62). La contención se limita a móvil porque en
+       escritorio la tabla ya se recorta sin ensanchar el viewport, y porque
+       el modal de edición se saca de la tabla al abrirse (`deudas.js`). */
+    contain: paint;
+  }
+
+  .tabla-contenedor--deudas thead th {
+    position: static;
   }
 }
 

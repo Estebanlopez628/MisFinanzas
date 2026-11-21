@@ -40,6 +40,7 @@ from decimal import Decimal, InvalidOperation
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.core.categorias import CATEGORIA_TRABAJO
 from app.core.numeros import redondear_dinero
 from app.core.texto import parsear_monto, parsear_porcentaje
 from app.modelos import Gasto, TrabajoExtra
@@ -65,8 +66,8 @@ MESES_VENTANA = 12
 # Días de cada quincena para un contrato quincenal.
 DIAS_QUINCENA = ((1, 15), (2, 30))
 # Categoría de las filas que son pagos del contrato. Los gastos fijos del trabajo
-# llevan otra categoría y `id_trabajo`, pero nunca esta.
-CATEGORIA_TRABAJO = "Trabajo extra"
+# llevan otra categoría y `id_trabajo`, pero nunca esta. La constante vive en
+# `core.categorias` para que la migración de datos la respete (ADR-60).
 PREFIJO_TRABAJO = "Trabajo · "
 
 
@@ -902,3 +903,83 @@ def resumen_trabajos(
         "pendientes": len(pendientes),
         "contratos": len(listar_trabajos(bd, id_usuario)),
     }
+
+
+# ---------------------------------------------------------------------------
+# Reparación de datos heredados (ADR-60)
+# ---------------------------------------------------------------------------
+
+
+def reparar_pagos_duplicados(bd: Session, *, simular: bool = False) -> dict[str, int]:
+    """Restaura los pagos de trabajo reclasificados y elimina sus duplicados.
+
+    Una versión anterior de la migración de categorías convirtió los pagos de
+    «Trabajos Extras» (categoría técnica «Trabajo extra») a «Otros Gastos Fijos».
+    Como la idempotencia de `asegurar_pagos_trabajos()` los busca por esa
+    categoría, cada arranque generó una copia nueva. Esta función:
+
+    1. Devuelve a «Trabajo extra» las filas con `id_trabajo` y descripción con el
+       prefijo `Trabajo · ` que quedaron en otra categoría.
+    2. Conserva un solo pago por contrato, año, mes y quincena, y elimina el
+       resto. Se prefiere el pago cobrado y, entre los pendientes, el que no esté
+       inhabilitado con la ×.
+
+    Es idempotente: ejecutarla de nuevo no cambia nada.
+
+    Args:
+        bd: Sesión de base de datos.
+        simular: Si es `True`, calcula el resultado pero no guarda los cambios.
+
+    Returns:
+        Diccionario con la cantidad de filas `restaurados` y `eliminados`.
+    """
+    restaurados = 0
+    reclasificados = bd.scalars(
+        select(Gasto).where(
+            Gasto.id_trabajo.is_not(None),
+            Gasto.categoria != CATEGORIA_TRABAJO,
+        )
+    ).all()
+    for gasto in reclasificados:
+        # Los gastos fijos reales del trabajo también tienen `id_trabajo`, pero
+        # su descripción la escribe la usuaria y no lleva el prefijo del pago.
+        if not (gasto.descripcion or "").startswith(PREFIJO_TRABAJO):
+            continue
+        gasto.categoria = CATEGORIA_TRABAJO
+        restaurados += 1
+    # El agrupamiento de abajo consulta la base: se fuerza el volcado de las
+    # categorías recién restauradas para que entren en el mismo lote.
+    if restaurados:
+        bd.flush()
+
+    pagos = bd.scalars(
+        select(Gasto).where(
+            Gasto.id_trabajo.is_not(None),
+            Gasto.categoria == CATEGORIA_TRABAJO,
+        )
+    ).all()
+    grupos: dict[tuple[str | None, int, int, int | None], list[Gasto]] = {}
+    for pago in pagos:
+        clave = (pago.id_trabajo, pago.fecha.year, pago.fecha.month, pago.quincena)
+        grupos.setdefault(clave, []).append(pago)
+
+    eliminados = 0
+    for filas in grupos.values():
+        if len(filas) <= 1:
+            continue
+        filas.sort(
+            key=lambda gasto: (
+                not gasto.pagado,
+                gasto.inhabilitado_hasta is not None,
+                gasto.id_gasto,
+            )
+        )
+        for duplicado in filas[1:]:
+            bd.delete(duplicado)
+            eliminados += 1
+
+    if simular:
+        bd.rollback()
+    elif restaurados or eliminados:
+        bd.commit()
+    return {"restaurados": restaurados, "eliminados": eliminados}

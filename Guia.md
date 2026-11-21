@@ -106,7 +106,7 @@ Principios que explican el resto del código:
 ### Resumen del inventario
 
 - **106 archivos** documentados: 53 Python, 37 plantillas Jinja2 y 16 recursos estáticos.
-- **66 clases**, **567 funciones** y **40 métodos** de clase.
+- **66 clases**, **571 funciones** y **40 métodos** de clase.
 
 ### Detalle por archivo
 
@@ -128,10 +128,10 @@ Principios que explican el resto del código:
 #### `backend/app/core/`
 
 - **`__init__.py`** · 11 líneas — Núcleo de la aplicación: parámetros de negocio y utilidades transversales.
-- **`base_datos.py`** · 879 líneas — Conexión a la base de datos y sesión por petición.
+- **`base_datos.py`** · 890 líneas — Conexión a la base de datos y sesión por petición.
   - Clases: `Base`
   - Funciones: `_cargar_archivo_entorno`, `_url_con_driver`, `obtener_bd`, `crear_esquema`, `_renombrar_referencia_a_categoria`, `_reconstruir_comercial_sin_stock`, `_migrar_columnas_trabajos`, `_migrar_columnas_chancucos`, `_migrar_columnas_metas`, `_migrar_dias_quincena_postgres`, `_migrar_columnas_perfil`, `_migrar_columnas_gastos`, `_migrar_chancucos`, `_migrar_columnas_deudas`, `_migrar_proyeccion_quincena`, `_migrar_saldos_incapacidad`, `_migrar_columnas_usuarios`, `_migrar_garantia_detalle`, `_migrar_deduccion_vinculada`, `_migrar_categorias_y_vinculos`, `_migrar_valor_atajo`, `aplicar_migraciones`, `inicializar_base_datos`
-- **`categorias.py`** · 190 líneas — Catálogo cerrado de categorías de egresos y colores de la dona.
+- **`categorias.py`** · 195 líneas — Catálogo cerrado de categorías de egresos y colores de la dona.
   - Clases: `Categoria`
   - Funciones: `_clave`, `normalizar_categoria`, `es_categoria_valida`, `color_de_categoria`, `es_credito`, `lista_categorias`
 - **`config.py`** · 314 líneas — Parámetros de negocio y configuración de la plataforma.
@@ -239,8 +239,8 @@ Principios que explican el resto del código:
   - Funciones: `nombre_archivo_recibo`, `texto_compartir_recibo`, `datos_recibo`
 - **`registro_incapacidades.py`** · 201 líneas — Persistencia de incapacidades y consulta de sus tramos mensuales.
   - Funciones: `registrar_incapacidad`, `tramos_del_mes`, `descuento_del_mes`, `listar_incapacidades`, `eliminar_incapacidad`
-- **`trabajos.py`** · 905 líneas — Ingresos independientes ("Trabajos Extras").
-  - Funciones: `_posicion`, `_desde_posicion`, `_rango_del_mes`, `_fecha_con_dia`, `_normalizar_contrato`, `_normalizar_frecuencia`, `_normalizar_quincena`, `_monto_opcional`, `_porcentaje_opcional`, `reparto_por_porcentajes`, `reparto_quincenal`, `porcentaje_del_total`, `valor_del_pago`, `crear_trabajo`, `listar_trabajos`, `cambiar_estado`, `eliminar_trabajo`, `gastos_fijos_trabajo`, `crear_gasto_trabajo`, `_pagos_del_mes`, `_meses_a_generar`, `_crear_pagos_del_mes`, `asegurar_pagos_trabajos`, `_periodos_del_trabajo`, `pagos_del_mes`, `extras_cobrados_mes`, `resumen_trabajos`
+- **`trabajos.py`** · 986 líneas — Ingresos independientes ("Trabajos Extras").
+  - Funciones: `_posicion`, `_desde_posicion`, `_rango_del_mes`, `_fecha_con_dia`, `_normalizar_contrato`, `_normalizar_frecuencia`, `_normalizar_quincena`, `_monto_opcional`, `_porcentaje_opcional`, `reparto_por_porcentajes`, `reparto_quincenal`, `porcentaje_del_total`, `valor_del_pago`, `crear_trabajo`, `listar_trabajos`, `cambiar_estado`, `eliminar_trabajo`, `gastos_fijos_trabajo`, `crear_gasto_trabajo`, `_pagos_del_mes`, `_meses_a_generar`, `_crear_pagos_del_mes`, `asegurar_pagos_trabajos`, `_periodos_del_trabajo`, `pagos_del_mes`, `extras_cobrados_mes`, `resumen_trabajos`, `reparar_pagos_duplicados`
 - **`usuarios.py`** · 359 líneas — Repositorio de usuarios sobre SQLAlchemy (Fase 2).
   - Funciones: `_normalizar_correo`, `correo_valido`, `sembrar_demostracion`, `buscar_por_correo`, `obtener_por_id`, `listar_usuarios`, `autenticar`, `crear_usuario`, `actualizar_alias`, `cambiar_contrasena`, `cambiar_rol`, `cambiar_estado`, `huella_contrasena`, `restablecer_contrasena`, `url_avatar_valida`, `actualizar_avatar`
 
@@ -250,7 +250,7 @@ Principios que explican el resto del código:
 
 #### `backend/app/static/css/`
 
-- **`estilos.css`** · 4497 líneas — Fondo y superficies
+- **`estilos.css`** · 4506 líneas — Fondo y superficies
 - **`factura-olb.css`** · 671 líneas — Sello de Anulada si aplica
 
 #### `backend/app/static/js/`
@@ -259,8 +259,8 @@ Principios que explican el resto del código:
   - Funciones: `restaurarBotonCopiar`, `confirmarCopia`, `copiar`, `seleccionarManual`, `cerrarEdicion`
 - **`categorias.js`** · 296 líneas — Selector cerrado de categorías, vinculación con deudas y conservación de
   - Funciones: `datosFormulario`, `restaurarDatos`, `cerrar`, `abrir`, `alternar`, `sincronizar`, `sincronizar`
-- **`deudas.js`** · 70 líneas — Interacción de filas con modal centrado (SRS v1.9, secciones 2.3 y 3.3).
-  - Funciones: `esMovil`, `cerrarOtras`, `conectarFilas`
+- **`deudas.js`** · 120 líneas — Interacción de filas con modal centrado (SRS v1.9, secciones 2.3 y 3.3).
+  - Funciones: `esMovil`, `sacarDeLaTabla`, `devolverALaTabla`, `vigilarPortabilidad`, `cerrarOtras`, `conectarFilas`
 - **`dona.js`** · 122 líneas — Interacción de las gráficas tipo dona (capacidad de endeudamiento y cartera).
   - Funciones: `centro`, `mostrar`, `restaurar`, `iniciar`
 - **`factura.js`** · 304 líneas — Factura y recibo de abono de OLB_BYTE como imagen PNG (ADR-50).
@@ -1404,6 +1404,10 @@ Constantes parametrizables en `core/config.py`: 210 h, 4 % + 4 %, factores
 - **Migración a Neon:** `scripts/migrar_a_neon.py` crea el esquema en PostgreSQL y copia
   `datos/finanzas.db` sin duplicar registros (`ON CONFLICT DO NOTHING`). Neutraliza las
   cuentas demo copiadas. Se puede repetir sin efectos adicionales (SRS v1.8, ADR-52).
+- **Reparación de pagos de trabajos:** `scripts/reparar_pagos_trabajos.py` devuelve a la
+  categoría «Trabajo extra» los pagos reclasificados por una migración anterior y elimina
+  los duplicados por contrato, año, mes y quincena. Acepta `--simular` y es idempotente
+  (ADR-60).
 
 ---
 
@@ -1415,8 +1419,9 @@ cd backend
 python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 
 .\.venv\Scripts\python -m compileall -q app     # sintaxis
-.\.venv\Scripts\python -m pytest -q             # suite completa (260 pruebas)
+.\.venv\Scripts\python -m pytest -q             # suite completa (678 pruebas)
 .\.venv\Scripts\python scripts\respaldo.py      # respaldo SQLite
+.\.venv\Scripts\python scripts\reparar_pagos_trabajos.py --simular  # diagnóstico ADR-60
 .\.venv\Scripts\python scripts\generar_guia.py --verificar
 ```
 
@@ -1433,6 +1438,8 @@ python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 | `test_auth.py`, `test_seguridad*.py` | Login, RBAC, JWT, CSRF y cabeceras. |
 | `test_vistas.py`, `test_finanzas_vistas.py` | Renderizado y navegación. |
 | `test_trabajos_chancucos.py`, `test_comercial.py` | Módulos restantes. |
+| `test_pagos_trabajos_migracion.py` | La migración respeta «Trabajo extra» y la reparación deduplica (ADR-60). |
+| `test_deudas_ui_v19.py` | Tabla de deudas contenida en móvil y modales (ADR-61 y ADR-62). |
 | `test_texto.py`, `test_respaldo.py` | Formato/parseo y respaldo. |
 
 ---

@@ -129,24 +129,54 @@ def test_los_paneles_de_escritorio_comparten_la_misma_altura() -> None:
     bloque = css.split(".rejilla-paneles--deudas > .panel--tabla {", 1)[1].split("}", 1)[0]
     assert "margin-top: 0;" in bloque
 
-    # La tabla muestra cuatro filas y permite scroll vertical y horizontal.
+    # En escritorio se ven cuatro filas y la caja desplaza en ambos ejes.
     tabla = css.split(".tabla-contenedor--deudas {", 1)[1].split("}", 1)[0]
     assert "max-height: 340px;" in tabla  # cuatro deudas en escritorio
     assert "overflow: auto;" in tabla
     assert "overscroll-behavior: contain;" in tabla
-    assert "touch-action: pan-x pan-y;" in tabla
-    assert "-webkit-overflow-scrolling: touch;" in tabla
     assert "max-width: 100%;" in tabla
     assert "\n  contain: paint;" not in tabla  # rompería el modal dentro de la tabla
+    # El gesto se deja al navegador: con `touch-action` y el scroll anidado de
+    # iOS, la tabla se arrastraba fuera del panel (ADR-61).
+    assert "touch-action:" not in tabla
+    assert "-webkit-overflow-scrolling:" not in tabla
 
     cabecera = css.split(".tabla-contenedor--deudas thead th {", 1)[1].split("}", 1)[0]
     assert "background: var(--bg-primary);" in cabecera
     assert "var(--bg-card)" not in cabecera
     assert "position: sticky;" in cabecera
 
+    # En móvil se replica la tabla «Mes a mes» de Analítica: sin alto máximo y
+    # sin cabecera sticky, para que solo el eje horizontal quede dentro de la
+    # caja y la página desplace en vertical.
     movil_tabla = (
         "@media (max-width: 640px) {\n"
         "  .tabla-contenedor--deudas {\n"
-        "    max-height: 280px;"
+        "    max-height: none;"
     )
-    assert movil_tabla in css  # la altura anterior se mantiene en móvil
+    assert movil_tabla in css
+    movil_cabecera = (
+        "  .tabla-contenedor--deudas thead th {\n"
+        "    position: static;"
+    )
+    assert movil_cabecera in css
+
+    # Sin `contain: paint` la tabla ancha ensancha el layout móvil (390 → 827)
+    # y la página entera se desplaza (ADR-62). La contención vive solo en el
+    # bloque móvil.
+    bloque_movil = css[css.index(movil_tabla) : css.index(movil_cabecera)]
+    assert "contain: paint;" in bloque_movil
+    assert "contain: paint;" not in tabla
+
+
+def test_el_modal_sale_de_la_tabla_contenida_al_abrirse() -> None:
+    """El modal se traslada al `body` para que `contain: paint` no lo recorte."""
+    javascript = (RAIZ_APP / "static" / "js" / "deudas.js").read_text(encoding="utf-8")
+
+    assert "new WeakMap()" in javascript
+    assert "document.createComment" in javascript
+    assert "document.body.appendChild(detalles)" in javascript
+    assert 'querySelectorAll(".tabla--deudas details.edicion-gasto--modal")' in javascript
+    # Al cerrar vuelve a su fila para no perder el formulario original.
+    assert "marcador.parentNode.insertBefore(detalles, marcador)" in javascript
+    assert 'addEventListener("toggle"' in javascript
