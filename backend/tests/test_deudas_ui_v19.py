@@ -154,7 +154,7 @@ def test_los_paneles_de_escritorio_comparten_la_misma_altura() -> None:
         "    max-height: none;"
     )
     assert movil_tabla in css
-    bloque_movil = css[css.index(movil_tabla) : css.index(movil_tabla) + 200]
+    bloque_movil = css[css.index(movil_tabla) : css.index("\n}\n", css.index(movil_tabla))]
     assert "contain: paint;" in bloque_movil
     assert "contain: paint;" not in tabla
     assert "max-height: 227px" not in css
