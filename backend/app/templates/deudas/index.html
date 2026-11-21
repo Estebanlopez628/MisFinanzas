@@ -168,7 +168,11 @@
                         <input type="hidden" name="acreedor" value="{{ deuda.acreedor }}" />
                         <input type="hidden" name="descripcion" value="{{ deuda.descripcion or '' }}" />
                         <input type="hidden" name="periodicidad" value="{{ deuda.periodicidad }}" />
-                        <h3 class="panel__titulo">Editar deuda</h3>
+                        <div class="edicion-gasto__cabecera">
+                          <h3 class="panel__titulo">Editar deuda</h3>
+                          <button class="edicion-gasto__cerrar" type="button" data-cancelar-edicion
+                                  aria-label="Cerrar edición" title="Cerrar">×</button>
+                        </div>
                         <label class="campo">
                           <span class="campo__etiqueta">Total Adeudado (COP)</span>
                           <input class="campo__control" type="text" name="saldo_total"
@@ -189,8 +193,6 @@
                         </label>
                         <div class="acciones-formulario acciones-formulario--edicion">
                           <button class="boton boton--primario boton--pequeno" type="submit">Actualizar</button>
-                          <button class="boton boton--cancelar boton--pequeno" type="button"
-                                  data-cancelar-edicion>Cancelar</button>
                         </div>
                       </form>
                     </details>

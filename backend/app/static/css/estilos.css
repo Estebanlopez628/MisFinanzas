@@ -3983,7 +3983,7 @@ strong.valor-negativo.recibo__cifra--saldo {
 
   .lista-gastos__item[data-deduccion-fila] > .lista-gastos__acciones > summary,
   .lista-gastos__item[data-deduccion-fila] > .lista-gastos__acciones > form {
-    display: none;
+    display: none !important;
   }
 }
 
@@ -4159,6 +4159,39 @@ details.edicion-gasto--modal[open]::before {
 /* El botón que abrió el modal no debe quedar dentro del contenido centrado. */
 details.edicion-gasto--modal[open] > summary {
   display: none;
+}
+
+/* Cabecera del modal: título a la izquierda y cierre sutil a la derecha.
+   Sustituye al botón «Cancelar» inferior en todos los modales de edición. */
+.edicion-gasto__cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.edicion-gasto__cerrar {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(148, 163, 184, 0.12);
+  color: var(--text-muted);
+  font-size: 1.15rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.edicion-gasto__cerrar:hover,
+.edicion-gasto__cerrar:focus-visible {
+  background: rgba(239, 68, 68, 0.16);
+  color: var(--accent-red);
+  outline: none;
 }
 
 /* La tarjeta del modal deja de estar anclada a la derecha o al 50 % con

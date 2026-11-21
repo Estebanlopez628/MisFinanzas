@@ -1864,6 +1864,13 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 - Se retiró el bloque «Crédito con …: faltan N cuota(s) · saldo …» de la fila de deducciones vinculadas: ocupaba una cuarta celda de la grid de tres columnas y bajaba los botones al centro. Ahora Editar/Eliminar quedan fijos en `grid-column: 3; justify-self: end`. El vínculo `id_deuda` y la anti-duplicación no cambian.
 - `sw.js` pasa a `olb-finanzas-v55`. Verificación: **663 pruebas** en verde y `generar_guia.py --verificar` sin problemas.
 
+### 2026-11-20 — Ajuste de modales: cierre superior y orden de botones
+
+- En móvil, el lápiz y la × laterales de las deducciones se ocultan con `display: none !important`; la fila sigue siendo táctil y abre el modal centrado.
+- En los modales de edición de deudas, gasto fijo y deducciones se añadió `.edicion-gasto__cabecera` con un botón sutil `.edicion-gasto__cerrar` (`data-cancelar-edicion`) y se retiró el «Cancelar» inferior.
+- En deducciones las acciones quedan en orden **Actualizar → Eliminar** (Eliminar usa `formaction`). En deudas y gasto fijo solo queda Actualizar.
+- `sw.js` pasa a `olb-finanzas-v56`. Verificación: **663 pruebas** en verde y `generar_guia.py --verificar` sin problemas.
+
 **Pendiente para el Paso 3:** solo la revisión visual en navegador (360/390/768/escritorio) de la dona, el consejero, los modales, el formulario de deducciones, el flujo SI/NO y el recibo; la corrección aritmética y la anti-duplicación ya están cubiertas por pruebas.
 
 

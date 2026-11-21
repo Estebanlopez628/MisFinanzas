@@ -66,6 +66,11 @@
             <input type="hidden" name="id_trabajo" value="{{ id_trabajo }}" />
           {% endif %}
           <input type="hidden" name="quincena" value="{{ gasto.quincena or '' }}" />
+          <div class="edicion-gasto__cabecera">
+            <h3 class="panel__titulo">Editar gasto</h3>
+            <button class="edicion-gasto__cerrar" type="button" data-cancelar-edicion
+                    aria-label="Cerrar edición" title="Cerrar">×</button>
+          </div>
           <label class="campo">
             <span class="campo__etiqueta">Categoría</span>
             {{ selector_categoria(gasto.categoria) }}
@@ -92,17 +97,10 @@
               required data-moneda
             />
           </label>
-          {# SRS v1.7: «Cancelar» cierra la edición sin guardar; mismo tamaño #}
-          {# que «Actualizar» y color rojo sutil. #}
+          {# SRS v1.9: el cierre va en la cabecera, así que aquí solo queda
+             «Actualizar» y, cuando aplica, «Eliminar» a su lado. #}
           <div class="acciones-formulario acciones-formulario--edicion">
             <button class="boton boton--primario boton--pequeno" type="submit">Actualizar</button>
-            <button
-              class="boton boton--cancelar boton--pequeno"
-              type="button"
-              data-cancelar-edicion
-            >
-              Cancelar
-            </button>
           </div>
         </form>
       </details>

@@ -352,6 +352,11 @@
                       action="{{ url_for('editar_deduccion_fija', id_deduccion=deduccion.id_deduccion) }}"
                       data-proteccion
                       data-guardar-formulario="editar-deduccion-{{ deduccion.id_deduccion }}">
+                  <div class="edicion-gasto__cabecera">
+                    <h3 class="panel__titulo">Editar deducción</h3>
+                    <button class="edicion-gasto__cerrar" type="button" data-cancelar-edicion
+                            aria-label="Cerrar edición" title="Cerrar">×</button>
+                  </div>
                   <label class="campo">
                     <span class="campo__etiqueta">Concepto</span>
                     <input class="campo__control" type="text" name="descripcion"
@@ -374,17 +379,15 @@
                     </select>
                   </label>
                   {{ vinculo_deuda(deudas_activas, deduccion.id_deuda or '') }}
-                  {# SRS v1.9, 3.3: las tres acciones del modal. «Eliminar»
-                     envía el mismo formulario a la ruta de borrado mediante
-                     formaction, sin anidar formularios. #}
+                  {# SRS v1.9: «Actualizar» primero y «Eliminar» a su lado. El
+                     cierre va en la cabecera, así que ya no hay «Cancelar».
+                     «Eliminar» usa formaction para no anidar formularios. #}
                   <div class="acciones-formulario acciones-formulario--edicion">
                     <button class="boton boton--primario boton--pequeno" type="submit">Actualizar</button>
                     <button class="boton boton--peligro boton--pequeno" type="submit"
                             formmethod="post"
                             formaction="{{ url_for('eliminar_deduccion_fija', id_deduccion=deduccion.id_deduccion) }}"
                             onclick="return confirm('¿Eliminar esta deducción fija?');">Eliminar</button>
-                    <button class="boton boton--cancelar boton--pequeno" type="button"
-                            data-cancelar-edicion>Cancelar</button>
                   </div>
                 </form>
               </details>

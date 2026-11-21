@@ -194,8 +194,8 @@ def test_limpiar_checks_no_deja_el_check_en_el_panel(cliente_admin, bd) -> None:
     assert _abono(bd, proyeccion.id_proyeccion) == Decimal("100000.00")
 
 
-def test_panel_ofrece_lapiz_cancelar_y_limpieza_visible(cliente_admin, bd) -> None:
-    """La fila usa lápiz, «Cancelar» y un botón de limpieza con más contraste."""
+def test_panel_ofrece_lapiz_cierre_y_limpieza_visible(cliente_admin, bd) -> None:
+    """La fila usa lápiz, cierre en la cabecera y limpieza con más contraste."""
     id_usuario = _id_admin(bd)
     _, gasto = _meta_con_gasto(bd, id_usuario)
     pagos_metas.marcar_pagado(bd, id_usuario, gasto.id_gasto, HOY)
@@ -204,14 +204,14 @@ def test_panel_ofrece_lapiz_cancelar_y_limpieza_visible(cliente_admin, bd) -> No
 
     assert "boton-circular--editar" in html
     assert "data-cancelar-edicion" in html
-    assert "boton--cancelar" in html
+    assert "edicion-gasto__cerrar" in html
     assert "boton--advertencia" in html
     assert "data-confirmar=" in html
     # En móvil la edición se abre como ventana centrada (SRS v1.7).
     assert "edicion-gasto edicion-gasto--modal" in html
 
 
-def test_presupuesto_hereda_lapiz_y_cancelar(cliente_admin, bd) -> None:
+def test_presupuesto_hereda_lapiz_y_cierre(cliente_admin, bd) -> None:
     """Las deducciones fijas usan el mismo componente de edición (DRY)."""
     id_usuario = _id_admin(bd)
     deducciones_fijas.crear_deduccion(bd, id_usuario, "Préstamo", "150.000", 1)
@@ -220,5 +220,5 @@ def test_presupuesto_hereda_lapiz_y_cancelar(cliente_admin, bd) -> None:
 
     assert "boton-circular--editar" in html
     assert "data-cancelar-edicion" in html
-    assert "boton--cancelar" in html
+    assert "edicion-gasto__cerrar" in html
     assert "edicion-gasto--modal" in html

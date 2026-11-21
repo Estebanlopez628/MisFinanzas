@@ -11,10 +11,10 @@ from app.servicios import deducciones_fijas, usuarios
 RAIZ_APP = Path(__file__).resolve().parents[1] / "app"
 
 
-def test_las_acciones_de_deducciones_estan_a_la_derecha_y_el_modal_tiene_tres_botones(
+def test_las_acciones_de_deducciones_estan_a_la_derecha_y_el_modal_tiene_cierre(
     cliente_admin: TestClient, bd
 ) -> None:
-    """Escritorio alinea los iconos; el modal ofrece Actualizar/Eliminar/Cancelar."""
+    """Escritorio alinea los iconos; el modal ofrece Actualizar/Eliminar y cierre arriba."""
     cuenta = usuarios.buscar_por_correo(bd, "admin@olbbyte.co")
     assert cuenta is not None
     deduccion = deducciones_fijas.crear_deduccion(
@@ -30,6 +30,9 @@ def test_las_acciones_de_deducciones_estan_a_la_derecha_y_el_modal_tiene_tres_bo
     assert 'formaction="' in html
     assert f"/deducciones/{deduccion.id_deduccion}/eliminar" in html
     assert "data-cancelar-edicion" in html
+    assert "edicion-gasto__cerrar" in html
+    assert ">Cancelar</button>" not in html
+    assert html.index(">Actualizar</button>") < html.index(">Eliminar</button>")
     assert 'aria-label="Eliminar Libranza"' in html
     assert "js/deudas.js" in html
 
@@ -46,6 +49,7 @@ def test_el_css_oculta_los_iconos_en_movil_y_alinea_a_la_derecha() -> None:
     assert ".lista-gastos__item[data-deduccion-fila]" in bloque_movil
     assert "> .lista-gastos__acciones > summary" in bloque_movil
     assert "> .lista-gastos__acciones > form" in bloque_movil
+    assert "display: none !important;" in bloque_movil
 
 
 def test_el_javascript_abre_el_modal_al_tocar_la_fila_de_deduccion() -> None:
