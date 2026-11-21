@@ -4199,17 +4199,36 @@ strong.valor-negativo.recibo__cifra--saldo {
   pointer-events: none;
 }
 
-/* SRS v1.9: como máximo cuatro deudas visibles; el resto se alcanza
-   deslizando hacia abajo y las columnas hacia la derecha. */
+/* SRS v1.9: se ven cuatro deudas; el resto se alcanza deslizando hacia abajo.
+   El desplazamiento horizontal queda contenido en la caja, sin arrastrar el
+   panel ni la página. */
 .tabla-contenedor--deudas {
-  max-height: 280px;
+  width: 100%;
+  max-width: 100%;
+  max-height: 340px;
   overflow: auto;
+  overscroll-behavior: contain;
 }
 
+/* Fondo opaco: la cabecera sticky debe tapar las filas que pasan por debajo. */
 .tabla-contenedor--deudas thead th {
   position: sticky;
   top: 0;
   z-index: 2;
+  background: var(--bg-card);
+  box-shadow: 0 1px 0 var(--borde-suave);
+}
+
+.rejilla-paneles--deudas > .panel {
+  min-width: 0;
+}
+
+/* El aumento a cuatro deudas es solo de escritorio. En móvil se conserva la
+   altura anterior para no hacer más larga la tarjeta. */
+@media (max-width: 640px) {
+  .tabla-contenedor--deudas {
+    max-height: 280px;
+  }
 }
 
 /* La celda sigue siendo `table-cell` para centrarse verticalmente con la línea

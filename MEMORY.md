@@ -1986,6 +1986,13 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 - La celda de descripción de «Atajos guardados» lleva la clase `.atajo-descripcion` y solo dentro de `@media (max-width: 640px)` baja a `font-size: 0.74rem` (el resto de la tabla sigue en 0.8rem).
 - No se tocó el escritorio ni los atajos embebidos de Mis Finanzas. `sw.js` pasa a `olb-finanzas-v75`; **674 pruebas** en verde y `generar_guia.py --verificar` sin problemas.
 
+### 2026-11-20 — Corrector de tabla de deudas al igualar paneles
+
+- Al aplicar `align-items: stretch` los paneles quedaron iguales, pero la cabecera sticky seguía con el fondo semitransparente de `.tabla thead th` (`rgba(15,23,42,.7)`), así que las filas se veían debajo al desplazarse. Se le dio fondo opaco `var(--bg-card)` y una sombra sutil.
+- En móvil el gesto horizontal arrastraba la tabla fuera del panel: el contenedor ahora tiene `width/max-width: 100%` y `overscroll-behavior: contain`, y los paneles de la rejilla `min-width: 0`. El scroll lateral sigue funcionando **dentro** de la caja.
+- Se amplió a cuatro deudas visibles **solo en escritorio** (`max-height: 340px`); en móvil se conservan los `280px` anteriores mediante un `@media`.
+- Se mantiene `align-items: stretch` (ambos paneles siguen igual de altos). `sw.js` pasa a `olb-finanzas-v76`; **674 pruebas** en verde.
+
 **Pendiente para el Paso 3:** solo la revisión visual en navegador (360/390/768/escritorio) de la dona, el consejero, los modales, el formulario de deducciones, el flujo SI/NO y el recibo; la corrección aritmética y la anti-duplicación ya están cubiertas por pruebas.
 
 

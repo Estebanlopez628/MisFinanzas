@@ -131,6 +131,18 @@ def test_los_paneles_de_escritorio_comparten_la_misma_altura() -> None:
 
     # La tabla muestra cuatro filas y permite scroll vertical y horizontal.
     tabla = css.split(".tabla-contenedor--deudas {", 1)[1].split("}", 1)[0]
-    assert "max-height: 280px;" in tabla
+    assert "max-height: 340px;" in tabla  # cuatro deudas en escritorio
     assert "overflow: auto;" in tabla
-    assert ".tabla-contenedor--deudas thead th {" in css
+    assert "overscroll-behavior: contain;" in tabla
+    assert "max-width: 100%;" in tabla
+
+    cabecera = css.split(".tabla-contenedor--deudas thead th {", 1)[1].split("}", 1)[0]
+    assert "background: var(--bg-card);" in cabecera
+    assert "position: sticky;" in cabecera
+
+    movil_tabla = (
+        "@media (max-width: 640px) {\n"
+        "  .tabla-contenedor--deudas {\n"
+        "    max-height: 280px;"
+    )
+    assert movil_tabla in css  # la altura anterior se mantiene en móvil
