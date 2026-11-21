@@ -1223,9 +1223,10 @@ Panel compartido de capacidad de endeudamiento (SRS v1.7, bloque F; base mínima
 en v1.8). La macro `panel_capacidad(capacidad, titulo, descripcion)` dibuja la
 dona del ingreso repartido entre gastos fijos, cuota de deudas, base mínima de
 liquidez y disponible para abonar. Desde SRS v1.9 los arcos y la leyenda salen
-de `capacidad.arcos_categoria`, con los nombres y colores del catálogo; en la
-leyenda solo se pintan las categorías con valor mayor que cero, y la categoría
-8 se marca como «automática · deudas». También muestra el semáforo,
+de `capacidad.arcos_categoria`, con los nombres y colores del catálogo. Hay una
+**sola** leyenda: los propios arcos ya traen el nombre, el color, el valor y el
+porcentaje de cada categoría con valor mayor que cero, sin duplicados ni notas
+adicionales. También muestra el semáforo,
 las deudas con tres cuotas o menos y la tabla de doce meses con su
 barra de saldo libre. Se incluye una vez en `presupuesto/index.html` y otra en
 `trabajos/index.html`, cada una con su propio título.

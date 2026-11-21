@@ -2778,22 +2778,6 @@ strong.valor-negativo.recibo__cifra--saldo {
   line-height: 1.4;
 }
 
-.dona__leyenda--categorias {
-  border-top: 1px solid var(--borde-suave, rgba(255, 255, 255, 0.12));
-  padding-top: 10px;
-  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
-  align-items: center;
-}
-
-.dona__leyenda--categorias li {
-  min-width: 0;
-}
-
-.dona__leyenda--categorias .insignia {
-  margin-left: 6px;
-  font-size: 0.68rem;
-}
-
 .barra {
   width: 100%;
   min-width: 80px;

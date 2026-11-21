@@ -158,13 +158,16 @@ def test_la_leyenda_de_la_dona_solo_muestra_categorias_con_valor(
     html = cliente_admin.get("/presupuesto").text
 
     for categoria in resultado.categorias:
-        etiqueta = f'data-leyenda-categoria="{categoria["nombre"]}"'
+        etiqueta = f'data-leyenda-etiqueta="{categoria["nombre"]}"'
         if categoria["valor"] > 0:
             assert etiqueta in html
         else:
             assert etiqueta not in html
     assert 'data-etiqueta="Otros Gastos Fijos"' in html
-    assert "automática · deudas" not in html  # sin deudas, la categoría 8 vale 0
+    # No hay una segunda leyenda duplicada ni la insignia «automática · deudas».
+    assert "data-leyenda-categoria=" not in html
+    assert "automática · deudas" not in html
+    assert html.count('data-leyenda-etiqueta="Otros Gastos Fijos"') == 1
 
 
 def test_el_js_y_el_service_worker_incluyen_el_selector_y_la_preservacion() -> None:

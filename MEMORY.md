@@ -1871,6 +1871,12 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 - En deducciones las acciones quedan en orden **Actualizar → Eliminar** (Eliminar usa `formaction`). En deudas y gasto fijo solo queda Actualizar.
 - `sw.js` pasa a `olb-finanzas-v56`. Verificación: **663 pruebas** en verde y `generar_guia.py --verificar` sin problemas.
 
+### 2026-11-20 — Leyenda única de la dona
+
+- Se eliminó el segundo `<ul class="dona__leyenda--categorias">` que repetía «Vivienda y Servicios», «Transporte y Movilidad», etc. La leyenda de los arcos (`data-leyenda-etiqueta`) ya incluye nombre, color, valor y porcentaje de cada categoría con valor > 0.
+- Se retiró la insignia «automática · deudas» y el CSS huérfano `.dona__leyenda--categorias`. `sw.js` pasa a `olb-finanzas-v57`.
+- Verificación: **663 pruebas** en verde y `generar_guia.py --verificar` sin problemas.
+
 **Pendiente para el Paso 3:** solo la revisión visual en navegador (360/390/768/escritorio) de la dona, el consejero, los modales, el formulario de deducciones, el flujo SI/NO y el recibo; la corrección aritmética y la anti-duplicación ya están cubiertas por pruebas.
 
 

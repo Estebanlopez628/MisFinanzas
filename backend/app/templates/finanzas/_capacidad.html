@@ -82,23 +82,8 @@
           </li>
           {% endif %}
         </ul>
-
-        {# SRS v1.9: las ocho categorías cerradas con sus colores exactos. La
-           categoría 8 se calcula sola con las deudas activas; los gastos y
-           deducciones vinculados a una deuda ya no aparecen aquí dos veces. #}
-        <ul class="dona__leyenda dona__leyenda--categorias">
-          {% for categoria in capacidad.categorias if categoria.valor > 0 %}
-            <li data-leyenda-categoria="{{ categoria.nombre }}">
-              <span class="dona__muestra" style="background: {{ categoria.color }}"></span>
-              {{ categoria.nombre }}:
-              <strong class="{{ 'valor-negativo' if categoria.valor > 0 else 'valor-positivo' }}">{{ categoria.valor | cop }}</strong>
-              <span class="ayuda">({{ categoria.porcentaje | porcentaje(1) }})</span>
-              {% if categoria.es_obligacion %}
-                <small class="insignia">automática · deudas</small>
-              {% endif %}
-            </li>
-          {% endfor %}
-        </ul>
+        {# Una sola leyenda: los arcos ya traen nombre, color, valor y porcentaje
+           de cada categoría con valor, más el ingreso y el dinero libre. #}
       </div>
 
       {% if not solo_trabajos %}
