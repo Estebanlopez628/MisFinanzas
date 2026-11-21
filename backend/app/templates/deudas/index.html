@@ -1,9 +1,10 @@
 {% extends "base.html" %}
-{% block titulo %}Resumen de Deudas{% endblock %}
+{% from "finanzas/_gasto_fijo.html" import boton_editar with context %}
+{% block titulo %}Registro y Detalles de deudas{% endblock %}
 
 {% block contenido %}
   <section class="heroe">
-    <h1 class="heroe__titulo">📉 Resumen de Deudas</h1>
+    <h1 class="heroe__titulo">📉 Registro y Detalles de deudas</h1>
     <p class="heroe__subtitulo">
       Registra el total adeudado, la cuota y cuántos pagos faltan. El sistema
       descuenta cada cuota cuando vence, sin simular intereses.
@@ -13,6 +14,23 @@
   <div class="acciones-formulario acciones-volver">
     <a class="boton boton--secundario boton--pequeno" href="{{ url_for('ver_dashboard') }}">← Volver al inicio</a>
   </div>
+
+  {# SRS v1.9, sección 3.2: acceso de regreso al formulario que envió al usuario
+     a registrar su deuda. Se lleva el id de la deuda recién creada. #}
+  {% if volver %}
+    {% set destinos = {
+      'deducciones': '/presupuesto',
+      'finanzas': '/finanzas',
+      'trabajos': '/trabajos-extras'
+    } %}
+    {% set destino = destinos.get(volver, '/') %}
+    <div class="acciones-formulario acciones-volver">
+      <a class="boton boton--primario boton--pequeno" data-volver-origen
+         href="{{ destino }}?guardado_deuda=1{% if deuda_reciente %}&deuda_id={{ deuda_reciente.id_deuda }}{% endif %}">
+        ← Volver al formulario de origen
+      </a>
+    </div>
+  {% endif %}
 
   {% if guardado %}
     <div class="alerta alerta--exito" role="status">Deuda registrada.</div>
@@ -49,13 +67,13 @@
     </article>
   </div>
 
-  <div class="rejilla-paneles">
+  <div class="rejilla-paneles rejilla-paneles--deudas">
     <section class="panel">
       <h2 class="panel__titulo">Nueva deuda</h2>
       <p class="panel__descripcion">
         Escribe el total adeudado, la cuota y las cuotas que faltan. La cuota por
-        las cuotas debe coincidir con el total: si no cuadra, te avisamos para
-        que corrijas los datos.
+        las cuotas debe cubrir el total: si no lo hace, te avisamos para que
+        corrijas los datos.
       </p>
       <form class="formulario" method="post" action="{{ url_for('crear_deuda') }}">
         <div class="fila-campos">
@@ -72,7 +90,7 @@
                    placeholder="Tarjeta, crédito de consumo…" />
           </label>
           <label class="campo">
-            <span class="campo__etiqueta">Total adeudado (COP)</span>
+            <span class="campo__etiqueta">Total Adeudado (COP)</span>
             <input class="campo__control" type="text" name="saldo_total"
                    inputmode="decimal" value="{{ valores.saldo_total if valores else '' }}"
                    placeholder="23.000.000" required data-moneda />
@@ -84,7 +102,7 @@
                    placeholder="383.333" required data-moneda />
           </label>
           <label class="campo">
-            <span class="campo__etiqueta">Cuotas pendientes</span>
+            <span class="campo__etiqueta">No. Cuotas Pendientes</span>
             <input class="campo__control" type="text" name="cuotas_pendientes"
                    inputmode="numeric" value="{{ valores.cuotas_pendientes if valores else '' }}"
                    placeholder="60" required />
@@ -109,21 +127,21 @@
       <h2 class="panel__titulo">Deudas registradas</h2>
       {% if deudas %}
         <div class="tabla-contenedor">
-          <table class="tabla">
+          <table class="tabla tabla--deudas">
             <thead>
               <tr>
                 <th scope="col">Acreedor</th>
-                <th scope="col">Total adeudado</th>
+                <th scope="col">Total Adeudado</th>
                 <th scope="col">Cuota</th>
-                <th scope="col">Pendientes</th>
+                <th scope="col">No. Cuotas Pendientes</th>
                 <th scope="col">Periodicidad</th>
                 <th scope="col">Estado</th>
-                <th scope="col"></th>
+                <th scope="col" class="deudas__acciones"><span class="sr-only">Acciones</span></th>
               </tr>
             </thead>
             <tbody>
               {% for deuda in deudas %}
-                <tr>
+                <tr class="fila-deuda" data-deuda-fila data-id-deuda="{{ deuda.id_deuda }}">
                   <td>
                     <strong>{{ deuda.acreedor }}</strong>
                     {% if deuda.descripcion %}
@@ -137,20 +155,56 @@
                   <td class="tabla__numero">{{ deuda.cuotas_pendientes }}</td>
                   <td>{{ deuda.periodicidad | capitalize }}</td>
                   <td>{{ deuda.estado | capitalize }}</td>
-                  <td>
+                  <td class="deudas__acciones">
+                    {# SRS v1.9, 2.3: el lápiz abre la misma ventana centrada que
+                       se usa en el resto de módulos (app.js cierra con Escape o
+                       tocando el fondo). En móvil se oculta y abre al tocar la fila. #}
+                    <details class="edicion-gasto edicion-gasto--modal">
+                      {{ boton_editar(deuda.acreedor) }}
+                      <form class="formulario formulario--compacto edicion-gasto__formulario"
+                            method="post"
+                            action="{{ url_for('editar_deuda', id_deuda=deuda.id_deuda) }}"
+                            data-proteccion>
+                        <input type="hidden" name="acreedor" value="{{ deuda.acreedor }}" />
+                        <input type="hidden" name="descripcion" value="{{ deuda.descripcion or '' }}" />
+                        <input type="hidden" name="periodicidad" value="{{ deuda.periodicidad }}" />
+                        <h3 class="panel__titulo">Editar deuda</h3>
+                        <label class="campo">
+                          <span class="campo__etiqueta">Total Adeudado (COP)</span>
+                          <input class="campo__control" type="text" name="saldo_total"
+                                 inputmode="decimal" value="{{ deuda.saldo_total | cop(false) }}"
+                                 required data-moneda />
+                        </label>
+                        <label class="campo">
+                          <span class="campo__etiqueta">Cuota (COP)</span>
+                          <input class="campo__control" type="text" name="cuota"
+                                 inputmode="decimal" value="{{ deuda.cuota_mensual | cop(false) }}"
+                                 required data-moneda />
+                        </label>
+                        <label class="campo">
+                          <span class="campo__etiqueta">No. Cuotas Pendientes</span>
+                          <input class="campo__control" type="text" name="cuotas_pendientes"
+                                 inputmode="numeric" value="{{ deuda.cuotas_pendientes }}"
+                                 required />
+                        </label>
+                        <div class="acciones-formulario acciones-formulario--edicion">
+                          <button class="boton boton--primario boton--pequeno" type="submit">Actualizar</button>
+                          <button class="boton boton--cancelar boton--pequeno" type="button"
+                                  data-cancelar-edicion>Cancelar</button>
+                        </div>
+                      </form>
+                    </details>
                     <form method="post"
                           action="{{ url_for('eliminar_deuda', id_deuda=deuda.id_deuda) }}"
-                          onsubmit="return confirm('¿Eliminar esta deuda y sus pagos?');">
-                      <button class="boton boton--peligro boton--pequeno" type="submit">
-                        Eliminar
-                      </button>
+                          data-confirmar="¿Eliminar esta deuda y sus pagos?">
+                      <button class="boton boton--peligro boton-circular" type="submit"
+                              aria-label="Eliminar {{ deuda.acreedor }}" title="Eliminar deuda">×</button>
                     </form>
                   </td>
                 </tr>
                 <tr class="fila-detalle-deuda">
                   <td colspan="7">
                     <div class="deuda-cuotas">
-
                       {% if pagos.get(deuda.id_deuda) %}
                         <h4 class="panel__titulo">Cuotas aplicadas</h4>
                         <div class="tabla-contenedor tabla-contenedor--compacta">
@@ -177,34 +231,8 @@
                             </tbody>
                           </table>
                         </div>
-                      {% endif %}
-
-                      {% if planes.get(deuda.id_deuda) %}
-                        <h4 class="panel__titulo">Próximas cuotas</h4>
-                        <div class="tabla-contenedor tabla-contenedor--compacta">
-                          <table class="tabla tabla--compacta">
-                            <thead>
-                              <tr>
-                                <th scope="col">Fecha</th>
-                                <th scope="col">Cuota</th>
-                                <th scope="col">Abono a capital</th>
-                                <th scope="col">Saldo</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {% for cuota in planes[deuda.id_deuda] %}
-                                <tr {% if cuota.ultima %}class="fila-periodo"{% endif %}>
-                                  <td>{{ cuota.fecha | fecha_larga }}</td>
-                                  <td class="tabla__numero">{{ cuota.valor | cop }}</td>
-                                  <td class="tabla__numero">{{ cuota.abono_capital | cop }}</td>
-                                  <td class="tabla__numero">{{ cuota.saldo_despues | cop }}</td>
-                                </tr>
-                              {% endfor %}
-                            </tbody>
-                          </table>
-                        </div>
-                      {% elif not pagos.get(deuda.id_deuda) %}
-                        <p class="tabla__vacia">Esta deuda no tiene cuotas pendientes.</p>
+                      {% else %}
+                        <p class="tabla__vacia">Esta deuda no tiene cuotas aplicadas.</p>
                       {% endif %}
                     </div>
                   </td>
@@ -218,4 +246,8 @@
       {% endif %}
     </section>
   </div>
+{% endblock %}
+
+{% block scripts %}
+  <script src="{{ url_for('estaticos', path='js/deudas.js') }}" defer></script>
 {% endblock %}

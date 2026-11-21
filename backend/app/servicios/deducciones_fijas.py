@@ -28,6 +28,7 @@ from decimal import Decimal
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
+from app.core import categorias as catalogo
 from app.core.numeros import redondear_dinero
 from app.core.texto import parsear_monto
 from app.modelos import Deuda, DeduccionFija
@@ -70,11 +71,8 @@ def _validar(descripcion: str, valor: Decimal | str | int | float, quincena: int
     return texto[:150], monto, numero
 
 
-def _deuda_vinculable(bd: Session, id_usuario: str, id_deuda: str | None) -> Deuda | None:
-    """Busca la deuda a la que se quiere vincular la deducción (SRS v1.9).
-
-    Solo se vinculan deudas del propio usuario, activas y mensuales. Una deuda
-    quincenal necesitaría dos deducciones por mes, y eso no se modela todavía.
+def _deuda_vinculable(bd: Session, id_usuario: str, id_deuda: str | None):
+    """Devuelve la deuda vinculable usando la regla compartida del servicio.
 
     Args:
         bd: Sesión de base de datos.
@@ -85,20 +83,10 @@ def _deuda_vinculable(bd: Session, id_usuario: str, id_deuda: str | None) -> Deu
         La deuda vinculable, o `None` si la deducción no está vinculada.
 
     Raises:
-        ValueError: Si la deuda no existe, es de otro usuario, ya está pagada o no
-            es mensual.
+        ValueError: Si la deuda no existe, es de otro usuario, ya está pagada o
+            no es mensual.
     """
-    texto = (id_deuda or "").strip()
-    if not texto:
-        return None
-    deuda = bd.get(Deuda, texto)
-    if deuda is None or deuda.id_usuario != id_usuario:
-        raise ValueError("La deuda elegida no existe.")
-    if deuda.estado != servicio_deudas.ESTADO_ACTIVA:
-        raise ValueError("Esa deuda ya está pagada; no se puede vincular a una deducción.")
-    if deuda.periodicidad != servicio_deudas.PERIODICIDAD_MENSUAL:
-        raise ValueError("Solo se pueden vincular deudas que se pagan cada mes.")
-    return deuda
+    return servicio_deudas.deuda_vinculable(bd, id_usuario, id_deuda)
 
 
 def crear_deduccion(
@@ -108,6 +96,7 @@ def crear_deduccion(
     valor: Decimal | str | int | float,
     quincena: int | str,
     id_deuda: str | None = None,
+    categoria: str | None = None,
 ) -> DeduccionFija:
     """Registra una deducción fija del salario.
 
@@ -119,6 +108,7 @@ def crear_deduccion(
             ignora y se usa la cuota mensual de la deuda.
         quincena: `1` o `2`, pago del que se descuenta.
         id_deuda: Deuda que esta deducción paga cada mes; vacío si no aplica.
+        categoria: Categoría cerrada; si falta se infiere de la descripción.
 
     Returns:
         La deducción persistida.
@@ -132,11 +122,15 @@ def crear_deduccion(
         # SRS v1.9: el descuento de nómina y la cuota son el mismo dinero; se toma
         # la cuota de la deuda para que no puedan quedar con montos distintos.
         monto = redondear_dinero(deuda.cuota_mensual or CERO)
+    nombre_categoria = categoria or (
+        catalogo.CATEGORIA_CREDITOS if catalogo.es_credito(texto) else catalogo.CATEGORIA_OTROS
+    )
     deduccion = DeduccionFija(
         id_usuario=id_usuario,
         descripcion=texto,
         valor=monto,
         quincena=numero,
+        categoria=catalogo.normalizar_categoria(nombre_categoria),
         id_deuda=deuda.id_deuda if deuda is not None else None,
     )
     bd.add(deduccion)
@@ -153,6 +147,7 @@ def actualizar_deduccion(
     valor: Decimal | str | int | float,
     quincena: int | str,
     id_deuda: str | None = None,
+    categoria: str | None = None,
 ) -> DeduccionFija | None:
     """Modifica una deducción existente del usuario.
 
@@ -164,6 +159,7 @@ def actualizar_deduccion(
         valor: Nuevo monto por pago; con deuda vinculada se usa la cuota de la deuda.
         quincena: Nueva quincena de descuento.
         id_deuda: Deuda vinculada; vacío quita el vínculo.
+        categoria: Nueva categoría cerrada; `None` conserva la anterior.
 
     Returns:
         La deducción actualizada, o `None` si no existe o es de otro usuario.
@@ -181,6 +177,8 @@ def actualizar_deduccion(
     deduccion.descripcion = texto
     deduccion.valor = monto
     deduccion.quincena = numero
+    if categoria:
+        deduccion.categoria = catalogo.normalizar_categoria(categoria)
     deduccion.id_deuda = deuda.id_deuda if deuda is not None else None
     bd.commit()
     bd.refresh(deduccion)
@@ -247,6 +245,44 @@ def listar_vigentes(bd: Session, id_usuario: str) -> list[DeduccionFija]:
         .order_by(DeduccionFija.quincena, DeduccionFija.descripcion)
     )
     return list(bd.scalars(consulta))
+
+
+def sin_vinculo(bd: Session, id_usuario: str) -> list[DeduccionFija]:
+    """Lista las deducciones vigentes que no pagan ninguna deuda.
+
+    Se usan para los egresos de la dona: las que sí tienen `id_deuda` ya están
+    representadas por la cuota de su deuda en «Créditos y Obligaciones» y no
+    deben contarse otra vez (regla anti-duplicación).
+
+    Args:
+        bd: Sesión de base de datos.
+        id_usuario: Dueño de las deducciones.
+
+    Returns:
+        Deducciones sin vínculo, ordenadas por quincena y descripción.
+    """
+    return [fila for fila in listar_vigentes(bd, id_usuario) if fila.id_deuda is None]
+
+
+def total_creditos_sin_vinculo(bd: Session, id_usuario: str) -> Decimal:
+    """Suma los descuentos de nómina que son crédito sin deuda registrada.
+
+    Son libranzas heredadas: no aparecen en `deudas`, por lo que se incluyen en
+    la categoría 8 como obligaciones, igual que se hacía antes de ADR-56.
+
+    Args:
+        bd: Sesión de base de datos.
+        id_usuario: Dueño de las deducciones.
+
+    Returns:
+        Total mensual redondeado a centavos.
+    """
+    return redondear_dinero(
+        sum(
+            (fila.valor for fila in sin_vinculo(bd, id_usuario) if catalogo.es_credito(fila.descripcion)),
+            start=CERO,
+        )
+    )
 
 
 def vinculadas_activas(bd: Session, id_usuario: str) -> list[DeduccionFija]:

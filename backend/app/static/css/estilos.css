@@ -1695,6 +1695,18 @@ textarea.campo__control {
   margin-top: 18px;
 }
 
+/* SRS v1.9, sección 2.1: en «Registro y Detalles de deudas» los paneles
+   «Nueva deuda» y «Deudas registradas» deben empezar a la misma altura. El
+   margen genérico de `.panel--tabla` bajaba el segundo panel en escritorio;
+   dentro de esta rejilla se anula y el `gap` ya separa las tarjetas en móvil. */
+.rejilla-paneles--deudas {
+  align-items: start;
+}
+
+.rejilla-paneles--deudas > .panel--tabla {
+  margin-top: 0;
+}
+
 .tabla-contenedor {
   overflow-x: auto;
   border: 1px solid var(--borde-suave);
@@ -2440,19 +2452,22 @@ textarea.campo__control {
 /* ---------------------------- OLB_BYTE: cobros y recibo ---------------------------- */
 
 .insignia--saldo-total {
-  background: rgba(16, 185, 129, 0.15);
-  color: var(--accent-green);
+  background: rgba(22, 163, 74, 0.12);
+  color: #16a34a;
   font-size: 1rem;
   padding: 6px 14px;
 }
 
+/* SRS v1.9, 4.3: cuerpo blanco sutil/gris perla con lectura tipo Nequi. */
 .recibo {
   max-width: 420px;
   margin: 16px auto;
-  background: var(--bg-card);
+  background: #f8fafc;
+  color: #111827;
+  border: 1px solid #e2e8f0;
   border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
 }
 
 .recibo__cabecera {
@@ -2474,14 +2489,15 @@ textarea.campo__control {
 .recibo__detalle,
 .recibo__saldo {
   display: block;
-  color: var(--text-muted);
+  color: #111827;
   font-size: 0.9rem;
 }
 
-.recibo__cifra {
+.recibo__cifra,
+strong.valor-negativo.recibo__cifra--saldo {
   display: block;
   font-size: 2rem;
-  color: var(--accent-green);
+  color: #16a34a;
   margin: 4px 0;
 }
 
@@ -2499,11 +2515,14 @@ textarea.campo__control {
   justify-content: space-between;
   gap: 12px;
   padding: 6px 0;
-  border-bottom: 1px dashed var(--borde-suave, rgba(255, 255, 255, 0.12));
+  border-bottom: 1px dashed #cbd5e1;
 }
 
-.recibo__datos dt {
-  color: var(--text-muted);
+.recibo__datos dt,
+.recibo__datos dd,
+.recibo__desglose li,
+.recibo__subtitulo {
+  color: #111827;
 }
 
 .recibo__datos dd {
@@ -2531,14 +2550,14 @@ textarea.campo__control {
 }
 
 .recibo__desglose--actual {
-  color: var(--accent-green);
+  color: #16a34a;
   font-weight: 600;
 }
 
 .recibo__pie {
   padding: 16px 20px 20px;
   text-align: center;
-  border-top: 1px solid var(--borde-suave, rgba(255, 255, 255, 0.12));
+  border-top: 1px solid #e2e8f0;
   margin-top: 12px;
 }
 
@@ -2757,6 +2776,22 @@ textarea.campo__control {
   gap: 8px;
   font-size: 0.8rem;
   line-height: 1.4;
+}
+
+.dona__leyenda--categorias {
+  border-top: 1px solid var(--borde-suave, rgba(255, 255, 255, 0.12));
+  padding-top: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+  align-items: center;
+}
+
+.dona__leyenda--categorias li {
+  min-width: 0;
+}
+
+.dona__leyenda--categorias .insignia {
+  margin-left: 6px;
+  font-size: 0.68rem;
 }
 
 .barra {
@@ -3917,4 +3952,234 @@ textarea.campo__control {
   .ordenes-moviles {
     display: flex;
   }
+}
+
+/* ------------ Deducciones fijas: fila superior de tres campos (3.1) ------- */
+
+.deduccion-quincena {
+  margin-top: 12px;
+}
+
+@media (min-width: 641px) {
+  .fila-campos--deducciones {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* ---- Deducciones fijas: acciones a la derecha y fila táctil (3.3) -------- */
+
+.lista-gastos__item[data-deduccion-fila] > .lista-gastos__acciones {
+  justify-content: flex-end;
+  text-align: right;
+  margin-left: auto;
+}
+
+@media (max-width: 640px) {
+  .lista-gastos__item[data-deduccion-fila] {
+    cursor: pointer;
+  }
+
+  .lista-gastos__item[data-deduccion-fila] > .lista-gastos__acciones > summary,
+  .lista-gastos__item[data-deduccion-fila] > .lista-gastos__acciones > form {
+    display: none;
+  }
+}
+
+/* ---------------- Deudas registradas (SRS v1.9, sección 2.3) -------------- */
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.tabla--deudas td.deudas__acciones {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+@media (max-width: 640px) {
+  .tabla--deudas .fila-deuda {
+    cursor: pointer;
+  }
+
+  /* Se ocultan los iconos de la fila, pero no el `<details>`: su formulario
+     sigue abriéndose como ventana centrada al tocar cualquier parte de la fila. */
+  .tabla--deudas .fila-deuda > .deudas__acciones > summary,
+  .tabla--deudas .fila-deuda > .deudas__acciones > form {
+    display: none;
+  }
+}
+
+/* ------- Vinculación condicional con deudas (SRS v1.9, sección 3.2) -------- */
+
+.vinculo-condicional {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0;
+  padding: 12px;
+  border: 1px solid var(--borde-suave, rgba(255, 255, 255, 0.12));
+  border-radius: var(--radio-md, 10px);
+}
+
+.vinculo-condicional__opciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.vinculo-condicional__aviso {
+  margin: 0;
+}
+
+/* ---------------- Selector cerrado de categorías (SRS v1.9) ---------------- */
+
+.selector-categoria {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.selector-categoria__entrada {
+  padding-right: 40px !important;
+  cursor: pointer;
+  text-overflow: ellipsis;
+}
+
+.selector-categoria__boton {
+  position: absolute;
+  right: 6px;
+  min-width: 30px;
+  height: 34px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.selector-categoria__boton:hover,
+.selector-categoria__boton:focus-visible {
+  color: var(--accent-blue);
+  outline: none;
+}
+
+.selector-categoria__lista {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 30;
+  max-height: 260px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  list-style: none;
+  margin: 0;
+  padding: 6px;
+  background: var(--bg-card);
+  border: 1px solid var(--borde-suave, rgba(255, 255, 255, 0.12));
+  border-radius: var(--radio-md, 10px);
+  box-shadow: var(--sombra-tarjeta, 0 12px 28px rgba(0, 0, 0, 0.35));
+}
+
+.selector-categoria__opcion {
+  display: block;
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.selector-categoria__opcion:hover,
+.selector-categoria__opcion:focus-visible {
+  background: rgba(2, 132, 199, 0.18);
+  outline: none;
+}
+
+.vinculo-deuda {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+  min-width: 0;
+}
+
+.vinculo-deuda .ayuda {
+  font-size: 0.78rem;
+}
+
+@media (max-width: 640px) {
+  .selector-categoria__lista {
+    max-height: 40vh;
+  }
+}
+
+/* -------- Centrado estricto de modales y banners (SRS v1.9, 4.1) --------- */
+
+/* Regla global: cualquier envoltorio de modal cubre el viewport y centra su
+   contenido, sin importar el ancho de pantalla. */
+.modal-centrado,
+details.edicion-gasto--modal[open] {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  padding: 1rem;
+}
+
+/* El fondo oscuro del modal de edición lo pone el propio <details> abierto;
+   se anula el ::before heredado para no duplicar capas. */
+details.edicion-gasto--modal[open] {
+  background: rgba(15, 23, 42, 0.72);
+}
+
+details.edicion-gasto--modal[open]::before {
+  content: none;
+}
+
+/* El botón que abrió el modal no debe quedar dentro del contenido centrado. */
+details.edicion-gasto--modal[open] > summary {
+  display: none;
+}
+
+/* La tarjeta del modal deja de estar anclada a la derecha o al 50 % con
+   translate: ahora es un elemento flex centrado por el contenedor. */
+.modal-centrado > *,
+details.edicion-gasto--modal[open] > .edicion-gasto__formulario {
+  position: relative;
+  inset: auto;
+  transform: none;
+  width: min(440px, 100%);
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  z-index: 51;
+  box-shadow: 0 18px 46px rgba(0, 0, 0, 0.45);
+}
+
+/* Los <dialog> nativos ya centra el navegador con showModal(); se les fija el
+   mismo nivel de capa y se evita que se corten en pantallas pequeñas. */
+dialog.cafe-dialogo,
+dialog.dialogo-edicion,
+dialog.detalle-orden {
+  z-index: 50;
+  max-width: calc(100vw - 2rem);
+  max-height: calc(100vh - 2rem);
 }

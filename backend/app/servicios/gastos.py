@@ -15,9 +15,11 @@ from decimal import Decimal
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.core import categorias as catalogo
 from app.core.numeros import redondear_dinero
 from app.core.texto import parsear_monto
 from app.modelos import Gasto
+from app.servicios import deudas as servicio_deudas
 
 CERO = Decimal("0")
 
@@ -53,6 +55,7 @@ def crear_gasto(
     fecha: date,
     es_fijo: bool = False,
     quincena: int | str | None = None,
+    id_deuda: str | None = None,
 ) -> Gasto:
     """Registra un gasto del usuario.
 
@@ -66,13 +69,16 @@ def crear_gasto(
         es_fijo: `True` para gastos recurrentes.
         quincena: `1` o `2` para gastos fijos de una quincena; `None` o `0`
             para gastos del mes completo.
+        id_deuda: Deuda registrada cuyo pago representa este gasto; vacío si no
+            aplica. El valor se toma de la cuota de la deuda para no duplicarla.
 
     Returns:
         El gasto persistido.
 
     Raises:
         ValueError: Si la categoría o la descripción están vacías, el valor es
-            negativo o inválido, o la quincena no es 1 ni 2.
+            negativo o inválido, la quincena no es 1 ni 2 o la deuda no se
+            puede vincular.
     """
     categoria_limpia = categoria.strip()
     descripcion_limpia = descripcion.strip()
@@ -86,6 +92,10 @@ def crear_gasto(
         raise ValueError("El valor del gasto no puede ser negativo.")
 
     quincena_normalizada = _normalizar_quincena(quincena)
+    deuda = servicio_deudas.deuda_vinculable(bd, id_usuario, id_deuda)
+    if deuda is not None:
+        monto = redondear_dinero(deuda.cuota_mensual or CERO)
+        categoria_limpia = catalogo.CATEGORIA_CREDITOS
 
     gasto = Gasto(
         id_usuario=id_usuario,
@@ -95,6 +105,7 @@ def crear_gasto(
         es_fijo=es_fijo,
         fecha=fecha,
         quincena=quincena_normalizada,
+        id_deuda=deuda.id_deuda if deuda is not None else None,
     )
     bd.add(gasto)
     bd.commit()
@@ -131,6 +142,7 @@ def listar_gastos(
     anio: int | None = None,
     mes: int | None = None,
     quincena: int | None = None,
+    excluir_vinculados: bool = False,
 ) -> list[Gasto]:
     """Lista los gastos del usuario, opcionalmente filtrados por mes y quincena.
 
@@ -140,6 +152,8 @@ def listar_gastos(
         anio: Año a filtrar; si es `None` se listan todos.
         mes: Mes a filtrar (1–12); requiere `anio`.
         quincena: `1` o `2` para limitar a esa quincena; `None` sin filtro.
+        excluir_vinculados: Si es `True`, omite los gastos que pagan una deuda:
+            su cuota ya se contabiliza en la categoría 8 de la dona.
 
     Returns:
         Lista ordenada por fecha descendente.
@@ -156,6 +170,8 @@ def listar_gastos(
         consulta = consulta.where(Gasto.fecha >= inicio, Gasto.fecha < fin)
     if quincena in (1, 2):
         consulta = consulta.where(Gasto.quincena == quincena)
+    if excluir_vinculados:
+        consulta = consulta.where(Gasto.id_deuda.is_(None))
     consulta = consulta.order_by(Gasto.fecha.desc())
     return list(bd.scalars(consulta))
 
@@ -279,6 +295,7 @@ def actualizar_gasto(
     valor: Decimal | str | int | float,
     categoria: str | None = None,
     quincena: int | str | None = None,
+    id_deuda: str | None = None,
 ) -> Gasto | None:
     """Modifica la descripción, el valor o la categoría de un gasto existente.
 
@@ -296,13 +313,15 @@ def actualizar_gasto(
         categoria: Categoría nueva; si es `None` se conserva la anterior.
         quincena: `1` o `2` para la quincena del gasto; `None`, `0` o cadena
             vacía lo devuelven al mes completo.
+        id_deuda: `None` conserva el vínculo actual; una cadena vacía lo quita;
+            un identificador lo cambia y ajusta el valor a la cuota de esa deuda.
 
     Returns:
         El gasto actualizado, o `None` si no existe o pertenece a otro usuario.
 
     Raises:
         ValueError: Si la descripción está vacía, el valor es negativo o
-            inválido, o la quincena no es 1 ni 2.
+            inválido, la quincena no es 1 ni 2 o la deuda no se puede vincular.
     """
     gasto = bd.get(Gasto, id_gasto)
     if gasto is None or gasto.id_usuario != id_usuario:
@@ -325,6 +344,13 @@ def actualizar_gasto(
         if not categoria_limpia:
             raise ValueError("La categoría del gasto es obligatoria.")
         gasto.categoria = categoria_limpia[:60]
+
+    if id_deuda is not None:
+        deuda = servicio_deudas.deuda_vinculable(bd, id_usuario, id_deuda)
+        gasto.id_deuda = deuda.id_deuda if deuda is not None else None
+        if deuda is not None:
+            gasto.valor = redondear_dinero(deuda.cuota_mensual or CERO)
+            gasto.categoria = catalogo.CATEGORIA_CREDITOS
 
     bd.commit()
     bd.refresh(gasto)

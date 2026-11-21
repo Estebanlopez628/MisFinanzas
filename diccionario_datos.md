@@ -169,7 +169,7 @@ Gastos fijos y variables que afectan el bolsillo del periodo.
 | `id_gasto` | `UUID` (PK) | No | Sí | Identificador. |
 | `id_usuario` | `UUID` (FK → `usuarios`) | No | Sí | Dueño. |
 | `id_periodo` | `UUID` (FK → `periodos_nomina`) | Sí | No | Nulo si es gasto fijo recurrente. |
-| `categoria` | `VARCHAR(60)` | No | Sí | Ej. `VIVIENDA`, `SERVICIOS`, `TRANSPORTE`, `OCIO`. |
+| `categoria` | `VARCHAR(60)` | No | Sí | SRS v1.9: una de las ocho categorías cerradas del catálogo de `core/categorias.py` (por ejemplo, `Vivienda y Servicios`). El texto libre heredado se normaliza en la migración. |
 | `descripcion` | `VARCHAR(150)` | No | Sí | Detalle legible. |
 | `valor` | `NUMERIC(14,2)` | No | Sí | `CHECK (valor >= 0)`. |
 | `es_fijo` | `BOOLEAN` | No | Sí | Si es recurrente cada periodo. |
@@ -177,6 +177,7 @@ Gastos fijos y variables que afectan el bolsillo del periodo.
 | `quincena` | `SMALLINT` | Sí | No | `1` o `2`: quincena a la que se imputa el gasto fijo. `NULL` = gasto del mes completo. `CHECK (quincena IN (1,2) OR quincena IS NULL)`. |
 | `id_proyeccion` | `UUID` (FK → `proyecciones_ahorro`) | Sí | No | SRS v1.6: meta que originó el gasto. `ON DELETE CASCADE`. `NULL` para gastos manuales. |
 | `id_trabajo` | `UUID` (FK → `trabajos_extras`) | Sí | No | SRS v1.7: pago generado por un trabajo extra. `ON DELETE CASCADE`. Los gastos con `id_trabajo` no se listan como gastos ni restan del sueldo o las quincenas: su neto va al diagnóstico del mes. |
+| `id_deuda` | `UUID` (FK → `deudas`) | Sí | No | SRS v1.9: deuda registrada cuyo pago es este gasto. `ON DELETE SET NULL`. El valor se toma de la cuota de la deuda y la categoría pasa a `Créditos y Obligaciones`. No se suma como gasto propio: su dinero ya está en la categoría 8 de la dona (anti-duplicación). |
 | `pagado` | `BOOLEAN` | No | Sí | SRS v1.6: `DEFAULT false`. Registro permanente del pago (✔). No se revierte con «Limpiar». |
 | `pagado_en` | `DATE` | Sí | No | SRS v1.6: fecha en que se marcó el pago. |
 | `monto_pagado` | `NUMERIC(14,2)` | Sí | No | SRS v1.6: monto realmente pagado. Con ✔ es igual a `valor`; con abono manual es el monto abonado; en abonos heredados es el abono anterior. Es lo que cuenta en el saldo cuando `pagado = true`. |
@@ -191,12 +192,14 @@ Gastos fijos y variables que afectan el bolsillo del periodo.
 - SRS v1.6, checks: `pagado` es permanente. Limpiar solo pone `check_visible = false`. Un gasto con `inhabilitado_hasta` vigente no cuenta en el saldo de su quincena y no admite ✔; solo admite abono manual, que lo deja pagado con el monto indicado.
 - SRS v1.6, valor: editar un gasto de meta cambia su valor en los meses posteriores de la misma quincena que aún no estén pagados. Los meses nuevos toman el último valor de esa quincena.
 - SRS v1.6: el abono de `abonos_proyeccion` es la suma de los gastos de la meta con `pagado = true` en ese mes; se recalcula al marcar, al editar un pago marcado y al saltar uno con ×.
+- SRS v1.9, catálogo cerrado: la categoría se elige entre ocho opciones fijas con colores definidos en `core/categorias.py`. La categoría 8 (`Créditos y Obligaciones`, `#EF4444`) no se captura a mano: se calcula con la cuota mensual de las deudas activas.
+- SRS v1.9, anti-duplicación: un gasto con `id_deuda` no se imputa a las quincenas ni se suma en las categorías 1 a 7 de la dona; su cuota ya se contó en la categoría 8.
 
 ---
 
 ## 8. `deudas`
 
-Pasivos del usuario (módulo `Resumen de Deudas`). **SRS v1.8:** se capturan seis
+Pasivos del usuario (módulo `Registro y Detalles de deudas`). **SRS v1.8:** se capturan seis
 datos visibles y **no hay intereses**: la cuota por el número de pagos debe
 reconstruir el total adeudado. Desaparecen la tasa, la fecha límite y el abono
 manual.
@@ -218,10 +221,19 @@ manual.
 > La columna heredada `tasa_interes` puede seguir existiendo en bases ya
 > desplegadas; queda nula y sin uso. El modelo ya no la mapea.
 
-**Coherencia del plan (SRS v1.8):** como no se capturan intereses,
-`cuota × cuotas` debe coincidir con el total adeudado. Se tolera **un peso por
-cuota** (60 cuotas → $60) para absorber redondeos; una diferencia mayor se
-rechaza con un mensaje que muestra las cuentas y pide revisar los datos.
+**Coherencia del plan (SRS v1.9, sección 2.2):** se acepta que
+`cuota × cuotas >= total adeudado`; el excedente es interés implícito. El único
+plan inválido es `cuota × cuotas < total`, con este mensaje exacto: «El número
+de cuotas por el valor de cuota no alcanza a cubrir el valor total de la deuda,
+revisa los datos y digítalos nuevamente». La validación se aplica al registrar y
+al editar la deuda.
+
+**Interés implícito simulado (oculto):** `servicios/deudas.py` expone
+`tasa_implicita_simulada()` y `amortizacion_simulada()`, que derivan por bisección
+(diez decimales) la tasa y el calendario ficticio que cuadran el modelo y cierran
+el saldo en cero en la última cuota. Son **cálculos internos**: no se persisten,
+no aparecen en pantallas, tablas ni recibos y no alimentan el consejero. Los
+pagos reales siguen abonando capital completo con `interes = 0`.
 
 ## 8.1 `pagos_deuda` — *Amortización automática* (SRS v1.8)
 
@@ -254,6 +266,7 @@ fusionan en una sola descripción libre.
 | `id_usuario` | `UUID` (FK → `usuarios`) | No | Sí | Propietario del registro. |
 | `descripcion` | `VARCHAR(120)` | No | Sí | Texto libre que identifica el atajo. Ej. `EPM energía`, `Claro internet`, `Tarjeta Bancolombia`. Absorbe los antiguos `entidad` + `tipo_servicio`. |
 | `numero_referencia` | `VARCHAR(60)` | No | Sí | Código que el usuario copia al portapapeles antes de pagar. |
+| `valor_pago` | `NUMERIC(14,2)` | Sí | No | SRS v1.9, sección 4.2: valor exacto a pagar. Opcional porque hay servicios con consumo variable; si existe se muestra en la tarjeta del atajo y en la tabla antes del botón *Pagar*. No puede ser negativo. |
 | `url_pago` | `VARCHAR(300)` | Sí | No | URL oficial para el botón *Pagar*. Validar `http(s)`. Se mantiene opcional: hay recibos que solo se pagan en ventanilla y el atajo sigue sirviendo para copiar la referencia. |
 | `dia_pago_1` | `SMALLINT` | Sí | No | SRS v1.7: día del mes del pago (1–31). Se guarda solo el número, sin año, porque el atajo se repite todos los meses. Los atajos anteriores quedan en `NULL` y se muestran sin distintivo. |
 | `dia_pago_2` | `SMALLINT` | Sí | No | SRS v1.7: segundo día del mes para un pago doble (por ejemplo, 15 y 30). Si coincide con `dia_pago_1`, se descarta y el atajo queda como pago único. |
@@ -331,8 +344,15 @@ antes de calcular el saldo libre.
 | `descripcion` | `VARCHAR(150)` | No | Sí | Concepto, por ejemplo «Libranza banco X». |
 | `valor` | `NUMERIC(14,2)` | No | Sí | Monto por pago; `>= 0`. |
 | `quincena` | `SMALLINT` | No | Sí | `1` o `2`: pago del que se descuenta. |
+| `categoria` | `VARCHAR(60)` | No | Sí | SRS v1.9: una de las ocho categorías cerradas de `core/categorias.py`; `DEFAULT 'Otros Gastos Fijos'`. Las libranzas heredadas se clasifican como `Créditos y Obligaciones`. |
 | `id_deuda` | `UUID` (FK → `deudas`) | Sí | No | SRS v1.9 (ADR-56). Deuda mensual que esta deducción paga. Si existe, `valor` toma la cuota de la deuda y la cuota no se cuenta dos veces. `ON DELETE SET NULL`: al borrar la deuda la deducción sigue como descuento normal. Cuando la deuda se paga, la deducción deja de descontarse. |
 | `fecha_creacion` | `TIMESTAMPTZ` | No | Sí | `now()`. |
+
+**Reglas SRS v1.9:** el selector de categoría es cerrado (ocho opciones) en el
+formulario. Una deducción con `id_deuda` no se imputa a la quincena ni se suma en
+las categorías 1 a 7 de la dona: su cuota ya está en la categoría 8. En una base
+PostgreSQL existente, `aplicar_migraciones()` agrega `categoria` e `id_deuda` con
+`ADD COLUMN IF NOT EXISTS` y normaliza los textos heredados sin borrar filas.
 
 ---
 

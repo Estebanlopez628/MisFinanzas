@@ -21,6 +21,8 @@ from pathlib import Path
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
+from app.core import categorias as catalogo
+
 RUTA_BACKEND = Path(__file__).resolve().parent.parent.parent
 RUTA_DATOS = RUTA_BACKEND / "datos"
 RUTA_DATOS.mkdir(exist_ok=True)
@@ -738,6 +740,131 @@ def _migrar_deduccion_vinculada() -> None:
             )
 
 
+def _migrar_categorias_y_vinculos() -> None:
+    """Agrega las categorías cerradas y los vínculos con deudas (SRS v1.9).
+
+    En SQLite se comprueban las columnas con `PRAGMA`; en PostgreSQL se usa
+    `ADD COLUMN IF NOT EXISTS`, porque `create_all` no altera tablas ya
+    existentes. Después se normalizan los textos heredados a los ocho nombres
+    del catálogo, sin borrar ningún registro.
+
+    La categoría 8 se deja intacta en los datos heredados: se deriva de las
+    deudas activas en tiempo de cálculo, no se guarda en cada gasto.
+    """
+    if _conexion_sqlite:
+        with motor.begin() as conexion:
+            columnas_gastos = {
+                fila[1] for fila in conexion.exec_driver_sql("PRAGMA table_info(gastos)").fetchall()
+            }
+            if columnas_gastos and "id_deuda" not in columnas_gastos:
+                conexion.exec_driver_sql(
+                    "ALTER TABLE gastos ADD COLUMN id_deuda VARCHAR(32) "
+                    "REFERENCES deudas (id_deuda) ON DELETE SET NULL"
+                )
+            columnas_fijas = {
+                fila[1]
+                for fila in conexion.exec_driver_sql("PRAGMA table_info(deducciones_fijas)").fetchall()
+            }
+            if columnas_fijas:
+                if "categoria" not in columnas_fijas:
+                    conexion.exec_driver_sql(
+                        "ALTER TABLE deducciones_fijas ADD COLUMN categoria "
+                        "VARCHAR(60) NOT NULL DEFAULT 'Otros Gastos Fijos'"
+                    )
+                if "id_deuda" not in columnas_fijas:
+                    conexion.exec_driver_sql(
+                        "ALTER TABLE deducciones_fijas ADD COLUMN id_deuda VARCHAR(32) "
+                        "REFERENCES deudas (id_deuda) ON DELETE SET NULL"
+                    )
+    else:
+        with motor.begin() as conexion:
+            conexion.exec_driver_sql(
+                "ALTER TABLE gastos ADD COLUMN IF NOT EXISTS id_deuda VARCHAR(32) "
+                "REFERENCES deudas (id_deuda) ON DELETE SET NULL"
+            )
+            conexion.exec_driver_sql(
+                "ALTER TABLE deducciones_fijas ADD COLUMN IF NOT EXISTS categoria "
+                "VARCHAR(60) NOT NULL DEFAULT 'Otros Gastos Fijos'"
+            )
+            conexion.exec_driver_sql(
+                "ALTER TABLE deducciones_fijas ADD COLUMN IF NOT EXISTS id_deuda VARCHAR(32) "
+                "REFERENCES deudas (id_deuda) ON DELETE SET NULL"
+            )
+
+    # Normalización de datos: solo se escriben los nombres del catálogo, así que
+    # la sentencia es segura en ambos motores (sin parámetros dependientes del
+    # dialecto). Se hace en una transacción aparte para no repetir el DDL.
+    with motor.begin() as conexion:
+        consultas = (
+            ("gastos", "id_gasto", False),
+            ("deducciones_fijas", "id_deduccion", True),
+        )
+        for tabla, columna_id, tiene_descripcion in consultas:
+            seleccion = f"SELECT {columna_id}, categoria"
+            if tiene_descripcion:
+                seleccion += ", descripcion"
+            filas = conexion.exec_driver_sql(
+                f"{seleccion} FROM {tabla}"
+            ).fetchall()
+            for fila in filas:
+                identificador, categoria = fila[0], fila[1]
+                descripcion = fila[2] if tiene_descripcion else ""
+                canonico = (
+                    catalogo.CATEGORIA_CREDITOS
+                    if tiene_descripcion and catalogo.es_credito(descripcion)
+                    else catalogo.normalizar_categoria(categoria)
+                )
+                if canonico != categoria:
+                    conexion.exec_driver_sql(
+                        f"UPDATE {tabla} SET categoria = '{canonico}' "
+                        f"WHERE {columna_id} = '{identificador}'"
+                    )
+
+
+def _migrar_valor_atajo() -> None:
+    """Agrega `chancucos.valor_pago` en SQLite y PostgreSQL (SRS v1.9, 4.2).
+
+    Los atajos existentes quedan sin valor: la tarjeta simplemente no muestra
+    esa línea hasta que el usuario edite o vuelva a crear el atajo.
+    """
+    if _conexion_sqlite:
+        with motor.begin() as conexion:
+            existentes = {
+                fila[1]
+                for fila in conexion.exec_driver_sql("PRAGMA table_info(chancucos)").fetchall()
+            }
+            if existentes and "valor_pago" not in existentes:
+                conexion.exec_driver_sql(
+                    "ALTER TABLE chancucos ADD COLUMN valor_pago NUMERIC(14, 2)"
+                )
+    else:
+        with motor.begin() as conexion:
+            conexion.exec_driver_sql(
+                "ALTER TABLE chancucos ADD COLUMN IF NOT EXISTS valor_pago NUMERIC(14, 2)"
+            )
+
+
+def aplicar_migraciones() -> None:
+    """Ejecuta todas las migraciones idempotentes del esquema.
+
+    Es el único punto de entrada para arrancar la app o para migrar una base
+    vacía a PostgreSQL: crea las tablas que falten y añade las columnas nuevas
+    sin borrar datos. Puede llamarse las veces que haga falta.
+    """
+    crear_esquema()
+    # La migración de atajos corre después de crear el esquema: si la tabla no
+    # existía, ya se creó con la estructura nueva y la función no hace nada.
+    _migrar_chancucos()
+    _migrar_valor_atajo()
+    _migrar_columnas_deudas()
+    _migrar_proyeccion_quincena()
+    _migrar_saldos_incapacidad()
+    _migrar_columnas_usuarios()
+    _migrar_garantia_detalle()
+    _migrar_deduccion_vinculada()
+    _migrar_categorias_y_vinculos()
+
+
 def inicializar_base_datos() -> None:
     """Prepara el esquema y siembra las cuentas de demostración.
 
@@ -746,15 +873,6 @@ def inicializar_base_datos() -> None:
     """
     from app.servicios import usuarios
 
-    crear_esquema()
-    # La migración de atajos corre después de crear el esquema: si la tabla no
-    # existía, ya se creó con la estructura nueva y la función no hace nada.
-    _migrar_chancucos()
-    _migrar_columnas_deudas()
-    _migrar_proyeccion_quincena()
-    _migrar_saldos_incapacidad()
-    _migrar_columnas_usuarios()
-    _migrar_garantia_detalle()
-    _migrar_deduccion_vinculada()
+    aplicar_migraciones()
     with FabricaSesiones() as sesion:
         usuarios.sembrar_demostracion(sesion)

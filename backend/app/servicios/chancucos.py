@@ -13,11 +13,14 @@ los meses; el distintivo «Día 15» se arma en la plantilla.
 
 from __future__ import annotations
 
+from decimal import Decimal
 from urllib.parse import urlparse
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.core.numeros import redondear_dinero
+from app.core.texto import parsear_monto
 from app.modelos import Chancuco
 
 DIAS_DEL_MES = range(1, 32)
@@ -99,6 +102,7 @@ def crear_chancuco(
     favorito: bool = False,
     dia_pago_1: int | str | None = None,
     dia_pago_2: int | str | None = None,
+    valor_pago: Decimal | str | int | float | None = None,
 ) -> Chancuco:
     """Registra un atajo de pago.
 
@@ -112,13 +116,14 @@ def crear_chancuco(
         favorito: Marca inicial de favorito.
         dia_pago_1: Día del mes del pago (1–31), si se conoce.
         dia_pago_2: Segundo día del mes para un pago doble, si aplica.
+        valor_pago: Monto exacto a pagar; vacío si el servicio no tiene monto fijo.
 
     Returns:
         El atajo persistido.
 
     Raises:
-        ValueError: Si falta la descripción o la referencia, la URL es inválida
-            o alguno de los días no está entre 1 y 31.
+        ValueError: Si falta la descripción o la referencia, la URL es inválida,
+            el valor no es numérico o alguno de los días no está entre 1 y 31.
     """
     descripcion_limpia = descripcion.strip()
     referencia_limpia = numero_referencia.strip()
@@ -128,11 +133,17 @@ def crear_chancuco(
         raise ValueError("El número de referencia es obligatorio.")
 
     primero, segundo = _normalizar_dias(dia_pago_1, dia_pago_2)
+    valor = None
+    if valor_pago is not None and str(valor_pago).strip():
+        valor = redondear_dinero(parsear_monto(str(valor_pago)))
+        if valor < 0:
+            raise ValueError("El valor a pagar no puede ser negativo.")
 
     chancuco = Chancuco(
         id_usuario=id_usuario,
         descripcion=descripcion_limpia[:120],
         numero_referencia=referencia_limpia[:60],
+        valor_pago=valor,
         url_pago=_validar_url(url_pago),
         favorito=favorito,
         dia_pago_1=primero,

@@ -8,6 +8,8 @@
   negocio: solo pinta el estado que ya calculó el servidor.
 #}
 
+{% from "_categorias.html" import selector_categoria, vinculo_deuda with context %}
+
 {% macro boton_editar(etiqueta) -%}
   {# SRS v1.7: «Editar» pasa a un lápiz del mismo tamaño que el check. #}
   <summary
@@ -57,12 +59,18 @@
           method="post"
           action="{{ url_for('editar_gasto', id_gasto=gasto.id_gasto) }}"
           data-proteccion
+          data-guardar-formulario="editar-gasto-{{ gasto.id_gasto }}"
         >
           <input type="hidden" name="origen" value="{{ origen }}" />
           {% if id_trabajo %}
             <input type="hidden" name="id_trabajo" value="{{ id_trabajo }}" />
           {% endif %}
           <input type="hidden" name="quincena" value="{{ gasto.quincena or '' }}" />
+          <label class="campo">
+            <span class="campo__etiqueta">Categoría</span>
+            {{ selector_categoria(gasto.categoria) }}
+          </label>
+          {{ vinculo_deuda(deudas_activas, gasto.id_deuda or '') }}
           <label class="campo">
             <span class="campo__etiqueta">Descripción</span>
             <input

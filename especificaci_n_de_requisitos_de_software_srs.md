@@ -22,7 +22,7 @@ La plataforma es un sistema web/móvil con arquitectura dual:
 
 | Rol | Descripción | Permisos y Accesos | 
 | ----- | ----- | ----- | 
-| **`ADMIN_OLB`** | Administrador principal (Propietario del sistema) | Acceso total a los 4 módulos principales (`Mis Finanzas`, `OLB_BYTE`, `Resumen de Deudas`, `Trabajos Extras`) y visualización del panel privado de "Chancucos". | 
+| **`ADMIN_OLB`** | Administrador principal (Propietario del sistema) | Acceso total a los 4 módulos principales (`Mis Finanzas`, `OLB_BYTE`, `Registro y Detalles de deudas`, `Trabajos Extras`) y visualización del panel privado de "Chancucos". | 
 | **`USER_FINANZAS`** | Usuario público registrado | Acceso al entorno de finanzas personales (`Mis Finanzas`). Rutas de `OLB_BYTE` totalmente bloqueadas a nivel de backend y UI. Visualización de anuncios. | 
 
 #### 2.2 Requisitos Funcionales: Autenticación y Perfil
@@ -59,7 +59,7 @@ La plataforma es un sistema web/móvil con arquitectura dual:
 
   2. **OLB_BYTE:** Panel comercial privado (deshabilitado/invisible para `USER_FINANZAS`).
 
-  3. **Resumen de Deudas:** Módulo complementario de control de pasivos.
+  3. **Registro y Detalles de deudas:** Módulo complementario de control de pasivos.
 
   4. **Trabajos Extras:** Módulo para el registro de ingresos independientes o esporádicos.
 
@@ -231,4 +231,4 @@ La plataforma es un sistema web/móvil con arquitectura dual:
 
   * **Memoria del Dominio:** Todo cambio arquitectónico, regla laboral colombiana parametrizada (horas, recargos, topes de auxilio de transporte, lógica de incapacidades con saldo arrastrado) debe documentarse en `MEMORY.md`.
 
-  * **Actualización Sincronizada:** Cada vez que se agregue o modifique un módulo (como los futuros módulos de `OLB_BYTE`, `Resumen de Deudas` o `Trabajos Extras`), es obligatorio actualizar tanto `AGENTS.md` como `MEMORY.md` antes de dar por finalizada la tarea.
+  * **Actualización Sincronizada:** Cada vez que se agregue o modifique un módulo (como los futuros módulos de `OLB_BYTE`, `Registro y Detalles de deudas` o `Trabajos Extras`), es obligatorio actualizar tanto `AGENTS.md` como `MEMORY.md` antes de dar por finalizada la tarea.

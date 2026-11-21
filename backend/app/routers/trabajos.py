@@ -20,11 +20,12 @@ from fastapi import APIRouter, Depends, Form, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
+from app import esquemas
 from app.core.base_datos import obtener_bd
 from app.core.texto import formatear_mes_anio
 from app.dependencias import UsuarioSesion, obtener_usuario_actual
 from app.routers.vistas import contexto_base, plantillas
-from app.servicios import auditoria, capacidad, perfiles, trabajos
+from app.servicios import auditoria, capacidad, deudas, perfiles, trabajos
 
 router = APIRouter(tags=["Trabajos Extras"])
 
@@ -84,6 +85,7 @@ def _contexto(
             "capacidad": capacidad.capacidad_trabajos(
                 bd, usuario.id_usuario, hoy.year, hoy.month
             ),
+            "deudas_activas": deudas.listar_vinculables(bd, usuario.id_usuario),
             "mes_visible": formatear_mes_anio(hoy.year, hoy.month),
             "hoy": hoy,
             "error": error,
@@ -263,10 +265,11 @@ def agregar_gasto_trabajo(
     id_trabajo: str,
     usuario: UsuarioSesion = Depends(obtener_usuario_actual),
     bd: Session = Depends(obtener_bd),
-    categoria: Annotated[str, Form()] = "Hogar",
+    categoria: Annotated[str, Form()] = "Vivienda y Servicios",
     descripcion: Annotated[str, Form()] = "",
     valor: Annotated[str, Form()] = "",
     quincena: Annotated[str, Form()] = "",
+    id_deuda: Annotated[str, Form()] = "",
 ) -> RedirectResponse:
     """Registra un gasto fijo dentro de un trabajo extra.
 
@@ -277,17 +280,33 @@ def agregar_gasto_trabajo(
         id_trabajo: Contrato al que pertenece el gasto.
         usuario: Usuario autenticado.
         bd: Sesión de base de datos.
-        categoria: Categoría libre del gasto.
+        categoria: Categoría cerrada del catálogo.
         descripcion: Nombre del gasto fijo.
         valor: Monto del gasto.
         quincena: `1` o `2` en contratos quincenales; vacío en mensuales.
+        id_deuda: Deuda mensual que paga el gasto; vacío si no aplica.
 
     Returns:
         Redirección a Trabajos Extras con el mensaje de éxito o de error.
     """
     try:
+        datos = esquemas.validar_formulario(
+            esquemas.GastoNuevo,
+            categoria=categoria,
+            descripcion=descripcion,
+            valor=valor,
+            quincena=quincena,
+            id_deuda=id_deuda,
+        )
         trabajos.crear_gasto_trabajo(
-            bd, usuario.id_usuario, id_trabajo, categoria, descripcion, valor, quincena or None
+            bd,
+            usuario.id_usuario,
+            id_trabajo,
+            datos.categoria,
+            datos.descripcion,
+            datos.valor,
+            datos.quincena or None,
+            datos.id_deuda,
         )
     except ValueError as error:
         return RedirectResponse(

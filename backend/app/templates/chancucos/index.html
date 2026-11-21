@@ -40,6 +40,14 @@
           <input class="campo__control" type="text" name="numero_referencia" required />
         </label>
         <label class="campo">
+          <span class="campo__etiqueta">Valor a pagar (COP)</span>
+          <input class="campo__control" type="text" name="valor_pago"
+                 inputmode="decimal" placeholder="150.000" data-moneda />
+          <span class="ayuda">
+            Opcional. Aparecerá en la tarjeta del atajo antes de pulsar «Pagar».
+          </span>
+        </label>
+        <label class="campo">
           <span class="campo__etiqueta">Link de pago (opcional)</span>
           <input class="campo__control" type="url" name="url_pago"
                  placeholder="https://pagos.entidad.com" />
@@ -108,6 +116,7 @@
             <tr>
               <th scope="col">Favorito</th>
               <th scope="col">Descripción</th>
+              <th scope="col">Valor a pagar</th>
               <th scope="col">Días de pago</th>
               <th scope="col">Referencia</th>
               <th scope="col">Acciones</th>
@@ -125,6 +134,13 @@
                   </form>
                 </td>
                 <td>{{ item.descripcion }}</td>
+                <td class="tabla__numero">
+                  {% if item.valor_pago %}
+                    {{ item.valor_pago | cop }}
+                  {% else %}
+                    <span class="ayuda">No definido</span>
+                  {% endif %}
+                </td>
                 <td>
                   {% if item.dia_pago_1 %}
                     {{ dias_pago(item) }}

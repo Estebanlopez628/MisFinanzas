@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "finanzas/_gasto_fijo.html" import fila_gasto with context %}
+{% from "_categorias.html" import selector_categoria, vinculo_deuda, vinculo_condicional with context %}
 {% from "chancucos/_dias.html" import dias_pago with context %}
 {% block titulo %}Mis Finanzas{% endblock %} {% block
 contenido %}
@@ -130,6 +131,8 @@ contenido %}
         method="post"
         action="{{ url_for('crear_gasto') }}"
         data-proteccion
+        data-guardar-formulario="crear-gasto-finanzas"
+        data-origen-modulo="finanzas"
       >
         <input type="hidden" name="origen" value="finanzas" />
         <input type="hidden" name="es_fijo" value="1" />
@@ -147,14 +150,7 @@ contenido %}
           </label>
           <label class="campo">
             <span class="campo__etiqueta">Categoría</span>
-            <input
-              class="campo__control"
-              type="text"
-              name="categoria"
-              list="categorias-gasto"
-              value="Hogar"
-              required
-            />
+            {{ selector_categoria() }}
           </label>
           <label class="campo">
             <span class="campo__etiqueta">Valor (COP)</span>
@@ -168,22 +164,16 @@ contenido %}
             />
           </label>
         </div>
+        {{ vinculo_condicional(
+             'finanzas', deudas_activas,
+             '¿Este crédito corresponde a una de tus deudas registradas?'
+           ) }}
         <button class="boton boton--secundario boton--pequeno" type="submit">
           + Agregar gasto fijo
         </button>
       </form>
     </article>
     {% endfor %}
-
-    <datalist id="categorias-gasto">
-      <option value="Hogar"></option>
-      <option value="Alimentación"></option>
-      <option value="Transporte"></option>
-      <option value="Servicios"></option>
-      <option value="Salud"></option>
-      <option value="Ocio"></option>
-      <option value="Educación"></option>
-    </datalist>
 
     {# ------------- Sub-contenedor 3: Atajos de Pago (lectura) ---------- #}
     <section
@@ -203,6 +193,10 @@ contenido %}
         <li class="lista-atajos__item">
           <span class="lista-atajos__texto">
             <span class="lista-atajos__descripcion">{{ item.descripcion }}</span>
+            {# SRS v1.9: el valor exacto se conoce antes de pulsar «Pagar». #}
+            {% if item.valor_pago %}
+              <small class="ayuda">Valor a pagar: {{ item.valor_pago | cop }}</small>
+            {% endif %}
             {# SRS v1.7: el día de pago se muestra como distintivo de la tarjeta. #}
             {{ dias_pago(item) }}
           </span>

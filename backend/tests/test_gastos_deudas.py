@@ -88,7 +88,7 @@ def test_vista_gastos_registra_y_elimina(bd, cliente_admin: TestClient) -> None:
 
 
 def test_validar_plan_acepta_el_redondeo_de_la_cuota() -> None:
-    """72.917 × 48 = 3.500.016: la diferencia de 16 pesos cabe en la tolerancia."""
+    """72.917 × 48 = 3.500.016: el excedente se acepta como interés implícito."""
     total, pago, cuotas = deudas.validar_plan("3.500.000", "72.917", 48)
 
     assert total == Decimal("3500000.00")
@@ -96,32 +96,31 @@ def test_validar_plan_acepta_el_redondeo_de_la_cuota() -> None:
     assert cuotas == 48
 
 
-def test_validar_plan_rechaza_un_total_mayor_al_adeudado() -> None:
-    """Cuota × cuotas mayor al total adeudado pide revisar los datos."""
-    try:
-        deudas.validar_plan("23.000.000", "433.000", 60)
-    except ValueError as error:
-        assert "más que el total adeudado" in str(error)
-    else:  # pragma: no cover - protección contra regresiones
-        raise AssertionError("Se esperaba ValueError")
+def test_validar_plan_acepta_interes_implicito() -> None:
+    """Cuota × cuotas mayor al total adeudado ya no es un error (SRS v1.9, 2.2)."""
+    total, pago, cuotas = deudas.validar_plan("23.000.000", "433.000", 60)
+
+    assert total == Decimal("23000000.00")
+    assert pago == Decimal("433000.00")
+    assert cuotas == 60
 
 
 def test_validar_plan_rechaza_un_total_menor_al_adeudado() -> None:
-    """Cuota × cuotas menor al total adeudado también pide revisar los datos."""
+    """Solo se rechaza el plan que ni siquiera cubre el capital."""
     try:
         deudas.validar_plan("23.000.000", "300.000", 60)
     except ValueError as error:
-        assert "menos que el total adeudado" in str(error)
+        assert deudas.MENSAJE_CUOTAS_INSUFICIENTES in str(error)
     else:  # pragma: no cover - protección contra regresiones
         raise AssertionError("Se esperaba ValueError")
 
 
-def test_deuda_rechaza_plan_que_no_cuadra(bd) -> None:
-    """La cuota por el número de pagos debe coincidir con el total adeudado."""
+def test_deuda_rechaza_plan_que_no_cubre_el_capital(bd) -> None:
+    """El servicio aplica el mismo mensaje único de validación."""
     try:
         deudas.crear_deuda(bd, _id_admin(bd), "Banco", "1.000.000", "50.000", 10)
     except ValueError as error:
-        assert "no cuadran" in str(error).lower()
+        assert deudas.MENSAJE_CUOTAS_INSUFICIENTES in str(error)
     else:  # pragma: no cover - protección contra regresiones
         raise AssertionError("Se esperaba ValueError")
 
@@ -154,7 +153,9 @@ def test_deuda_quincenal_aplica_cada_quince_dias(bd) -> None:
 def test_ultima_cuota_deja_el_saldo_exacto_en_cero(bd) -> None:
     """El plan termina en cero y la última cuota absorbe el redondeo."""
     id_usuario = _id_admin(bd)
-    deuda = deudas.crear_deuda(bd, id_usuario, "Banco", "1.000.000", "333.333", 3)
+    # 333.334 × 3 = 1.000.002 ≥ capital: el excedente se acepta como interés
+    # implícito y la última cuota absorbe el ajuste.
+    deuda = deudas.crear_deuda(bd, id_usuario, "Banco", "1.000.000", "333.334", 3)
     deuda.fecha_creacion = datetime(2026, 1, 1, 8, 0)
     bd.commit()
 
@@ -227,9 +228,11 @@ def test_vista_deudas_registra_y_muestra_amortizacion(
     html = " ".join(cliente_admin.get("/deudas").text.split())
     assert "Banco" in html
     assert "3.500.000" in html
-    # SRS v1.9: las cuotas se muestran directamente en la tabla, sin botón que las oculte.
+    # SRS v1.9, 2.3: solo se muestran las cuotas aplicadas; no hay calendario
+    # de «Próximas cuotas» ni campos de interés.
     assert "Ver cuotas" not in html
-    assert "Próximas cuotas" in html
+    assert "Próximas cuotas" not in html
+    assert "No. Cuotas Pendientes" in html
     # SRS v1.8: sin intereses, sin abonos manuales y sin tasa capturada.
     assert "Abonar" not in html
     assert 'name="tasa_interes"' not in html

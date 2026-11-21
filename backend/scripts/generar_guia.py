@@ -176,7 +176,7 @@ def _resumen_plantilla(contenido: str) -> str:
         contenido: Texto de la plantilla.
 
     Returns:
-        Texto como «Plantilla: Resumen de Deudas» o la primera línea.
+        Texto como «Plantilla: Registro y Detalles de deudas» o la primera línea.
     """
     coincidencia = re.search(
         r"{%\s*block\s+titulo\s*%}(.*?){%\s*endblock\s*%}", contenido, re.DOTALL

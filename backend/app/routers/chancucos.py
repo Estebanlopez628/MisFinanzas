@@ -66,6 +66,7 @@ def crear_chancuco(
     bd: Session = Depends(obtener_bd),
     descripcion: Annotated[str, Form()] = "",
     numero_referencia: Annotated[str, Form()] = "",
+    valor_pago: Annotated[str, Form()] = "",
     url_pago: Annotated[str, Form()] = "",
     favorito: Annotated[str, Form()] = "",
     unico_pago: Annotated[str, Form()] = "1",
@@ -86,6 +87,7 @@ def crear_chancuco(
         bd: Sesión de base de datos.
         descripcion: Texto que identifica el atajo.
         numero_referencia: Número a copiar.
+        valor_pago: Monto exacto a pagar; opcional.
         url_pago: Pasarela oficial; opcional.
         favorito: ``1`` para marcarlo como favorito.
         unico_pago: ``1`` si el servicio se paga una sola vez al mes.
@@ -115,6 +117,7 @@ def crear_chancuco(
             favorito == "1",
             dia_pago_1=dia_pago_1,
             dia_pago_2=None if unico_pago == "1" else dia_pago_2,
+            valor_pago=valor_pago or None,
         )
         auditoria.registrar(
             bd, usuario.id_usuario, "CHANCUCO_CREADO", "chancucos", chancuco.descripcion

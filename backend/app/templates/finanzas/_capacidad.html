@@ -31,7 +31,7 @@
           <svg viewBox="0 0 42 42" class="dona__svg" role="img"
                aria-label="Reparto del ingreso entre gastos fijos, deudas y dinero libre">
             <circle cx="21" cy="21" r="15.9155" fill="transparent" class="dona__fondo" stroke-width="6" />
-            {% for arco in capacidad.arcos %}
+            {% for arco in capacidad.arcos_categoria %}
               <circle class="dona__arco" tabindex="0" cx="21" cy="21" r="15.9155" fill="transparent" stroke-width="6"
                       style="stroke: {{ arco.color }}"
                       stroke-dasharray="{{ arco.longitud }} {{ 100 - arco.longitud }}"
@@ -53,7 +53,7 @@
         </div>
 
         <ul class="dona__leyenda">
-          {% for arco in capacidad.arcos %}
+          {% for arco in capacidad.arcos_categoria %}
             <li data-leyenda-etiqueta="{{ arco.etiqueta }}">
               <span class="dona__muestra" style="background: {{ arco.color }}"></span>
               {{ arco.etiqueta }}:
@@ -81,6 +81,23 @@
             ({{ capacidad.porcentaje_libre | porcentaje(1) }})
           </li>
           {% endif %}
+        </ul>
+
+        {# SRS v1.9: las ocho categorías cerradas con sus colores exactos. La
+           categoría 8 se calcula sola con las deudas activas; los gastos y
+           deducciones vinculados a una deuda ya no aparecen aquí dos veces. #}
+        <ul class="dona__leyenda dona__leyenda--categorias">
+          {% for categoria in capacidad.categorias %}
+            <li data-leyenda-categoria="{{ categoria.nombre }}">
+              <span class="dona__muestra" style="background: {{ categoria.color }}"></span>
+              {{ categoria.nombre }}:
+              <strong class="{{ 'valor-negativo' if categoria.valor > 0 else 'valor-positivo' }}">{{ categoria.valor | cop }}</strong>
+              <span class="ayuda">({{ categoria.porcentaje | porcentaje(1) }})</span>
+              {% if categoria.es_obligacion %}
+                <small class="insignia">automática · deudas</small>
+              {% endif %}
+            </li>
+          {% endfor %}
         </ul>
       </div>
 

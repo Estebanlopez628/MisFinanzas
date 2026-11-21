@@ -35,7 +35,7 @@ from sqlalchemy.engine import Connection  # noqa: E402
 from sqlalchemy.schema import Table  # noqa: E402
 
 import app.modelos  # noqa: E402,F401  (registra las tablas en Base.metadata)
-from app.core.base_datos import Base, URL_BASE_DATOS, motor  # noqa: E402
+from app.core.base_datos import URL_BASE_DATOS, aplicar_migraciones, motor  # noqa: E402
 from app.core.seguridad import hash_contrasena  # noqa: E402
 from app.modelos import Usuario  # noqa: E402
 from app.servicios.usuarios import CUENTAS_DEMO  # noqa: E402
@@ -147,7 +147,7 @@ def main() -> None:
         raise SystemExit(f"No existe el origen: {argumentos.origen}")
 
     origen_motor = create_engine(f"sqlite:///{argumentos.origen.resolve().as_posix()}")
-    Base.metadata.create_all(motor)
+    aplicar_migraciones()
 
     print(f"Origen: {argumentos.origen}")
     with origen_motor.connect() as origen, motor.begin() as destino:

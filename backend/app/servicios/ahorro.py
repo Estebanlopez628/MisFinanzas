@@ -827,13 +827,12 @@ def diagnostico(
         `metas_mes` es informativo: ya está restado en el saldo porque cada meta
         vive como gasto fijo (SRS v1.6).
     """
-    # La cuota mensual de las deudas sale del disponible, igual que en la dona de
-    # capacidad (ADR-53). Las deducciones fijas que son créditos ya restan dentro
-    # del saldo de cada quincena, así que aquí no se vuelven a descontar.
-    # Las cuotas de deudas vinculadas ya restan como deducción fija (ADR-56).
+    # SRS v1.9: la cuota de TODAS las deudas activas se cuenta en la categoría 8.
+    # Los gastos y deducciones vinculados ya no restan en las quincenas (regla
+    # anti-duplicación), así que aquí se descuenta la cuota completa una sola vez.
     cuota_deudas = redondear_dinero(
         servicio_deudas.resumen_deudas(bd, id_usuario)["cuota_mensual"]
-        - servicio_fijas.cuota_de_vinculadas(bd, id_usuario)
+        + servicio_fijas.total_creditos_sin_vinculo(bd, id_usuario)
     )
     saldo = redondear_dinero(saldo_libre_total(bd, id_usuario, perfil, anio, mes) - cuota_deudas)
     extras = servicio_trabajos.extras_cobrados_mes(bd, id_usuario, anio, mes)

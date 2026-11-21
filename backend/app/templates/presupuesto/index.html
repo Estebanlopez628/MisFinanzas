@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% from "finanzas/_gasto_fijo.html" import boton_editar with context %}
 {% from "finanzas/_capacidad.html" import panel_capacidad with context %}
+{% from "_categorias.html" import selector_categoria, vinculo_deuda, vinculo_condicional with context %}
 {% block titulo %}Gastos y Presupuesto{% endblock %}
 
 {% block contenido %}
@@ -206,7 +207,7 @@
           <input class="campo__control" type="text" name="categoria" list="categorias-meta"
                  placeholder="Ahorro, predial, vacaciones…" required />
           <datalist id="categorias-meta">
-            {% for categoria in categorias %}
+            {% for categoria in sugerencias_metas %}
               <option value="{{ categoria }}"></option>
             {% endfor %}
           </datalist>
@@ -295,41 +296,38 @@
     </p>
 
     <form class="formulario formulario--compacto" method="post"
-          action="{{ url_for('crear_deduccion_fija') }}" data-proteccion>
-      <div class="fila-campos">
+          action="{{ url_for('crear_deduccion_fija') }}" data-proteccion
+          data-guardar-formulario="crear-deduccion-fija"
+          data-origen-modulo="deducciones">
+      {# SRS v1.9, sección 3.1: fila superior de tres columnas y fila inferior
+         con la quincena donde aplican los pagos. #}
+      <div class="fila-campos fila-campos--deducciones">
         <label class="campo">
           <span class="campo__etiqueta">Concepto</span>
           <input class="campo__control" type="text" name="descripcion"
                  placeholder="Libranza banco X, fondo…" required />
         </label>
         <label class="campo">
-          <span class="campo__etiqueta">Valor por pago (COP)</span>
+          <span class="campo__etiqueta">Categoría</span>
+          {{ selector_categoria('Otros Gastos Fijos') }}
+        </label>
+        <label class="campo">
+          <span class="campo__etiqueta">Valor Descontado (COP)</span>
           <input class="campo__control" type="text" name="valor"
                  inputmode="decimal" placeholder="120.000" required data-moneda />
         </label>
-        <label class="campo">
-          <span class="campo__etiqueta">Quincena donde aplicaremos los pagos</span>
-          <select class="campo__control" name="quincena">
-            <option value="1">{{ etiquetas_quincena[1] }}</option>
-            <option value="2">{{ etiquetas_quincena[2] }}</option>
-          </select>
-        </label>
       </div>
-      <label class="campo">
-        <span class="campo__etiqueta">¿Es la cuota de una deuda que estás pagando?</span>
-        <select class="campo__control" name="id_deuda">
-          <option value="">No, es un descuento sin control de cuotas</option>
-          {% for deuda in deudas_mensuales %}
-            <option value="{{ deuda.id_deuda }}">
-              {{ deuda.acreedor }} · saldo {{ deuda.saldo_total | cop }} · {{ deuda.cuotas_pendientes }} cuota(s)
-            </option>
-          {% endfor %}
+      <label class="campo deduccion-quincena">
+        <span class="campo__etiqueta">Quincena donde aplican los pagos</span>
+        <select class="campo__control" name="quincena">
+          <option value="1">{{ etiquetas_quincena[1] }}</option>
+          <option value="2">{{ etiquetas_quincena[2] }}</option>
         </select>
-        <span class="ayuda">
-          Si eliges una deuda, el valor será su cuota mensual: el descuento se cuenta una
-          sola vez y verás cuántas cuotas faltan. Solo aparecen deudas que se pagan cada mes.
-        </span>
       </label>
+      {{ vinculo_condicional(
+           'deducciones', deudas_activas,
+           '¿Esta deducción corresponde a una de tus deudas registradas?'
+         ) }}
       {# SRS v1.5: mismo peso visual que «Crear meta»; sin el signo «+». #}
       <button class="boton boton--primario" type="submit">
         Agregar deducción fija
@@ -339,9 +337,9 @@
     {% if deducciones %}
       <ul class="lista-gastos">
         {% for deduccion in deducciones %}
-          <li class="lista-gastos__item">
+          <li class="lista-gastos__item" data-deduccion-fila data-id-deduccion="{{ deduccion.id_deduccion }}">
             <span class="lista-gastos__nombre">
-              {{ deduccion.descripcion }} - {{ etiquetas_quincena[deduccion.quincena] }}
+              {{ deduccion.descripcion }} - {{ deduccion.categoria }} - {{ etiquetas_quincena[deduccion.quincena] }}
             </span>
             <span class="lista-gastos__valor">Valor: {{ deduccion.valor | cop }}</span>
             {% if deduccion.deuda %}
@@ -359,14 +357,19 @@
                 {{ boton_editar(deduccion.descripcion) }}
                 <form class="formulario formulario--compacto edicion-gasto__formulario" method="post"
                       action="{{ url_for('editar_deduccion_fija', id_deduccion=deduccion.id_deduccion) }}"
-                      data-proteccion>
+                      data-proteccion
+                      data-guardar-formulario="editar-deduccion-{{ deduccion.id_deduccion }}">
                   <label class="campo">
                     <span class="campo__etiqueta">Concepto</span>
                     <input class="campo__control" type="text" name="descripcion"
                            value="{{ deduccion.descripcion }}" required />
                   </label>
                   <label class="campo">
-                    <span class="campo__etiqueta">Valor (COP)</span>
+                    <span class="campo__etiqueta">Categoría</span>
+                    {{ selector_categoria(deduccion.categoria) }}
+                  </label>
+                  <label class="campo">
+                    <span class="campo__etiqueta">Valor Descontado (COP)</span>
                     <input class="campo__control" type="text" name="valor"
                            inputmode="decimal" value="{{ deduccion.valor | cop(false) }}" required data-moneda />
                   </label>
@@ -377,19 +380,16 @@
                       <option value="2" {% if deduccion.quincena == 2 %}selected{% endif %}>{{ etiquetas_quincena[2] }}</option>
                     </select>
                   </label>
-                  <label class="campo">
-                    <span class="campo__etiqueta">¿Es la cuota de una deuda que estás pagando?</span>
-                    <select class="campo__control" name="id_deuda">
-                      <option value="">No, es un descuento sin control de cuotas</option>
-                      {% for opcion in deudas_mensuales %}
-                        <option value="{{ opcion.id_deuda }}" {% if deduccion.id_deuda == opcion.id_deuda %}selected{% endif %}>
-                          {{ opcion.acreedor }} · saldo {{ opcion.saldo_total | cop }} · {{ opcion.cuotas_pendientes }} cuota(s)
-                        </option>
-                      {% endfor %}
-                    </select>
-                  </label>
+                  {{ vinculo_deuda(deudas_activas, deduccion.id_deuda or '') }}
+                  {# SRS v1.9, 3.3: las tres acciones del modal. «Eliminar»
+                     envía el mismo formulario a la ruta de borrado mediante
+                     formaction, sin anidar formularios. #}
                   <div class="acciones-formulario acciones-formulario--edicion">
                     <button class="boton boton--primario boton--pequeno" type="submit">Actualizar</button>
+                    <button class="boton boton--peligro boton--pequeno" type="submit"
+                            formmethod="post"
+                            formaction="{{ url_for('eliminar_deduccion_fija', id_deduccion=deduccion.id_deduccion) }}"
+                            onclick="return confirm('¿Eliminar esta deducción fija?');">Eliminar</button>
                     <button class="boton boton--cancelar boton--pequeno" type="button"
                             data-cancelar-edicion>Cancelar</button>
                   </div>
@@ -600,4 +600,5 @@
 
 {% block scripts %}
   <script src="{{ url_for('estaticos', path='js/presupuesto.js') }}" defer></script>
+  <script src="{{ url_for('estaticos', path='js/deudas.js') }}" defer></script>
 {% endblock %}

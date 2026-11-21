@@ -551,6 +551,7 @@ def crear_gasto_trabajo(
     descripcion: str,
     valor: str | int | float | Decimal,
     quincena: int | str | None = None,
+    id_deuda: str | None = None,
 ) -> Gasto:
     """Registra un gasto fijo dentro de un trabajo extra.
 
@@ -566,6 +567,7 @@ def crear_gasto_trabajo(
         descripcion: Nombre del gasto fijo.
         valor: Monto del gasto.
         quincena: `1` o `2` en contratos quincenales.
+        id_deuda: Deuda mensual que paga el gasto; vacío si no aplica.
 
     Returns:
         El gasto persistido.
@@ -586,6 +588,7 @@ def crear_gasto_trabajo(
         date.today(),
         es_fijo=True,
         quincena=periodo,
+        id_deuda=id_deuda,
     )
     gasto.id_trabajo = id_trabajo
     gasto.check_visible = False

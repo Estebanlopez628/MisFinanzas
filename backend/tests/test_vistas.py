@@ -10,8 +10,8 @@ from __future__ import annotations
 from fastapi.testclient import TestClient
 
 # Tarjetas y enlaces esperados tras la limpieza del bloque 2.
-TARJETAS_ADMIN = ("Mis Finanzas", "OLB_BYTE", "Resumen de Deudas", "Trabajos Extras")
-TARJETAS_PUBLICAS = ("Mis Finanzas", "Resumen de Deudas", "Trabajos Extras")
+TARJETAS_ADMIN = ("Mis Finanzas", "OLB_BYTE", "Registro y Detalles de deudas", "Trabajos Extras")
+TARJETAS_PUBLICAS = ("Mis Finanzas", "Registro y Detalles de deudas", "Trabajos Extras")
 
 
 def test_dashboard_responde_para_administrador(cliente_admin: TestClient) -> None:

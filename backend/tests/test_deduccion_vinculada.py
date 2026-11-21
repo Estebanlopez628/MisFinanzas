@@ -66,7 +66,11 @@ def test_la_cuota_se_cuenta_una_sola_vez(bd) -> None:
     con_vinculo = _capacidad(bd, id_usuario)
 
     assert vinculada.valor == Decimal("400000.00")
-    assert con_vinculo.deudas == Decimal("0.00")
+    # SRS v1.9: la cuota vive en la categoría 8 (deudas), no en gastos fijos.
+    # Antes se restaba de `deudas`; ahora es la deuda la que se muestra y el
+    # descuento vinculado deja de contarse como gasto, para no duplicarlo.
+    assert con_vinculo.deudas == Decimal("400000.00")
+    assert con_vinculo.gastos == Decimal("236800.00")
 
     # Comparación: solo el descuento, sin deuda. Ese es el libre correcto.
     deudas.eliminar_deuda(bd, id_usuario, deuda.id_deuda)
@@ -120,14 +124,17 @@ def test_la_proyeccion_retira_la_cuota_al_terminar(bd) -> None:
     assert proyeccion[-1]["deuda"] == Decimal("0.00")
 
 
-def test_solo_se_vinculan_deudas_mensuales_activas_y_propias(bd) -> None:
-    """Las deudas quincenales, pagadas o ajenas no se pueden vincular."""
+def test_solo_se_vinculan_deudas_activas_y_propias(bd) -> None:
+    """SRS v1.9, 3.2: se vinculan todas las activas (también quincenales)."""
     id_usuario = _id_admin(bd)
     quincenal = deudas.crear_deuda(
-        bd, id_usuario, "Banco", "800000", "100000", 8, periodicidad=deudas.PERIODICIDAD_QUINCENAL
+        bd, id_usuario, "Banco", "800000", "100000", 8,
+        periodicidad=deudas.PERIODICIDAD_QUINCENAL
     )
-    with pytest.raises(ValueError, match="cada mes"):
-        deducciones_fijas.crear_deduccion(bd, id_usuario, "Libranza", "0", 1, quincenal.id_deuda)
+    vinculada = deducciones_fijas.crear_deduccion(
+        bd, id_usuario, "Libranza", "0", 1, quincenal.id_deuda
+    )
+    assert vinculada.id_deuda == quincenal.id_deuda
 
     mensual = deudas.crear_deuda(bd, id_usuario, "Banco", "800000", "400000", 2)
     bd.get(Deuda, mensual.id_deuda).estado = deudas.ESTADO_PAGADA

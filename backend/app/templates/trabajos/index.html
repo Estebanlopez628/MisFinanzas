@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "finanzas/_gasto_fijo.html" import fila_gasto with context %}
+{% from "_categorias.html" import selector_categoria, vinculo_deuda, vinculo_condicional with context %}
 {% from "finanzas/_capacidad.html" import panel_capacidad with context %}
 {% block titulo %}Trabajos Extras{% endblock %}
 
@@ -44,7 +45,9 @@
     {% endif %}
 
     <form class="formulario formulario--compacto" method="post"
-          action="{{ url_for('agregar_gasto_trabajo', id_trabajo=trabajo.id_trabajo) }}" data-proteccion>
+          action="{{ url_for('agregar_gasto_trabajo', id_trabajo=trabajo.id_trabajo) }}" data-proteccion
+      data-guardar-formulario="crear-gasto-trabajo-{{ trabajo.id_trabajo }}"
+      data-origen-modulo="trabajos">
       {% if periodo.quincena %}<input type="hidden" name="quincena" value="{{ periodo.quincena }}" />{% endif %}
       <div class="fila-campos">
         <label class="campo">
@@ -54,7 +57,7 @@
         </label>
         <label class="campo">
           <span class="campo__etiqueta">Categoría</span>
-          <input class="campo__control" type="text" name="categoria" value="Hogar" required />
+          {{ selector_categoria() }}
         </label>
         <label class="campo">
           <span class="campo__etiqueta">Valor (COP)</span>
@@ -62,6 +65,10 @@
                  placeholder="150.000" required data-moneda />
         </label>
       </div>
+      {{ vinculo_condicional(
+           'trabajos', deudas_activas,
+           '¿Este crédito corresponde a una de tus deudas registradas?'
+         ) }}
       <button class="boton boton--secundario boton--pequeno" type="submit">Agregar gasto fijo</button>
     </form>
 

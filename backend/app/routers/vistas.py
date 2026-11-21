@@ -22,6 +22,7 @@ from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
+from app.core import categorias as catalogo
 from app.core.base_datos import obtener_bd
 from app.core.config import obtener_configuracion, obtener_parametros
 from app.servicios import acceso_google, factura_pdf
@@ -75,7 +76,7 @@ TARJETAS_DASHBOARD: list[dict[str, Any]] = [
     },
     {
         "clave": "deudas",
-        "titulo": "Resumen de Deudas",
+        "titulo": "Registro y Detalles de deudas",
         "descripcion": "Control de pasivos, cuotas y fechas límite.",
         "icono": "📉",
         "url": "/deudas",
@@ -135,6 +136,9 @@ def contexto_base(usuario: UsuarioSesion | None) -> dict[str, Any]:
         "configuracion": configuracion,
         "parametros": obtener_parametros(),
         "anio_actual": date.today().year,
+        # Catálogo cerrado de ocho categorías: el selector de los formularios y
+        # la leyenda de la dona leen los mismos nombres y colores del backend.
+        "categorias": catalogo.lista_categorias(),
         "google_activo": acceso_google.google_activo(),
         # Apoyo voluntario: solo el QR de Bre-B (data URI). No se expone ningún número.
         "cafe": {

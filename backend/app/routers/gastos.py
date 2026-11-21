@@ -17,10 +17,11 @@ from fastapi import APIRouter, Depends, Form, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
+from app import esquemas
 from app.core.base_datos import obtener_bd
 from app.dependencias import UsuarioSesion, obtener_usuario_actual
 from app.routers.vistas import contexto_base, plantillas
-from app.servicios import auditoria, gastos, pagos_metas, perfiles
+from app.servicios import auditoria, deudas, gastos, pagos_metas, perfiles
 
 router = APIRouter(tags=["Gastos"])
 
@@ -87,6 +88,7 @@ def ver_gastos(
             "guardado": bool(guardado),
             "seccion": "gastos",
             "etiquetas_quincena": _etiquetas_quincena(bd, usuario.id_usuario),
+            "deudas_activas": deudas.listar_vinculables(bd, usuario.id_usuario),
         }
     )
     return plantillas.TemplateResponse(request, "gastos/index.html", contexto)
@@ -103,6 +105,7 @@ def crear_gasto(
     fecha: Annotated[str, Form()] = "",
     es_fijo: Annotated[str, Form()] = "",
     quincena: Annotated[str, Form()] = "",
+    id_deuda: Annotated[str, Form()] = "",
     origen: Annotated[str, Form()] = "",
 ) -> HTMLResponse | RedirectResponse:
     """Registra un gasto.
@@ -117,6 +120,7 @@ def crear_gasto(
         fecha: Fecha ISO; si falta se usa hoy.
         es_fijo: ``1`` si es recurrente.
         quincena: ``1`` o ``2`` para gastos fijos de una quincena.
+        id_deuda: Deuda registrada que paga este gasto; vacío si no aplica.
         origen: ``finanzas`` cuando el formulario vive en "Mis Finanzas"; en ese
             caso se vuelve al panel de quincenas tras guardar.
 
@@ -124,15 +128,27 @@ def crear_gasto(
         Redirección al listado o a Mis Finanzas, o la vista con el error.
     """
     try:
+        datos = esquemas.validar_formulario(
+            esquemas.GastoNuevo,
+            categoria=categoria,
+            descripcion=descripcion,
+            valor=valor,
+            fecha=fecha,
+            es_fijo=es_fijo,
+            quincena=quincena,
+            id_deuda=id_deuda,
+            origen=origen,
+        )
         gasto = gastos.crear_gasto(
             bd,
             usuario.id_usuario,
-            categoria,
-            descripcion,
-            valor,
-            _parsear_fecha(fecha),
-            es_fijo=es_fijo == "1",
-            quincena=quincena,
+            datos.categoria,
+            datos.descripcion,
+            datos.valor,
+            _parsear_fecha(datos.fecha),
+            es_fijo=datos.es_fijo == "1",
+            quincena=datos.quincena,
+            id_deuda=datos.id_deuda,
         )
         auditoria.registrar(
             bd, usuario.id_usuario, "GASTO_CREADO", "gastos", gasto.descripcion
@@ -163,6 +179,7 @@ def crear_gasto(
                 "seccion": "gastos",
                 "error": str(error),
                 "etiquetas_quincena": _etiquetas_quincena(bd, usuario.id_usuario),
+                "deudas_activas": deudas.listar_vinculables(bd, usuario.id_usuario),
             }
         )
         return plantillas.TemplateResponse(
@@ -191,6 +208,7 @@ def editar_gasto(
     valor: Annotated[str, Form()] = "",
     categoria: Annotated[str, Form()] = "",
     quincena: Annotated[str, Form()] = "",
+    id_deuda: Annotated[str, Form()] = "",
     origen: Annotated[str, Form()] = "",
 ) -> HTMLResponse | RedirectResponse:
     """Actualiza el valor o la descripción de un gasto ya registrado.
@@ -208,6 +226,7 @@ def editar_gasto(
         valor: Nuevo monto en pesos.
         categoria: Categoría nueva; si llega vacía se conserva la actual.
         quincena: `1` o `2` para la quincena del gasto; vacío para el mes completo.
+        id_deuda: Deuda vinculada; vacía quita el vínculo.
         origen: ``finanzas`` cuando el formulario vive en "Mis Finanzas"; en ese
             caso se vuelve al panel de quincenas tras guardar.
 
@@ -215,14 +234,24 @@ def editar_gasto(
         Redirección al listado o a Mis Finanzas, o la vista con el error.
     """
     try:
+        datos = esquemas.validar_formulario(
+            esquemas.GastoEditar,
+            descripcion=descripcion,
+            valor=valor,
+            categoria=categoria,
+            quincena=quincena,
+            id_deuda=id_deuda,
+            origen=origen,
+        )
         gasto = gastos.actualizar_gasto(
             bd,
             usuario.id_usuario,
             id_gasto,
-            descripcion,
-            valor,
-            categoria=categoria or None,
-            quincena=quincena,
+            datos.descripcion,
+            datos.valor,
+            categoria=datos.categoria or None,
+            quincena=datos.quincena,
+            id_deuda=datos.id_deuda,
         )
     except (ValueError, ArithmeticError) as error:
         if origen == "finanzas":
@@ -250,6 +279,7 @@ def editar_gasto(
                 "seccion": "gastos",
                 "error": str(error),
                 "etiquetas_quincena": _etiquetas_quincena(bd, usuario.id_usuario),
+                "deudas_activas": deudas.listar_vinculables(bd, usuario.id_usuario),
             }
         )
         return plantillas.TemplateResponse(

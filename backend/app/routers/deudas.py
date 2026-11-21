@@ -1,4 +1,4 @@
-"""Rutas del módulo "Resumen de Deudas".
+"""Rutas del módulo "Registro y Detalles de deudas".
 
 Responsabilidad
 ---------------
@@ -15,11 +15,13 @@ entradas, invoca el servicio y presenta resultados.
 from __future__ import annotations
 
 from typing import Annotated
+from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, Form, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
+from app import esquemas
 from app.core.base_datos import obtener_bd
 from app.dependencias import UsuarioSesion, obtener_usuario_actual
 from app.routers.vistas import contexto_base, plantillas
@@ -36,6 +38,7 @@ def _contexto(
     guardado: bool = False,
     aplicadas: int = 0,
     valores: dict[str, str] | None = None,
+    volver: str | None = None,
 ) -> dict[str, object]:
     """Prepara el contexto de la vista de deudas.
 
@@ -47,34 +50,29 @@ def _contexto(
         aplicadas: Cuotas descontadas automáticamente en esta visita.
         valores: Datos ya escritos en el formulario, para no perderlos al
             corregir un error.
+        volver: Módulo de origen de un flujo de vinculación (sección 3.2).
 
     Returns:
         Diccionario para la plantilla.
     """
     contexto = contexto_base(usuario)
     lista = deudas.listar_deudas(bd, usuario.id_usuario)
+    # SRS v1.9, 2.3: no se calcula ni se muestra el calendario de «Próximas
+    # cuotas»; solo se listan las cuotas ya aplicadas.
     pagos = deudas.listar_pagos(bd, usuario.id_usuario)
-    planes = {
-        deuda.id_deuda: deudas.proyeccion_deuda(
-            deuda,
-            pagos[deuda.id_deuda][-1].fecha_aplicacion
-            if pagos.get(deuda.id_deuda)
-            else None,
-        )
-        for deuda in lista
-    }
     contexto.update(
         {
-            "titulo_pagina": "Resumen de Deudas",
+            "titulo_pagina": "Registro y Detalles de deudas",
             "deudas": lista,
             "pagos": pagos,
-            "planes": planes,
             "resumen": deudas.resumen_deudas(bd, usuario.id_usuario),
             "periodicidades": deudas.PERIODICIDADES,
             "error": error,
             "guardado": guardado,
             "aplicadas": aplicadas,
             "valores": valores or {},
+            "volver": volver,
+            "deuda_reciente": max(lista, key=lambda deuda: deuda.fecha_creacion) if lista else None,
         }
     )
     return contexto
@@ -107,6 +105,7 @@ def ver_deudas(
             bd,
             guardado=bool(guardado),
             aplicadas=aplicadas,
+            volver=request.query_params.get("volver"),
         ),
     )
 
@@ -140,15 +139,24 @@ def crear_deuda(
         Redirección o vista con error.
     """
     try:
+        datos = esquemas.validar_formulario(
+            esquemas.DeudaNueva,
+            acreedor=acreedor,
+            descripcion=descripcion,
+            saldo_total=saldo_total,
+            cuota=cuota,
+            cuotas_pendientes=cuotas_pendientes,
+            periodicidad=periodicidad,
+        )
         deuda = deudas.crear_deuda(
             bd,
             usuario.id_usuario,
-            acreedor,
-            saldo_total,
-            cuota,
-            cuotas_pendientes,
-            periodicidad,
-            descripcion or None,
+            datos.acreedor,
+            datos.saldo_total,
+            datos.cuota,
+            datos.cuotas_pendientes,
+            datos.periodicidad,
+            datos.descripcion or None,
         )
         auditoria.registrar(bd, usuario.id_usuario, "DEUDA_CREADA", "deudas", deuda.acreedor)
     except (ValueError, ArithmeticError) as error:
@@ -171,6 +179,85 @@ def crear_deuda(
             status_code=status.HTTP_400_BAD_REQUEST,
         )
 
+    return RedirectResponse(url="/deudas?guardado=1", status_code=status.HTTP_303_SEE_OTHER)
+
+
+@router.post("/deudas/{id_deuda}/editar", name="editar_deuda", response_model=None)
+def editar_deuda(
+    request: Request,
+    id_deuda: str,
+    usuario: UsuarioSesion = Depends(obtener_usuario_actual),
+    bd: Session = Depends(obtener_bd),
+    acreedor: Annotated[str, Form()] = "",
+    descripcion: Annotated[str, Form()] = "",
+    saldo_total: Annotated[str, Form()] = "",
+    cuota: Annotated[str, Form()] = "",
+    cuotas_pendientes: Annotated[str, Form()] = "",
+    periodicidad: Annotated[str, Form()] = deudas.PERIODICIDAD_MENSUAL,
+) -> HTMLResponse | RedirectResponse:
+    """Corrige el plan de pagos de una deuda propia.
+
+    Args:
+        request: Petición HTTP.
+        id_deuda: Deuda a modificar.
+        usuario: Usuario autenticado.
+        bd: Sesión de base de datos.
+        acreedor: Acreedor.
+        descripcion: Detalle.
+        saldo_total: Capital pendiente inicial.
+        cuota: Valor de cada pago.
+        cuotas_pendientes: Número de pagos que faltan.
+        periodicidad: `QUINCENAL` o `MENSUAL`.
+
+    Returns:
+        Redirección al listado o la vista con el error de validación.
+    """
+    try:
+        datos = esquemas.validar_formulario(
+            esquemas.DeudaEditar,
+            acreedor=acreedor,
+            descripcion=descripcion,
+            saldo_total=saldo_total,
+            cuota=cuota,
+            cuotas_pendientes=cuotas_pendientes,
+            periodicidad=periodicidad,
+        )
+        deuda = deudas.actualizar_deuda(
+            bd,
+            usuario.id_usuario,
+            id_deuda,
+            datos.acreedor,
+            datos.saldo_total,
+            datos.cuota,
+            datos.cuotas_pendientes,
+            datos.periodicidad,
+            datos.descripcion or None,
+        )
+    except (ValueError, ArithmeticError) as error:
+        return plantillas.TemplateResponse(
+            request,
+            "deudas/index.html",
+            _contexto(
+                usuario,
+                bd,
+                error=str(error),
+                valores={
+                    "acreedor": acreedor,
+                    "descripcion": descripcion,
+                    "saldo_total": saldo_total,
+                    "cuota": cuota,
+                    "cuotas_pendientes": cuotas_pendientes,
+                    "periodicidad": periodicidad,
+                },
+            ),
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+    if deuda is None:
+        return RedirectResponse(
+            url=f"/deudas?error={quote('La deuda no existe.')}",
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
+    auditoria.registrar(bd, usuario.id_usuario, "DEUDA_ACTUALIZADA", "deudas", deuda.acreedor)
     return RedirectResponse(url="/deudas?guardado=1", status_code=status.HTTP_303_SEE_OTHER)
 
 

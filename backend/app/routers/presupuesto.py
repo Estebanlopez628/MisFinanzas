@@ -20,6 +20,7 @@ from fastapi import APIRouter, Depends, Form, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
+from app import esquemas
 from app.core.base_datos import obtener_bd
 from app.dependencias import UsuarioSesion, obtener_usuario_actual
 from app.routers.vistas import contexto_base, plantillas
@@ -126,7 +127,10 @@ def _contexto(
                 and deuda.periodicidad == deudas.PERIODICIDAD_MENSUAL
             ],
             "etiquetas_quincena": perfiles.etiquetas_quincena(perfil),
-            "categorias": ahorro.CATEGORIAS_SUGERIDAS,
+            # El catálogo cerrado de ocho categorías viene de `contexto_base`;
+            # las metas conservan sus propias sugerencias de texto libre.
+            "sugerencias_metas": ahorro.CATEGORIAS_SUGERIDAS,
+            "deudas_activas": deudas.listar_vinculables(bd, usuario.id_usuario),
             "fecha_hoy": hoy.isoformat(),
             "guardado": guardado,
             "error": error or None,
@@ -314,6 +318,7 @@ def crear_deduccion_fija(
     valor: Annotated[str, Form()] = "",
     quincena: Annotated[str, Form()] = "1",
     id_deuda: Annotated[str, Form()] = "",
+    categoria: Annotated[str, Form()] = "",
 ) -> HTMLResponse | RedirectResponse:
     """Registra una deducción fija del salario (libranza, fondo, seguro).
 
@@ -325,13 +330,28 @@ def crear_deduccion_fija(
         valor: Monto por pago en pesos.
         quincena: `1` o `2`, pago del que se descuenta.
         id_deuda: Deuda mensual que esta deducción paga; vacío si no aplica.
+        categoria: Categoría cerrada del catálogo de ocho opciones.
 
     Returns:
         Redirección al planificador o la vista con el error (400).
     """
     try:
+        datos = esquemas.validar_formulario(
+            esquemas.DeduccionNueva,
+            descripcion=descripcion,
+            valor=valor,
+            quincena=quincena,
+            id_deuda=id_deuda,
+            categoria=categoria or None,
+        )
         deduccion = deducciones_fijas.crear_deduccion(
-            bd, usuario.id_usuario, descripcion, valor, quincena, id_deuda
+            bd,
+            usuario.id_usuario,
+            datos.descripcion,
+            datos.valor,
+            datos.quincena,
+            datos.id_deuda,
+            datos.categoria,
         )
     except (ValueError, ArithmeticError) as error:
         contexto = _contexto(usuario, bd, error=str(error))
@@ -363,6 +383,7 @@ def editar_deduccion_fija(
     valor: Annotated[str, Form()] = "",
     quincena: Annotated[str, Form()] = "1",
     id_deuda: Annotated[str, Form()] = "",
+    categoria: Annotated[str, Form()] = "",
 ) -> HTMLResponse | RedirectResponse:
     """Modifica una deducción fija existente del usuario.
 
@@ -375,13 +396,29 @@ def editar_deduccion_fija(
         valor: Nuevo monto por pago.
         quincena: Nueva quincena de descuento.
         id_deuda: Deuda vinculada; vacío quita el vínculo.
+        categoria: Nueva categoría cerrada; vacía conserva la actual.
 
     Returns:
         Redirección al planificador o la vista con el error.
     """
     try:
+        datos = esquemas.validar_formulario(
+            esquemas.DeduccionEditar,
+            descripcion=descripcion,
+            valor=valor,
+            quincena=quincena,
+            id_deuda=id_deuda,
+            categoria=categoria or None,
+        )
         actualizada = deducciones_fijas.actualizar_deduccion(
-            bd, usuario.id_usuario, id_deduccion, descripcion, valor, quincena, id_deuda
+            bd,
+            usuario.id_usuario,
+            id_deduccion,
+            datos.descripcion,
+            datos.valor,
+            datos.quincena,
+            datos.id_deuda,
+            datos.categoria,
         )
     except (ValueError, ArithmeticError) as error:
         contexto = _contexto(usuario, bd, error=str(error))

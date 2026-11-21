@@ -25,7 +25,7 @@ El sistema cumple una **doble función clave**:
 Pantalla limpia con 4 accesos:
 - **Mis Finanzas:** nómina, recargos y presupuesto quincenal.
 - **OLB_BYTE:** comercial y cartera (privado, deshabilitado/oculto para `USER_FINANZAS`).
-- **Resumen de Deudas:** pasivos acumulados.
+- **Registro y Detalles de deudas:** pasivos acumulados.
 - **Trabajos Extras:** ingresos independientes al salario base.
 Más una sección aparte de **Chancucos** exclusiva de `ADMIN_OLB`.
 
@@ -101,7 +101,7 @@ Recálculo en tiempo real (<100 ms) sin recargar página. Se implementa con func
 - **Contexto:** el header acumulaba 12 pestañas y el dashboard 9 tarjetas que mezclaban módulos principales con submódulos, además de exigir administrador para Deudas y Trabajos.
 - **Decisión:**
   - Header con **solo tres opciones**: `Inicio`, `Mi Perfil` y `Salir`. Los módulos se abren desde el dashboard.
-  - Dashboard con **cuatro tarjetas**: `Mis Finanzas`, `OLB_BYTE` (solo `ADMIN_OLB`), `Resumen de Deudas` y `Trabajos Extras`.
+  - Dashboard con **cuatro tarjetas**: `Mis Finanzas`, `OLB_BYTE` (solo `ADMIN_OLB`), `Registro y Detalles de deudas` y `Trabajos Extras`.
   - `OLB_BYTE` y `Chancucos` permanecen como rutas exclusivas del administrador (**403** para `USER_FINANZAS`). `Deudas` y `Trabajos Extras` dejan de exigir rol administrador porque el SRS v1.2 los declara de acceso general; los servicios ya filtran por `id_usuario`.
   - La administración de cuentas (`/admin/usuarios`) sale del dashboard y queda enlazada desde `Mi Perfil`, visible solo para el administrador.
 - **Consecuencia:** menos ruido visual y un único punto de entrada a los submódulos, que en el bloque 3 pasarán a vivir dentro de `Mis Finanzas`.
@@ -834,7 +834,7 @@ Recálculo en tiempo real (<100 ms) sin recargar página. Se implementa con func
 2. La dona muestra el libre del salario y el libre de trabajos extras, con su valor y porcentaje, y el total libre. Los trabajos entran por su valor de pago y salen con sus gastos fijos.
 3. `sw.js` en `olb-finanzas-v20`: el service worker servía el CSS de la factura desde caché, por eso el recuadro de medios de pago se veía sin centrar aunque el código ya estaba centrado.
 
-**Limitación:** la proyección a doce meses solo cuenta las deudas registradas en «Resumen de Deudas»; los créditos de deducción no se proyectan.
+**Limitación:** la proyección a doce meses solo cuenta las deudas registradas en «Registro y Detalles de deudas»; los créditos de deducción no se proyectan.
 
 **Verificación:** `pytest` en verde (510 pruebas). En la aplicación, la dona muestra libre del salario $2.572.280 + libre de trabajos extras $1.429.000 = libre total $4.001.280.
 
@@ -902,7 +902,7 @@ Recálculo en tiempo real (<100 ms) sin recargar página. Se implementa con func
 ### 2026-11-18 — Botones de vuelta, Trabajos Extras por frecuencia y proyección retirada
 
 **Cambios realizados**
-1. Botón «← Volver» (mismo patrón que OLB_BYTE) en Mis Finanzas y Resumen de Deudas y Trabajos Extras (al inicio) y en Gastos y Presupuesto (a Mis Finanzas).
+1. Botón «← Volver» (mismo patrón que OLB_BYTE) en Mis Finanzas y Registro y Detalles de deudas y Trabajos Extras (al inicio) y en Gastos y Presupuesto (a Mis Finanzas).
 2. Se retira la tabla «Proyección a 12 meses» de la capacidad (Gastos y Presupuesto y Trabajos Extras); la dona y el semáforo se conservan.
 3. Trabajos Extras: aviso «Ten en cuenta» sobre el valor por pago al registrar.
 4. Frecuencia mensual: una tabla «Mes completo». Quincenal: tablas «Quincena 1» y «Quincena 2», cada una con su porcentaje del sueldo y el formulario «Gasto fijo – Categoría – Valor» (crea el gasto en Mis Finanzas, `origen=trabajos`).
@@ -1303,7 +1303,7 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Cambios realizados**
 1. `templates/base.html` — el header queda con `Inicio`, `Mi Perfil` y `Salir`; se retiran Mis Finanzas, Gastos, Historial, Incapacidades, OLB_BYTE, Deudas, Trabajos, Chancucos y Usuarios.
-2. `routers/vistas.py` — `TARJETAS_DASHBOARD` se reduce a cuatro entradas: Mis Finanzas, OLB_BYTE (`solo_admin`), Resumen de Deudas y Trabajos Extras (ambas de acceso general). El contexto del dashboard deja de exponer `perfil` y `mostrar_chancucos`.
+2. `routers/vistas.py` — `TARJETAS_DASHBOARD` se reduce a cuatro entradas: Mis Finanzas, OLB_BYTE (`solo_admin`), Registro y Detalles de deudas y Trabajos Extras (ambas de acceso general). El contexto del dashboard deja de exponer `perfil` y `mostrar_chancucos`.
 3. `templates/dashboard.html` — se elimina la sección «Accesos exclusivos» (Chancucos y Usuarios) y el aviso de perfil incompleto, ya cubierto por el onboarding.
 4. `routers/deudas.py` y `routers/trabajos.py` — se retira `exigir_administrador`; los servicios ya filtran por `id_usuario`, por lo que cada cuenta ve solo sus registros.
 5. `templates/perfil/index.html` — panel «Administración de cuentas» visible solo para `ADMIN_OLB`, con enlace a `/admin/usuarios`, para no perder la gestión de roles al retirarla del dashboard.
@@ -1715,6 +1715,150 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Pendiente**
 - PostgreSQL + Alembic y limitador compartido (Redis) para despliegue multi-instancia; no bloquean el uso actual.
+
+---
+
+### ADR-57 — Catálogo cerrado de categorías, dona por categoría y tasa implícita simulada (SRS v1.9)
+
+- **Contexto:** los gastos usaban texto libre y las deducciones fijas no tenían categoría, así que la dona no podía agrupar egresos con colores consistentes. Además, la cuota de una deuda vinculada podía contarse como gasto y como obligación a la vez.
+- **Decisión:**
+  - `core/categorias.py` define las **ocho** categorías y sus colores exactos; `Gasto.categoria` y la nueva `DeduccionFija.categoria` se capturan con un selector cerrado, validado por esquemas Pydantic en `app/esquemas.py`.
+  - `Gasto.id_deuda` (FK → `deudas`) complementa al `id_deuda` que ya tenía `DeduccionFija`. Un gasto o deducción vinculado deja de imputarse a las quincenas y de sumarse a las categorías 1–7: su cuota ya está en la categoría 8, que se alimenta de las deudas activas.
+  - `aplicar_migraciones()` agrega las columnas en SQLite (`PRAGMA`) y PostgreSQL (`ADD COLUMN IF NOT EXISTS`) y normaliza los textos heredados sin borrar filas. `migrar_a_neon.py` la invoca antes de copiar datos.
+  - La liquidez mínima sigue siendo $300.000 y se aplica **después** del reparto: solo el remanente alimenta el consejero.
+  - `tasa_implicita_simulada()` deriva por bisección la tasa que implican saldo, cuota y cuotas, y la usa `DeudaNueva` para validar. No se persiste, no se cobra y no cambia la amortización: ADR-53 sigue vigente.
+- **Consecuencias:** `Capacidad.deudas` pasa a ser la cuota bruta de la categoría 8 (antes se restaba la cuota vinculada). `ahorro.diagnostico` usa la misma cifra para que dona y consejero coincidan. La dona expone `categorias` y `arcos_categoria` con los colores del catálogo, además de sus cuatro arcos históricos.
+- **Archivos:** `core/categorias.py`, `app/esquemas.py`, `modelos.py`, `core/base_datos.py`, `scripts/migrar_a_neon.py`, `servicios/{gastos,deducciones_fijas,deudas,quincenas,capacidad,ahorro}.py`, `routers/{gastos,presupuesto,deudas}.py`, `diccionario_datos.md` §7/§8/§9.3.
+
+### 2026-11-20 — Paso 1: backend, migraciones, catálogo cerrado y anti-duplicación (SRS v1.9)
+
+**Cambios realizados**
+1. Catálogo cerrado de ocho categorías con colores exactos y normalización de textos heredados (`core/categorias.py`).
+2. Columnas `gastos.id_deuda` y `deducciones_fijas.categoria` en los modelos; migración idempotente para SQLite y PostgreSQL, disponible también para el script de Neon mediante `aplicar_migraciones()`.
+3. Esquemas Pydantic para gastos, deducciones y deudas, integrados en los routers sin cambiar el contrato de los formularios.
+4. Simulación de tasa implícita por bisección (10 decimales) solo para validación; la amortización sigue sin intereses.
+5. Dona agrupada por categorías, categoría 8 alimentada por deudas activas, anti-duplicación de cuotas vinculadas y base mínima de $300.000 respetada por dona y consejero.
+6. Pruebas nuevas en `tests/test_categorias_cerradas.py` (9) y actualización de `test_deduccion_vinculada.py` a la nueva semántica de `deudas`.
+
+**Verificación**
+- `python -m compileall` sin errores.
+- `pytest -q` → **630 pruebas en verde**.
+- `scripts/generar_guia.py --verificar` → 103 archivos con ficha y sin docstrings pendientes.
+- Neon: con la URL nueva se actualizó `backend/.env` (no versionado), se ejecutó `aplicar_migraciones()` y se confirmaron en `information_schema` las columnas `gastos.id_deuda`, `deducciones_fijas.categoria` e `id_deuda`; `SELECT 1` responde correctamente. Falta actualizar `DATABASE_URL` en Render.
+
+### 2026-11-20 — Paso 2: selector cerrado, vinculación con deuda y dona por categorías (SRS v1.9)
+
+**Cambios realizados**
+1. `templates/_categorias.html`: macros `selector_categoria` (cuadro de solo lectura que despliega las 8 opciones con sus colores y pega el nombre exacto) y `vinculo_deuda` (pregunta SÍ/NO con selector de deudas mensuales activas y nota anti-duplicación).
+2. `static/js/categorias.js`: apertura/cierre del desplegable, navegación con teclado, sincronización del vínculo y conservación de formularios en `sessionStorage` cuando la página vuelve con `?error…`. Cargado globally desde `base.html` y cacheado en `sw.js` (`olb-finanzas-v50`).
+3. Selector incorporado en los formularios de Mis Finanzas, Gastos, Trabajos Extras (alta y edición de gasto) y Deducciones Fijas (alta y edición). `/trabajos-extras/{id}/gastos` ahora valida con `esquemas.GastoNuevo` y acepta `id_deuda`.
+4. `_capacidad.html` dibuja los arcos y la leyenda con `capacidad.arcos_categoria`, más un desglose de las 8 categorías con la 8 marcada como «automática · deudas». Las metas conservan sus propias sugerencias en `sugerencias_metas`.
+5. Pruebas nuevas en `tests/test_selector_categoria_ui.py` (8) y ajuste de `test_dona_interactiva.py` a la etiqueta por categoría.
+
+**Verificación**
+- `compileall` y `node --check js/categorias.js` sin errores.
+- `pytest -q` → **638 pruebas en verde**.
+- `scripts/generar_guia.py --verificar` → 105 archivos con ficha y sin docstrings pendientes.
+
+### 2026-11-20 — Sección 2.1: renombramiento y alineación de deudas
+
+**Cambios realizados**
+1. «Resumen de Deudas» pasa a ser «Registro y Detalles de deudas» en la tarjeta del dashboard (`routers/vistas.py`), el `<title>` y el `<h1>` de la plantilla, el `titulo_pagina` del router, los docstrings, el diccionario de datos, el SRS, `Guia.md` y `AGENTS.md`. En los mensajes de la vista se conserva el texto neutral «deuda(s)».
+2. Alineación de escritorio: la rejilla de la vista lleva `rejilla-paneles--deudas`, con `align-items: start` y `margin-top: 0` para el panel de tabla. Así «Nueva deuda» y «Deudas registradas» arrancan a la misma altura; en móvil el `gap` de la rejilla mantiene la separación. El `margin-top` genérico de `.panel--tabla` se conserva para las demás vistas.
+
+**Verificación**
+- `compileall` sin errores.
+- `pytest -q` → **641 pruebas en verde** (3 nuevas en `test_deudas_ui_v19.py`).
+- `scripts/generar_guia.py --verificar` → 105 archivos con ficha y sin docstrings pendientes.
+
+### ADR-58 — Interés implícito permitido y simulación oculta (SRS v1.9, sección 2.2)
+
+- **Contexto:** el SRS exige aceptar planes donde `cuota × cuotas` supera el capital (por ejemplo, $30.000.000 en 164 cuotas de $300.000 = $49.200.000) y solo rechazar el plan que no cubre el capital. La regla de igualdad estricta de ADR-53 quedó obsoleta.
+- **Decisión:**
+  - `validar_plan` rechaza únicamente `cuota × cuotas < saldo_total`, con el mensaje único «El número de cuotas por el valor de cuota no alcanza a cubrir el valor total de la deuda, revisa los datos y digítalos nuevamente». Se aplica al registrar y al editar.
+  - `amortizacion_simulada()` deriva por bisección una tasa ficticia y reparte cada cuota entre interés y capital, ajustando la última para cerrar en cero. Es una comprobación matemática privada: no se persiste, no se muestra y no alimenta tablas ni recomendaciones.
+  - Los pagos reales siguen abonando capital completo y `pagos_deuda.interes = 0`. Cuando el capital se agota antes del número de cuotas previsto, `cuotas_pendientes` pasa a cero para que la deuda no quede «pagada con cuotas pendientes».
+  - Se agregó `actualizar_deuda()` y `POST /deudas/{id_deuda}/editar` con la misma validación; el historial de `pagos_deuda` no se reescribe.
+- **Consecuencias:** ADR-53 se mantiene solo en lo referente a no capturar ni exhibir intereses; su tolerancia de $1 por cuota desaparece. Los esquemas Pydantic calculan la tasa simulada solo para validar.
+- **Archivos:** `servicios/deudas.py`, `esquemas.py`, `routers/deudas.py`, `diccionario_datos.md` §8, `tests/test_deudas_interes_implicito.py`.
+
+### 2026-11-20 — Sección 2.2: validación de cuotas con interés implícito (backend)
+
+**Cambios realizados**
+1. `validar_plan` acepta `cuota × cuotas >= total` y usa un único mensaje de error para el caso `< total`; se retira la tolerancia por cuota.
+2. `amortizacion_simulada()` cuadra el modelo en privado (tasa y calendario ficticios, última cuota en cero) y se invoca al alta y a la edición descartando su resultado.
+3. `DeudaNueva`/`DeudaEditar` validan con la tasa simulada; nuevo servicio `actualizar_deuda()` y ruta `POST /deudas/{id_deuda}/editar` sin reescribir pagos aplicados.
+4. Los pagos reales conservan `interes = 0` y al agotar el capital se cierra `cuotas_pendientes`.
+
+**Verificación**
+- `compileall` sin errores.
+- `pytest -q` → **647 pruebas en verde** (6 nuevas en `test_deudas_interes_implicito.py`; se ajustaron pruebas de la regla anterior).
+- `scripts/generar_guia.py --verificar` → sin docstrings pendientes.
+
+### 2026-11-20 — Sección 2.3: tabla tipo Excel y edición responsiva de deudas
+
+**Cambios realizados**
+1. Se elimina por completo «Próximas cuotas» y el cálculo de `planes` en `routers/deudas.py`; bajo cada deuda solo se listan las cuotas aplicadas. No hay campos ni columnas de interés.
+2. La tabla usa las seis columnas pedidas: Acreedor, Total Adeudado, Cuota, No. Cuotas Pendientes, Periodicidad y Estado, más una séptima de acciones.
+3. Escritorio: lápiz (macro `boton_editar`) y × al final de cada fila. El lápiz abre el patrón `<details class="edicion-gasto--modal">` con solo Total Adeudado, Cuota y No. Cuotas Pendientes, más «Actualizar» y «Cancelar»; acreedor, descripción y periodicidad viajan ocultos para la ruta de edición de 2.2.
+4. Móvil: CSS oculta los iconos de la fila y `js/deudas.js` abre el mismo modal al tocar cualquier parte de `tr[data-deuda-fila]`, cerrando primero cualquier otro modal abierto. `sw.js` pasa a `olb-finanzas-v51`.
+
+**Verificación**
+- `compileall` y `node --check js/deudas.js` sin errores.
+- `pytest -q` → **650 pruebas en verde** (3 nuevas; se ajustó la prueba que esperaba «Próximas cuotas»).
+- `scripts/generar_guia.py --verificar` → 106 archivos con ficha y sin docstrings pendientes.
+
+### 2026-11-20 — Sección 3.1: estructura de campos en deducciones fijas
+
+**Cambios realizados**
+1. El formulario de deducciones fijas pasa a dos filas: `fila-campos--deducciones` con Concepto | Categoría (selector cerrado) | Valor Descontado (COP), y debajo «Quincena donde aplican los pagos».
+2. Se retira la etiqueta «Valor por pago (COP)»; el modal de edición usa el mismo nombre «Valor Descontado (COP)». La etiqueta «Quincena donde aplicaremos los pagos» sigue solo en el formulario de metas.
+3. CSS: `.fila-campos--deducciones` fuerza tres columnas desde 641 px y hereda el apilado a una columna en móvil; `.deduccion-quincena` separa la fila inferior.
+
+**Verificación**
+- `pytest -q` → **651 pruebas en verde** (1 nueva en `test_selector_categoria_ui.py`).
+- `scripts/generar_guia.py --verificar` → 106 archivos con ficha y sin docstrings pendientes.
+
+### 2026-11-20 — Sección 3.2: flujo condicional de vinculación
+
+**Cambios realizados**
+1. La categoría 8 ya se puede elegir en los formularios; antes se reclasificaba a «Otros Gastos Fijos». Los esquemas Pydantic exigen `id_deuda` cuando la categoría es «Créditos y Obligaciones», con el mensaje de la sección 3.2.
+2. `vinculo_condicional` (macro nueva en `_categorias.html`) muestra la pregunta SI/NO con el texto exacto de cada módulo solo al elegir crédito. SI habilita «Deudas registradas»; NO deshabilita guardar, muestra el mensaje exacto y el enlace «Ve a registrar la deuda».
+3. Se ampliaron `deuda_vinculable` y `listar_vinculables` para aceptar **todas** las deudas activas, incluidas las quincenales (antes solo mensuales). Se conserva la anti-duplicación: el gasto/deducción vinculado no se suma a las categorías 1–7 de la dona.
+4. `deudas.js` no cambia; `categorias.js` guarda en `sessionStorage` los campos y el módulo (`deducciones`, `finanzas`, `trabajos`) al pulsar el enlace. La vista de deudas muestra «Volver al formulario de origen» con `?guardado_deuda=1&deuda_id=…`; al regresar se restauran los campos, se marca SI y se preselecciona la deuda recién creada. `sw.js` pasa a `olb-finanzas-v52`.
+
+**Verificación**
+- `compileall` y `node --check js/categorias.js` sin errores.
+- `pytest -q` → **656 pruebas en verde** (5 nuevas en `test_vinculacion_condicional.py`).
+- `scripts/generar_guia.py --verificar` → 106 archivos con ficha y sin docstrings pendientes.
+
+### 2026-11-20 — Sección 3.3: alineación y modal de deducciones fijas
+
+**Cambios realizados**
+1. Escritorio: `.lista-gastos__item[data-deduccion-fila] > .lista-gastos__acciones` usa `justify-content: flex-end`, `text-align: right` y `margin-left: auto` para que Editar y Eliminar queden pegados al borde derecho.
+2. Móvil: se ocultan el summary del lápiz y el formulario lateral de borrado; la fila completa (`data-deduccion-fila`) abre el modal centrado existente.
+3. El modal muestra la información de la deducción y tres botones: Actualizar, Eliminar y Cancelar. Eliminar usa `formaction` sobre el formulario de edición, así que no hay formularios anidados; conserva su confirmación.
+4. `deudas.js` conecta ahora tanto `tr[data-deuda-fila]` como `li[data-deduccion-fila]` y se carga también en presupuesto. `sw.js` pasa a `olb-finanzas-v53`.
+
+**Verificación**
+- `compileall` y `node --check js/deudas.js` sin errores.
+- `pytest -q` → **659 pruebas en verde** (3 nuevas en `test_deducciones_ui_v19.py`).
+- `scripts/generar_guia.py --verificar` → 106 archivos con ficha y sin docstrings pendientes.
+
+### 2026-11-20 — Bloque 4: modales centrados, valor de atajos y recibo legible
+
+**Cambios realizados**
+1. **4.1** Utilidad global `.modal-centrado` con `position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 50; padding: 1rem`. Se aplica también a `details.edicion-gasto--modal[open]`, cuya tarjeta pasa a ser un elemento flex centrado (`inset:auto`, `transform:none`, ancho `min(440px,100%)`, scroll propio). Se anula el `::before` y el summary del modal abierto. Los `<dialog>` nativos conservan el centrado del navegador con el mismo `z-index` y límites de viewport.
+2. **4.2** Nuevo campo `chancucos.valor_pago NUMERIC(14,2)` opcional, validado en el servicio, con formulario en `chancucos/index.html`, columna «Valor a pagar» en la tabla y línea «Valor a pagar: …» en la tarjeta de Mis Finanzas antes de «Pagar». Migración idempotente en SQLite y Neon (`_migrar_valor_atajo()`).
+3. **4.3** Recibo estilo Nequi: `.recibo` con fondo `#f8fafc` y texto `#111827`, separadores claros, montos y estado aprobado en `#16a34a`, cabecera azul `var(--accent-blue)` intacta. El wrapper de la captura PNG usa el mismo gris perla. `sw.js` en `olb-finanzas-v54`.
+
+**Verificación**
+- `compileall` sin errores.
+- `pytest -q` → **663 pruebas en verde** (4 nuevas en `test_srs_v1_9_bloque4.py`).
+- `aplicar_migraciones()` ejecutado en Neon: `chancucos.valor_pago` confirmado en `information_schema`.
+- `scripts/generar_guia.py --verificar` → 106 archivos con ficha y sin docstrings pendientes.
+
+**Pendiente para el Paso 3:** solo la revisión visual en navegador (360/390/768/escritorio) de la dona, el consejero, los modales, el formulario de deducciones, el flujo SI/NO y el recibo; la corrección aritmética y la anti-duplicación ya están cubiertas por pruebas.
 
 
 

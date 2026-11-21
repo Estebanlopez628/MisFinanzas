@@ -276,6 +276,12 @@ class Gasto(Base):
         nullable=True,
         index=True,
     )
+    # SRS v1.9: el gasto es la cuota de una deuda registrada. Su valor ya se
+    # contabiliza en la categoría 8 de la dona, así que no se suma como egreso
+    # propio ni se resta dos veces del dinero libre (regla anti-duplicación).
+    id_deuda: Mapped[str | None] = mapped_column(
+        ForeignKey("deudas.id_deuda", ondelete="SET NULL"), nullable=True, index=True
+    )
     pagado: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     pagado_en: Mapped[date | None] = mapped_column(Date, nullable=True)
     monto_pagado: Mapped[Decimal | None] = mapped_column(Numeric(14, 2), nullable=True)
@@ -363,6 +369,9 @@ class Chancuco(Base):
     )
     descripcion: Mapped[str] = mapped_column(String(120), nullable=False)
     numero_referencia: Mapped[str] = mapped_column(String(60), nullable=False)
+    # SRS v1.9, sección 4.2: valor exacto del servicio, opcional porque no todo
+    # atajo tiene un monto fijo (por ejemplo, servicios con consumo variable).
+    valor_pago: Mapped[Decimal | None] = mapped_column(Numeric(14, 2), nullable=True)
     url_pago: Mapped[str | None] = mapped_column(String(300), nullable=True)
     # SRS v1.7: día del mes en que se paga el servicio. Se guarda solo el número
     # (1–31), sin año: el atajo es una referencia mensual. `dia_pago_2` distingue
@@ -473,6 +482,11 @@ class DeduccionFija(Base):
     descripcion: Mapped[str] = mapped_column(String(150), nullable=False)
     valor: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False)
     quincena: Mapped[int] = mapped_column(SmallInteger, nullable=False)
+    # SRS v1.9: categoría cerrada (una de las ocho del catálogo) para agrupar
+    # el descuento en la dona junto con los gastos fijos.
+    categoria: Mapped[str] = mapped_column(
+        String(60), nullable=False, default="Otros Gastos Fijos", server_default="Otros Gastos Fijos"
+    )
     # SRS v1.9: si la deducción es la cuota de una deuda, se guarda aquí. La deuda
     # lleva el conteo de cuotas y su cuota no se cuenta dos veces.
     id_deuda: Mapped[str | None] = mapped_column(

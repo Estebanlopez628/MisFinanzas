@@ -1,0 +1,115 @@
+{#
+  Selector cerrado de categorías y vinculación con deudas (SRS v1.9).
+
+  La entrada es de solo lectura: al hacer clic se despliegan las ocho opciones
+  del catálogo y al elegir una se pega su nombre exacto. Así se bloquea el texto
+  libre inválido en el navegador; el backend vuelve a validarlo con Pydantic.
+  `vinculo_condicional` muestra la pregunta SI/NO al elegir «Créditos y
+  Obligaciones» y, con NO, ofrece el acceso rápido al módulo de deudas.
+
+  La vinculación con deuda usa el mismo patrón que ya existía en deducciones
+  fijas, y solo lista deudas mensuales activas (las que acepta el servidor).
+#}
+
+{% macro selector_categoria(valor='', nombre='categoria') -%}
+  <div class="selector-categoria" data-selector-categoria>
+    <input
+      class="campo__control selector-categoria__entrada"
+      type="text"
+      name="{{ nombre }}"
+      value="{{ valor or 'Vivienda y Servicios' }}"
+      readonly
+      required
+      data-categoria-entrada
+      aria-label="Categoría"
+    />
+    <button
+      class="selector-categoria__boton"
+      type="button"
+      data-categoria-boton
+      aria-label="Desplegar las ocho categorías"
+      aria-expanded="false"
+    >▾</button>
+    <ul class="selector-categoria__lista" data-categoria-lista hidden>
+      {% for categoria in categorias %}
+        <li>
+          <button
+            class="selector-categoria__opcion"
+            type="button"
+            data-categoria-opcion="{{ categoria.nombre }}"
+          >
+            <span class="dona__muestra" style="background: {{ categoria.color }}"></span>{{ categoria.nombre }}
+          </button>
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
+{%- endmacro %}
+
+
+{% macro vinculo_condicional(modulo, deudas, texto, seleccionada='') -%}
+  {# SRS v1.9, sección 3.2: solo aparece al elegir «Créditos y Obligaciones». #}
+  <div class="vinculo-condicional" data-vinculo-condicional hidden>
+    <p class="campo__etiqueta">{{ texto }}</p>
+    <div class="vinculo-condicional__opciones">
+      <label class="campo campo--casilla">
+        <input type="radio" name="vinculacion" value="SI" data-vincular-si
+               {% if seleccionada %}checked{% endif %} />
+        <span>SI</span>
+      </label>
+      <label class="campo campo--casilla">
+        <input type="radio" name="vinculacion" value="NO" data-vincular-no />
+        <span>NO</span>
+      </label>
+    </div>
+    <label class="campo" data-deuda-selector>
+      <span class="campo__etiqueta">Deudas registradas</span>
+      <select class="campo__control" name="id_deuda" data-deuda-opciones>
+        <option value="">Elige una deuda…</option>
+        {% for deuda in deudas %}
+          <option value="{{ deuda.id_deuda }}" {% if deuda.id_deuda == seleccionada %}selected{% endif %}>
+            {{ deuda.acreedor }} · cuota {{ (deuda.cuota_mensual or 0) | cop }} · {{ deuda.cuotas_pendientes }} cuota(s)
+          </option>
+        {% endfor %}
+      </select>
+    </label>
+    <div class="alerta alerta--aviso vinculo-condicional__aviso" data-sin-deuda hidden>
+      <p>Debes registrar tu deuda en el módulo Registro y Detalles de deudas para poder guardar este registro</p>
+      <a class="enlace" data-ir-a-deudas data-origen="{{ modulo }}"
+         href="/deudas?volver={{ modulo }}">Ve a registrar la deuda</a>
+    </div>
+  </div>
+{%- endmacro %}
+
+
+{% macro vinculo_deuda(deudas, seleccionada='') -%}
+  <div class="vinculo-deuda" data-vinculo-deuda>
+    <label class="campo campo--casilla">
+      <input
+        type="checkbox"
+        data-vincular-deuda
+        {% if seleccionada %}checked{% endif %}
+        {% if not deudas %}disabled{% endif %}
+      />
+      <span>¿Es la cuota de una deuda que ya registraste?</span>
+    </label>
+    <label class="campo" data-deuda-selector {% if not seleccionada %}hidden{% endif %}>
+      <span class="campo__etiqueta">Deuda que paga este gasto</span>
+      <select class="campo__control" name="id_deuda" data-deuda-opciones>
+        <option value="">Elige una deuda…</option>
+        {% for deuda in deudas %}
+          <option value="{{ deuda.id_deuda }}" {% if deuda.id_deuda == seleccionada %}selected{% endif %}>
+            {{ deuda.acreedor }} · cuota {{ (deuda.cuota_mensual or 0) | cop }} · {{ deuda.cuotas_pendientes }} cuota(s)
+          </option>
+        {% endfor %}
+      </select>
+      <span class="ayuda">
+        Al vincularla, el valor y la categoría serán los de la cuota y el dinero
+        se cuenta una sola vez dentro de «Créditos y Obligaciones».
+      </span>
+    </label>
+    {% if not deudas %}
+      <span class="ayuda">Aún no hay deudas mensuales activas que puedas vincular.</span>
+    {% endif %}
+  </div>
+{%- endmacro %}

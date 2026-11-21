@@ -42,7 +42,7 @@ from app.core.texto import (
 from app.dependencias import UsuarioSesion, obtener_usuario_actual
 from app.modelos import DeduccionFija, PerfilFinanciero, PeriodoNomina
 from app.routers.vistas import contexto_base, plantillas
-from app.servicios import auditoria, gastos, pagos_metas, perfiles, periodos, registro_incapacidades
+from app.servicios import auditoria, deudas, gastos, pagos_metas, perfiles, periodos, registro_incapacidades
 from app.servicios import deducciones_fijas
 from app.servicios.incapacidad import (
     LiquidacionIncapacidad,
@@ -653,6 +653,8 @@ def _contexto_calculadora(
             "total_deducciones_ley": _total_deducciones_ley(resultado, fijas_periodo),
             # Chancucos (SRS v1.8): disponibles para todos los usuarios.
             "chancucos": servicio_chancucos.listar_chancucos(bd, usuario.id_usuario),
+            # SRS v1.9: opciones del flujo «¿vincular con una deuda?».
+            "deudas_activas": deudas.listar_vinculables(bd, usuario.id_usuario),
             "seccion": "liquidacion",
             "quincenas": (
                 [0] if perfil is None or perfil.modalidad_pago == perfiles.MODALIDAD_MENSUAL else [0, 1, 2]

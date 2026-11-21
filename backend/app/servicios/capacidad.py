@@ -17,6 +17,10 @@ Reglas:
   20 % verde, hasta 35 % ámbar y por encima rojo.
 - La proyección supone el mismo ingreso y los mismos gastos fijos: solo cambia la
   cuota de deuda al terminar cada obligación. Es una estimación, no un cierre.
+- SRS v1.9: los egresos se agrupan en las ocho categorías cerradas del catálogo.
+  La categoría 8 («Créditos y Obligaciones») se alimenta con la cuota mensual de
+  las deudas activas. Un gasto o deducción con `id_deuda` NO se suma como egreso
+  propio: su dinero ya está dentro de esa categoría (anti-duplicación).
 
 Este módulo no escribe en la base de datos: solo lee y calcula.
 """
@@ -24,18 +28,18 @@ Este módulo no escribe en la base de datos: solo lee y calcula.
 from __future__ import annotations
 
 import math
-import re
-import unicodedata
 from dataclasses import dataclass, field
 from datetime import date
 from decimal import Decimal
 
 from sqlalchemy.orm import Session
 
+from app.core import categorias as catalogo
 from app.core.numeros import redondear_dinero
-from app.modelos import Deuda, PerfilFinanciero
+from app.modelos import Deuda, DeduccionFija, Gasto, PerfilFinanciero
 from app.servicios import deducciones_fijas as servicio_deducciones
 from app.servicios import deudas as servicio_deudas
+from app.servicios import gastos as servicio_gastos
 from app.servicios import quincenas as servicio_quincenas
 from app.servicios import trabajos as servicio_trabajos
 
@@ -47,10 +51,6 @@ CUOTAS_POR_TERMINAR = 3
 # monto no se ofrece para abonos ni metas; solo el remanente se considera
 # capacidad real de abono.
 BASE_MINIMA_LIQUIDEZ = Decimal("300000")
-# Una deducción fija cuya descripción diga «crédito» o «créditos» (por ejemplo,
-# una libranza) se trata como deuda y no como gasto fijo.
-PATRON_CREDITO = re.compile(r"\bcreditos?\b")
-
 # Umbrales del semáforo, en porcentaje del ingreso mensual.
 UMBRAL_VERDE = Decimal("20")
 UMBRAL_AMBAR = Decimal("35")
@@ -95,6 +95,9 @@ class Capacidad:
         proyeccion: Doce meses de cuota y saldo libre estimados.
         base_minima: Parte del libre reservada como base mínima de liquidez.
         disponible_abono: Remanente del libre que sí puede abonarse o ahorrarse.
+        categorias: Las ocho categorías cerradas con su valor, color y peso.
+        arcos_categoria: Segmentos de la dona por categoría, con los colores
+            exactos del catálogo, más la base mínima y lo disponible.
     """
 
     ingreso: Decimal
@@ -113,6 +116,8 @@ class Capacidad:
     libre_extras: Decimal = CERO
     base_minima: Decimal = CERO
     disponible_abono: Decimal = CERO
+    categorias: list[dict[str, object]] = field(default_factory=list)
+    arcos_categoria: list[dict[str, object]] = field(default_factory=list)
 
 
 def repartir_libre(libre: Decimal) -> tuple[Decimal, Decimal]:
@@ -145,8 +150,7 @@ def es_credito(descripcion: str) -> bool:
     Returns:
         `True` si la descripción contiene la palabra crédito o créditos.
     """
-    normal = unicodedata.normalize("NFKD", descripcion or "").encode("ascii", "ignore").decode("ascii").lower()
-    return bool(PATRON_CREDITO.search(normal))
+    return catalogo.es_credito(descripcion)
 
 
 def _porcentaje(valor: Decimal, total: Decimal) -> Decimal:
@@ -162,6 +166,146 @@ def _porcentaje(valor: Decimal, total: Decimal) -> Decimal:
     if total <= CERO:
         return CERO
     return redondear_dinero(max(valor, CERO) / total * CIEN)
+
+
+def agrupar_por_categoria(
+    gastos: list[Gasto],
+    deducciones: list[DeduccionFija],
+    cuota_obligaciones: Decimal,
+    deducciones_ley: Decimal = CERO,
+) -> dict[str, Decimal]:
+    """Reparte los egresos entre las ocho categorías cerradas del catálogo.
+
+    Los gastos y deducciones con categoría «Créditos y Obligaciones» se omiten:
+    esa categoría se calcula sola con la cuota de las deudas activas. Así, un
+    gasto o deducción vinculado mediante `id_deuda` no se suma dos veces.
+
+    Args:
+        gastos: Gastos fijos del mes, ya sin los vinculados a deudas.
+        deducciones: Deducciones fijas vigentes, sin las vinculadas a deudas.
+        cuota_obligaciones: Cuota mensual de las deudas activas y créditos de
+            nómina heredados; alimenta la categoría 8.
+        deducciones_ley: Salud y pensión del mes; no son categorías propias, por
+            lo que se agrupan con «Otros Gastos Fijos» para que la dona cuadre.
+
+    Returns:
+        Diccionario con los ocho nombres canónicos y su total redondeado.
+    """
+    totales = {categoria.nombre: CERO for categoria in catalogo.CATEGORIAS}
+    for gasto in gastos:
+        nombre = catalogo.normalizar_categoria(gasto.categoria)
+        if nombre == catalogo.CATEGORIA_CREDITOS:
+            continue
+        totales[nombre] = redondear_dinero(
+            totales[nombre] + servicio_gastos.valor_computable(gasto)
+        )
+    for fija in deducciones:
+        nombre = catalogo.normalizar_categoria(fija.categoria)
+        if nombre == catalogo.CATEGORIA_CREDITOS:
+            continue
+        totales[nombre] = redondear_dinero(totales[nombre] + fija.valor)
+    totales[catalogo.CATEGORIA_OTROS] = redondear_dinero(
+        totales[catalogo.CATEGORIA_OTROS] + deducciones_ley
+    )
+    totales[catalogo.CATEGORIA_CREDITOS] = redondear_dinero(cuota_obligaciones)
+    return totales
+
+
+def resumen_categorias(
+    totales: dict[str, Decimal],
+    ingreso: Decimal,
+) -> list[dict[str, object]]:
+    """Prepara las ocho categorías para la plantilla y el JavaScript de la dona.
+
+    Args:
+        totales: Total por categoría calculado por `agrupar_por_categoria`.
+        ingreso: Ingreso mensual, base de los porcentajes.
+
+    Returns:
+        Lista de ocho diccionarios con `nombre`, `color`, `valor`,
+        `porcentaje` y `es_obligacion`, en el orden oficial del catálogo.
+    """
+    filas: list[dict[str, object]] = []
+    for categoria in catalogo.CATEGORIAS:
+        valor = redondear_dinero(totales.get(categoria.nombre, CERO))
+        filas.append(
+            {
+                "nombre": categoria.nombre,
+                "color": categoria.color,
+                "valor": valor,
+                "porcentaje": _porcentaje(valor, ingreso),
+                "es_obligacion": categoria.nombre == catalogo.CATEGORIA_CREDITOS,
+            }
+        )
+    return filas
+
+
+def _arcos_categoria(
+    totales: dict[str, Decimal],
+    base: Decimal,
+    disponible: Decimal,
+    ingreso: Decimal,
+) -> list[dict[str, object]]:
+    """Construye los arcos de la dona por categoría con sus colores exactos.
+
+    Args:
+        totales: Total por categoría del catálogo.
+        base: Parte del libre reservada como liquidez mínima.
+        disponible: Remanente del libre.
+        ingreso: Ingreso mensual; si no es positivo no hay dona.
+
+    Returns:
+        Arcos con etiqueta, valor, porcentaje, longitud, desplazamiento y color,
+        con la base y lo disponible al final como en la dona clásica.
+    """
+    if ingreso <= CERO:
+        return []
+
+    candidatos: list[tuple[str, Decimal, str, str]] = []
+    for categoria in catalogo.CATEGORIAS:
+        valor = redondear_dinero(totales.get(categoria.nombre, CERO))
+        if valor > CERO:
+            candidatos.append(
+                (categoria.nombre, valor, categoria.color, "valor-negativo")
+            )
+    if base > CERO:
+        candidatos.append(
+            ("Base mínima de liquidez", base, "var(--accent-green)", "valor-positivo")
+        )
+    if disponible > CERO:
+        candidatos.append(
+            ("Disponible para abonar", disponible, "var(--accent-amber)", "valor-positivo")
+        )
+    if not candidatos:
+        return []
+
+    # Si los egresos superan el ingreso, el dibujo se escala sobre el total para
+    # que la circunferencia cierre y no aparezcan arcos mayores de 100 %.
+    comprometido = redondear_dinero(sum((fila[1] for fila in candidatos), start=CERO))
+    denominador = max(ingreso, comprometido)
+    porcentajes = [_porcentaje(fila[1], denominador) for fila in candidatos]
+    redondeados = [valor.quantize(Decimal("0.1")) for valor in porcentajes]
+    diferencia = CIEN - sum(redondeados, start=CERO)
+    if redondeados:
+        mayor = max(range(len(redondeados)), key=lambda indice: porcentajes[indice])
+        redondeados[mayor] += diferencia
+
+    arcos: list[dict[str, object]] = []
+    avance = CERO
+    for (etiqueta, valor, color, clase), porcentaje in zip(candidatos, redondeados):
+        arcos.append(
+            {
+                "etiqueta": etiqueta,
+                "valor": redondear_dinero(valor),
+                "porcentaje": porcentaje,
+                "longitud": redondear_dinero(porcentaje),
+                "desplazamiento": redondear_dinero(-avance),
+                "color": color,
+                "clase": clase,
+            }
+        )
+        avance += porcentaje
+    return arcos
 
 
 def _repartir_arcos(
@@ -492,6 +636,16 @@ def capacidad_trabajos(
     gastos = redondear_dinero(sum((bloque["gastos_total"] for bloque in bloques), start=CERO))
     libre = redondear_dinero(ingreso - gastos)
     base, disponible = repartir_libre(libre)
+    totales = agrupar_por_categoria(
+        [
+            gasto
+            for bloque in bloques
+            for periodo in bloque["periodos"]
+            for gasto in periodo["gastos"]
+        ],
+        [],
+        CERO,
+    )
     return Capacidad(
         ingreso=ingreso,
         gastos=gastos,
@@ -505,6 +659,8 @@ def capacidad_trabajos(
         arcos=_repartir_arcos(gastos, CERO, libre, ingreso),
         base_minima=base,
         disponible_abono=disponible,
+        categorias=resumen_categorias(totales, ingreso),
+        arcos_categoria=_arcos_categoria(totales, base, disponible, ingreso),
     )
 
 
@@ -541,43 +697,48 @@ def capacidad_endeudamiento(
     libre_extras = redondear_dinero(sum((bloque["disponible"] for bloque in bloques), start=CERO))
     ingreso = redondear_dinero(ingreso_base + ingreso_extras)
 
-    # Las deducciones fijas que son créditos pasan a deuda; el resto es gasto fijo.
-    # Un crédito sin deuda vinculada se pasa a cuota de deudas. Uno vinculado ya
-    # cuenta como deducción fija y su cuota sale de la deuda (SRS v1.9, ADR-56).
-    creditos = redondear_dinero(
-        sum(
-            (
-                fija.valor
-                for fija in servicio_deducciones.listar_vigentes(bd, id_usuario)
-                if fija.id_deuda is None and es_credito(fija.descripcion)
-            ),
-            start=CERO,
-        )
+    # SRS v1.9: la cuota de las deudas activas (más las libranzas heredadas sin
+    # deuda registrada) es la categoría 8. Los gastos y deducciones con
+    # `id_deuda` NO se suman como egresos propios: su dinero ya está aquí y las
+    # quincenas ya no lo restan, así que se descuenta una sola vez del libre.
+    fijas = servicio_deducciones.sin_vinculo(bd, id_usuario)
+    creditos = servicio_deducciones.total_creditos_sin_vinculo(bd, id_usuario)
+    gastos_modelo = servicio_gastos.listar_gastos(
+        bd, id_usuario, anio, mes, excluir_vinculados=True
     )
-    cuota_vinculada = servicio_deducciones.cuota_de_vinculadas(bd, id_usuario)
-    valor_vinculado = redondear_dinero(
-        sum(
-            (fija.valor for fija in servicio_deducciones.vinculadas_activas(bd, id_usuario)),
-            start=CERO,
-        )
-    )
+    gastos_trabajos = [
+        gasto
+        for bloque in bloques
+        for periodo in bloque["periodos"]
+        for gasto in periodo["gastos"]
+    ]
+
     deducciones_fijas_total = redondear_dinero(
         sum((fila.deducciones_fijas for fila in resumen), start=CERO)
     )
+    deducciones_ley = redondear_dinero(sum((fila.deducciones for fila in resumen), start=CERO))
     gastos = redondear_dinero(
-        sum((fila.gastos + fila.deducciones for fila in resumen), start=CERO)
+        sum((fila.gastos for fila in resumen), start=CERO)
+        + deducciones_ley
         + (deducciones_fijas_total - creditos)
         + gastos_extras
     )
     deudas = list(servicio_deudas.listar_deudas(bd, id_usuario))
     cuota_deudas = redondear_dinero(
-        servicio_deudas.resumen_deudas(bd, id_usuario)["cuota_mensual"]
-        + creditos
-        - cuota_vinculada
+        servicio_deudas.resumen_deudas(bd, id_usuario)["cuota_mensual"] + creditos
     )
     libre = redondear_dinero(ingreso - gastos - cuota_deudas)
     libre_salario = redondear_dinero(libre - libre_extras)
     base, disponible = repartir_libre(libre)
+
+    totales = agrupar_por_categoria(
+        gastos_modelo + gastos_trabajos,
+        [fija for fija in fijas if not catalogo.es_credito(fija.descripcion)],
+        cuota_deudas,
+        deducciones_ley,
+    )
+    categorias = resumen_categorias(totales, ingreso)
+    arcos_categoria = _arcos_categoria(totales, base, disponible, ingreso)
 
     if ingreso <= CERO:
         estado = ESTADO_SIN_DATOS
@@ -603,14 +764,13 @@ def capacidad_endeudamiento(
         mensaje=_mensaje_semaforo(estado, porcentaje_deudas),
         arcos=_repartir_arcos(gastos, cuota_deudas, libre, ingreso),
         por_terminar=deudas_por_terminar(bd, id_usuario),
-        # La proyección cuenta la cuota de la deuda vinculada en su calendario; por eso
-        # su descuento de nómina sale de los gastos fijos constantes. Así, al terminar
-        # la deuda, la cuota y el descuento se retiran juntos.
-        proyeccion=proyeccion_capacidad(
-            ingreso, gastos - valor_vinculado, deudas, hoy, creditos
-        ),
+        # La proyección mantiene constantes los gastos y aplica el calendario de
+        # cada deuda: cuando una termina, su cuota deja de pesar en ese mes.
+        proyeccion=proyeccion_capacidad(ingreso, gastos, deudas, hoy, creditos),
         libre_salario=libre_salario,
         libre_extras=libre_extras,
         base_minima=base,
         disponible_abono=disponible,
+        categorias=categorias,
+        arcos_categoria=arcos_categoria,
     )
