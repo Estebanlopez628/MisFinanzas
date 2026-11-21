@@ -1901,6 +1901,12 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 - Al tocar la fila, `deudas.js` abre `details.atajo-modal` centrado con descripción, valor, días, referencia con Copiar al lado, enlace y favorito; abajo Pagar → Eliminar y cierre sutil en la cabecera.
 - No se tocó el panel embebido de Mis Finanzas. `sw.js` pasa a `olb-finanzas-v61`; **668 pruebas** en verde y `node --check` OK.
 
+### 2026-11-20 — Atajos embebidos de Mis Finanzas en móvil
+
+- En `finanzas/index.html`, cada `li[data-atajo-fila]` lleva un `details.atajo-finanzas-modal` con la ficha completa del atajo (descripción, valor pagar, días, referencia con Copiar, enlace y favorito) y el botón Pagar abajo.
+- CSS móvil (≤640 px): se ocultan la línea de valor, la referencia y el enlace Pagar de la tarjeta; solo quedan descripción y día. El toque de la fila abre el modal centrado (`deudas.js` → `conectarFilas("li[data-atajo-fila]"…)`).
+- No se cambió el panel de Atajos guardados ni la lógica de negocio. `sw.js` pasa a `olb-finanzas-v62`; **669 pruebas** en verde.
+
 **Pendiente para el Paso 3:** solo la revisión visual en navegador (360/390/768/escritorio) de la dona, el consejero, los modales, el formulario de deducciones, el flujo SI/NO y el recibo; la corrección aritmética y la anti-duplicación ya están cubiertas por pruebas.
 
 

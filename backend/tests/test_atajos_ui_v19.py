@@ -68,6 +68,46 @@ def test_la_fila_movil_y_el_modal_muestran_toda_la_informacion(
     assert html.index(">Pagar</a>") < html.index(">Eliminar</button>")
 
 
+def test_los_atajos_de_mis_finanzas_abren_su_propio_modal(
+    cliente_admin: TestClient, bd
+) -> None:
+    """En Mis Finanzas el modal muestra toda la información del atajo."""
+    cuenta = usuarios.buscar_por_correo(bd, "admin@olbbyte.co")
+    assert cuenta is not None
+    chancuco = chancucos.crear_chancuco(
+        bd,
+        cuenta.id_usuario,
+        "Agua acueducto",
+        "REF-AGUA",
+        valor_pago="95.000",
+        url_pago="https://pagos.acueducto.com.co",
+        dia_pago_1=8,
+    )
+
+    html = cliente_admin.get("/finanzas").text
+
+    assert f'data-atajo-fila data-id-chancuco="{chancuco.id_chancuco}"' in html
+    assert "atajo-finanzas-modal" in html
+    assert "Detalle del atajo" in html
+    assert "REF-AGUA" in html
+    assert "$95.000" in html
+    assert "Día 8" in html
+    assert 'data-copiar="REF-AGUA"' in html
+    assert ">Pagar</a>" in html
+
+    css = (RAIZ_APP / "static" / "css" / "estilos.css").read_text(encoding="utf-8")
+    movil = css.split("@media (max-width: 640px)", 1)[1]
+    assert ".lista-atajos__item[data-atajo-fila]" in movil
+    assert ".lista-atajos__texto small.ayuda" in movil
+    assert "> .lista-atajos__referencia" in movil
+    assert ".atajo-finanzas-modal > summary" in movil
+
+    javascript = (RAIZ_APP / "static" / "js" / "deudas.js").read_text(encoding="utf-8")
+    assert 'conectarFilas("li[data-atajo-fila]"' in javascript
+    plantilla = (RAIZ_APP / "templates" / "finanzas" / "index.html").read_text(encoding="utf-8")
+    assert "js/deudas.js" in plantilla
+
+
 def test_el_css_de_movil_oculta_columnas_y_el_js_abre_el_modal() -> None:
     """Solo descripción, valor y día en la fila; la fila abre el modal."""
     css = (RAIZ_APP / "static" / "css" / "estilos.css").read_text(encoding="utf-8")

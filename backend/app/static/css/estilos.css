@@ -4094,6 +4094,32 @@ strong.valor-negativo.recibo__cifra--saldo {
   }
 }
 
+/* ---- Atajos embebidos de Mis Finanzas: solo descripción y día (SRS v1.9) -- */
+
+.atajo-finanzas-modal {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .lista-atajos__item[data-atajo-fila] {
+    cursor: pointer;
+  }
+
+  .lista-atajos__item[data-atajo-fila] .lista-atajos__texto small.ayuda,
+  .lista-atajos__item[data-atajo-fila] > .lista-atajos__referencia,
+  .lista-atajos__item[data-atajo-fila] > a {
+    display: none !important;
+  }
+
+  .atajo-finanzas-modal {
+    display: block;
+  }
+
+  .atajo-finanzas-modal > summary {
+    display: none !important;
+  }
+}
+
 /* ---------------- Deudas registradas (SRS v1.9, sección 2.3) -------------- */
 
 .sr-only {

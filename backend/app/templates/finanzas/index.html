@@ -190,7 +190,7 @@ contenido %}
       {% if chancucos %}
       <ul class="lista-atajos">
         {% for item in chancucos %}
-        <li class="lista-atajos__item">
+        <li class="lista-atajos__item" data-atajo-fila data-id-chancuco="{{ item.id_chancuco }}">
           <span class="lista-atajos__texto">
             <span class="lista-atajos__descripcion">{{ item.descripcion }}</span>
             {# SRS v1.9: el valor exacto se conoce antes de pulsar «Pagar». #}
@@ -219,6 +219,46 @@ contenido %}
             >Pagar</a
           >
           {% endif %}
+
+          {# SRS v1.9: en móvil solo se ven descripción y día; al tocar la fila
+             se abre este modal centrado con toda la información del atajo. #}
+          <details class="edicion-gasto edicion-gasto--modal atajo-finanzas-modal">
+            <summary aria-label="Ver detalle del atajo">Ver</summary>
+            <div class="edicion-gasto__formulario atajo-modal__tarjeta">
+              <div class="edicion-gasto__cabecera">
+                <h3 class="panel__titulo">Detalle del atajo</h3>
+                <button class="edicion-gasto__cerrar" type="button" data-cancelar-edicion
+                        aria-label="Cerrar detalle" title="Cerrar">×</button>
+              </div>
+              <dl class="atajo-modal__datos">
+                <div><dt>Descripción</dt><dd>{{ item.descripcion }}</dd></div>
+                <div>
+                  <dt>Valor a pagar</dt>
+                  <dd>{{ item.valor_pago | cop if item.valor_pago else 'No definido' }}</dd>
+                </div>
+                <div><dt>Días de pago</dt><dd>{{ dias_pago(item) if item.dia_pago_1 else 'Sin día definido' }}</dd></div>
+                <div>
+                  <dt>Referencia</dt>
+                  <dd>
+                    <code>{{ item.numero_referencia }}</code>
+                    <button class="boton boton--secundario boton--pequeno atajo-accion" type="button"
+                            data-copiar="{{ item.numero_referencia }}">Copiar</button>
+                  </dd>
+                </div>
+                <div>
+                  <dt>Enlace de pago</dt>
+                  <dd>{{ item.url_pago or 'No definido' }}</dd>
+                </div>
+                <div><dt>Favorito</dt><dd>{{ 'Sí' if item.favorito else 'No' }}</dd></div>
+              </dl>
+              <div class="acciones-formulario acciones-formulario--edicion">
+                {% if item.url_pago %}
+                  <a class="boton boton--primario boton--pequeno atajo-accion" href="{{ item.url_pago }}"
+                     target="_blank" rel="noopener">Pagar</a>
+                {% endif %}
+              </div>
+            </div>
+          </details>
         </li>
         {% endfor %}
       </ul>
@@ -716,4 +756,5 @@ contenido %}
 
 {% endblock %} {% block scripts %}
 <script src="{{ url_for('estaticos', path='js/finanzas.js') }}" defer></script>
+<script src="{{ url_for('estaticos', path='js/deudas.js') }}" defer></script>
 {% endblock %}
