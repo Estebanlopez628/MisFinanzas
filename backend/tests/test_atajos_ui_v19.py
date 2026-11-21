@@ -30,7 +30,7 @@ def test_los_tres_botones_de_la_tabla_tienen_el_mismo_grosor(
     html = cliente_admin.get("/chancucos").text
     css = (RAIZ_APP / "static" / "css" / "estilos.css").read_text(encoding="utf-8")
 
-    assert html.count("atajo-accion") >= 6
+    assert html.count("atajo-accion") >= 5
     bloque = css.split(".boton.atajo-accion {", 1)[1].split("}", 1)[0]
     for regla in ("min-height: 34px;", "padding: 7px 12px;", "font-size: 0.78rem;"):
         assert regla in bloque
@@ -39,7 +39,7 @@ def test_los_tres_botones_de_la_tabla_tienen_el_mismo_grosor(
 def test_la_fila_movil_y_el_modal_muestran_toda_la_informacion(
     cliente_admin: TestClient, bd
 ) -> None:
-    """La fila es tipo Excel y el modal agrupa datos y acciones Pagar/Eliminar."""
+    """La fila es tipo Excel y el modal permite editar el atajo con Actualizar/Eliminar."""
     cuenta = usuarios.buscar_por_correo(bd, "admin@olbbyte.co")
     assert cuenta is not None
     chancuco = chancucos.crear_chancuco(
@@ -58,14 +58,20 @@ def test_la_fila_movil_y_el_modal_muestran_toda_la_informacion(
     assert 'class="tabla tabla--atajos"' in html
     assert f'data-chancuco-fila data-id-chancuco="{chancuco.id_chancuco}"' in html
     assert "atajo-modal" in html
-    assert "Detalle del atajo" in html
+    assert "Editar atajo" in html
     assert "REF-99" in html
     assert "$120.000" in html
     assert "Día 10 · Día 25" in html
-    assert 'data-copiar="REF-99"' in html
-    assert ">Pagar</a>" in html
+    # El modal es de edición: no lleva Copiar ni Pagar, y la URL va en un input.
+    assert html.count('data-copiar="REF-99"') == 1
+    assert "<dt>Enlace de pago</dt>" not in html
+    assert 'name="url_pago"' in html
+    assert ">Actualizar</button>" in html
     assert ">Eliminar</button>" in html
-    assert html.index(">Pagar</a>") < html.index(">Eliminar</button>")
+
+    css = (RAIZ_APP / "static" / "css" / "estilos.css").read_text(encoding="utf-8")
+    datos = css.split(".atajo-modal__datos > div {", 1)[1].split("}", 1)[0]
+    assert "border-bottom" not in datos
 
 
 def test_los_atajos_de_mis_finanzas_abren_su_propio_modal(
@@ -118,6 +124,9 @@ def test_el_css_de_movil_oculta_columnas_y_el_js_abre_el_modal() -> None:
     plantilla = (RAIZ_APP / "templates" / "chancucos" / "index.html").read_text(encoding="utf-8")
 
     movil = css.split("@media (max-width: 640px)", 1)[1]
+    assert ".tabla--atajos thead tr" in movil
+    assert ".tabla--atajos thead th:nth-child(2)" in movil
+    assert "max-content" in movil
     assert ".tabla--atajos tr[data-chancuco-fila]" in movil
     assert "> td:nth-child(1)" in movil
     assert "> td:nth-child(5)" in movil
@@ -125,3 +134,48 @@ def test_el_css_de_movil_oculta_columnas_y_el_js_abre_el_modal() -> None:
     assert ".atajo-modal > summary" in movil
     assert 'conectarFilas("tr[data-chancuco-fila]"' in javascript
     assert "js/deudas.js" in plantilla
+
+
+def test_editar_un_atajo_guarda_todos_los_cambios(cliente_admin: TestClient, bd) -> None:
+    """El botón Actualizar del modal persiste los datos editados."""
+    cuenta = usuarios.buscar_por_correo(bd, "admin@olbbyte.co")
+    assert cuenta is not None
+    chancuco = chancucos.crear_chancuco(
+        bd, cuenta.id_usuario, "EPM", "REF-VIEJA", valor_pago="100.000", dia_pago_1=15
+    )
+
+    respuesta = cliente_admin.post(
+        f"/chancucos/{chancuco.id_chancuco}/editar",
+        data={
+            "descripcion": "EPM energía",
+            "numero_referencia": "REF-NUEVA",
+            "valor_pago": "185.000",
+            "url_pago": "https://pagos.epm.com.co/nueva",
+            "dia_pago_1": "20",
+            "dia_pago_2": "30",
+            "favorito": "1",
+        },
+        follow_redirects=False,
+    )
+
+    assert respuesta.status_code == 303
+    bd.refresh(chancuco)
+    assert chancuco.descripcion == "EPM energía"
+    assert chancuco.numero_referencia == "REF-NUEVA"
+    assert float(chancuco.valor_pago) == 185000.0
+    assert chancuco.dia_pago_1 == 20
+    assert chancuco.dia_pago_2 == 30
+    assert chancuco.favorito is True
+    assert chancuco.url_pago == "https://pagos.epm.com.co/nueva"
+
+    invalida = cliente_admin.post(
+        f"/chancucos/{chancuco.id_chancuco}/editar",
+        data={
+            "descripcion": "EPM energía",
+            "numero_referencia": "REF-NUEVA",
+            "url_pago": "javascript:alert(1)",
+        },
+        follow_redirects=False,
+    )
+    assert invalida.status_code == 303
+    assert "http" in invalida.headers["location"]

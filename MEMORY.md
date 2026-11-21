@@ -1913,6 +1913,13 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 - El botón Pagar queda centrado a ancho natural (`grid-template-columns: 1fr; justify-items: center; width: auto; min-width: 160px`). El modal de `/chancucos` no cambia.
 - `sw.js` pasa a `olb-finanzas-v63`; **669 pruebas** en verde.
 
+### 2026-11-20 — Modal de edición de atajos y ajustes de presentación
+
+- Se quitaron las líneas divisorias (`border-bottom`) de `.atajo-modal__datos` en ambos modales, igualando el formato de los demás modales.
+- Móvil de «Atajos guardados»: se restablece una cabecera compacta con Descripción | Valor a pagar | Día de pago y las columnas pasan a `max-content` con gap de 6 px, para que los datos no queden alejados de la descripción.
+- El modal de `/chancucos` ya no es informativo: permite editar descripción, referencia, valor a pagar, día(s), enlace (input `type="url"` con ancho controlado) y favorito; abajo Actualizar → Eliminar, sin Copiar ni Pagar. Se agregó `actualizar_chancuco()` y `POST /chancucos/{id}/editar` con auditoría. El modal de Mis Finanzas queda solo lectura + Pagar.
+- `sw.js` pasa a `olb-finanzas-v64`; **670 pruebas** en verde y `generar_guia.py --verificar` sin problemas.
+
 **Pendiente para el Paso 3:** solo la revisión visual en navegador (360/390/768/escritorio) de la dona, el consejero, los modales, el formulario de deducciones, el flujo SI/NO y el recibo; la corrección aritmética y la anti-duplicación ya están cubiertas por pruebas.
 
 

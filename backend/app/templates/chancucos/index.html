@@ -167,44 +167,60 @@
                      con toda la información del atajo y las acciones abajo. #}
                   <details class="edicion-gasto edicion-gasto--modal atajo-modal">
                     <summary aria-label="Ver detalle del atajo">Ver</summary>
-                    <div class="edicion-gasto__formulario atajo-modal__tarjeta">
+                    <form class="formulario formulario--compacto edicion-gasto__formulario atajo-modal__tarjeta"
+                          method="post"
+                          action="{{ url_for('editar_chancuco', id_chancuco=item.id_chancuco) }}"
+                          data-proteccion>
                       <div class="edicion-gasto__cabecera">
-                        <h3 class="panel__titulo">Detalle del atajo</h3>
+                        <h3 class="panel__titulo">Editar atajo</h3>
                         <button class="edicion-gasto__cerrar" type="button" data-cancelar-edicion
-                                aria-label="Cerrar detalle" title="Cerrar">×</button>
+                                aria-label="Cerrar edición" title="Cerrar">×</button>
                       </div>
-                      <dl class="atajo-modal__datos">
-                        <div><dt>Descripción</dt><dd>{{ item.descripcion }}</dd></div>
-                        <div>
-                          <dt>Valor a pagar</dt>
-                          <dd>{{ item.valor_pago | cop if item.valor_pago else 'No definido' }}</dd>
-                        </div>
-                        <div><dt>Días de pago</dt><dd>{{ dias_pago(item) if item.dia_pago_1 else 'Sin día definido' }}</dd></div>
-                        <div>
-                          <dt>Referencia</dt>
-                          <dd>
-                            <code>{{ item.numero_referencia }}</code>
-                            <button class="boton boton--secundario boton--pequeno atajo-accion" type="button"
-                                    data-copiar="{{ item.numero_referencia }}">Copiar</button>
-                          </dd>
-                        </div>
-                        <div>
-                          <dt>Enlace de pago</dt>
-                          <dd>{{ item.url_pago or 'No definido' }}</dd>
-                        </div>
-                        <div><dt>Favorito</dt><dd>{{ 'Sí' if item.favorito else 'No' }}</dd></div>
-                      </dl>
+                      <label class="campo">
+                        <span class="campo__etiqueta">Descripción</span>
+                        <input class="campo__control" type="text" name="descripcion"
+                               value="{{ item.descripcion }}" required />
+                      </label>
+                      <label class="campo">
+                        <span class="campo__etiqueta">Número de referencia</span>
+                        <input class="campo__control" type="text" name="numero_referencia"
+                               value="{{ item.numero_referencia }}" required />
+                      </label>
+                      <label class="campo">
+                        <span class="campo__etiqueta">Valor a pagar (COP)</span>
+                        <input class="campo__control" type="text" name="valor_pago" inputmode="decimal"
+                               value="{{ item.valor_pago | cop(false) if item.valor_pago else '' }}"
+                               data-moneda />
+                      </label>
+                      <div class="fila-campos">
+                        <label class="campo">
+                          <span class="campo__etiqueta">Día de pago</span>
+                          <input class="campo__control" type="number" name="dia_pago_1"
+                                 min="1" max="31" value="{{ item.dia_pago_1 or '' }}" />
+                        </label>
+                        <label class="campo">
+                          <span class="campo__etiqueta">Segundo día (opcional)</span>
+                          <input class="campo__control" type="number" name="dia_pago_2"
+                                 min="1" max="31" value="{{ item.dia_pago_2 or '' }}" />
+                        </label>
+                      </div>
+                      <label class="campo">
+                        <span class="campo__etiqueta">Enlace de pago (opcional)</span>
+                        <input class="campo__control" type="url" name="url_pago"
+                               value="{{ item.url_pago or '' }}" placeholder="https://pagos.entidad.com" />
+                      </label>
+                      <label class="campo campo--casilla">
+                        <input type="checkbox" name="favorito" value="1" {% if item.favorito %}checked{% endif %} />
+                        <span>Marcar como favorito</span>
+                      </label>
                       <div class="acciones-formulario acciones-formulario--edicion">
-                        {% if item.url_pago %}
-                          <a class="boton boton--primario boton--pequeno atajo-accion" href="{{ item.url_pago }}"
-                             target="_blank" rel="noopener">Pagar</a>
-                        {% endif %}
-                        <form method="post" action="{{ url_for('eliminar_chancuco', id_chancuco=item.id_chancuco) }}"
-                              onsubmit="return confirm('¿Eliminar este atajo de pago?');">
-                          <button class="boton boton--peligro boton--pequeno atajo-accion" type="submit">Eliminar</button>
-                        </form>
+                        <button class="boton boton--primario boton--pequeno atajo-accion" type="submit">Actualizar</button>
+                        <button class="boton boton--peligro boton--pequeno atajo-accion" type="submit"
+                                formmethod="post"
+                                formaction="{{ url_for('eliminar_chancuco', id_chancuco=item.id_chancuco) }}"
+                                onclick="return confirm('¿Eliminar este atajo de pago?');">Eliminar</button>
                       </div>
-                    </div>
+                    </form>
                   </details>
                 </td>
               </tr>

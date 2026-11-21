@@ -4006,8 +4006,7 @@ strong.valor-negativo.recibo__cifra--saldo {
   display: flex;
   justify-content: space-between;
   gap: 12px;
-  padding: 6px 0;
-  border-bottom: 1px dashed var(--borde-suave, rgba(255, 255, 255, 0.12));
+  padding: 4px 0;
   font-size: 0.86rem;
 }
 
@@ -4026,8 +4025,33 @@ strong.valor-negativo.recibo__cifra--saldo {
     display: block;
   }
 
+  /* Cabecera compacta: solo las tres columnas que se ven en la fila. */
   .tabla--atajos thead {
+    display: block;
+    margin-bottom: 6px;
+  }
+
+  .tabla--atajos thead tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) max-content max-content;
+    gap: 6px;
+    padding: 0 10px;
+  }
+
+  .tabla--atajos thead th {
     display: none;
+    padding: 0;
+    border: 0;
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+
+  .tabla--atajos thead th:nth-child(2),
+  .tabla--atajos thead th:nth-child(3),
+  .tabla--atajos thead th:nth-child(4) {
+    display: block;
   }
 
   .tabla--atajos tbody {
@@ -4036,9 +4060,9 @@ strong.valor-negativo.recibo__cifra--saldo {
 
   .tabla--atajos tr[data-chancuco-fila] {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-columns: minmax(0, 1fr) max-content max-content;
     align-items: center;
-    gap: 10px;
+    gap: 6px;
     margin-bottom: 8px;
     padding: 8px 10px;
     border: 1px solid var(--borde-suave);

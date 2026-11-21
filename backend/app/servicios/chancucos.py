@@ -155,6 +155,69 @@ def crear_chancuco(
     return chancuco
 
 
+def actualizar_chancuco(
+    bd: Session,
+    id_usuario: str,
+    id_chancuco: str,
+    descripcion: str,
+    numero_referencia: str,
+    valor_pago: Decimal | str | int | float | None = None,
+    url_pago: str | None = None,
+    favorito: bool = False,
+    dia_pago_1: int | str | None = None,
+    dia_pago_2: int | str | None = None,
+) -> Chancuco | None:
+    """Actualiza todos los datos editables de un atajo propio.
+
+    Args:
+        bd: Sesión de base de datos.
+        id_usuario: Dueño del atajo.
+        id_chancuco: Identificador del atajo a modificar.
+        descripcion: Texto que identifica el atajo.
+        numero_referencia: Número que se copia al portapapeles.
+        valor_pago: Monto exacto a pagar; vacío si no tiene monto fijo.
+        url_pago: Pasarela oficial; vacía si no aplica.
+        favorito: Estado del favorito.
+        dia_pago_1: Día del mes del pago (1–31), si se conoce.
+        dia_pago_2: Segundo día del mes para un pago doble, si aplica.
+
+    Returns:
+        El atajo actualizado, o `None` si no existe o es de otro usuario.
+
+    Raises:
+        ValueError: Si faltan datos obligatorios, la URL es inválida, el valor
+            es negativo o alguno de los días no está entre 1 y 31.
+    """
+    chancuco = bd.get(Chancuco, id_chancuco)
+    if chancuco is None or chancuco.id_usuario != id_usuario:
+        return None
+
+    descripcion_limpia = descripcion.strip()
+    referencia_limpia = numero_referencia.strip()
+    if not descripcion_limpia:
+        raise ValueError("La descripción del atajo es obligatoria.")
+    if not referencia_limpia:
+        raise ValueError("El número de referencia es obligatorio.")
+
+    primero, segundo = _normalizar_dias(dia_pago_1, dia_pago_2)
+    valor = None
+    if valor_pago is not None and str(valor_pago).strip():
+        valor = redondear_dinero(parsear_monto(str(valor_pago)))
+        if valor < 0:
+            raise ValueError("El valor a pagar no puede ser negativo.")
+
+    chancuco.descripcion = descripcion_limpia[:120]
+    chancuco.numero_referencia = referencia_limpia[:60]
+    chancuco.valor_pago = valor
+    chancuco.url_pago = _validar_url(url_pago)
+    chancuco.dia_pago_1 = primero
+    chancuco.dia_pago_2 = segundo
+    chancuco.favorito = favorito
+    bd.commit()
+    bd.refresh(chancuco)
+    return chancuco
+
+
 def listar_chancucos(bd: Session, id_usuario: str) -> list[Chancuco]:
     """Lista los atajos del usuario, primero los favoritos.
 

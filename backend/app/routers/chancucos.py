@@ -10,6 +10,7 @@ Responsabilidad
 from __future__ import annotations
 
 from typing import Annotated
+from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, Form, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -130,6 +131,72 @@ def crear_chancuco(
             status_code=status.HTTP_303_SEE_OTHER,
         )
 
+    return RedirectResponse(url=destino, status_code=status.HTTP_303_SEE_OTHER)
+
+
+@router.post("/chancucos/{id_chancuco}/editar", name="editar_chancuco", response_model=None)
+def editar_chancuco(
+    request: Request,
+    id_chancuco: str,
+    usuario: UsuarioSesion = Depends(obtener_usuario_actual),
+    bd: Session = Depends(obtener_bd),
+    descripcion: Annotated[str, Form()] = "",
+    numero_referencia: Annotated[str, Form()] = "",
+    valor_pago: Annotated[str, Form()] = "",
+    url_pago: Annotated[str, Form()] = "",
+    favorito: Annotated[str, Form()] = "",
+    dia_pago_1: Annotated[str, Form()] = "",
+    dia_pago_2: Annotated[str, Form()] = "",
+    origen: Annotated[str, Form()] = "",
+) -> HTMLResponse | RedirectResponse:
+    """Guarda los cambios hechos en el modal de edición de un atajo.
+
+    Args:
+        request: Petición HTTP.
+        id_chancuco: Atajo a modificar.
+        usuario: Usuario autenticado, dueño del atajo.
+        bd: Sesión de base de datos.
+        descripcion: Texto que identifica el atajo.
+        numero_referencia: Número que se copia al portapapeles.
+        valor_pago: Monto exacto a pagar.
+        url_pago: Pasarela oficial; opcional.
+        favorito: ``1`` si debe quedar como favorito.
+        dia_pago_1: Día del mes del primer pago.
+        dia_pago_2: Segundo día del mes, si aplica.
+        origen: ``finanzas`` cuando la acción viene del panel embebido.
+
+    Returns:
+        Redirección al panel con el resultado, o la vista con el error.
+    """
+    base_error = "/finanzas?error_chancuco=" if origen == "finanzas" else "/chancucos?error="
+    destino = (
+        "/finanzas?guardado_chancuco=1#chancucos"
+        if origen == "finanzas"
+        else "/chancucos?guardado=1"
+    )
+    try:
+        actualizado = chancucos.actualizar_chancuco(
+            bd,
+            usuario.id_usuario,
+            id_chancuco,
+            descripcion,
+            numero_referencia,
+            valor_pago=valor_pago or None,
+            url_pago=url_pago or None,
+            favorito=favorito == "1",
+            dia_pago_1=dia_pago_1,
+            dia_pago_2=dia_pago_2,
+        )
+    except (ValueError, ArithmeticError) as error:
+        return RedirectResponse(
+            url=f"{base_error}{quote(str(error))}",
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
+    if actualizado is None:
+        return RedirectResponse(url="/chancucos", status_code=status.HTTP_303_SEE_OTHER)
+    auditoria.registrar(
+        bd, usuario.id_usuario, "CHANCUCO_ACTUALIZADO", "chancucos", actualizado.descripcion
+    )
     return RedirectResponse(url=destino, status_code=status.HTTP_303_SEE_OTHER)
 
 
