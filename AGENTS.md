@@ -31,8 +31,8 @@ Plataforma web/móvil híbrida (PWA) con backend y frontend **100% Python**, arq
 
 ## 3. Roles & Control de Acceso
 
-- **`ADMIN_OLB`**: Propietario del sistema. Acceso total a los 4 módulos (`Mis Finanzas`, `OLB_BYTE`, `Registro y Detalles de deudas`, `Trabajos Extras`) y bloque exclusivo de **Chancucos** dentro de `Mis Finanzas`. La administración de cuentas se abre desde `Mi Perfil`.
-- **`USER_FINANZAS`**: Usuario público. Acceso a `Mis Finanzas` (incluye sus submódulos), `Registro y Detalles de deudas` y `Trabajos Extras`, con anuncios no invasivos. `OLB_BYTE` y `Chancucos` están bloqueados a nivel de UI **y** de endpoint (403).
+- **`ADMIN_OLB`**: Propietario del sistema. Acceso total a los 4 módulos (`Mis Finanzas`, `OLB_BYTE`, `Registro y Detalles de deudas`, `Trabajos Extras`). La administración de cuentas se abre desde `Mi Perfil`. Desde SRS v1.8 los **Chancucos** (Atajos de Pago) ya no son exclusivos: cada usuario administra los suyos.
+- **`USER_FINANZAS`**: Usuario público. Acceso a `Mis Finanzas` (incluye sus submódulos, entre ellos **Configurar Atajos de Pago**), `Registro y Detalles de deudas` y `Trabajos Extras`, con anuncios no invasivos. `OLB_BYTE` sigue bloqueado a nivel de UI **y** de endpoint (403).
 - **Navegación (SRS v1.2):** el header contiene únicamente `Inicio`, `Mi Perfil` y `Salir`. El dashboard muestra 4 tarjetas; `OLB_BYTE` se omite por completo para `USER_FINANZAS`.
 
 ---
@@ -50,7 +50,7 @@ Plataforma web/móvil híbrida (PWA) con backend y frontend **100% Python**, arq
 ├── AGENTS.md                           # Este archivo
 ├── DESPLIEGUE.md                       # Guía de producción, respaldos y rollback
 ├── diccionario_datos.md                # Diccionario de datos (fuente para BD)
-├── especificaci_n_de_requisitos_de_software_srs.md   # SRS v1.1.0
+├── especificaci_n_de_requisitos_de_software_srs.md   # SRS (v1.1.0 + v1.9)
 ├── .github/workflows/ci.yml            # compileall + pytest + prueba de respaldo
 └── backend/
     ├── requirements.txt
@@ -58,13 +58,16 @@ Plataforma web/móvil híbrida (PWA) con backend y frontend **100% Python**, arq
     ├── datos/finanzas.db               # Base SQLite local (no versionar)
     ├── scripts/respaldo.py             # Respaldo consistente y rotación
     ├── scripts/generar_guia.py        # Inventario de Guia.md + --verificar
-    ├── tests/                          # Suite completa (559 pruebas)
+    ├── scripts/migrar_a_neon.py        # Copia SQLite → PostgreSQL (idempotente)
+    ├── tests/                          # Suite completa (674 pruebas)
     └── app/
         ├── main.py                     # Punto de entrada FastAPI (fábrica de app)
         ├── dependencias.py             # Sesión, `SesionRequerida` y RBAC por rol
+        ├── esquemas.py                 # Validación Pydantic (gastos, deducciones, deudas)
         ├── modelos.py                  # Tablas SQLAlchemy del diccionario
         ├── core/
-        │   ├── base_datos.py           # Motor, sesión por petición y siembra
+        │   ├── base_datos.py           # Motor, sesión, migraciones y siembra
+        │   ├── categorias.py           # Catálogo cerrado de 8 categorías + colores
         │   ├── config.py               # Parámetros de negocio y entorno
         │   ├── limitador.py            # Ventana de intentos fallidos de login
         │   ├── middleware.py           # CSRF por origen + cabeceras de seguridad
@@ -105,6 +108,7 @@ Plataforma web/móvil híbrida (PWA) con backend y frontend **100% Python**, arq
         │   └── usuarios.py             # Repositorio de usuarios sobre BD
         ├── templates/                  # Vistas Jinja2
         │   ├── base.html
+        │   ├── _categorias.html       # Selector cerrado + vinculación condicional
         │   ├── login.html
         │   ├── registro.html
         │   ├── dashboard.html
@@ -125,6 +129,8 @@ Plataforma web/móvil híbrida (PWA) con backend y frontend **100% Python**, arq
         └── static/
             ├── css/estilos.css         # Paleta oficial, componentes e impresión
             ├── js/finanzas.js          # Fetch + debounce, plantillas y aviso
+            ├── js/categorias.js        # Selector de categorías, SI/NO y sessionStorage
+            ├── js/deudas.js            # Modales por fila (deudas, deducciones, atajos)
             ├── js/app.js               # Portapapeles, filas y service worker
             ├── js/perfil.js            # Modalidad quincenal y avisos
             ├── js/presupuesto.js       # Total proyectado y duración de la meta
@@ -160,8 +166,8 @@ Plataforma web/móvil híbrida (PWA) con backend y frontend **100% Python**, arq
   - Recargo Dominical/Festivo: `1.90`
 - **Auxilio de Transporte:** se anula ($0) si `Sueldo Básico + Recargos` > 2 SMMLV (**COP 3.501.810**, parametrizable).
 - **Incapacidades (origen común):** días 1–2 al 100% (empleador); días 3+ al 66.67% (descuento del 33.33% a cargo de EPS). Los días son **calendario** (`fin − inicio + 1`) y no se digitan; la regla 100 %/66,67 % se aplica una sola vez sobre la incapacidad completa. Si el rango cruza de mes, cada mes descuenta **solo su tramo** (`registro_incapacidades.tramos_del_mes`); **no hay rollover** (ADR-20). La incapacidad entra en la caja única de deducciones de ley.
-- **Deudas (SRS v1.8, ADR-53):** seis datos (acreedor, descripción, total adeudado, cuota, cuotas pendientes y periodicidad quincenal/mensual). **Sin intereses:** la tasa se retira del modelo y `cuota × cuotas` debe reconstruir el total adeudado con tolerancia de **$1 por cuota** (si no cuadra, se pide revisar y reingresar). Al abrir el módulo se aplican las cuotas vencidas en `pagos_deuda` (idempotente por `UNIQUE(id_deuda, numero_cuota)`); cada cuota abona capital completo y la última deja el saldo exacto en cero. No existe abono manual.
-- **Metas con «Ambas quincenas» (ADR-22):** `quincena = 3` guarda la cuota mensual y la reparte entre los dos pagos (`valor_por_pago`). Sigue siendo planificación: no se resta del saldo libre.
+- **Deudas (SRS v1.9, ADR-53 + ADR-58):** seis datos (acreedor, descripción, total adeudado, cuota, cuotas pendientes y periodicidad quincenal/mensual). Se acepta `cuota × cuotas >= total`: el excedente es interés implícito que se calcula en privado (`tasa_implicita_simulada`, `amortizacion_simulada`) y **nunca se guarda ni se muestra**. Solo se rechaza `cuota × cuotas < total` con el mensaje fijo de la sección 2.2. Los pagos reales siguen abonando capital con `interes = 0`; al abrir el módulo se aplican las cuotas vencidas en `pagos_deuda` (idempotente por `UNIQUE(id_deuda, numero_cuota)`). No existe abono manual.
+- **Metas con «Ambas quincenas» (ADR-22, ADR-24):** `quincena = 3` guarda la cuota mensual y la reparte entre los dos pagos (`valor_por_pago`). Desde ADR-24 cada meta genera gastos fijos por quincena: el ✔ registra el abono y la meta **sí resta** del saldo libre.
 - **Capacidad de endeudamiento y consejero (SRS v1.8, ADR-53):** el ingreso del mes (quincenas + extras cobrados) se reparte entre gastos fijos, cuota mensual de deudas y libre; el semáforo usa el porcentaje de deuda (≤ 20 % verde, ≤ 35 % ámbar, más rojo). Del libre se reserva una **base mínima de liquidez de $300.000** (`BASE_MINIMA_LIQUIDEZ`, compartida con `ahorro.py`): la dona muestra «Base mínima de liquidez» y «Disponible para abonar», y solo el remanente alimenta el consejero. Si el libre no supera la base, el consejo se apaga con un mensaje que invita a crear una meta de emergencia. Con deudas, el orden es de **flujo de caja**: si el excedente cancela una deuda completa, primero la de más cuotas por delante (12 meses antes que 5); si no, la de menor saldo. Sin deudas dirige el excedente a las metas.
 - **Onboarding obligatorio (SRS v1.2):** ninguna ruta de negocio se abre sin perfil financiero; `UsuarioSesion.perfil_configurado` se calcula por petición y `OnboardingRequerido` redirige a `/perfil?bienvenida=1` (303 HTML / 409 JSON).
 - **Quincenas independientes:** en modalidad `QUINCENAL`, `porcentaje_quincena_1 + porcentaje_quincena_2 = 100 %`. Las deducciones de ley se aplican **solo** a la quincena indicada en `quincena_deducciones`. Si el usuario no conoce los porcentajes, informa el neto de la quincena sin descuentos y el sistema deriva ambos porcentajes por descarte.
@@ -197,7 +203,7 @@ python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 
 ```bash
 cd backend
-.\.venv\Scripts\python -m pytest -q          # suite completa (559 pruebas)
+.\.venv\Scripts\python -m pytest -q          # suite completa (674 pruebas)
 .\.venv\Scripts\python scripts\respaldo.py   # copia consistente en backend/respaldos
 .\.venv\Scripts\python scripts\generar_guia.py --verificar  # docstrings y fichas de Guia.md
 ```
@@ -388,4 +394,5 @@ La configuración vive en `.vscode/launch.json`. También existe **Pruebas (pyte
 - [x] **Descripción de atajos más pequeña solo en móvil:** la celda `atajo-descripcion` de «Atajos guardados» baja a `font-size: 0.74rem` dentro de `@media (max-width: 640px)`; escritorio y Mis Finanzas no cambian. `sw.js` en `olb-finanzas-v75`. Verificación: **674 pruebas** en verde.
 - [x] **Corrector de la tabla de deudas tras igualar paneles:** la cabecera sticky ahora tiene fondo opaco (`var(--bg-card)`) para que las filas no se vean debajo al desplazarse; el scroll horizontal queda contenido (`max-width: 100%`, `overscroll-behavior: contain`) y el panel no se sale de su sitio; se ven cuatro deudas solo en escritorio (`max-height: 340px`), conservando `280px` en móvil. Se mantiene `align-items: stretch`. `sw.js` en `olb-finanzas-v76`. Verificación: **674 pruebas** en verde.
 - [x] **Cabecera contrastada y gesto táctil confinado en deudas:** la cabecera sticky pasa al slate oscuro `var(--bg-primary)` (#0F172A), más oscuro que el cuerpo. El contenedor añade `touch-action: pan-x pan-y`, `overscroll-behavior` en ambos ejes y `-webkit-overflow-scrolling: touch`, para que el dedo solo desplace la caja. No se usa `contain: paint` porque el modal de edición vive dentro de la tabla y dejaría de centrarse. `sw.js` en `olb-finanzas-v77`. Verificación: **674 pruebas** en verde.
+- [x] **SRS v1.9 — Estado final documentado:** secciones 1.1 a 4.3 implementadas, verificadas y pusheadas (`28be4c2`). Documentación sincronizada: `MEMORY.md` (ADR-57, ADR-58, ADR-59 y bitácoras), `AGENTS.md` (roles, estructura, reglas y estado), `Guia.md` (106 archivos con ficha, inventario regenerado) y `diccionario_datos.md` (columnas `id_deuda`, `categoria`, `valor_pago` y reglas de interés implícito). Verificación final: `compileall` OK, **674 pruebas** en verde, `generar_guia.py --verificar` sin problemas, despliegue local contra Neon con `/salud` 200. `sw.js` en `olb-finanzas-v77`.
 - [ ] **SRS v1.9 — Paso 3 (verificación final) pendiente:** revisión visual en navegador de dona, consejero, modales de deudas/deducciones, formulario de deducciones, flujo SI/NO y recibo en 360/390/768/escritorio. La comprobación programática ya está cubierta: dona y consejero suman egresos sin duplicar `id_deuda` y respetan el colchón de $300.000 (`test_categorias_cerradas.py`, `test_selector_categoria_ui.py`).

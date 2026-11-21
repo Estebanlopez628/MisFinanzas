@@ -106,7 +106,7 @@ Principios que explican el resto del código:
 ### Resumen del inventario
 
 - **106 archivos** documentados: 53 Python, 37 plantillas Jinja2 y 16 recursos estáticos.
-- **66 clases**, **565 funciones** y **40 métodos** de clase.
+- **66 clases**, **567 funciones** y **40 métodos** de clase.
 
 ### Detalle por archivo
 
@@ -156,9 +156,9 @@ Principios que explican el resto del código:
   - Funciones: `_contexto_admin`, `ver_usuarios`, `cambiar_rol_usuario`, `cambiar_estado_usuario`
 - **`auth.py`** · 569 líneas — Rutas de autenticación: login, registro y cierre de sesión.
   - Funciones: `_clave_intento`, `_establecer_cookie`, `ver_login`, `procesar_login`, `cerrar_sesion`, `ver_registro`, `procesar_registro`, `ver_olvide_contrasena`, `_login_con_error`, `iniciar_google`, `callback_google`, `_base_publica`, `_pagina_olvide`, `_cuenta_del_enlace`, `_pagina_restablecer`, `procesar_olvide_contrasena`, `ver_restablecer_contrasena`, `procesar_restablecer_contrasena`
-- **`chancucos.py`** · 183 líneas — Panel de Chancucos: referencias de pago con copiado y botón *Pagar*.
-  - Funciones: `ver_chancucos`, `crear_chancuco`, `alternar_favorito`, `eliminar_chancuco`
-- **`deudas.py`** · 283 líneas — Rutas del módulo "Registro y Detalles de deudas".
+- **`chancucos.py`** · 250 líneas — Panel de Chancucos: referencias de pago con copiado y botón *Pagar*.
+  - Funciones: `ver_chancucos`, `crear_chancuco`, `editar_chancuco`, `alternar_favorito`, `eliminar_chancuco`
+- **`deudas.py`** · 281 líneas — Rutas del módulo "Registro y Detalles de deudas".
   - Funciones: `_contexto`, `ver_deudas`, `crear_deuda`, `editar_deuda`, `eliminar_deuda`
 - **`finanzas.py`** · 1084 líneas — Módulo "Mis Finanzas": liquidación, guardado e historial.
   - Clases: `EntradaFinanzas`
@@ -201,8 +201,8 @@ Principios que explican el resto del código:
 - **`capacidad.py`** · 777 líneas — Capacidad de endeudamiento y proyección a doce meses (SRS v1.7, bloque F).
   - Clases: `Capacidad`
   - Funciones: `repartir_libre`, `es_credito`, `_porcentaje`, `agrupar_por_categoria`, `resumen_categorias`, `_arcos_categoria`, `_repartir_arcos`, `_meses_equivalentes`, `_etiqueta_mes`, `_mover_mes`, `meses_siguientes`, `deudas_por_terminar`, `proyeccion_capacidad`, `_mensaje_semaforo`, `capacidad_trabajos`, `capacidad_endeudamiento`
-- **`chancucos.py`** · 213 líneas — Referencias de pago rápido ("Chancucos").
-  - Funciones: `_normalizar_dia`, `_normalizar_dias`, `_validar_url`, `crear_chancuco`, `listar_chancucos`, `alternar_favorito`, `eliminar_chancuco`
+- **`chancucos.py`** · 276 líneas — Referencias de pago rápido ("Chancucos").
+  - Funciones: `_normalizar_dia`, `_normalizar_dias`, `_validar_url`, `crear_chancuco`, `actualizar_chancuco`, `listar_chancucos`, `alternar_favorito`, `eliminar_chancuco`
 - **`comercial.py`** · 1451 líneas — Operación comercial de OLB_BYTE: ventas a crédito, cartera y deuda con proveedor.
   - Clases: `LineaVenta`, `PagoInicial`
   - Funciones: `ahora_tienda`, `normalizar_telefono`, `_dinero`, `_sumar_meses`, `_texto_garantia`, `_validar_linea`, `_cliente_para_venta`, `_siguiente_numero_orden`, `deuda_proveedor`, `_registrar_movimiento_proveedor`, `registrar_cliente`, `listar_clientes`, `buscar_clientes`, `registrar_venta`, `obtener_venta`, `_venta_activa`, `_recalcular_estado_pago`, `_validar_metodo`, `registrar_abono`, `_devuelto`, `_registrar_devolucion`, `anular_venta`, `registrar_devolucion`, `pendiente_devolver`, `obtener_abono`, `abonos_de_venta`, `buscar_cartera`, `registrar_abono_proveedor`, `listar_movimientos_proveedor`, `_texto_busqueda`, `filtrar_ventas`, `listar_ventas`, `cartera`, `resumen_cartera`, `estado_garantia`, `clasificar_saldo`, `barras_balance`, `segmentos_dona`, `etiqueta_producto`, `opciones_garantia`, `registrar_garantia`, `actualizar_estado_garantia`, `listar_garantias`, `garantia_vigente_al_reclamo`, `ranking_fallas`, `formatear_pesos`, `texto_compartir_factura`, `enlace_whatsapp_factura`, `enlace_whatsapp_recibo`, `enlace_whatsapp_cobro`, `_enlace_wa`
@@ -250,23 +250,23 @@ Principios que explican el resto del código:
 
 #### `backend/app/static/css/`
 
-- **`estilos.css`** · 4186 líneas — Fondo y superficies
+- **`estilos.css`** · 4497 líneas — Fondo y superficies
 - **`factura-olb.css`** · 671 líneas — Sello de Anulada si aplica
 
 #### `backend/app/static/js/`
 
-- **`app.js`** · 326 líneas — Mejoras progresivas globales.
-  - Funciones: `copiar`, `seleccionarManual`, `cerrarEdicion`
+- **`app.js`** · 360 líneas — Mejoras progresivas globales.
+  - Funciones: `restaurarBotonCopiar`, `confirmarCopia`, `copiar`, `seleccionarManual`, `cerrarEdicion`
 - **`categorias.js`** · 296 líneas — Selector cerrado de categorías, vinculación con deudas y conservación de
   - Funciones: `datosFormulario`, `restaurarDatos`, `cerrar`, `abrir`, `alternar`, `sincronizar`, `sincronizar`
-- **`deudas.js`** · 54 líneas — Interacción de filas con modal centrado (SRS v1.9, secciones 2.3 y 3.3).
+- **`deudas.js`** · 70 líneas — Interacción de filas con modal centrado (SRS v1.9, secciones 2.3 y 3.3).
   - Funciones: `esMovil`, `cerrarOtras`, `conectarFilas`
 - **`dona.js`** · 122 líneas — Interacción de las gráficas tipo dona (capacidad de endeudamiento y cartera).
   - Funciones: `centro`, `mostrar`, `restaurar`, `iniciar`
 - **`factura.js`** · 304 líneas — Factura y recibo de abono de OLB_BYTE como imagen PNG (ADR-50).
   - Funciones: `descargar`, `esperarImagen`, `montarHoja`, `crearPng`, `imagenDe`, `copiarImagen`, `mensajeDelEnlace`, `compartirArchivo`, `enviarPorWhatsapp`, `descargarImagen`
-- **`finanzas.js`** · 598 líneas — Mejora progresiva de "Mis Finanzas".
-  - Funciones: `leerFormulario`, `pintarCampo`, `pintarDeduccion`, `pintarValorAuxilio`, `pintarErrores`, `pintarDetalle`, `pintarAuxilio`, `aplicarResultado`, `pintarTramos`, `pintarIncapacidad`, `pintarQuincenas`, `pintarTexto`, `calcular`, `programarCalculo`, `marcarCambios`, `aplicarPlantilla`, `copiarAlPortapapeles`, `prepararCopiadoRapido`
+- **`finanzas.js`** · 540 líneas — Mejora progresiva de "Mis Finanzas".
+  - Funciones: `leerFormulario`, `pintarCampo`, `pintarDeduccion`, `pintarValorAuxilio`, `pintarErrores`, `pintarDetalle`, `pintarAuxilio`, `aplicarResultado`, `pintarTramos`, `pintarIncapacidad`, `pintarQuincenas`, `pintarTexto`, `calcular`, `programarCalculo`, `marcarCambios`, `aplicarPlantilla`
 - **`incapacidades.js`** · 129 líneas — Cálculo automático del módulo de incapacidades (SRS v1.5).
   - Funciones: `fechasListas`, `reemplazar`, `actualizar`, `programar`
 - **`moneda.js`** · 77 líneas — Formato de los campos de pesos mientras se escriben (SRS v1.9).
@@ -285,7 +285,7 @@ Principios que explican el resto del código:
 
 #### `backend/app/templates/`
 
-- **`_categorias.html`** · 116 líneas
+- **`_categorias.html`** · 117 líneas
 - **`base.html`** · 120 líneas — Vista previa al compartir el enlace (WhatsApp, redes). La URL pública sale de APP_URL;
 - **`dashboard.html`** · 53 líneas — Plantilla: Panel principal
 - **`login.html`** · 88 líneas — Plantilla: Iniciar sesión
@@ -300,7 +300,7 @@ Principios que explican el resto del código:
 #### `backend/app/templates/chancucos/`
 
 - **`_dias.html`** · 15 líneas
-- **`index.html`** · 176 líneas — Plantilla: Configurar Atajos de Pago
+- **`index.html`** · 238 líneas — Plantilla: Configurar Atajos de Pago
 
 #### `backend/app/templates/componentes/`
 
@@ -308,14 +308,14 @@ Principios que explican el resto del código:
 
 #### `backend/app/templates/deudas/`
 
-- **`index.html`** · 254 líneas — Plantilla: Registro y Detalles de deudas
+- **`index.html`** · 223 líneas — Plantilla: Registro y Detalles de deudas
 
 #### `backend/app/templates/finanzas/`
 
-- **`_capacidad.html`** · 147 líneas
-- **`_gasto_fijo.html`** · 196 líneas
+- **`_capacidad.html`** · 132 líneas
+- **`_gasto_fijo.html`** · 194 líneas
 - **`_subnav.html`** · 27 líneas — Subnavegación interna del módulo "Mis Finanzas" (SRS v1.3, bloque 1).
-- **`index.html`** · 720 líneas — Plantilla: Mis Finanzas
+- **`index.html`** · 757 líneas — Plantilla: Mis Finanzas
 
 #### `backend/app/templates/gastos/`
 
@@ -352,7 +352,7 @@ Principios que explican el resto del código:
 
 #### `backend/app/templates/presupuesto/`
 
-- **`index.html`** · 605 líneas — Plantilla: Gastos y Presupuesto
+- **`index.html`** · 601 líneas — Plantilla: Gastos y Presupuesto
 
 #### `backend/app/templates/privado/`
 
@@ -1269,14 +1269,16 @@ tramos con su descuento, más el listado de incapacidades registradas.
 ### `backend/app/templates/deudas/index.html`
 
 Cuatro tarjetas de resumen, formulario de seis campos y tabla tipo Excel con
-las columnas Acreedor, Total Adeudado, Cuota, No. Cuotas Pendientes, Periodicidad
-y Estado (SRS v1.9, sección 2.3). Al final de cada fila van el lápiz de edición y
-la × de borrado; el lápiz abre un modal centrado con solo Total Adeudado, Cuota y
-No. Cuotas Pendientes más «Actualizar» y «Cancelar». En móvil los iconos se
-ocultan y la fila completa abre ese mismo modal con `js/deudas.js`. Bajo cada
-deuda se listan únicamente las cuotas aplicadas: no hay «Próximas cuotas» ni
-campos de interés. Si se llega con `?volver=…`, aparece «Volver al formulario de
-origen» con el id de la deuda recién creada (sección 3.2).
+las columnas Acreedor, Total Adeudado, Cuota, No. de cuotas pendientes (en tres
+líneas, columna estrecha), Periodicidad y Estado (SRS v1.9, sección 2.3). Hay
+**una sola fila por deuda**: se eliminaron el bloque de «Cuotas aplicadas» y el
+mensaje de deuda sin cuotas. Al final de cada fila van el lápiz de edición y la
+× de borrado; el modal centrado ofrece solo Total Adeudado, Cuota y No. Cuotas,
+con cierre sutil arriba y «Actualizar». En móvil los iconos se ocultan y la fila
+abre ese modal con `js/deudas.js`. El contenedor de la tabla fija la cabecera con
+fondo opaco, limita la altura (cuatro deudas en escritorio) y confina el scroll
+horizontal y vertical dentro de la caja. Si se llega con `?volver=…`, aparece
+«Volver al formulario de origen» con el id de la deuda recién creada.
 
 ### `backend/app/templates/chancucos/_dias.html`
 

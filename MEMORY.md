@@ -1727,7 +1727,7 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
   - `aplicar_migraciones()` agrega las columnas en SQLite (`PRAGMA`) y PostgreSQL (`ADD COLUMN IF NOT EXISTS`) y normaliza los textos heredados sin borrar filas. `migrar_a_neon.py` la invoca antes de copiar datos.
   - La liquidez mínima sigue siendo $300.000 y se aplica **después** del reparto: solo el remanente alimenta el consejero.
   - `tasa_implicita_simulada()` deriva por bisección la tasa que implican saldo, cuota y cuotas, y la usa `DeudaNueva` para validar. No se persiste, no se cobra y no cambia la amortización: ADR-53 sigue vigente.
-- **Consecuencias:** `Capacidad.deudas` pasa a ser la cuota bruta de la categoría 8 (antes se restaba la cuota vinculada). `ahorro.diagnostico` usa la misma cifra para que dona y consejero coincidan. La dona expone `categorias` y `arcos_categoria` con los colores del catálogo, además de sus cuatro arcos históricos.
+- **Consecuencias:** `Capacidad.deudas` pasa a ser la cuota bruta de la categoría 8 (antes se restaba la cuota vinculada). `ahorro.diagnostico` usa la misma cifra para que dona y consejero coincidan. La dona expone `categorias` y `arcos_categoria` con los colores del catálogo, además de sus cuatro arcos históricos. La referencia a ADR-53 en el punto anterior quedó matizada por **ADR-58** (interés implícito permitido) y la categoría 8 pasó a ser seleccionable con `id_deuda` obligatorio según **ADR-59**.
 - **Archivos:** `core/categorias.py`, `app/esquemas.py`, `modelos.py`, `core/base_datos.py`, `scripts/migrar_a_neon.py`, `servicios/{gastos,deducciones_fijas,deudas,quincenas,capacidad,ahorro}.py`, `routers/{gastos,presupuesto,deudas}.py`, `diccionario_datos.md` §7/§8/§9.3.
 
 ### 2026-11-20 — Paso 1: backend, migraciones, catálogo cerrado y anti-duplicación (SRS v1.9)
@@ -1781,6 +1781,18 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
   - Se agregó `actualizar_deuda()` y `POST /deudas/{id_deuda}/editar` con la misma validación; el historial de `pagos_deuda` no se reescribe.
 - **Consecuencias:** ADR-53 se mantiene solo en lo referente a no capturar ni exhibir intereses; su tolerancia de $1 por cuota desaparece. Los esquemas Pydantic calculan la tasa simulada solo para validar.
 - **Archivos:** `servicios/deudas.py`, `esquemas.py`, `routers/deudas.py`, `diccionario_datos.md` §8, `tests/test_deudas_interes_implicito.py`.
+
+### ADR-59 — Sistema de modales, tablas táctiles y presentación responsive (SRS v1.9)
+
+- **Contexto:** después de ADR-57/58 hicieron falta decisiones de UI: varios modales se desalineaban, las tablas largas crecían sin control y el mismo componente debía servir en escritorio y móvil.
+- **Decisión:**
+  - Todo modal usa una capa fija que cubre el viewport y centra la tarjeta; la tarjeta lleva cierre sutil en la cabecera, sustituyendo al botón «Cancelar» inferior. En modales de tres acciones el orden es **Actualizar → Eliminar**.
+  - Las filas de deudas, deducciones y atajos son táctiles en móvil: se ocultan los iconos laterales y un toque abre el modal centrado. En escritorio se muestran los botones de acción. El scroll de las tablas queda contenido en su caja (`overscroll-behavior`, `touch-action`); no se usa `contain: paint` porque el modal vive dentro de la tabla.
+  - El catálogo de ocho categorías es la única fuente de colores para la dona; el selector usa un punto neutro en vez de cuadrito de color. La categoría 8 **sí se puede elegir**, pero exige `id_deuda` (supera la reserva automática descrita en ADR-57).
+  - El recibo de abono usa fondo gris perla `#F8FAFC`, texto carbón `#111827` y montos verdes `#16A34A`, conservando la cabecera azul.
+  - El botón Copiar tiene un único manejador global con estado «¡Copiado!» de 5 segundos.
+- **Consecuencias:** se conserva la anti-duplicación por `id_deuda` y la liquidez mínima de $300.000; los cambios son de presentación y no alteran cálculos ni migraciones.
+- **Archivos:** `static/css/estilos.css`, `static/js/app.js`, `static/js/deudas.js`, `static/js/categorias.js`, `templates/_categorias.html`, `templates/deudas/index.html`, `templates/presupuesto/index.html`, `templates/chancucos/index.html`, `templates/finanzas/index.html`, `templates/olb_byte/_recibo.html`.
 
 ### 2026-11-20 — Sección 2.2: validación de cuotas con interés implícito (backend)
 

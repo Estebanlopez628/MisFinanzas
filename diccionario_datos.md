@@ -192,17 +192,19 @@ Gastos fijos y variables que afectan el bolsillo del periodo.
 - SRS v1.6, checks: `pagado` es permanente. Limpiar solo pone `check_visible = false`. Un gasto con `inhabilitado_hasta` vigente no cuenta en el saldo de su quincena y no admite ✔; solo admite abono manual, que lo deja pagado con el monto indicado.
 - SRS v1.6, valor: editar un gasto de meta cambia su valor en los meses posteriores de la misma quincena que aún no estén pagados. Los meses nuevos toman el último valor de esa quincena.
 - SRS v1.6: el abono de `abonos_proyeccion` es la suma de los gastos de la meta con `pagado = true` en ese mes; se recalcula al marcar, al editar un pago marcado y al saltar uno con ×.
-- SRS v1.9, catálogo cerrado: la categoría se elige entre ocho opciones fijas con colores definidos en `core/categorias.py`. La categoría 8 (`Créditos y Obligaciones`, `#EF4444`) no se captura a mano: se calcula con la cuota mensual de las deudas activas.
+- SRS v1.9, catálogo cerrado: la categoría se elige entre ocho opciones fijas con colores definidos en `core/categorias.py`. La categoría 8 (`Créditos y Obligaciones`, `#EF4444`) **sí se puede seleccionar** en el formulario, pero en ese caso el backend exige un `id_deuda` vinculado; la lista de arcos vuelve a calcular su valor con la cuota de las deudas activas.
 - SRS v1.9, anti-duplicación: un gasto con `id_deuda` no se imputa a las quincenas ni se suma en las categorías 1 a 7 de la dona; su cuota ya se contó en la categoría 8.
 
 ---
 
 ## 8. `deudas`
 
-Pasivos del usuario (módulo `Registro y Detalles de deudas`). **SRS v1.8:** se capturan seis
-datos visibles y **no hay intereses**: la cuota por el número de pagos debe
-reconstruir el total adeudado. Desaparecen la tasa, la fecha límite y el abono
-manual.
+Pasivos del usuario (módulo `Registro y Detalles de deudas`). Se capturan seis
+datos visibles: acreedor, descripción, total adeudado, cuota, cuotas pendientes y
+periodicidad. Desaparecen la tasa, la fecha límite y el abono manual. **SRS v1.9,
+ADR-58:** se admite interés implícito —`cuota × cuotas` puede superar el capital—,
+pero se calcula en privado y nunca se guarda ni se muestra; los pagos siguen
+abonando capital completo.
 
 | Campo | Tipo | Nulo | Obligatorio | Descripción / Regla |
 | --- | --- | --- | --- | --- |
@@ -256,9 +258,10 @@ duplica pagos.
 
 ## 9. `chancucos` — *Atajos de pago*
 
-Referencias de pago rápido (exclusivo `ADMIN_OLB`). **SRS v1.3:** el registro se
-simplifica a tres datos visibles; desaparecen `entidad` y `tipo_servicio`, que se
-fusionan en una sola descripción libre.
+Referencias de pago rápido. Desde SRS v1.8 **todos los usuarios autenticados**
+pueden crear y administrar sus propios atajos (cada uno ve solo los suyos).
+**SRS v1.3:** el registro se simplifica a tres datos visibles; desaparecen
+`entidad` y `tipo_servicio`, que se fusionan en una sola descripción libre.
 
 | Campo | Tipo | Nulo | Obligatorio | Descripción / Regla |
 | --- | --- | --- | --- | --- |
@@ -266,8 +269,8 @@ fusionan en una sola descripción libre.
 | `id_usuario` | `UUID` (FK → `usuarios`) | No | Sí | Propietario del registro. |
 | `descripcion` | `VARCHAR(120)` | No | Sí | Texto libre que identifica el atajo. Ej. `EPM energía`, `Claro internet`, `Tarjeta Bancolombia`. Absorbe los antiguos `entidad` + `tipo_servicio`. |
 | `numero_referencia` | `VARCHAR(60)` | No | Sí | Código que el usuario copia al portapapeles antes de pagar. |
-| `valor_pago` | `NUMERIC(14,2)` | Sí | No | SRS v1.9, sección 4.2: valor exacto a pagar. Opcional porque hay servicios con consumo variable; si existe se muestra en la tarjeta del atajo y en la tabla antes del botón *Pagar*. No puede ser negativo. |
-| `url_pago` | `VARCHAR(300)` | Sí | No | URL oficial para el botón *Pagar*. Validar `http(s)`. Se mantiene opcional: hay recibos que solo se pagan en ventanilla y el atajo sigue sirviendo para copiar la referencia. |
+| `valor_pago` | `NUMERIC(14,2)` | Sí | No | SRS v1.9, sección 4.2: valor exacto a pagar. Opcional porque hay servicios con consumo variable; si existe se muestra en la tabla de «Atajos guardados» y en la tarjeta embebida de Mis Finanzas. No puede ser negativo. |
+| `url_pago` | `VARCHAR(300)` | Sí | No | URL oficial de la pasarela. Validar `http(s)`. Se mantiene opcional: hay recibos que solo se pagan en ventanilla y el atajo sigue sirviendo para copiar la referencia. En el modal de edición se muestra en un `input type="url"` de ancho controlado para no romper la tarjeta. |
 | `dia_pago_1` | `SMALLINT` | Sí | No | SRS v1.7: día del mes del pago (1–31). Se guarda solo el número, sin año, porque el atajo se repite todos los meses. Los atajos anteriores quedan en `NULL` y se muestran sin distintivo. |
 | `dia_pago_2` | `SMALLINT` | Sí | No | SRS v1.7: segundo día del mes para un pago doble (por ejemplo, 15 y 30). Si coincide con `dia_pago_1`, se descarta y el atajo queda como pago único. |
 | `favorito` | `BOOLEAN` | No | Sí | Default `false`. Ordena los atajos en el panel de lectura. |
@@ -280,6 +283,17 @@ lee ni la escribe.
 
 **Migración SRS v1.7:** `_migrar_columnas_chancucos()` agrega `dia_pago_1` y
 `dia_pago_2` como `SMALLINT NULL`. Es idempotente y no toca los atajos existentes.
+
+**Migración SRS v1.9, sección 4.2:** `_migrar_valor_atajo()` agrega `valor_pago`
+`NUMERIC(14,2) NULL` en SQLite (`PRAGMA`) y PostgreSQL (`IF NOT EXISTS`). Los
+atajos existentes conservan sus datos y muestran «No definido» hasta editarlos.
+
+**Edición (SRS v1.9):** `POST /chancucos/{id_chancuco}/editar` actualiza
+descripción, referencia, valor, día de pago, enlace y favorito mediante
+`actualizar_chancuco()`. El modal de edición no ofrece un segundo día visible;
+si el atajo ya tenía `dia_pago_2`, el valor se conserva en un campo oculto.
+En escritorio la fila de «Atajos guardados» ofrece «Actualizar» (no «Pagar»);
+en móvil la fila se toca para abrir el mismo modal.
 
 ---
 
@@ -345,7 +359,7 @@ antes de calcular el saldo libre.
 | `valor` | `NUMERIC(14,2)` | No | Sí | Monto por pago; `>= 0`. |
 | `quincena` | `SMALLINT` | No | Sí | `1` o `2`: pago del que se descuenta. |
 | `categoria` | `VARCHAR(60)` | No | Sí | SRS v1.9: una de las ocho categorías cerradas de `core/categorias.py`; `DEFAULT 'Otros Gastos Fijos'`. Las libranzas heredadas se clasifican como `Créditos y Obligaciones`. |
-| `id_deuda` | `UUID` (FK → `deudas`) | Sí | No | SRS v1.9 (ADR-56). Deuda mensual que esta deducción paga. Si existe, `valor` toma la cuota de la deuda y la cuota no se cuenta dos veces. `ON DELETE SET NULL`: al borrar la deuda la deducción sigue como descuento normal. Cuando la deuda se paga, la deducción deja de descontarse. |
+| `id_deuda` | `UUID` (FK → `deudas`) | Sí | No | SRS v1.9 (ADR-56, sección 3.2). Deuda **activa** que esta deducción paga, mensual o quincenal. Si existe, `valor` toma la cuota de la deuda y la cuota no se cuenta dos veces. `ON DELETE SET NULL`: al borrar la deuda la deducción sigue como descuento normal. Cuando la deuda se paga, la deducción deja de descontarse. |
 | `fecha_creacion` | `TIMESTAMPTZ` | No | Sí | `now()`. |
 
 **Reglas SRS v1.9:** el selector de categoría es cerrado (ocho opciones) en el
