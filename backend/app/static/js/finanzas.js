@@ -9,8 +9,6 @@
  *   valor del auxilio de transporte y el desglose de recargos.
  * - Ofrecer el botón "Limpiar" para vaciar las horas y avisar cuando hay
  *   cambios sin guardar.
- * - Dar confirmación visual ("¡Copiado!") a los botones `data-copiar` de los
- *   atajos de pago.
  *
  * Si el navegador no ejecuta JavaScript (o la petición falla), el formulario
  * sigue funcionando con el POST clásico que renderiza el servidor.
@@ -23,9 +21,6 @@
   // escribe, y por debajo del umbral de 100 ms percibido por el usuario.
   var RETARDO_MS = 150;
   var RUTA_CALCULO = "/finanzas/calcular";
-
-  // Tiempo que el botón de copiado muestra la confirmación antes de restaurarse.
-  var DURACION_CONFIRMACION_MS = 1200;
 
   var formulario = document.querySelector("[data-calculadora]");
   if (!formulario) {
@@ -452,60 +447,6 @@
     programarCalculo();
   }
 
-  /**
-   * Copia un texto al portapapeles con respaldo para navegadores antiguos.
-   *
-   * @param {string} texto Contenido a copiar.
-   */
-  function copiarAlPortapapeles(texto) {
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(texto).catch(function () {
-        /* Si el permiso se deniega, el usuario aún puede seleccionar el texto. */
-      });
-      return;
-    }
-
-    var auxiliar = document.createElement("textarea");
-    auxiliar.value = texto;
-    auxiliar.setAttribute("readonly", "readonly");
-    auxiliar.style.position = "fixed";
-    auxiliar.style.opacity = "0";
-    document.body.appendChild(auxiliar);
-    auxiliar.select();
-    try {
-      document.execCommand("copy");
-    } catch (error) {
-      /* Sin soporte de copiado: no se interrumpe la navegación. */
-    }
-    document.body.removeChild(auxiliar);
-  }
-
-  /**
-   * Da confirmación visual breve a los botones `data-copiar`.
-   *
-   * Se usa delegación en `document` para cubrir tanto el bloque de atajos como
-   * la tabla de gestión, sin registrar un escucha por botón.
-   */
-  function prepararCopiadoRapido() {
-    document.addEventListener("click", function (evento) {
-      var boton = evento.target.closest("[data-copiar]");
-      if (!boton) {
-        return;
-      }
-
-      copiarAlPortapapeles(boton.getAttribute("data-copiar") || "");
-
-      var textoOriginal = boton.textContent;
-      boton.textContent = "¡Copiado!";
-      boton.classList.add("boton--copiado");
-
-      window.setTimeout(function () {
-        boton.textContent = textoOriginal;
-        boton.classList.remove("boton--copiado");
-      }, DURACION_CONFIRMACION_MS);
-    });
-  }
-
   formulario.addEventListener("input", function () {
     marcarCambios();
     programarCalculo();
@@ -589,7 +530,8 @@
     return "";
   });
 
-  prepararCopiadoRapido();
+  // El copiado de atajos lo gestiona `app.js` de forma global: una sola
+  // confirmación «¡Copiado!» que vuelve a «Copiar» a los 5 segundos.
 
   // Reactividad al entrar: el primer cálculo llega sin esperar a que el usuario
   // toque un campo. Se difiere un ciclo para no competir con el render inicial.

@@ -136,6 +136,19 @@ def test_el_css_de_movil_oculta_columnas_y_el_js_abre_el_modal() -> None:
     assert "js/deudas.js" in plantilla
 
 
+def test_el_copiado_es_unico_y_vuelve_a_copiar_a_los_cinco_segundos() -> None:
+    """Un solo manejador global muestra «¡Copiado!» y lo restauran a los 5 s."""
+    app_js = (RAIZ_APP / "static" / "js" / "app.js").read_text(encoding="utf-8")
+    finanzas_js = (RAIZ_APP / "static" / "js" / "finanzas.js").read_text(encoding="utf-8")
+
+    assert "CONFIRMACION_COPIADO_MS = 5000" in app_js
+    assert 'boton.textContent = "¡Copiado!"' in app_js
+    assert "restaurarBotonCopiar" in app_js
+    assert 'querySelectorAll(".boton--copiado")' in app_js
+    assert "prepararCopiadoRapido" not in finanzas_js
+    assert "copiarAlPortapapeles" not in finanzas_js
+
+
 def test_editar_un_atajo_guarda_todos_los_cambios(cliente_admin: TestClient, bd) -> None:
     """El botón Actualizar del modal persiste los datos editados."""
     cuenta = usuarios.buscar_por_correo(bd, "admin@olbbyte.co")

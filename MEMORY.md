@@ -1926,6 +1926,12 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 - La apertura sigue siendo exclusivamente por clic/toque en la fila (`deudas.js` → `conectarFilas`); el `<details>` sin summary se abre programáticamente con `.open = true`.
 - Se retiraron las reglas CSS que ocultaban ese summary. `sw.js` pasa a `olb-finanzas-v65`; **670 pruebas** en verde.
 
+### 2026-11-20 — Estado temporal del botón Copiar
+
+- Existían dos manejadores para `[data-copiar]`: uno global en `app.js` (1500 ms) y otro en `finanzas.js` (1200 ms), que se pisaban y dejaban varios botones en «¡Copiado!».
+- Se eliminó `copiarAlPortapapeles()`/`prepararCopiadoRapido()` de `finanzas.js`. Ahora `app.js` es el único manejador: guarda el texto original en `data-texto-original`, muestra «¡Copiado!» solo en el botón pulsado, restaura cualquier otro botón en estado copiado y vuelve a «Copiar» a los **5000 ms**.
+- `sw.js` pasa a `olb-finanzas-v66`; `node --check` OK y **671 pruebas** en verde.
+
 **Pendiente para el Paso 3:** solo la revisión visual en navegador (360/390/768/escritorio) de la dona, el consejero, los modales, el formulario de deducciones, el flujo SI/NO y el recibo; la corrección aritmética y la anti-duplicación ya están cubiertas por pruebas.
 
 

@@ -18,6 +18,44 @@
 (function () {
   "use strict";
 
+  /** Duración de la confirmación visual de «Copiar» (5 segundos). */
+  var CONFIRMACION_COPIADO_MS = 5000;
+
+  /**
+   * Devuelve un botón de copiado a su texto y estilo originales.
+   *
+   * @param {HTMLElement} boton Botón a restaurar.
+   */
+  function restaurarBotonCopiar(boton) {
+    if (!boton.classList.contains("boton--copiado")) {
+      return;
+    }
+    boton.textContent = boton.getAttribute("data-texto-original") || "Copiar";
+    boton.classList.remove("boton--copiado");
+    boton.removeAttribute("data-texto-original");
+  }
+
+  /**
+   * Muestra «¡Copiado!» solo en el botón pulsado y lo restaura a los 5 segundos.
+   *
+   * @param {HTMLElement} boton Botón que disparó la acción.
+   */
+  function confirmarCopia(boton) {
+    document.querySelectorAll(".boton--copiado").forEach(function (otro) {
+      if (otro !== boton) {
+        restaurarBotonCopiar(otro);
+      }
+    });
+    if (!boton.classList.contains("boton--copiado")) {
+      boton.setAttribute("data-texto-original", boton.textContent);
+      boton.classList.add("boton--copiado");
+    }
+    boton.textContent = "¡Copiado!";
+    window.setTimeout(function () {
+      restaurarBotonCopiar(boton);
+    }, CONFIRMACION_COPIADO_MS);
+  }
+
   /**
    * Copia un texto al portapapeles y avisa al usuario.
    *
@@ -25,21 +63,17 @@
    * @param {HTMLElement} boton Botón que disparó la acción.
    */
   function copiar(texto, boton) {
-    var confirmar = function () {
-      var original = boton.textContent;
-      boton.textContent = "Copiado";
-      window.setTimeout(function () {
-        boton.textContent = original;
-      }, 1500);
-    };
-
     if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(texto).then(confirmar).catch(function () {
-        seleccionarManual(texto);
-      });
+      navigator.clipboard.writeText(texto)
+        .then(function () { confirmarCopia(boton); })
+        .catch(function () {
+          seleccionarManual(texto);
+          confirmarCopia(boton);
+        });
       return;
     }
     seleccionarManual(texto);
+    confirmarCopia(boton);
   }
 
   /**
