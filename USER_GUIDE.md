@@ -26,7 +26,7 @@ La fila del gasto vinculado conserva la descripción que escribiste y muestra ú
 
 ## 3. Registrar una deuda y vincular su cuota sin duplicarla
 
-1. Ve al módulo 'Registro y Detalles de deudas' y crea la deuda indicando el Acreedor, Total Adeudado, valor de la Cuota y Número de cuotas pendientes.
+1. Ve al módulo 'Registro y Detalles de deudas' y crea la deuda indicando el Acreedor, Total Adeudado, valor de la Cuota y Número de cuotas pendientes. Mientras escribes, la app calcula cuota × cuotas: si no alcanza a cubrir el total, el botón «Guardar deuda» se bloquea y aparece una alerta roja con lo que debes corregir. En cuanto los números cuadren, la alerta desaparece y puedes guardar.
 2. Ve a 'Gastos Fijos' (en Finanzas o Trabajos Extras) o a 'Deducciones Fijas' (en Gastos y Presupuestos), elige la categoría 'Créditos y Obligaciones', responde SI cuando te pregunte si corresponde a una deuda registrada y selecciónala en la lista.
 3. El valor de la cuota se carga automáticamente desde tu deuda y podrás marcarla como pagada cada mes sin que el gráfico de dona ni el Consejero te descuenten el dinero dos veces.
 
@@ -79,5 +79,11 @@ En «Atajos de Pago» en el celular, la descripción se ajusta a su texto y el e
 ### Nueva comparativa de cierre de deuda
 
 Dentro del Consejero, la antigua gráfica de barras fue reemplazada por una comparativa de cierre con tres partes: una píldora verde con el dinero y los meses que te ahorras, dos velocímetros (azul «Pago mínimo» frente a verde «Con excedente») con la fecha y el total de cada camino, y una curva de saldo a 12 meses. La línea azul punteada es pagar solo lo mínimo; la curva verde es hacerlo con tu excedente. El hito «¡Libre de deuda!» marca el mes exacto en que el saldo llega a cero. Toca cualquier mes para ver ambos saldos. Es una proyección educativa, no una promesa ni asesoría financiera.
+
+### Fechas y confirmaciones
+
+Los campos de fecha muestran un ícono de calendario en gris claro. En la computadora, basta con hacer clic en cualquier parte del campo para que se abra el calendario; también puedes seguir escribiendo con el teclado.
+
+Cuando una acción pide confirmación —por ejemplo, limpiar los ✔ de una quincena o eliminar un registro— aparece una ventana oscura de MisFinanzas con el mensaje y los botones «Cancelar» y «Confirmar» (o «Eliminar»). Ya no se muestran las ventanas blancas del navegador. Para avisos informativos se usa el mismo estilo con un botón «Entendido».
 
 © 2026 MisFinanzas

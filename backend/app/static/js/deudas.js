@@ -147,6 +147,50 @@
 
   // SRS v3.4, punto 4.1: scroll de ida hasta «Nueva deuda», igual que el de
   // retorno al formulario de origen. El flag se consume una sola vez.
+  // SRS v3.9.1, sección 1: validación preventiva en vivo del plan de pagos.
+  var botonGuardar = document.querySelector("[data-guardar-deuda]");
+  var alertaDeuda = document.querySelector("[data-alerta-deuda]");
+  var formularioDeuda = botonGuardar && botonGuardar.closest("form");
+  if (formularioDeuda && alertaDeuda) {
+    var totalCampo = formularioDeuda.querySelector('[name="saldo_total"]');
+    var cuotaCampo = formularioDeuda.querySelector('[name="cuota"]');
+    var cuotasCampo = formularioDeuda.querySelector('[name="cuotas_pendientes"]');
+
+    /**
+     * Interpreta un monto escrito con separadores colombianos.
+     *
+     * @param {string} texto Valor del input.
+     * @returns {number} Monto numérico, 0 si no es válido.
+     */
+    function numeroDeuda(texto) {
+      var limpio = (texto || "").replace(/[^\d,]/g, "").replace(",", ".");
+      var numero = parseFloat(limpio);
+      return isFinite(numero) ? numero : 0;
+    }
+
+    /**
+     * Bloquea el guardado cuando la cuota por las cuotas no cubre la deuda.
+     */
+    function validarPlan() {
+      var total = numeroDeuda(totalCampo && totalCampo.value);
+      var cuota = numeroDeuda(cuotaCampo && cuotaCampo.value);
+      var cuotas = numeroDeuda(cuotasCampo && cuotasCampo.value);
+      var incompleto = total <= 0 || cuota <= 0 || cuotas <= 0;
+      var insuficiente = !incompleto && cuota * cuotas < total;
+      alertaDeuda.hidden = !insuficiente;
+      botonGuardar.disabled = insuficiente;
+      botonGuardar.classList.toggle("boton--deshabilitado", insuficiente);
+    }
+
+    [totalCampo, cuotaCampo, cuotasCampo].forEach(function (campo) {
+      if (campo) {
+        campo.addEventListener("input", validarPlan);
+        campo.addEventListener("change", validarPlan);
+      }
+    });
+    validarPlan();
+  }
+
   if (sessionStorage.getItem("misfinanzas_scroll_to_new_debt") === "true") {
     sessionStorage.removeItem("misfinanzas_scroll_to_new_debt");
     window.requestAnimationFrame(function () {

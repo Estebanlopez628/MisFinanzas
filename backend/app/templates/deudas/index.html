@@ -124,7 +124,14 @@
             </select>
           </label>
         </div>
-        <button class="boton boton--primario" type="submit">Guardar deuda</button>
+        <button class="boton boton--primario" type="submit" data-guardar-deuda>Guardar deuda</button>
+        {# SRS v3.9.1, sección 1: alerta preventiva con el mismo estilo rojo de
+           las demás validaciones, justo debajo del botón. #}
+        <div class="alerta alerta--error" data-alerta-deuda role="alert" hidden>
+          El valor total calculado entre el valor de la cuota y la cantidad de
+          cuotas no alcanza a cubrir la totalidad de la deuda. Por favor,
+          verifica nuevamente la información y digita correctamente los datos.
+        </div>
       </form>
       {# SRS v3.0, punto 1: enlace de texto limpio, justo debajo del formulario
          «Nueva deuda» y con el mismo estilo que «Ve a registrar la deuda». #}

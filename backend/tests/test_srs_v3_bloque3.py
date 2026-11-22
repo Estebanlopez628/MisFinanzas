@@ -35,7 +35,7 @@ def test_textos_justificados_y_volver_primario(cliente_usuario: TestClient) -> N
 def test_contraste_de_flechas_calendario_y_modales() -> None:
     """Selects, fechas y modales usan gris claro y centrado global."""
     assert "stroke='%239CA3AF'" in CSS
-    assert "filter: invert(0.75)" in CSS
+    assert "filter: invert(0.82) brightness(1.15)" in CSS
     assert "color-scheme: dark" in CSS
     assert ".modal-centrado," in CSS
     assert "inset: 0" in CSS

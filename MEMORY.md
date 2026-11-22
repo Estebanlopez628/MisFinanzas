@@ -262,6 +262,12 @@ Recálculo en tiempo real (<100 ms) sin recargar página. Se implementa con func
 - **Decisión:** `trabajos_extras` gana `tipo_contrato` (`INDEFINIDO` | `TERMINO_FIJO`), `frecuencia` (`MENSUAL` | `QUINCENAL`), `fecha_fin` y `fecha_pago`. `valor` es el monto **de cada pago**. Los pagos se generan de forma idempotente como filas de `gastos` con `id_trabajo`: reutilizan la macro `fila_gasto` (lápiz, «Cancelar», ×, ✔ y abono manual) pero `gastos.listar_gastos` los excluye, así que no tocan el sueldo, las quincenas ni los totales de gastos. El ✔ registra el cobro y `trabajos.extras_cobrados_mes` lo suma al `disponible` del diagnóstico del mes. La frecuencia quincenal crea dos pagos (día 15 y día 30 ajustado al último día); la mensual, uno en el día de `fecha_pago`. Un contrato indefinido mantiene una ventana móvil de 12 meses desde el mes visible; un término fijo se detiene en `fecha_fin`. La × inhabilita el pago 15 días en lugar de borrarlo, para que la generación idempotente no lo recree. Los trabajos anteriores se migran como término fijo de un solo mes para no inventar ingresos recurrentes.
 - **Archivos:** `modelos.py` (`TrabajoExtra`, `Gasto.id_trabajo`), `core/base_datos.py` (`_migrar_columnas_trabajos`, `id_trabajo` en `_migrar_columnas_gastos`), `servicios/trabajos.py`, `servicios/gastos.py`, `servicios/pagos_metas.py` (`quitar_gasto`), `servicios/ahorro.py` (`diagnostico`), `routers/trabajos.py`, `routers/gastos.py` (`_volver`), `templates/trabajos/index.html`, `templates/finanzas/_gasto_fijo.html`, `templates/presupuesto/index.html`, `static/js/app.js`, `diccionario_datos.md` §7 y §12, `tests/test_trabajos_extras.py`.
 
+### ADR-72 — Blindaje UX v3.9.1: validación en vivo, fechas y modales propios
+- **Contexto:** el formulario de deudas solo avisaba del plan inválido después del POST (error 400); el icono de fecha era poco visible y no se abría al hacer clic en escritorio; y varias acciones usaban `window.confirm`/`window.alert`, que muestran cuadros blancos nativos que rompen la identidad oscura.
+- **Decisión:** `deudas.js` calcula `cuota × cuotas` en cada entrada y bloquea «Guardar deuda» con alerta roja amigable; el backend comparte el mismo mensaje exacto en `detail`. Los `<input type=date>` llevan icono gris de alto contraste y `showPicker()` global en escritorio. Se auditó todo el código y se eliminó el 100% de diálogos nativos: `base.html` aporta `#modal-confirmacion` y `#modal-aviso`, y `app.js` gestiona `data-confirmar` con `requestSubmit`; los avisos de factura usan el toast oscuro.
+- **Consecuencia:** queda prohibido reintroducir cualquier diálogo nativo; las validaciones no exponen códigos HTTP y la experiencia visual es uniforme en móvil y escritorio. No se tocaron los módulos aprobados en v3.7.
+- **Archivos:** `servicios/deudas.py`, `templates/deudas/index.html`, `static/js/deudas.js`, `static/css/estilos.css`, `static/js/app.js`, `static/js/factura.js`, `templates/base.html`, plantillas de gastos, historial, incapacidades, chancucos y presupuesto, `sw.js` (`olb-finanzas-v99`), `tests/test_srs_v3_9_*.py`.
+
 ### ADR-71 — Consolidación final v3.7: móvil, WhatsApp nativo, icono y Consejero
 - **Contexto:** los atajos guardados aún desplazaban lateralmente en móvil; compartir por WhatsApp descargaba un PNG innecesario y dejaba pestañas en blanco en iOS/Android; el retorno de deudas podía marcar SI sin comparar IDs reales; el icono neón azul sustituye al anterior; y la gráfica de 24 barras del Consejero no comunicaba bien el cierre.
 - **Decisión:** los tres orígenes publican `data-deudas-actuales` y se comparan con los IDs del servidor; `whatsapp://send` en móvil sin descarga (la copia con `ClipboardItem` sigue intacta) y `wa.me` en escritorio; el icono oficial pasa a ser `Logotipo OLB BYTE futurista en neón azul.png` en todos los tamaños; `Consejo.cierre` calcula en Python la proyección y la plantilla dibuja píldora, dos velocímetros, curva SVG de 12 meses con hito «¡Libre de deuda!» y tooltip.
@@ -507,6 +513,13 @@ Recálculo en tiempo real (<100 ms) sin recargar página. Se implementa con func
 ---
 
 ## Bitácora de Cambios
+
+### 2026-11-22 — SRS v3.9.1: blindaje UX y cierre documental (ADR-72)
+
+- Validación preventiva en deudas con mensaje amigable idéntico en frontend y backend.
+- Selectores de fecha con icono gris visible y apertura inmediata en escritorio.
+- Erradicación total de diálogos nativos: modales oscuros propios para confirmaciones y avisos.
+- `sw.js` en `olb-finanzas-v99`. Verificación: **768 pruebas** en verde, incluida una auditoría global que falla si reaparece cualquier `alert`/`confirm`/`prompt`.
 
 ### 2026-11-22 — SRS v3.7: consolidación final (5 ajustes, ADR-71)
 

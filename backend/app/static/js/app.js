@@ -155,6 +155,26 @@
     }
   });
 
+  // SRS v3.9.1, sección 2: en escritorio, un clic en cualquier zona del campo
+  // de fecha despliega el calendario de inmediato sin perder la edición a mano.
+  var esMovil = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  if (!esMovil) {
+    document.addEventListener("click", function (evento) {
+      var campo = evento.target;
+      if (!(campo instanceof HTMLInputElement) || campo.type !== "date") {
+        return;
+      }
+      if (typeof campo.showPicker !== "function") {
+        return;
+      }
+      try {
+        campo.showPicker();
+      } catch (error) {
+        // El navegador ya abrió el calendario o exige un gesto distinto.
+      }
+    });
+  }
+
   // ------------------- Ediciones en línea y confirmaciones ----------------
 
   /**
@@ -213,17 +233,152 @@
     }
   });
 
-  // SRS v1.7: las acciones destructivas o masivas piden confirmación con un
-  // atributo, sin depender de manejadores incrustados en el HTML.
+  // SRS v3.9.1, sección 3: sistema global de modales. Ningún flujo dispara
+  // diálogos nativos del navegador (alertas, confirmaciones o prompts).
+  var modalConfirmacion = document.getElementById("modal-confirmacion");
+  var modalAviso = document.getElementById("modal-aviso");
+  var respuestaConfirmacion = null;
+
+  /**
+   * Cierra el modal de confirmación con una respuesta.
+   *
+   * @param {boolean} valor `true` si el usuario aceptó.
+   */
+  function cerrarConfirmacion(valor) {
+    if (!modalConfirmacion) {
+      return;
+    }
+    modalConfirmacion.hidden = true;
+    if (respuestaConfirmacion) {
+      respuestaConfirmacion(valor);
+      respuestaConfirmacion = null;
+    }
+  }
+
+  /**
+   * Abre el modal de confirmación propio.
+   *
+   * @param {string} mensaje Texto a mostrar.
+   * @param {boolean} peligro `true` para una eliminación definitiva.
+   * @returns {Promise<boolean>} `true` si el usuario confirmó.
+   */
+  function pedirConfirmacion(mensaje, peligro) {
+    if (!modalConfirmacion) {
+      return Promise.resolve(false);
+    }
+    var cuerpo = document.getElementById("modal-confirmacion-cuerpo");
+    var icono = document.getElementById("modal-confirmacion-icono");
+    var aceptar = modalConfirmacion.querySelector("[data-confirm-aceptar]");
+    if (cuerpo) {
+      cuerpo.textContent = mensaje;
+    }
+    if (icono) {
+      icono.textContent = peligro ? "!" : "?";
+    }
+    if (aceptar) {
+      aceptar.className = peligro ? "boton boton--peligro" : "boton boton--primario";
+      aceptar.textContent = peligro ? "Eliminar" : "Confirmar";
+    }
+    modalConfirmacion.hidden = false;
+    return new Promise(function (resolver) {
+      respuestaConfirmacion = resolver;
+    });
+  }
+
+  if (modalConfirmacion) {
+    var cancelar = modalConfirmacion.querySelector("[data-confirm-cancelar]");
+    var aceptar = modalConfirmacion.querySelector("[data-confirm-aceptar]");
+    if (cancelar) {
+      cancelar.addEventListener("click", function () { cerrarConfirmacion(false); });
+    }
+    if (aceptar) {
+      aceptar.addEventListener("click", function () { cerrarConfirmacion(true); });
+    }
+    modalConfirmacion.addEventListener("click", function (evento) {
+      if (evento.target === modalConfirmacion) {
+        cerrarConfirmacion(false);
+      }
+    });
+  }
+
+  /**
+   * Muestra un aviso con el modal oscuro de la app.
+   *
+   * @param {string} mensaje Texto a mostrar.
+   */
+  function mostrarAvisoApp(mensaje) {
+    if (!modalAviso) {
+      return;
+    }
+    var cuerpo = document.getElementById("modal-aviso-cuerpo");
+    if (cuerpo) {
+      cuerpo.textContent = mensaje;
+    }
+    modalAviso.hidden = false;
+    var entendido = modalAviso.querySelector("[data-aviso-entendido]");
+    if (entendido) {
+      entendido.focus();
+    }
+  }
+
+  if (modalAviso) {
+    var entendido = modalAviso.querySelector("[data-aviso-entendido]");
+    if (entendido) {
+      entendido.addEventListener("click", function () { modalAviso.hidden = true; });
+    }
+    modalAviso.addEventListener("click", function (evento) {
+      if (evento.target === modalAviso) {
+        modalAviso.hidden = true;
+      }
+    });
+  }
+
+  // Formularios con confirmación: se detiene el envío hasta que el usuario
+  // responda en el modal propio.
   document.addEventListener("submit", function (evento) {
     var formulario = evento.target;
     if (!(formulario instanceof HTMLFormElement)) {
       return;
     }
     var mensaje = formulario.getAttribute("data-confirmar");
-    if (mensaje && !window.confirm(mensaje)) {
-      evento.preventDefault();
+    if (!mensaje) {
+      return;
     }
+    evento.preventDefault();
+    pedirConfirmacion(mensaje, formulario.hasAttribute("data-confirmar-peligro")).then(function (ok) {
+      if (ok) {
+        formulario.submit();
+      }
+    });
+  });
+
+  // Botones y enlaces con confirmación (incluidos los que usan `formaction`).
+  document.addEventListener("click", function (evento) {
+    var objetivo = evento.target;
+    if (!(objetivo instanceof Element)) {
+      return;
+    }
+    var control = objetivo.closest("[data-confirmar]");
+    if (!control || control.tagName === "FORM") {
+      return;
+    }
+    evento.preventDefault();
+    var peligro = control.hasAttribute("data-confirmar-peligro");
+    pedirConfirmacion(control.getAttribute("data-confirmar"), peligro).then(function (ok) {
+      if (!ok) {
+        return;
+      }
+      var formulario = control.form;
+      if (formulario) {
+        if (typeof formulario.requestSubmit === "function") {
+          formulario.requestSubmit(control);
+        } else {
+          formulario.submit();
+        }
+      } else if (control.tagName === "A") {
+        window.location.href = control.getAttribute("href");
+      }
+    });
   });
 
   // ------------------ Tipo de contrato de Trabajos Extras ------------------

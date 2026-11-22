@@ -51,8 +51,9 @@ CUOTAS_MAXIMAS = 600
 # SRS v1.9, sección 2.2: único mensaje de validación permitido para el plan de
 # pagos. Se usa cuando la suma de cuotas no alcanza ni el capital adeudado.
 MENSAJE_CUOTAS_INSUFICIENTES = (
-    "El número de cuotas por el valor de cuota no alcanza a cubrir el valor "
-    "total de la deuda, revisa los datos y digítalos nuevamente"
+    "El valor total calculado entre el valor de la cuota y la cantidad de "
+    "cuotas no alcanza a cubrir la totalidad de la deuda. Por favor, verifica "
+    "nuevamente la información y digita correctamente los datos."
 )
 
 

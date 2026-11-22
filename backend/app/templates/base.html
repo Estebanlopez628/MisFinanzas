@@ -112,6 +112,32 @@
       </dialog>
     {% endif %}
   </div>
+  {# SRS v3.9.1: modales propios para reemplazar alert/confirm/prompt nativos. #}
+  <div class="app-modal" id="modal-confirmacion" hidden role="dialog" aria-modal="true"
+       aria-labelledby="modal-confirmacion-titulo">
+    <div class="app-modal__tarjeta">
+      <span class="app-modal__icono" id="modal-confirmacion-icono" aria-hidden="true">!</span>
+      <h2 class="app-modal__titulo" id="modal-confirmacion-titulo">Confirmar acción</h2>
+      <p class="app-modal__cuerpo" id="modal-confirmacion-cuerpo"></p>
+      <div class="app-modal__acciones">
+        <button class="boton boton--secundario" type="button" data-confirm-cancelar>Cancelar</button>
+        <button class="boton boton--primario" type="button" data-confirm-aceptar>Aceptar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="app-modal" id="modal-aviso" hidden role="alertdialog" aria-modal="true"
+       aria-labelledby="modal-aviso-titulo">
+    <div class="app-modal__tarjeta">
+      <span class="app-modal__icono app-modal__icono--azul" aria-hidden="true">i</span>
+      <h2 class="app-modal__titulo" id="modal-aviso-titulo">Aviso</h2>
+      <p class="app-modal__cuerpo" id="modal-aviso-cuerpo"></p>
+      <div class="app-modal__acciones">
+        <button class="boton boton--primario" type="button" data-aviso-entendido>Entendido</button>
+      </div>
+    </div>
+  </div>
+
   <script src="{{ url_for('estaticos', path='js/app.js') }}" defer></script>
   <script src="{{ url_for('estaticos', path='js/dona.js') }}" defer></script>
   <script src="{{ url_for('estaticos', path='js/moneda.js') }}" defer></script>

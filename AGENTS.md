@@ -179,6 +179,9 @@ Plataforma web/móvil híbrida (PWA) con backend y frontend **100% Python**, arq
 14. **Móvil y WhatsApp (SRS v3.7):** atajos sin scroll lateral y con encabezado/filas alineados; en iOS/Android `whatsapp://send` vía `window.location.href`, sin descargar PNG al compartir; la copia al portapapeles con `ClipboardItem` no se modifica.
 15. **Deuda confirmada (SRS v3.7):** comparar `existing_debt_ids` con los IDs reales del servidor antes de marcar SI; sin ID nuevo se mantiene NO y se bloquea guardar.
 16. **Consejero (SRS v3.7):** la gráfica unificada de cierre la calcula Python en `Consejo.cierre`; el SVG y el tooltip son solo presentación. Icono nativo oficial: logotipo neón azul.
+17. **Cero diálogos nativos (SRS v3.9.1):** prohibición absoluta de alertas, confirmaciones y prompts del navegador en cualquier módulo. Usar siempre `#modal-confirmacion` / `#modal-aviso` de `base.html` con `data-confirmar` o `mostrarAvisoApp()`.
+18. **Validación preventiva (SRS v3.9.1):** en deudas, bloquear «Guardar deuda» en vivo cuando `cuota × cuotas < total`, con la alerta roja de texto amigable; el backend devuelve el mismo mensaje en `detail`.
+19. **Fechas (SRS v3.9.1):** icono gris visible y `showPicker()` al hacer clic en escritorio para `input[type="date"]`.
 
 ---
 
@@ -457,3 +460,7 @@ La configuración vive en `.vscode/launch.json`. También existe **Pruebas (pyte
 - [x] **SRS v3.7 — Sección 4 (icono neón):** nuevo icono oficial `assets/Logotipo OLB BYTE futurista en neón azul.png` en `favicon-32.png`, `icono-180/192/512.png` y `icono-512-maskable.png`; `base.html` añade los `link` de 32 y 192; manifiesto con `purpose: "any maskable"`; `sw.js` en `olb-finanzas-v98`.
 - [x] **SRS v3.7 — Sección 5 (Consejero):** reemplazo de las 24 barras por la comparativa unificada: píldora de ahorro, dos velocímetros, curva de área SVG de 12 meses con hito «¡Libre de deuda!» y tooltip táctil. `Consejo.cierre` lo calcula Python; `consejero.js` solo muestra el detalle.
 - [x] **SRS v3.7 — Cierre documental (sección 6):** Guía, Constitución, Diccionario, `MEMORY.md` (ADR-71), `AGENTS.md` y SRS §11 sincronizados. Verificación: suite completa en verde.
+- [x] **SRS v3.9.1 — Sección 1 (deudas):** validación reactiva de `cuota × cuotas >= total` con botón bloqueado y alerta roja amigable bajo «Guardar deuda»; mismo mensaje exacto en el `detail` del backend para alta y edición.
+- [x] **SRS v3.9.1 — Sección 2 (fechas):** icono gris `invert(0.82) brightness(1.15)`, `opacity: .9` y `padding: 4px`; `showPicker()` global en escritorio con clic en cualquier zona del campo.
+- [x] **SRS v3.9.1 — Sección 3 (modales propios):** auditoría total y reemplazo del 100% de `alert`/`confirm`/`prompt` por `#modal-confirmacion` y `#modal-aviso` oscuros con `data-confirmar`, `requestSubmit` y toast oficial; cero diálogos nativos en el código.
+- [x] **SRS v3.9.1 — Cierre documental (sección 4):** Guías, Diccionario, Constitución, `MEMORY.md` (ADR-72), `AGENTS.md` y SRS §12 sincronizados. `sw.js` en `olb-finanzas-v99`. Verificación: **768 pruebas** en verde.

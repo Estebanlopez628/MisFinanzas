@@ -6,7 +6,7 @@ Principios innegociables. Toda especificación, plan y tarea debe cumplirlos de 
    - El sistema es público para la gestión de finanzas personales (`USER_FINANZAS`) y privado exclusivamente para el administrador (`ADMIN_OLB`), protegiendo el módulo de ventas, cartera y enlaces de pago ("chancucos").
 
 2. **La Especificación Activa Manda:**
-   - La especificación vigente es la **SRS v3.7** (sección 11 del archivo `especificaci_n_de_requisitos_de_software_srs.md`), que conserva las reglas de v1.1.0 a v3.4 salvo contradicción explícita.
+   - La especificación vigente es la **SRS v3.9.1** (sección 12 del archivo `especificaci_n_de_requisitos_de_software_srs.md`), que conserva las reglas de v1.1.0 a v3.7 salvo contradicción explícita.
    - Ninguna funcionalidad de cálculo salarial, recargos, incapacidades o control de quincenas se implementa si no está formalmente detallada en la especificación activa.
 
 3. **Cálculos Financieros Transparentes y Automáticos:**
@@ -50,6 +50,12 @@ Principios innegociables. Toda especificación, plan y tarea debe cumplirlos de 
     - «Atajos guardados» no genera scroll lateral en móvil y mantiene encabezados y filas en la misma rejilla.
     - El retorno de deudas compara IDs reales (`existing_debt_ids`) antes de marcar SI.
 
-12. **Documentación Viva Completa:**
+12. **Experiencia de Usuario Uniforme (SRS v3.9.1):**
+    - Está prohibido disparar diálogos nativos del navegador (alertas, confirmaciones o prompts). Toda confirmación o aviso usa los modales oscuros propios de MisFinanzas.
+    - Las validaciones son preventivas y se explican en lenguaje claro, sin exponer códigos técnicos HTTP.
+    - Los campos de fecha mantienen el icono legible en tema oscuro y se abren con un clic en escritorio.
+    - La identidad visual oscura, la separación de roles y la reserva de $300.000 con cero duplicidad de cuotas se conservan sin cambios.
+
+13. **Documentación Viva Completa:**
    - Además de `AGENTS.md` y `MEMORY.md`, son obligatorios esta misma `constitution.md`, `diccionario_datos.md`, `Guia.md` (fichas por archivo + inventario regenerado con `--verificar`), `USER_GUIDE.md` (manual del usuario) y la SRS del repositorio, con la versión activa reflejada en todos ellos.
    - Ningún bloque se considera terminado si `compileall`, `pytest`, `node --check` y `generar_guia.py --verificar` no están en verde.

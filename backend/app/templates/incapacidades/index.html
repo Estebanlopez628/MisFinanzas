@@ -222,7 +222,7 @@
                 <td>{{ item.estado }}</td>
                 <td>
                   <form method="post" action="{{ url_for('eliminar_incapacidad', id_incapacidad=item.id_incapacidad) }}"
-                        onsubmit="return confirm('¿Eliminar esta incapacidad y sus saldos pendientes?');">
+                        data-confirmar="¿Eliminar esta incapacidad y sus saldos pendientes?" data-confirmar-peligro>
                     <button class="boton boton--peligro boton--pequeno" type="submit">Eliminar</button>
                   </form>
                 </td>

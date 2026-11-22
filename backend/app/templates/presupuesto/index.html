@@ -478,7 +478,7 @@
                     <button class="boton boton--peligro boton--pequeno" type="submit"
                             formmethod="post"
                             formaction="{{ url_for('eliminar_deduccion_fija', id_deduccion=deduccion.id_deduccion) }}"
-                            onclick="return confirm('¿Eliminar esta deducción fija?');">Eliminar</button>
+                            data-confirmar="¿Eliminar esta deducción fija?" data-confirmar-peligro>Eliminar</button>
                   </div>
                 </form>
               </details>
@@ -524,7 +524,8 @@
               </div>
               <form method="post"
                     action="{{ url_for('eliminar_proyeccion', id_proyeccion=meta.proyeccion.id_proyeccion) }}"
-                    onsubmit="return confirm('¿Eliminar esta meta? Se archiva en el historial y se quitan sus cuotas futuras no pagadas.');">
+                    data-confirmar="¿Eliminar esta meta? Se archiva en el historial y se quitan sus cuotas futuras no pagadas."
+                    data-confirmar-peligro>
                 <button class="boton boton--peligro boton--pequeno" type="submit">Eliminar</button>
               </form>
             </header>

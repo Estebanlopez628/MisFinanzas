@@ -159,7 +159,7 @@
                   <button class="boton boton--primario boton--pequeno atajo-accion" type="button"
                           data-abrir-atajo aria-label="Actualizar {{ item.descripcion }}">Actualizar</button>
                   <form method="post" action="{{ url_for('eliminar_chancuco', id_chancuco=item.id_chancuco) }}"
-                        onsubmit="return confirm('¿Eliminar este atajo de pago?');">
+                        data-confirmar="¿Eliminar este atajo de pago?" data-confirmar-peligro>
                     <button class="boton boton--peligro boton--pequeno atajo-accion" type="submit">Eliminar</button>
                   </form>
 
@@ -216,7 +216,7 @@
                         <button class="boton boton--peligro boton--pequeno atajo-accion" type="submit"
                                 formmethod="post"
                                 formaction="{{ url_for('eliminar_chancuco', id_chancuco=item.id_chancuco) }}"
-                                onclick="return confirm('¿Eliminar este atajo de pago?');">Eliminar</button>
+                                data-confirmar="¿Eliminar este atajo de pago?" data-confirmar-peligro>Eliminar</button>
                       </div>
                     </form>
                   </details>

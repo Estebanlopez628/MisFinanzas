@@ -307,7 +307,7 @@
     var numero = numeroDelEnlace(whatsapp);
 
     if (!numero) {
-      window.alert("El cliente no tiene un número de celular registrado. Agrégalo en su ficha para abrir el chat.");
+      mostrarAviso("El cliente no tiene un número de celular registrado. Agrégalo en su ficha para abrir el chat.");
       return;
     }
 
@@ -388,7 +388,7 @@
         descargar(blob, nombre);
       })
       .catch(function (error) {
-        window.alert((error && error.message) || "No se pudo preparar la imagen.");
+        mostrarAviso((error && error.message) || "No se pudo preparar la imagen.");
       })
       .then(function () {
         restaurarLogo();

@@ -119,7 +119,7 @@
                 <td class="tabla__numero">{{ gasto.valor | cop }}</td>
                 <td>
                   <form method="post" action="{{ url_for('eliminar_gasto', id_gasto=gasto.id_gasto) }}"
-                        onsubmit="return confirm('¿Eliminar este gasto?');">
+                        data-confirmar="¿Eliminar este gasto?" data-confirmar-peligro>
                     <button class="boton boton--peligro boton--pequeno" type="submit">Eliminar</button>
                   </form>
                 </td>

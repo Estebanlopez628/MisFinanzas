@@ -86,7 +86,8 @@
                      href="{{ url_for('imprimir_periodo', id_periodo=fila.periodo.id_periodo) }}">Imprimir</a>
                   <form method="post"
                         action="{{ url_for('eliminar_periodo', id_periodo=fila.periodo.id_periodo) }}"
-                        onsubmit="return confirm('¿Eliminar este periodo? Los saldos de incapacidad volverán a quedar pendientes.');">
+                        data-confirmar="¿Eliminar este periodo? Los saldos de incapacidad volverán a quedar pendientes."
+                        data-confirmar-peligro>
                     <button class="boton boton--peligro boton--pequeno" type="submit">Eliminar</button>
                   </form>
                 </td>

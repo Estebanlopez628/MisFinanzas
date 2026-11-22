@@ -4195,7 +4195,85 @@ strong.valor-negativo.recibo__cifra--saldo {
 }
 
 @media (max-width: 767px) {
-  /* SRS v3.7, sección 5: comparativa de cierre de deuda en el Consejero. */
+  /* SRS v3.9.1, sección 3: modales propios en lugar de diálogos nativos. */
+.app-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+}
+
+.app-modal[hidden] {
+  display: none !important;
+}
+
+.app-modal__tarjeta {
+  width: 100%;
+  max-width: 24rem;
+  padding: 1.25rem;
+  border: 1px solid rgba(51, 65, 85, 0.9);
+  border-radius: 1rem;
+  background: #0F172A;
+  color: #F8FAFC;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+  text-align: center;
+}
+
+.app-modal__icono {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  margin-bottom: 0.75rem;
+  border-radius: 999px;
+  background: rgba(245, 158, 11, 0.15);
+  color: #FBBF24;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.app-modal__icono--azul {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60A5FA;
+}
+
+.app-modal__titulo {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.app-modal__cuerpo {
+  margin: 0 0 1.25rem;
+  color: #CBD5E1;
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+.app-modal__acciones {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.app-modal__acciones .boton {
+  min-width: 7rem;
+}
+
+/* SRS v3.9.1, sección 1: botón de guardado bloqueado por validación en vivo. */
+.boton--deshabilitado,
+.boton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* SRS v3.7, sección 5: comparativa de cierre de deuda en el Consejero. */
 .cierre-deuda {
   margin-top: 16px;
   padding: 14px;
@@ -5158,11 +5236,21 @@ select.campo__control {
   color-scheme: dark;
 }
 
+input[type="date"],
+input[type="datetime-local"],
+input[type="month"] {
+  color-scheme: dark;
+  cursor: pointer;
+}
+
 input[type="date"]::-webkit-calendar-picker-indicator,
 input[type="datetime-local"]::-webkit-calendar-picker-indicator,
 input[type="month"]::-webkit-calendar-picker-indicator {
-  filter: invert(0.75);
+  filter: invert(0.82) brightness(1.15);
+  opacity: 0.9;
   cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
 }
 
 input[type="date"],

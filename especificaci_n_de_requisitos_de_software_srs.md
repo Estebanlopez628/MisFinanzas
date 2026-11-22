@@ -430,3 +430,29 @@ Se sustituyen las 24 barras por un componente SVG único: píldora verde con aho
 ### 11.7 Cierre documental
 
 Guía, Constitución, Diccionario, `MEMORY.md` (ADR-71), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v3.7.
+
+---
+
+## 12. SRS v3.9.1 — Blindaje UX + Cierre Documental Completo
+
+Versión 3.9.1 y **línea base vigente**. Tres ajustes UX y el cierre documental, sin modificar los módulos aprobados en v3.7.
+
+### 12.1 No regresión
+
+Se conservan intactos la gráfica unificada del Consejero, el icono neón azul, WhatsApp nativo con PNG en portapapeles, la tabla móvil de Atajos, el scroll bidireccional y bloqueo reactivo en Deudas, la paleta de diez colores y Ayuda/Comentarios.
+
+### 12.2 Validación preventiva de deudas
+
+En el formulario se calcula en vivo `totalCuotas = cuota × cantidadCuotas`. Si los tres campos son mayores a cero y `totalCuotas < totalAdeudado`, se bloquea «Guardar deuda» con estilo apagado y se muestra justo debajo una alerta roja con este texto exacto: «El valor total calculado entre el valor de la cuota y la cantidad de cuotas no alcanza a cubrir la totalidad de la deuda. Por favor, verifica nuevamente la información y digita correctamente los datos.». En cuanto la condición se corrige, la alerta desaparece y el botón se habilita. El backend devuelve el mismo mensaje en `detail` sin prefijos HTTP.
+
+### 12.3 Selectores de fecha
+
+CSS global con `color-scheme: dark`, `cursor: pointer` e indicador `filter: invert(0.82) brightness(1.15)`, `opacity: 0.9`, `padding: 4px` y `border-radius: 4px`. Listener global que llama a `showPicker()` al hacer clic en cualquier zona de un `<input type="date">` en escritorio, sin perder la edición por teclado.
+
+### 12.4 Modales propios, cero diálogos nativos
+
+Se auditan y eliminan el 100% de `alert`, `confirm` y `prompt` del código. `base.html` aporta `#modal-confirmacion` y `#modal-aviso` con backdrop `fixed inset-0 z-9999`, tarjeta `#0F172A`, botón secundario gris «Cancelar» y primario azul «Confirmar» (rojo solo para eliminación definitiva). `app.js` gestiona `data-confirmar` en formularios y controles con `requestSubmit`, y los avisos usan el toast oscuro. Ningún flujo puede mostrar un cuadro blanco del navegador.
+
+### 12.5 Cierre documental
+
+Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-72), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v3.9.1.

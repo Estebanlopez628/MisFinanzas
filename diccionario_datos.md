@@ -223,12 +223,14 @@ abonando capital completo.
 > La columna heredada `tasa_interes` puede seguir existiendo en bases ya
 > desplegadas; queda nula y sin uso. El modelo ya no la mapea.
 
-**Coherencia del plan (SRS v1.9, sección 2.2):** se acepta que
-`cuota × cuotas >= total adeudado`; el excedente es interés implícito. El único
-plan inválido es `cuota × cuotas < total`, con este mensaje exacto: «El número
-de cuotas por el valor de cuota no alcanza a cubrir el valor total de la deuda,
-revisa los datos y digítalos nuevamente». La validación se aplica al registrar y
-al editar la deuda.
+**Coherencia del plan (SRS v1.9 §2.2, mensaje actualizado en v3.9.1):** se acepta
+que `cuota × cuotas >= total adeudado`; el excedente es interés implícito. El único
+plan inválido es `cuota × cuotas < total`, con este mensaje exacto y amigable,
+sin códigos HTTP: «El valor total calculado entre el valor de la cuota y la
+cantidad de cuotas no alcanza a cubrir la totalidad de la deuda. Por favor,
+verifica nuevamente la información y digita correctamente los datos.». La
+validación se aplica al registrar y al editar, y en v3.9.1 también en vivo en el
+formulario, antes de pulsar «Guardar deuda».
 
 **Interés implícito simulado (oculto):** `servicios/deudas.py` expone
 `tasa_implicita_simulada()` y `amortizacion_simulada()`, que derivan por bisección

@@ -106,7 +106,7 @@ Principios que explican el resto del código:
 ### Resumen del inventario
 
 - **115 archivos** documentados: 56 Python, 40 plantillas Jinja2 y 19 recursos estáticos.
-- **69 clases**, **611 funciones** y **43 métodos** de clase.
+- **69 clases**, **616 funciones** y **43 métodos** de clase.
 
 ### Detalle por archivo
 
@@ -218,7 +218,7 @@ Principios que explican el resto del código:
   - Funciones: `_destinatario`, `_enviar_por_api`, `enviar_correo`, `configuracion_valida`, `enviar_recuperacion`
 - **`deducciones_fijas.py`** · 335 líneas — Deducciones fijas del salario (SRS v1.4, REQ-08; vinculación SRS v1.9).
   - Funciones: `_validar`, `_deuda_vinculable`, `crear_deduccion`, `actualizar_deduccion`, `eliminar_deduccion`, `listar_deducciones`, `listar_vigentes`, `sin_vinculo`, `total_creditos_sin_vinculo`, `vinculadas_activas`, `cuota_de_vinculadas`, `total_por_quincena`
-- **`deudas.py`** · 755 líneas — Pasivos del usuario y amortización automática ("Registro y Detalles de deudas").
+- **`deudas.py`** · 756 líneas — Pasivos del usuario y amortización automática ("Registro y Detalles de deudas").
   - Clases: `CuotaProyectada`
   - Funciones: `_limpiar_periodicidad`, `_sumar_periodo`, `_periodos_transcurridos`, `_validar_datos_plan`, `validar_plan`, `_valor_presente`, `tasa_implicita_simulada`, `amortizacion_simulada`, `deuda_vinculable`, `crear_deuda`, `actualizar_deuda`, `listar_deudas`, `listar_vinculables`, `listar_pagos`, `_aplicar_pago`, `aplicar_cuotas_vencidas`, `proyeccion_deuda`, `cuota_mensual_equivalente`, `eliminar_deuda`, `resumen_deudas`
 - **`factura_pdf.py`** · 159 líneas — Factura de OLB_BYTE: datos, logos, diseño compartido y conversión a PDF (ADR-36).
@@ -257,13 +257,13 @@ Principios que explican el resto del código:
 
 #### `backend/app/static/css/`
 
-- **`estilos.css`** · 5244 líneas — Fondo y superficies
+- **`estilos.css`** · 5332 líneas — Fondo y superficies
 - **`factura-olb.css`** · 711 líneas — Sello de Anulada si aplica
 
 #### `backend/app/static/js/`
 
-- **`app.js`** · 370 líneas — Mejoras progresivas globales.
-  - Funciones: `restaurarBotonCopiar`, `confirmarCopia`, `copiar`, `seleccionarManual`, `cerrarEdicion`
+- **`app.js`** · 525 líneas — Mejoras progresivas globales.
+  - Funciones: `restaurarBotonCopiar`, `confirmarCopia`, `copiar`, `seleccionarManual`, `cerrarEdicion`, `cerrarConfirmacion`, `pedirConfirmacion`, `mostrarAvisoApp`
 - **`ayuda.js`** · 124 líneas — Envío de reportes desde «Ayuda y comentarios» (SRS v2.0, sección 5.3).
   - Funciones: `escapar`, `cargarMisReportes`
 - **`categorias.js`** · 526 líneas — Selector cerrado de categorías, vinculación con deudas y conservación de
@@ -271,8 +271,8 @@ Principios que explican el resto del código:
 - **`comentarios.js`** · 46 líneas — Cambio de estado en el panel administrativo de reportes (SRS v2.0, 5.5).
 - **`consejero.js`** · 41 líneas — Tooltip táctil de la gráfica «Comparativa de cierre de deuda» (SRS v3.7).
   - Funciones: `mostrar`
-- **`deudas.js`** · 171 líneas — Interacción de filas con modal centrado (SRS v1.9, secciones 2.3 y 3.3).
-  - Funciones: `esMovil`, `sacarDeLaTabla`, `devolverALaTabla`, `vigilarPortabilidad`, `cerrarOtras`, `conectarFilas`, `pendienteDeDeuda`
+- **`deudas.js`** · 215 líneas — Interacción de filas con modal centrado (SRS v1.9, secciones 2.3 y 3.3).
+  - Funciones: `esMovil`, `sacarDeLaTabla`, `devolverALaTabla`, `vigilarPortabilidad`, `cerrarOtras`, `conectarFilas`, `pendienteDeDeuda`, `numeroDeuda`, `validarPlan`
 - **`dona.js`** · 122 líneas — Interacción de las gráficas tipo dona (capacidad de endeudamiento y cartera).
   - Funciones: `centro`, `mostrar`, `restaurar`, `iniciar`
 - **`factura.js`** · 422 líneas — Factura y recibo de abono de OLB_BYTE como imagen PNG (ADR-50).
@@ -298,7 +298,7 @@ Principios que explican el resto del código:
 #### `backend/app/templates/`
 
 - **`_categorias.html`** · 126 líneas
-- **`base.html`** · 122 líneas — Vista previa al compartir el enlace (WhatsApp, redes). La URL pública sale de APP_URL;
+- **`base.html`** · 148 líneas — Vista previa al compartir el enlace (WhatsApp, redes). La URL pública sale de APP_URL;
 - **`dashboard.html`** · 82 líneas — Plantilla: Panel principal
 - **`login.html`** · 95 líneas — Plantilla: Iniciar sesión
 - **`olvide_contrasena.html`** · 35 líneas — Plantilla: Recuperar contraseña
@@ -326,7 +326,7 @@ Principios que explican el resto del código:
 
 #### `backend/app/templates/deudas/`
 
-- **`index.html`** · 246 líneas — Plantilla: Registro y Detalles de deudas
+- **`index.html`** · 253 líneas — Plantilla: Registro y Detalles de deudas
 
 #### `backend/app/templates/finanzas/`
 
@@ -342,7 +342,7 @@ Principios que explican el resto del código:
 #### `backend/app/templates/historial/`
 
 - **`imprimir.html`** · 41 líneas — Plantilla: Liquidación
-- **`index.html`** · 109 líneas — Plantilla: Historial de Registros
+- **`index.html`** · 110 líneas — Plantilla: Historial de Registros
 
 #### `backend/app/templates/incapacidades/`
 
@@ -370,7 +370,7 @@ Principios que explican el resto del código:
 
 #### `backend/app/templates/presupuesto/`
 
-- **`index.html`** · 693 líneas — Plantilla: Gastos y Presupuesto
+- **`index.html`** · 694 líneas — Plantilla: Gastos y Presupuesto
 
 #### `backend/app/templates/privado/`
 
@@ -946,6 +946,8 @@ cargar la vista lee `misfinanzas_pending_debt_link` y ajusta la etiqueta del
 enlace de regreso con `origin_label`, sin alterar el `volver` que pinta el
 servidor. **Nunca elimina la clave**: solo el formulario de origen la borra tras
 restaurar sus datos, así que el enlace sigue vivo después de guardar la deuda.
+SRS v3.9.1: `numeroDeuda` y `validarPlan` bloquean «Guardar deuda» en vivo cuando
+`cuota × cuotas < total`, con la alerta roja del propio formulario.
 
 ### `backend/app/static/js/consejero.js`
 
@@ -1005,7 +1007,11 @@ Mejoras globales: `copiar` usa la API de portapapeles con respaldo
 plegables y el registro del service worker. `cerrarEdicion` descarta la edición
 en línea desde «Cancelar», el fondo oscuro móvil o la tecla Escape. Antes de
 enviar, revisa los campos `inputmode` y `type="number"` y detiene el envío con un
-aviso si traen letras. Sin dependencias.
+aviso si traen letras. Sin dependencias. SRS v3.9.1: `pedirConfirmacion` y
+`mostrarAvisoApp` sustituyen por completo a los diálogos nativos del navegador,
+con los modales oscuros `#modal-confirmacion` y `#modal-aviso` de `base.html`;
+también abre el calendario con `showPicker()` al hacer clic en un `input[type=date]`
+en escritorio.
 
 ### `backend/app/static/js/finanzas.js`
 
