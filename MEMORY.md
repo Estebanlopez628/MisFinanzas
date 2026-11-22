@@ -502,6 +502,13 @@ Recálculo en tiempo real (<100 ms) sin recargar página. Se implementa con func
 
 ## Bitácora de Cambios
 
+### 2026-11-22 — Nuevo icono nativo de la PWA
+
+- El propietario eligió `assets/Icono OLB BYTE Finanzas App Nativa.png` (1254×1254) como icono al añadir la app a la pantalla de inicio.
+- Se regeneraron `icono-180.png` (apple-touch-icon de iOS), `icono-192.png` y `icono-512.png` del manifiesto, y `icono-512-maskable.png` con el contenido escalado al 80 % central sobre fondo negro para sobrevivir a las máscaras del sistema.
+- `favicon.svg` sigue siendo el de la pestaña del navegador. `sw.js` subió a `olb-finanzas-v96` para que los dispositivos descarguen los nuevos PNG.
+- Verificación: 22 pruebas de PWA/seguridad y 747 de la suite en verde; inspección visual de los cuatro PNG.
+
 ### 2026-11-22 — SRS v3.4: blindaje anti-regresión y cierre documental (ADR-70)
 
 - Paleta de diez colores únicos centralizada; Alimentación ya no comparte verde con la base mínima.
