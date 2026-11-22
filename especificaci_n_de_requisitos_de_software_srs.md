@@ -482,3 +482,25 @@ La entrada del menú exclusiva del administrador cambia la llave inglesa por un 
 ### 13.5 Cierre documental
 
 Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-73), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v3.9.3.
+
+---
+
+## 14. SRS v3.9.5 — Ajustes Quirúrgicos
+
+Versión 3.9.5 y **línea base vigente**. Dos cambios visuales únicos, sin tocar ningún módulo aprobado en v3.9.3.
+
+### 14.1 No regresión
+
+No se alteran el fondo de la tarjeta del Consejero, la vista móvil, el ícono nativo PWA `Logotipo OLB BYTE futurista en neón azul.png`, la validación de cuotas, los selectores de fecha, los modales propios, WhatsApp, Atajos Guardados ni las donas.
+
+### 14.2 Ícono oficial del módulo OLB_BYTE
+
+La entrada del menú exclusiva del administrador renderiza `static/img/icono_OLBBYTE.png` (copiado desde `assets/`) mediante `<img src=... alt="OLB_BYTE" width="20" height="20">`, con `object-fit: contain`, `display: inline-block`, `flex-shrink: 0` y `vertical-align: middle`. Las dimensiones son idénticas a las de los íconos de los módulos vecinos, sin deformación en escritorio ni móvil. Sustituye al SVG de escaparate de v3.9.3.
+
+### 14.3 Velocímetros en dos columnas en escritorio
+
+El contenedor padre de los dos velocímetros fuerza en línea `display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; width: 100%; max-width: 540px; margin: 0 auto 16px auto`. Cada tarjeta lleva `min-width: 0; display: flex; flex-direction: column; align-items: center` y su SVG `width="120" height="68"` con `flex-shrink: 0`. Queda prohibido el apilamiento vertical en escritorio; no se modifica la vista móvil ni los colores de fondo.
+
+### 14.4 Cierre documental
+
+Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-74), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v3.9.5.

@@ -23,8 +23,9 @@
         {% if tarjeta.disponible %}
           <a class="tarjeta tarjeta--{{ tarjeta.acento }}" href="{{ tarjeta.url }}">
             <span class="tarjeta__icono" aria-hidden="true">
-              {%- if tarjeta.icono_svg -%}
-                {{ tarjeta.icono_svg | safe }}
+              {%- if tarjeta.icono_archivo -%}
+                <img class="tarjeta__icono-imagen" src="{{ url_for('estaticos', path=tarjeta.icono_archivo) }}"
+                     alt="OLB_BYTE" width="20" height="20" />
               {%- else -%}
                 {{ tarjeta.icono }}
               {%- endif -%}
@@ -42,8 +43,9 @@
         {% else %}
           <article class="tarjeta tarjeta--{{ tarjeta.acento }} tarjeta--inactiva" aria-disabled="true">
             <span class="tarjeta__icono" aria-hidden="true">
-              {%- if tarjeta.icono_svg -%}
-                {{ tarjeta.icono_svg | safe }}
+              {%- if tarjeta.icono_archivo -%}
+                <img class="tarjeta__icono-imagen" src="{{ url_for('estaticos', path=tarjeta.icono_archivo) }}"
+                     alt="OLB_BYTE" width="20" height="20" />
               {%- else -%}
                 {{ tarjeta.icono }}
               {%- endif -%}

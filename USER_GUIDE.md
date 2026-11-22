@@ -86,6 +86,6 @@ Los campos de fecha muestran un ícono de calendario en gris claro. En la comput
 
 Cuando una acción pide confirmación —por ejemplo, limpiar los ✔ de una quincena o eliminar un registro— aparece una ventana oscura de MisFinanzas con el mensaje y los botones «Cancelar» y «Confirmar» (o «Eliminar»). Ya no se muestran las ventanas blancas del navegador. Para avisos informativos se usa el mismo estilo con un botón «Entendido».
 
-La tarjeta de OLB_BYTE en el inicio del administrador muestra ahora un ícono de tienda/ventas en lugar de una llave inglesa. La gráfica del Consejero comparte el mismo fondo y borde que las gráficas de OLB_BYTE; en escritorio los velocímetros quedan compactos y lado a lado.
+La tarjeta de OLB_BYTE en el inicio del administrador muestra el ícono oficial `icono_OLBBYTE.png`, del mismo tamaño que los íconos de los demás módulos. La gráfica del Consejero comparte el mismo fondo y borde que las gráficas de OLB_BYTE; en escritorio los dos velocímetros quedan compactos y uno al lado del otro.
 
 © 2026 MisFinanzas

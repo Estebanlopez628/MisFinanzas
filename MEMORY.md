@@ -262,6 +262,12 @@ Recálculo en tiempo real (<100 ms) sin recargar página. Se implementa con func
 - **Decisión:** `trabajos_extras` gana `tipo_contrato` (`INDEFINIDO` | `TERMINO_FIJO`), `frecuencia` (`MENSUAL` | `QUINCENAL`), `fecha_fin` y `fecha_pago`. `valor` es el monto **de cada pago**. Los pagos se generan de forma idempotente como filas de `gastos` con `id_trabajo`: reutilizan la macro `fila_gasto` (lápiz, «Cancelar», ×, ✔ y abono manual) pero `gastos.listar_gastos` los excluye, así que no tocan el sueldo, las quincenas ni los totales de gastos. El ✔ registra el cobro y `trabajos.extras_cobrados_mes` lo suma al `disponible` del diagnóstico del mes. La frecuencia quincenal crea dos pagos (día 15 y día 30 ajustado al último día); la mensual, uno en el día de `fecha_pago`. Un contrato indefinido mantiene una ventana móvil de 12 meses desde el mes visible; un término fijo se detiene en `fecha_fin`. La × inhabilita el pago 15 días en lugar de borrarlo, para que la generación idempotente no lo recree. Los trabajos anteriores se migran como término fijo de un solo mes para no inventar ingresos recurrentes.
 - **Archivos:** `modelos.py` (`TrabajoExtra`, `Gasto.id_trabajo`), `core/base_datos.py` (`_migrar_columnas_trabajos`, `id_trabajo` en `_migrar_columnas_gastos`), `servicios/trabajos.py`, `servicios/gastos.py`, `servicios/pagos_metas.py` (`quitar_gasto`), `servicios/ahorro.py` (`diagnostico`), `routers/trabajos.py`, `routers/gastos.py` (`_volver`), `templates/trabajos/index.html`, `templates/finanzas/_gasto_fijo.html`, `templates/presupuesto/index.html`, `static/js/app.js`, `diccionario_datos.md` §7 y §12, `tests/test_trabajos_extras.py`.
 
+### ADR-74 — Ajustes quirúrgicos v3.9.5: ícono PNG y velocímetros en fila
+- **Contexto:** el menú de OLB_BYTE mostraba un SVG de escaparate en vez del PNG oficial `icono_OLBBYTE.png`, y en escritorio los dos velocímetros del Consejero se apilaban verticalmente.
+- **Decisión:** se copia el PNG a `static/img/` y se renderiza con `<img width="20" height="20">`, `object-fit: contain` y `flex-shrink: 0`, exactamente el mismo tamaño que los íconos de los módulos vecinos. El contenedor de velocímetros lleva estilos en línea con `display: grid; grid-template-columns: repeat(2, minmax(0, 1fr))`, ancho 100 %, máximo 540 px y margen central; cada tarjeta con `min-width: 0` y su SVG 120×68 con `flex-shrink: 0`.
+- **Consecuencia:** no se tocan el fondo de la tarjeta del Consejero, la vista móvil, el ícono PWA neón azul, la validación de cuotas, los selectores de fecha, los modales, WhatsApp, Atajos ni las donas.
+- **Archivos:** `assets/icono_OLBBYTE.png` → `static/img/`, `routers/vistas.py`, `templates/dashboard.html`, `static/css/estilos.css`, `templates/presupuesto/index.html`, `tests/test_srs_v3_9_5.py`.
+
 ### ADR-73 — Uniformidad visual v3.9.3 y mensajes limpios
 - **Contexto:** la gráfica del Consejero tenía un fondo negro profundo distinto al de las gráficas de OLB_BYTE; en escritorio los velocímetros se estiraban; el mensaje de validación de deudas cambió de redacción y Pydantic filtraba `tasa_implicita: Value error,`; y la tarjeta de OLB_BYTE usaba una llave inglesa que parecía configuración técnica.
 - **Decisión:** la tarjeta del Consejero adopta la superficie de `.panel` (fondo `rgba(30,41,59,.75)`, borde suave y radio grande); en escritorio los velocímetros quedan en dos columnas de hasta 520 px con SVG 120×68 y la curva a 170 px; los botones de meses van sin caja. El mensaje de deudas se unifica al texto limpio y `validar_formulario` quita los prefijos de Pydantic, con `limpiarMensajeError()` como respaldo en el frontend. El ícono del menú de OLB_BYTE pasa a un escaparate SVG, sin tocar el ícono PWA neón.
@@ -519,6 +525,12 @@ Recálculo en tiempo real (<100 ms) sin recargar página. Se implementa con func
 ---
 
 ## Bitácora de Cambios
+
+### 2026-11-22 — SRS v3.9.5: ajustes quirúrgicos y línea base (ADR-74)
+
+- Ícono del menú de OLB_BYTE reemplazado por `icono_OLBBYTE.png` a 20×20, igual que los íconos vecinos.
+- Velocímetros del Consejero forzados en dos columnas paralelas en escritorio, sin tocar móvil ni colores.
+- Verificación: 3 pruebas nuevas y suite completa en verde (776 pruebas).
 
 ### 2026-11-22 — SRS v3.9.3: uniformidad visual e ícono comercial (ADR-73)
 

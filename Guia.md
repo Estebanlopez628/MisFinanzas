@@ -183,7 +183,7 @@ Principios que explican el resto del código:
   - Funciones: `manifiesto`, `service_worker`, `favicon`
 - **`trabajos.py`** · 317 líneas — Rutas del módulo "Trabajos Extras".
   - Funciones: `_fecha_opcional`, `_contexto`, `ver_trabajos_extras`, `crear_trabajo`, `cambiar_estado`, `eliminar_trabajo`, `agregar_gasto_trabajo`
-- **`vistas.py`** · 233 líneas — Rutas de navegación principal y endpoint de salud.
+- **`vistas.py`** · 226 líneas — Rutas de navegación principal y endpoint de salud.
   - Funciones: `iniciales_alias`, `contexto_base`, `verificar_salud`, `ver_dashboard`
 
 #### `backend/app/servicios/`
@@ -257,7 +257,7 @@ Principios que explican el resto del código:
 
 #### `backend/app/static/css/`
 
-- **`estilos.css`** · 5361 líneas — Fondo y superficies
+- **`estilos.css`** · 5366 líneas — Fondo y superficies
 - **`factura-olb.css`** · 711 líneas — Sello de Anulada si aplica
 
 #### `backend/app/static/js/`
@@ -299,7 +299,7 @@ Principios que explican el resto del código:
 
 - **`_categorias.html`** · 126 líneas
 - **`base.html`** · 148 líneas — Vista previa al compartir el enlace (WhatsApp, redes). La URL pública sale de APP_URL;
-- **`dashboard.html`** · 94 líneas — Plantilla: Panel principal
+- **`dashboard.html`** · 96 líneas — Plantilla: Panel principal
 - **`login.html`** · 95 líneas — Plantilla: Iniciar sesión
 - **`olvide_contrasena.html`** · 35 líneas — Plantilla: Recuperar contraseña
 - **`registro.html`** · 59 líneas — Plantilla: Crear cuenta
@@ -370,7 +370,7 @@ Principios que explican el resto del código:
 
 #### `backend/app/templates/presupuesto/`
 
-- **`index.html`** · 694 líneas — Plantilla: Gastos y Presupuesto
+- **`index.html`** · 701 líneas — Plantilla: Gastos y Presupuesto
 
 #### `backend/app/templates/privado/`
 
@@ -559,9 +559,10 @@ muestra las 4 tarjetas según rol; `verificar_salud` responde `/salud` para
 monitoreo. Aquí viven también la instancia de `Jinja2Templates`, los filtros
 (`cop`, `porcentaje`, `fecha_larga`) y los globales de plantilla. `contexto_base` también
 entrega `cafe` (monto y QR de Bre-B en data URI) para el apoyo voluntario. V3.9.3:
-la tarjeta de OLB_BYTE lleva `icono_svg` con un escaparate comercial en vez del
-ícono de herramientas; `dashboard.html` lo inyecta con `| safe`. El ícono PWA no
-se modifica.
+la tarjeta de OLB_BYTE llevaba un escaparate SVG; en **v3.9.5** se sustituye por
+`icono_archivo = "img/icono_OLBBYTE.png"`, que `dashboard.html` renderiza como
+`<img>` de 20×20 con `object-fit: contain`, igual que los íconos vecinos. El
+ícono PWA neón azul no se modifica.
 
 ### `backend/app/routers/auth.py`
 
@@ -1396,7 +1397,10 @@ cerrado) | Valor Descontado (COP), y abajo «Quincena donde aplican los pagos».
 En la lista, las acciones se alinean a la derecha y en móvil la fila completa
 abre un modal con Actualizar, Eliminar y Cancelar (sección 3.3). El consejero financiero se
 muestra activo cuando el libre supera la base mínima o apagado con el mensaje de
-emergencia.
+emergencia. V3.9.5: en la comparativa de cierre, el contenedor de velocímetros
+fuerza en línea `grid-template-columns: repeat(2, minmax(0, 1fr))`, ancho 100 %,
+máximo 540 px y margen central; cada tarjeta lleva `min-width: 0` y su SVG
+120×68 con `flex-shrink: 0`, sin tocar móvil ni el fondo de la tarjeta.
 
 ### `backend/app/templates/historial/index.html`
 

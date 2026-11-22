@@ -340,10 +340,15 @@ a.tarjeta:focus-visible {
   line-height: 1;
 }
 
-.tarjeta__icono svg {
+.tarjeta__icono svg,
+.tarjeta__icono-imagen {
   width: 20px;
   height: 20px;
-  color: currentColor;
+  max-width: 20px;
+  max-height: 20px;
+  display: inline-block;
+  object-fit: contain;
+  flex-shrink: 0;
   vertical-align: middle;
 }
 

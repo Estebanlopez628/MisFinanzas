@@ -182,8 +182,10 @@ Plataforma web/móvil híbrida (PWA) con backend y frontend **100% Python**, arq
 17. **Cero diálogos nativos (SRS v3.9.1):** prohibición absoluta de alertas, confirmaciones y prompts del navegador en cualquier módulo. Usar siempre `#modal-confirmacion` / `#modal-aviso` de `base.html` con `data-confirmar` o `mostrarAvisoApp()`.
 18. **Validación preventiva (SRS v3.9.1):** en deudas, bloquear «Guardar deuda» en vivo cuando `cuota × cuotas < total`, con la alerta roja de texto amigable; el backend devuelve el mismo mensaje en `detail`.
 19. **Fechas (SRS v3.9.1):** icono gris visible y `showPicker()` al hacer clic en escritorio para `input[type="date"]`.
-20. **Uniformidad visual (SRS v3.9.3):** la gráfica del Consejero usa el fondo/borde de las gráficas de OLB_BYTE; velocímetros compactos 120×68 en escritorio; el ícono del menú de OLB_BYTE es un escaparate, nunca una llave inglesa.
+20. **Uniformidad visual (SRS v3.9.3):** la gráfica del Consejero usa el fondo/borde de las gráficas de OLB_BYTE y los velocímetros son compactos (120×68 px) en escritorio. El ícono del menú se rige por la regla 22.
 21. **Mensajes limpios (SRS v3.9.3):** prohibido mostrar `tasa_implicita: Value error,` o nombres de campo de Pydantic; `validar_formulario` y `limpiarMensajeError()` los eliminan.
+22. **Ícono OLB_BYTE (SRS v3.9.5):** el menú usa `static/img/icono_OLBBYTE.png` en `<img>` de 20×20 con `object-fit: contain`, igual que los íconos vecinos; no es un SVG ni una llave inglesa; el ícono PWA no cambia.
+23. **Velocímetros (SRS v3.9.5):** en escritorio el contenedor fuerza `display: grid; grid-template-columns: repeat(2, minmax(0, 1fr))`, ancho 100 %, máximo 540 px y margen central; cada tarjeta con `min-width: 0` y SVG 120×68 con `flex-shrink: 0`. No se toca móvil ni el fondo.
 
 ---
 
@@ -469,4 +471,7 @@ La configuración vive en `.vscode/launch.json`. También existe **Pruebas (pyte
 - [x] **SRS v3.9.3 — Sección 1 (uniformidad):** la tarjeta «Comparativa de cierre de deuda» usa el fondo `rgba(30,41,59,.75)`, borde `var(--borde-suave)` y radio `var(--radio-lg)` de `.panel`, igual que las gráficas de OLB_BYTE; en escritorio velocímetros en 2 columnas de máximo 520 px con SVG 120×68 y curva limitada a 170 px; botones de meses sin cajas.
 - [x] **SRS v3.9.3 — Sección 2 (mensajes):** texto de validación de deudas unificado al mensaje limpio; `validar_formulario` elimina `Value error,` y el prefijo `tasa_implicita`; `limpiarMensajeError()` hace lo propio en el frontend.
 - [x] **SRS v3.9.3 — Sección 3 (icono OLB_BYTE):** la tarjeta del módulo usa un SVG de escaparate comercial (`icono_svg` + `| safe`) en vez de la llave inglesa; el ícono PWA neón azul no se toca.
-- [x] **SRS v3.9.3 — Cierre documental (sección 4):** Guías, Diccionario, Constitución, `MEMORY.md` (ADR-73), `AGENTS.md` y SRS §13 sincronizados como línea base vigente.
+- [x] **SRS v3.9.3 — Cierre documental (sección 4):** Guías, Diccionario, Constitución, `MEMORY.md` (ADR-73), `AGENTS.md` y SRS §13 sincronizados.
+- [x] **SRS v3.9.5 — Ajuste 1 (ícono OLB_BYTE):** copiado `assets/icono_OLBBYTE.png` a `static/img/`, renderizado como `<img width=20 height=20>` con `object-fit: contain` y `flex-shrink: 0`, homologado a los íconos vecinos; ícono PWA neón azul intacto.
+- [x] **SRS v3.9.5 — Ajuste 2 (velocímetros):** contenedor con estilos en línea `display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; width: 100%; max-width: 540px; margin: 0 auto 16px`, tarjetas con `min-width: 0` y SVG 120×68 con `flex-shrink: 0`; móvil y color de fondo sin cambios.
+- [x] **SRS v3.9.5 — Cierre documental:** Guías, Diccionario, Constitución, `MEMORY.md` (ADR-74), `AGENTS.md` y SRS §14 sincronizados como línea base vigente.

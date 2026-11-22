@@ -65,11 +65,11 @@ def test_limpieza_de_prefijos_en_frontend() -> None:
 
 
 def test_icono_comercial_en_el_menu_de_olb_byte(cliente_admin: TestClient) -> None:
-    """La tarjeta usa un escaparate, no una llave inglesa."""
+    """SRS v3.9.5: la tarjeta usa el PNG oficial, no una llave inglesa."""
     tarjeta = next(t for t in vistas.TARJETAS_DASHBOARD if t["clave"] == "olb-byte")
     assert tarjeta["icono"] == ""
-    assert "M3 9l1.5-5h15L21 9" in tarjeta["icono_svg"]
+    assert tarjeta["icono_archivo"] == "img/icono_OLBBYTE.png"
     assert "🛠" not in tarjeta["icono"]
 
     html = cliente_admin.get("/").text
-    assert "M3 9l1.5-5h15L21 9" in html
+    assert "icono_OLBBYTE.png" in html

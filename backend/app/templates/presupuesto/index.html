@@ -157,9 +157,13 @@
             {% endif %}!
           </p>
 
-          <div class="cierre-deuda__velocimetros">
-            <article class="cierre-deuda__velocimetro cierre-deuda__velocimetro--base">
-              <svg viewBox="0 0 120 70" width="120" height="68" aria-hidden="true" focusable="false">
+          <div class="cierre-deuda__velocimetros"
+               style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; width: 100%; max-width: 540px; margin: 0 auto 16px auto;">
+            <article class="cierre-deuda__velocimetro cierre-deuda__velocimetro--base"
+                     style="min-width: 0; display: flex; flex-direction: column; align-items: center;">
+              <svg viewBox="0 0 120 70" width="120" height="68"
+                   style="width: 120px; height: 68px; flex-shrink: 0;"
+                   aria-hidden="true" focusable="false">
                 <path d="M 12 60 A 48 48 0 0 1 108 60" fill="none" stroke="#1E293B" stroke-width="12" stroke-linecap="round" />
                 <path d="M 12 60 A 48 48 0 0 1 68 13" fill="none" stroke="#3B82F6" stroke-width="12" stroke-linecap="round" />
                 <line x1="60" y1="60" x2="45" y2="24" stroke="#60A5FA" stroke-width="3" stroke-linecap="round" />
@@ -169,8 +173,11 @@
               <strong>{{ consejo.cierre.fecha_cierre_base }}</strong>
               <small>({{ consejo.cierre.costo_total_base | cop }} total)</small>
             </article>
-            <article class="cierre-deuda__velocimetro cierre-deuda__velocimetro--optimo">
-              <svg viewBox="0 0 120 70" width="120" height="68" aria-hidden="true" focusable="false">
+            <article class="cierre-deuda__velocimetro cierre-deuda__velocimetro--optimo"
+                     style="min-width: 0; display: flex; flex-direction: column; align-items: center;">
+              <svg viewBox="0 0 120 70" width="120" height="68"
+                   style="width: 120px; height: 68px; flex-shrink: 0;"
+                   aria-hidden="true" focusable="false">
                 <path d="M 12 60 A 48 48 0 0 1 108 60" fill="none" stroke="#1E293B" stroke-width="12" stroke-linecap="round" />
                 <path d="M 12 60 A 48 48 0 0 1 102 38" fill="none" stroke="#10B981" stroke-width="12" stroke-linecap="round" />
                 <line x1="60" y1="60" x2="88" y2="30" stroke="#34D399" stroke-width="3" stroke-linecap="round" />

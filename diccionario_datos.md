@@ -648,3 +648,7 @@ La SRS v3.7 **no añade columnas ni tablas**: la gráfica del Consejero lee la
 misma serie de doce meses que ya produce `servicios/consejero.py`, enriquecida
 con el diccionario en memoria `cierre` (puntos, hitos y totales). Tampoco cambia
 el esquema el nuevo icono nativo ni el esquema `whatsapp://send`.
+
+La SRS v3.9.5 tampoco modifica el modelo de datos: sustituye el ícono de menú de
+OLB_BYTE por `static/img/icono_OLBBYTE.png` (recurso visual, 20×20 px) y fuerza
+la rejilla de dos columnas de los velocímetros del Consejero en escritorio.
