@@ -141,42 +141,132 @@
         {% endif %}
       </div>
 
-      <h3 class="capacidad__subtitulo">Base frente a optimizado (12 meses)</h3>
-      <p class="ayuda">
-        {% if consejo.modo == 'DEUDA' %}
-          Saldo de deuda restante: mientras más baja la barra, mejor.
-        {% else %}
-          Ahorro acumulado: mientras más alta la barra, mejor.
-        {% endif %}
-        Azul: solo lo mínimo o lo ya planeado. Verde: con tu excedente.
-      </p>
-      <div class="comparativa">
-        <div class="comparativa__grafica" role="img"
-             aria-label="Comparación mes a mes entre el escenario base y el optimizado">
-          {% for fila in consejo.serie %}
-            <div class="comparativa__mes">
-              <div class="comparativa__barras">
-                <span class="comparativa__barra comparativa__barra--base"
-                      style="height: {{ fila.base_pct }}%"
-                      title="Base: {{ fila.base | cop }}"></span>
-                <span class="comparativa__barra comparativa__barra--optimizado"
-                      style="height: {{ fila.optimizado_pct }}%"
-                      title="Optimizado: {{ fila.optimizado | cop }}"></span>
-              </div>
-              {# El mes y el año van en líneas separadas para que no se encimen en el celular. #}
-              {% set partes = fila.etiqueta.split(' ', 1) %}
-              <span class="comparativa__etiqueta">
-                <span class="comparativa__mes-nombre">{{ partes[0] }}</span>
-                {% if partes|length > 1 %}<span class="comparativa__anio">{{ partes[1] }}</span>{% endif %}
-              </span>
-            </div>
+      {% if consejo.cierre %}
+        {# SRS v3.7, sección 5: gráfica unificada de cierre de deuda. #}
+        <section class="cierre-deuda" data-cierre-consejero
+                 aria-labelledby="titulo-cierre-deuda">
+          <h3 class="cierre-deuda__titulo" id="titulo-cierre-deuda">
+            Comparativa de cierre de deuda
+          </h3>
+
+          <p class="cierre-deuda__pill">
+            ¡Ahorras {{ consejo.cierre.ahorro_mostrado | cop }}
+            {% if consejo.cierre.meses_ahorrados > 0 %}
+              y {{ consejo.cierre.meses_ahorrados }}
+              {{ 'mes' if consejo.cierre.meses_ahorrados == 1 else 'meses' }}
+            {% endif %}!
+          </p>
+
+          <div class="cierre-deuda__velocimetros">
+            <article class="cierre-deuda__velocimetro cierre-deuda__velocimetro--base">
+              <svg viewBox="0 0 120 70" aria-hidden="true" focusable="false">
+                <path d="M 12 60 A 48 48 0 0 1 108 60" fill="none" stroke="#1E293B" stroke-width="12" stroke-linecap="round" />
+                <path d="M 12 60 A 48 48 0 0 1 68 13" fill="none" stroke="#3B82F6" stroke-width="12" stroke-linecap="round" />
+                <line x1="60" y1="60" x2="45" y2="24" stroke="#60A5FA" stroke-width="3" stroke-linecap="round" />
+                <circle cx="60" cy="60" r="4" fill="#3B82F6" />
+              </svg>
+              <span>Pago mínimo</span>
+              <strong>{{ consejo.cierre.fecha_cierre_base }}</strong>
+              <small>({{ consejo.cierre.costo_total_base | cop }} total)</small>
+            </article>
+            <article class="cierre-deuda__velocimetro cierre-deuda__velocimetro--optimo">
+              <svg viewBox="0 0 120 70" aria-hidden="true" focusable="false">
+                <path d="M 12 60 A 48 48 0 0 1 108 60" fill="none" stroke="#1E293B" stroke-width="12" stroke-linecap="round" />
+                <path d="M 12 60 A 48 48 0 0 1 102 38" fill="none" stroke="#10B981" stroke-width="12" stroke-linecap="round" />
+                <line x1="60" y1="60" x2="88" y2="30" stroke="#34D399" stroke-width="3" stroke-linecap="round" />
+                <circle cx="60" cy="60" r="4" fill="#10B981" />
+              </svg>
+              <span>Con excedente</span>
+              <strong>{{ consejo.cierre.fecha_cierre_opt }}</strong>
+              <small>({{ consejo.cierre.costo_total_opt | cop }} total)</small>
+            </article>
+          </div>
+
+          <h4 class="cierre-deuda__subtitulo">Proyección de saldo (12 meses)</h4>
+          {% set denominador = consejo.maximo if consejo.maximo > 0 else 1 %}
+          {% set puntos_opt = namespace(valores=[]) %}
+          {% set puntos_base = namespace(valores=[]) %}
+          {% for punto in consejo.cierre.puntos %}
+            {% set x = (15 + punto.index * 30) | round(1) %}
+            {% set y_opt = (120 - (punto.optimizado / denominador * 100)) | round(1) %}
+            {% set y_base = (120 - (punto.base / denominador * 100)) | round(1) %}
+            {% set puntos_opt.valores = puntos_opt.valores + [(x | string) ~ ',' ~ (y_opt | string)] %}
+            {% set puntos_base.valores = puntos_base.valores + [(x | string) ~ ',' ~ (y_base | string)] %}
           {% endfor %}
+          {% set linea_opt = puntos_opt.valores | join(' ') %}
+          {% set area_opt = '15,120 ' ~ linea_opt ~ ' 345,120' %}
+          <div class="cierre-deuda__grafica">
+            <svg viewBox="0 0 360 150" role="img"
+                 aria-label="Proyección de saldo a doce meses: base frente a optimizado">
+              <defs>
+                <linearGradient id="gradOptimizado" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#10B981" stop-opacity="0.45" />
+                  <stop offset="100%" stop-color="#10B981" stop-opacity="0.02" />
+                </linearGradient>
+              </defs>
+              <line x1="15" y1="120" x2="345" y2="120" stroke="#334155" stroke-width="1" />
+              <polygon points="{{ area_opt }}" fill="url(#gradOptimizado)" />
+              <polyline points="{{ puntos_base.valores | join(' ') }}" fill="none"
+                        stroke="#3B82F6" stroke-width="2.5" stroke-dasharray="5,5" />
+              <polyline points="{{ linea_opt }}" fill="none"
+                        stroke="#10B981" stroke-width="3" stroke-linecap="round" />
+              {% if consejo.cierre.mes_libre_index is not none %}
+                {% set x_libre = 15 + consejo.cierre.mes_libre_index * 30 %}
+                <g class="cierre-deuda__hito">
+                  <circle cx="{{ x_libre }}" cy="20" r="4" fill="#10B981" />
+                  <text x="{{ x_libre }}" y="12" text-anchor="middle">¡Libre de deuda!</text>
+                </g>
+              {% endif %}
+            </svg>
+            <div class="cierre-deuda__meses">
+              {% for punto in consejo.cierre.puntos %}
+                <button type="button" class="cierre-deuda__mes{% if punto.index == consejo.cierre.mes_libre_index %} cierre-deuda__mes--libre{% endif %}"
+                        data-mes="{{ punto.mes }} {{ punto.anio }}"
+                        data-base="{{ punto.base | cop }}"
+                        data-optimo="{{ punto.optimizado | cop }}">
+                  <span>{{ punto.mes }}</span>
+                  <small>{{ punto.anio }}</small>
+                </button>
+              {% endfor %}
+            </div>
+            <div class="cierre-deuda__tooltip" data-cierre-tooltip hidden></div>
+          </div>
+
+          <ul class="comparativa__leyenda">
+            <li><span class="dona__muestra comparativa__muestra--base"></span> Base (Normal)</li>
+            <li><span class="dona__muestra comparativa__muestra--optimizado"></span> Optimizado (Con tu excedente)</li>
+          </ul>
+        </section>
+      {% else %}
+        <h3 class="capacidad__subtitulo">Base frente a optimizado (12 meses)</h3>
+        <p class="ayuda">Ahorro acumulado: mientras más alta la barra, mejor.</p>
+        <div class="comparativa">
+          <div class="comparativa__grafica" role="img"
+               aria-label="Comparación mes a mes entre el escenario base y el optimizado">
+            {% for fila in consejo.serie %}
+              <div class="comparativa__mes">
+                <div class="comparativa__barras">
+                  <span class="comparativa__barra comparativa__barra--base"
+                        style="height: {{ fila.base_pct }}%"
+                        title="Base: {{ fila.base | cop }}"></span>
+                  <span class="comparativa__barra comparativa__barra--optimizado"
+                        style="height: {{ fila.optimizado_pct }}%"
+                        title="Optimizado: {{ fila.optimizado | cop }}"></span>
+                </div>
+                {% set partes = fila.etiqueta.split(' ', 1) %}
+                <span class="comparativa__etiqueta">
+                  <span class="comparativa__mes-nombre">{{ partes[0] }}</span>
+                  {% if partes|length > 1 %}<span class="comparativa__anio">{{ partes[1] }}</span>{% endif %}
+                </span>
+              </div>
+            {% endfor %}
+          </div>
+          <ul class="comparativa__leyenda">
+            <li><span class="dona__muestra comparativa__muestra--base"></span> Base</li>
+            <li><span class="dona__muestra comparativa__muestra--optimizado"></span> Optimizado</li>
+          </ul>
         </div>
-        <ul class="comparativa__leyenda">
-          <li><span class="dona__muestra comparativa__muestra--base"></span> Base</li>
-          <li><span class="dona__muestra comparativa__muestra--optimizado"></span> Optimizado</li>
-        </ul>
-      </div>
+      {% endif %}
       <p class="ayuda">
         Proyección educativa: supone el mismo ingreso, los mismos gastos fijos y
         las mismas cuotas. No reemplaza una asesoría financiera.
@@ -298,7 +388,8 @@
     <form class="formulario formulario--compacto formulario--deducciones" method="post"
           action="{{ url_for('crear_deduccion_fija') }}" data-proteccion
           data-guardar-formulario="crear-deduccion-fija"
-          data-origen-modulo="deducciones">
+          data-origen-modulo="deducciones"
+          data-deudas-actuales="{{ deudas_activas | map(attribute='id_deuda') | join(',') }}">
       {# SRS v1.9, sección 3.1: fila superior de tres columnas y fila inferior
          con la quincena donde aplican los pagos. #}
       <div class="fila-campos fila-campos--deducciones">
@@ -597,4 +688,5 @@
 {% block scripts %}
   <script src="{{ url_for('estaticos', path='js/presupuesto.js') }}" defer></script>
   <script src="{{ url_for('estaticos', path='js/deudas.js') }}" defer></script>
+  <script src="{{ url_for('estaticos', path='js/consejero.js') }}" defer></script>
 {% endblock %}

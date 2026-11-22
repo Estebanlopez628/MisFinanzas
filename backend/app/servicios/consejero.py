@@ -28,7 +28,7 @@ Este módulo no escribe en la base de datos.
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import date
 from decimal import Decimal
 
@@ -79,6 +79,7 @@ class Consejo:
         meses_liquidacion: Mes en que la deuda llega a cero, si ocurre.
         serie: Doce filas con la comparación y sus alturas de barra.
         maximo: Valor mayor de la serie, base de las alturas relativas.
+        cierre: Datos de la gráfica unificada «Comparativa de cierre de deuda».
     """
 
     activo: bool
@@ -99,6 +100,7 @@ class Consejo:
     meses_liquidacion: int | None = None
     serie: list[dict[str, object]] = field(default_factory=list)
     maximo: Decimal = CERO
+    cierre: dict[str, object] = field(default_factory=dict)
 
 
 @dataclass
@@ -314,11 +316,106 @@ def _meses_de_texto(meses: int | None) -> str:
     return f"en {meses} meses"
 
 
+_MESES_CORTOS = (
+    "ene", "feb", "mar", "abr", "may", "jun",
+    "jul", "ago", "sep", "oct", "nov", "dic",
+)
+
+
+def _fecha_cierre(referencia: date, offset_meses: int) -> str:
+    """Devuelve «Mes Año» para el mes en que se cierra una deuda.
+
+    Args:
+        referencia: Mes de partida de la proyección.
+        offset_meses: Cuántos meses después cae el cierre.
+
+    Returns:
+        Etiqueta corta con la primera letra en mayúscula.
+    """
+    indice = (referencia.month - 1 + max(0, offset_meses)) % 12
+    anio = referencia.year + (referencia.month - 1 + max(0, offset_meses)) // 12
+    nombre = _MESES_CORTOS[indice]
+    return f"{nombre[0].upper() + nombre[1:]} {anio}"
+
+
+def _datos_cierre(
+    estados: list[_EstadoDeuda],
+    consejo: Consejo,
+    etiquetas: list[str],
+    referencia: date,
+) -> dict[str, object]:
+    """Prepara la proyección de la gráfica unificada de cierre de deuda.
+
+    Args:
+        estados: Deudas activas con su saldo y cuota vigentes.
+        consejo: Consejo ya calculado, cuya serie se reutiliza.
+        etiquetas: Rótulos de los doce meses.
+        referencia: Mes de partida.
+
+    Returns:
+        Diccionario con puntos, hitos y totales para la plantilla SVG.
+    """
+    deuda_inicial = redondear_dinero(sum((estado.saldo for estado in estados), start=CERO))
+    cuota = redondear_dinero(sum((estado.cuota for estado in estados), start=CERO))
+    extra = redondear_dinero(consejo.excedente)
+    serie_base = [fila["base"] for fila in consejo.serie]
+    serie_optima = [fila["optimizado"] for fila in consejo.serie]
+
+    meses_base = math.ceil(deuda_inicial / cuota) if cuota > CERO else 0
+    ritmo_optimo = cuota + extra
+    meses_optimo = math.ceil(deuda_inicial / ritmo_optimo) if ritmo_optimo > CERO else 0
+    meses_ahorrados = max(0, meses_base - meses_optimo)
+    ahorro_saldo = max(CERO, redondear_dinero(serie_base[-1] - serie_optima[-1]))
+    # Si ambas curvas llegan a cero dentro del año, el ahorro visible es la
+    # cuota que dejas de pagar por los meses que te ahorras (sin intereses).
+    ahorro = (
+        ahorro_saldo
+        if ahorro_saldo > CERO
+        else redondear_dinero(cuota * meses_ahorrados)
+    )
+
+    mes_libre: int | None = None
+    if deuda_inicial > CERO:
+        for indice, saldo in enumerate(serie_optima):
+            if saldo <= CERO:
+                mes_libre = indice
+                break
+
+    puntos: list[dict[str, object]] = []
+    for indice, etiqueta in enumerate(etiquetas):
+        partes = etiqueta.rsplit(" ", 1)
+        puntos.append(
+            {
+                "index": indice,
+                "mes": partes[0],
+                "anio": partes[1] if len(partes) > 1 else str(referencia.year),
+                "base": serie_base[indice],
+                "optimizado": serie_optima[indice],
+            }
+        )
+
+    return {
+        "deuda_inicial": deuda_inicial,
+        "cuota_mensual": cuota,
+        "excedente_mensual": extra,
+        "puntos": puntos,
+        "mes_libre_index": mes_libre,
+        "meses_ahorrados": meses_ahorrados,
+        "ahorro_mostrado": ahorro,
+        "fecha_cierre_base": _fecha_cierre(referencia, meses_base),
+        "fecha_cierre_opt": _fecha_cierre(referencia, meses_optimo),
+        # Sin intereses: el costo es lo pagado en cuotas frente al capital.
+        "costo_total_base": redondear_dinero(cuota * meses_base),
+        "costo_total_opt": deuda_inicial,
+    }
+
+
 def _consejo_deuda(
     estados: list[_EstadoDeuda],
     excedente: Decimal,
     alias: str,
     etiquetas: list[str],
+    referencia: date | None = None,
 ) -> Consejo:
     """Recomienda a qué deuda dirigir el excedente para liberar la cuota.
 
@@ -327,6 +424,7 @@ def _consejo_deuda(
         excedente: Dinero disponible después de la base mínima de liquidez.
         alias: Nombre visible para el saludo.
         etiquetas: Rótulos de los doce meses.
+        referencia: Mes de partida de la proyección.
 
     Returns:
         El consejo configurado en modo deuda.
@@ -367,7 +465,7 @@ def _consejo_deuda(
         f"deudas {_meses_de_texto(meses)}."
     )
 
-    return Consejo(
+    resultado = Consejo(
         activo=True,
         alias=alias,
         excedente=excedente,
@@ -385,6 +483,10 @@ def _consejo_deuda(
         serie=serie,
         maximo=maximo,
     )
+    cierre = _datos_cierre(
+        estados, resultado, etiquetas, referencia or date.today()
+    )
+    return replace(resultado, cierre=cierre)
 
 
 def _consejo_ahorro(
@@ -521,5 +623,5 @@ def consejo_financiero(
     ]
     estados = _estados(servicio_deudas.listar_deudas(bd, id_usuario))
     if estados:
-        return _consejo_deuda(estados, disponible, alias, etiquetas)
+        return _consejo_deuda(estados, disponible, alias, etiquetas, referencia)
     return _consejo_ahorro(bd, id_usuario, disponible, alias, etiquetas)

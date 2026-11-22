@@ -298,7 +298,6 @@
    */
   function enviarPorWhatsapp(boton) {
     var url = boton.getAttribute("data-fragmento");
-    var nombre = boton.getAttribute("data-nombre") || "imagen.png";
     var whatsapp = boton.getAttribute("data-whatsapp") || "";
     var texto = boton.getAttribute("data-texto") || mensajeDelEnlace(whatsapp);
     // SRS v2.0, sección 1: el destinatario se toma del celular registrado en la
@@ -313,6 +312,11 @@
     }
 
     var enlaceDirecto = "https://wa.me/" + numero + "?text=" + encodeURIComponent(texto);
+    // SRS v3.7, sección 2: en iOS y Android se usa el esquema nativo para entrar
+    // directamente en el chat sin dejar una pestaña web intermedia en blanco.
+    var esMovil = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    var enlaceNativo =
+      "whatsapp://send?phone=" + numero + "&text=" + encodeURIComponent(texto);
 
     // Guardia del logo del modal: la captura usa un clon fuera de pantalla y
     // aquí se garantiza que el nodo visible quede exactamente como estaba.
@@ -333,21 +337,28 @@
     // `aria-busy` mientras se prepara el comprobante.
     boton.setAttribute("aria-busy", "true");
     try {
-      // Apertura externa limpia: nunca se navega en la misma pestaña (eso
-      // producía la pantalla en blanco) ni se abre una pestaña intermedia.
-      var ventana = window.open(enlaceDirecto, "_blank", "noopener,noreferrer");
-      if (!ventana) {
-        mostrarAviso("Permite ventanas emergentes para abrir WhatsApp. El comprobante ya quedó copiado.");
+      if (esMovil) {
+        // Móvil: salto directo a la app. No se descarga ningún PNG: la imagen
+        // se deja únicamente en el portapapeles para pegarla en el chat.
+        mostrarAviso("Abriendo WhatsApp con el comprobante copiado…");
+        window.location.href = enlaceNativo;
+      } else {
+        // Escritorio: se mantiene la apertura externa limpia.
+        var ventana = window.open(enlaceDirecto, "_blank", "noopener,noreferrer");
+        if (!ventana) {
+          mostrarAviso("Permite ventanas emergentes para abrir WhatsApp. El comprobante ya quedó copiado.");
+        }
       }
 
       Promise.all([promesaImagen, copiada])
         .then(function (resultado) {
-          descargar(resultado[0], nombre);
-          mostrarAviso(
-            resultado[1]
-              ? "Chat abierto y comprobante copiado: si deseas adjuntar la imagen, solo pulsa Pegar en el chat de WhatsApp"
-              : "Chat abierto y comprobante descargado: adjúntalo con el clip antes de enviar."
-          );
+          if (!esMovil) {
+            mostrarAviso(
+              resultado[1]
+                ? "Chat abierto y comprobante copiado: si deseas adjuntar la imagen, solo pulsa Pegar en el chat de WhatsApp"
+                : "Chat abierto. El comprobante no se pudo copiar en este navegador."
+            );
+          }
         })
         .catch(function (error) {
           mostrarAviso((error && error.message) || "No se pudo preparar la imagen.");

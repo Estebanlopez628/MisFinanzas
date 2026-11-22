@@ -640,3 +640,8 @@ El cambio crítico fue separar la base mínima (`#10B981`) de Alimentación
   de `deudas.cuota_mensual` sin duplicarla en dona ni consejero.
 - `feedback_usuarios` conserva `estado` y `fecha_resolucion` para «Mis reportes
   enviados» y el badge administrativo.
+
+La SRS v3.7 **no añade columnas ni tablas**: la gráfica del Consejero lee la
+misma serie de doce meses que ya produce `servicios/consejero.py`, enriquecida
+con el diccionario en memoria `cierre` (puntos, hitos y totales). Tampoco cambia
+el esquema el nuevo icono nativo ni el esquema `whatsapp://send`.

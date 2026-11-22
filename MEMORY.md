@@ -262,6 +262,12 @@ Recálculo en tiempo real (<100 ms) sin recargar página. Se implementa con func
 - **Decisión:** `trabajos_extras` gana `tipo_contrato` (`INDEFINIDO` | `TERMINO_FIJO`), `frecuencia` (`MENSUAL` | `QUINCENAL`), `fecha_fin` y `fecha_pago`. `valor` es el monto **de cada pago**. Los pagos se generan de forma idempotente como filas de `gastos` con `id_trabajo`: reutilizan la macro `fila_gasto` (lápiz, «Cancelar», ×, ✔ y abono manual) pero `gastos.listar_gastos` los excluye, así que no tocan el sueldo, las quincenas ni los totales de gastos. El ✔ registra el cobro y `trabajos.extras_cobrados_mes` lo suma al `disponible` del diagnóstico del mes. La frecuencia quincenal crea dos pagos (día 15 y día 30 ajustado al último día); la mensual, uno en el día de `fecha_pago`. Un contrato indefinido mantiene una ventana móvil de 12 meses desde el mes visible; un término fijo se detiene en `fecha_fin`. La × inhabilita el pago 15 días en lugar de borrarlo, para que la generación idempotente no lo recree. Los trabajos anteriores se migran como término fijo de un solo mes para no inventar ingresos recurrentes.
 - **Archivos:** `modelos.py` (`TrabajoExtra`, `Gasto.id_trabajo`), `core/base_datos.py` (`_migrar_columnas_trabajos`, `id_trabajo` en `_migrar_columnas_gastos`), `servicios/trabajos.py`, `servicios/gastos.py`, `servicios/pagos_metas.py` (`quitar_gasto`), `servicios/ahorro.py` (`diagnostico`), `routers/trabajos.py`, `routers/gastos.py` (`_volver`), `templates/trabajos/index.html`, `templates/finanzas/_gasto_fijo.html`, `templates/presupuesto/index.html`, `static/js/app.js`, `diccionario_datos.md` §7 y §12, `tests/test_trabajos_extras.py`.
 
+### ADR-71 — Consolidación final v3.7: móvil, WhatsApp nativo, icono y Consejero
+- **Contexto:** los atajos guardados aún desplazaban lateralmente en móvil; compartir por WhatsApp descargaba un PNG innecesario y dejaba pestañas en blanco en iOS/Android; el retorno de deudas podía marcar SI sin comparar IDs reales; el icono neón azul sustituye al anterior; y la gráfica de 24 barras del Consejero no comunicaba bien el cierre.
+- **Decisión:** los tres orígenes publican `data-deudas-actuales` y se comparan con los IDs del servidor; `whatsapp://send` en móvil sin descarga (la copia con `ClipboardItem` sigue intacta) y `wa.me` en escritorio; el icono oficial pasa a ser `Logotipo OLB BYTE futurista en neón azul.png` en todos los tamaños; `Consejo.cierre` calcula en Python la proyección y la plantilla dibuja píldora, dos velocímetros, curva SVG de 12 meses con hito «¡Libre de deuda!» y tooltip.
+- **Consecuencia:** no se tocó la lógica contable, la paleta de 10 colores, el modal de Ayuda, la tarjeta de Estado de Cartera ni la copia del PNG al portapapeles. La gráfica sigue siendo una proyección educativa sin intereses.
+- **Archivos:** `templates/chancucos/index.html`, `static/css/estilos.css`, `static/js/factura.js`, `static/js/categorias.js`, `templates/finanzas/index.html`, `templates/presupuesto/index.html`, `templates/trabajos/index.html`, `servicios/consejero.py`, `static/js/consejero.js`, `base.html`, `manifest.webmanifest`, `static/img/*`, `sw.js` (`olb-finanzas-v98`), `tests/test_srs_v3_7_*.py`.
+
 ### ADR-70 — Blindaje anti-regresión v3.4: paleta, atajos, WhatsApp y deudas
 - **Contexto:** la base mínima de liquidez y Alimentación compartían `#10B981`; los atajos guardados dejaban huecos amplios en móvil; el botón «Compartir por WhatsApp» del modal parecía no copiar la imagen y dejaba pantalla en blanco al abrir el chat; ir a registrar deudas llevaba arriba de la página; y volver sin registrar marcaba SI igualmente.
 - **Decisión:** se centralizaron diez HEX únicos en `core/categorias.py` con `COLORES_DONA` y `paleta_es_unica()`; la columna de descripción de atajos usa `fit-content(160px)` con `w-fit` y gap de 11 px; el modal reutiliza la función maestra sin alterar su copia de PNG ni su mensaje, abre con `_blank`/`noopener,noreferrer` y mantiene el ícono visible con `aria-busy`; el flag `misfinanzas_scroll_to_new_debt` lleva a «Nueva deuda» y `debt_created` se confirma solo tras el POST exitoso, con bloqueo reactivo del valor por categoría.
@@ -501,6 +507,15 @@ Recálculo en tiempo real (<100 ms) sin recargar página. Se implementa con func
 ---
 
 ## Bitácora de Cambios
+
+### 2026-11-22 — SRS v3.7: consolidación final (5 ajustes, ADR-71)
+
+- Atajos guardados sin scroll lateral y con columnas alineadas en móvil.
+- WhatsApp nativo en iOS/Android (`whatsapp://send`) sin descargar PNG ni dejar pestañas en blanco; la copia al portapapeles sigue intacta.
+- Validación de deuda por comparación real de IDs (`existing_debt_ids`).
+- Icono nativo oficial: logotipo OLB BYTE en neón azul, en 32/180/192/512 y maskable.
+- Consejero con gráfica unificada: píldora, dos velocímetros y curva SVG de 12 meses con hito «¡Libre de deuda!» y tooltip táctil; cálculo en Python.
+- `sw.js` en `olb-finanzas-v98`. Verificación: suite completa en verde.
 
 ### 2026-11-22 — Nuevo icono nativo de la PWA
 

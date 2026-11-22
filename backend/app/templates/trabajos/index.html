@@ -48,7 +48,8 @@
     <form class="formulario formulario--compacto" method="post"
           action="{{ url_for('agregar_gasto_trabajo', id_trabajo=trabajo.id_trabajo) }}" data-proteccion
       data-guardar-formulario="crear-gasto-trabajo-{{ trabajo.id_trabajo }}"
-      data-origen-modulo="trabajos">
+      data-origen-modulo="trabajos"
+      data-deudas-actuales="{{ deudas_activas | map(attribute='id_deuda') | join(',') }}">
       {% if periodo.quincena %}<input type="hidden" name="quincena" value="{{ periodo.quincena }}" />{% endif %}
       <div class="fila-campos">
         <label class="campo">

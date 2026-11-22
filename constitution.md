@@ -6,7 +6,7 @@ Principios innegociables. Toda especificación, plan y tarea debe cumplirlos de 
    - El sistema es público para la gestión de finanzas personales (`USER_FINANZAS`) y privado exclusivamente para el administrador (`ADMIN_OLB`), protegiendo el módulo de ventas, cartera y enlaces de pago ("chancucos").
 
 2. **La Especificación Activa Manda:**
-   - La especificación vigente es la **SRS v3.4** (sección 10 del archivo `especificaci_n_de_requisitos_de_software_srs.md`), que conserva las reglas de v1.1.0 a v3.1 salvo contradicción explícita.
+   - La especificación vigente es la **SRS v3.7** (sección 11 del archivo `especificaci_n_de_requisitos_de_software_srs.md`), que conserva las reglas de v1.1.0 a v3.4 salvo contradicción explícita.
    - Ninguna funcionalidad de cálculo salarial, recargos, incapacidades o control de quincenas se implementa si no está formalmente detallada en la especificación activa.
 
 3. **Cálculos Financieros Transparentes y Automáticos:**
@@ -43,6 +43,13 @@ Principios innegociables. Toda especificación, plan y tarea debe cumplirlos de 
     - WhatsApp se abre siempre con `window.open(url, '_blank', 'noopener,noreferrer')`: nunca se navega en la misma pestaña ni se oculta el ícono del botón.
     - El flujo de deudas es bidireccional: scroll de ida a «Nueva deuda» y de retorno al formulario de origen; solo se marca SI si el backend confirmó la deuda (`debt_created: true`), y el campo Valor se bloquea/desbloquea al instante según la categoría.
 
-11. **Documentación Viva Completa:**
+11. **Identidad Visual y Módulos Aprobados (SRS v3.7):**
+    - El icono nativo de la PWA es el logotipo oficial «Logotipo OLB BYTE futurista en neón azul.png», presente en los PNG de 32/180/192/512 y en la variante maskable.
+    - La gráfica del Consejero es la comparativa unificada de cierre (píldora, dos velocímetros y curva SVG de 12 meses con hito «¡Libre de deuda!»); la lógica la calcula Python y el SVG solo la dibuja.
+    - En móvil, WhatsApp usa el esquema nativo `whatsapp://send` sin descargar PNG ni dejar pestañas en blanco; en escritorio se mantiene `wa.me` en `_blank`.
+    - «Atajos guardados» no genera scroll lateral en móvil y mantiene encabezados y filas en la misma rejilla.
+    - El retorno de deudas compara IDs reales (`existing_debt_ids`) antes de marcar SI.
+
+12. **Documentación Viva Completa:**
    - Además de `AGENTS.md` y `MEMORY.md`, son obligatorios esta misma `constitution.md`, `diccionario_datos.md`, `Guia.md` (fichas por archivo + inventario regenerado con `--verificar`), `USER_GUIDE.md` (manual del usuario) y la SRS del repositorio, con la versión activa reflejada en todos ellos.
    - Ningún bloque se considera terminado si `compileall`, `pytest`, `node --check` y `generar_guia.py --verificar` no están en verde.

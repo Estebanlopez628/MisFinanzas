@@ -4195,8 +4195,147 @@ strong.valor-negativo.recibo__cifra--saldo {
 }
 
 @media (max-width: 767px) {
+  /* SRS v3.7, sección 5: comparativa de cierre de deuda en el Consejero. */
+.cierre-deuda {
+  margin-top: 16px;
+  padding: 14px;
+  border: 1px solid rgba(30, 41, 59, 0.9);
+  border-radius: 16px;
+  background: #0F172A;
+  color: #F8FAFC;
+}
+
+.cierre-deuda__titulo {
+  margin: 0 0 12px;
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.cierre-deuda__pill {
+  width: fit-content;
+  margin: 0 auto 18px;
+  padding: 5px 14px;
+  border: 1px solid rgba(52, 211, 153, 0.6);
+  border-radius: 999px;
+  background: rgba(16, 185, 129, 0.15);
+  color: #6EE7B7;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.cierre-deuda__velocimetros {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.cierre-deuda__velocimetro {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 6px;
+  border: 1px solid rgba(30, 41, 59, 0.8);
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.6);
+  text-align: center;
+}
+
+.cierre-deuda__velocimetro--optimo {
+  border-color: rgba(16, 185, 129, 0.35);
+}
+
+.cierre-deuda__velocimetro svg {
+  width: 100px;
+  height: 58px;
+}
+
+.cierre-deuda__velocimetro > span {
+  color: #94A3B8;
+  font-size: 0.68rem;
+}
+
+.cierre-deuda__velocimetro--optimo > span {
+  color: #6EE7B7;
+}
+
+.cierre-deuda__velocimetro strong {
+  font-size: 0.86rem;
+}
+
+.cierre-deuda__velocimetro small {
+  color: #94A3B8;
+  font-size: 0.65rem;
+}
+
+.cierre-deuda__subtitulo {
+  margin: 0 0 8px;
+  text-align: center;
+  font-size: 0.82rem;
+  color: #E2E8F0;
+}
+
+.cierre-deuda__grafica svg {
+  width: 100%;
+  height: 150px;
+  overflow: visible;
+}
+
+.cierre-deuda__hito text {
+  fill: #34D399;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.cierre-deuda__meses {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  margin-top: 4px;
+}
+
+.cierre-deuda__mes {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2px 0;
+  border: 0;
+  background: none;
+  color: #94A3B8;
+  font-size: 0.6rem;
+  cursor: pointer;
+}
+
+.cierre-deuda__mes small {
+  font-size: 0.55rem;
+  opacity: 0.75;
+}
+
+.cierre-deuda__mes--libre {
+  color: #34D399;
+  font-weight: 700;
+}
+
+.cierre-deuda__tooltip {
+  margin-top: 10px;
+  padding: 8px 10px;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.9);
+  font-size: 0.74rem;
+  text-align: center;
+}
+
+/* SRS v3.7, sección 1: sin desplazamiento hacia un área vacía a la derecha. */
+  .tabla-contenedor--atajos {
+    width: 100%;
+    overflow-x: hidden;
+  }
+
   .tabla--atajos {
     display: block;
+    width: 100%;
   }
 
   /* Cabecera compacta: solo las tres columnas que se ven en la fila. */
@@ -4227,6 +4366,14 @@ strong.valor-negativo.recibo__cifra--saldo {
   .tabla--atajos thead th:nth-child(3),
   .tabla--atajos thead th:nth-child(4) {
     display: block;
+  }
+
+  .tabla--atajos thead th:nth-child(3),
+  .tabla--atajos thead th:nth-child(4),
+  .tabla--atajos tr[data-chancuco-fila] > td:nth-child(3),
+  .tabla--atajos tr[data-chancuco-fila] > td:nth-child(4) {
+    text-align: right;
+    white-space: nowrap;
   }
 
   .tabla--atajos tbody {

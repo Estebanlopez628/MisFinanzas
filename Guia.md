@@ -105,8 +105,8 @@ Principios que explican el resto del código:
 
 ### Resumen del inventario
 
-- **114 archivos** documentados: 56 Python, 40 plantillas Jinja2 y 18 recursos estáticos.
-- **69 clases**, **607 funciones** y **43 métodos** de clase.
+- **115 archivos** documentados: 56 Python, 40 plantillas Jinja2 y 19 recursos estáticos.
+- **69 clases**, **611 funciones** y **43 métodos** de clase.
 
 ### Detalle por archivo
 
@@ -211,9 +211,9 @@ Principios que explican el resto del código:
 - **`comercial.py`** · 1587 líneas — Operación comercial de OLB_BYTE: ventas a crédito, cartera y deuda con proveedor.
   - Clases: `LineaVenta`, `PagoInicial`
   - Funciones: `ahora_tienda`, `normalizar_telefono`, `_dinero`, `_sumar_meses`, `_texto_garantia`, `_validar_linea`, `_cliente_para_venta`, `_siguiente_numero_orden`, `deuda_proveedor`, `_registrar_movimiento_proveedor`, `registrar_cliente`, `listar_clientes`, `buscar_clientes`, `registrar_venta`, `obtener_venta`, `_venta_activa`, `_recalcular_estado_pago`, `_validar_metodo`, `registrar_abono`, `_devuelto`, `_registrar_devolucion`, `anular_venta`, `registrar_devolucion`, `pendiente_devolver`, `obtener_abono`, `abonos_de_venta`, `buscar_cartera`, `registrar_abono_proveedor`, `listar_movimientos_proveedor`, `_texto_busqueda`, `filtrar_ventas`, `listar_ventas`, `cartera`, `resumen_cartera`, `estado_garantia`, `clasificar_saldo`, `_barra_divergente`, `balance_tres_bloques`, `barras_balance`, `segmentos_dona`, `etiqueta_producto`, `opciones_garantia`, `registrar_garantia`, `actualizar_estado_garantia`, `listar_garantias`, `garantia_vigente_al_reclamo`, `ranking_fallas`, `formatear_pesos`, `texto_compartir_factura`, `enlace_whatsapp_factura`, `enlace_whatsapp_recibo`, `enlace_whatsapp_cobro`, `_enlace_wa`
-- **`consejero.py`** · 526 líneas — Consejero financiero del excedente mensual (SRS v1.8).
+- **`consejero.py`** · 628 líneas — Consejero financiero del excedente mensual (SRS v1.8).
   - Clases: `Consejo`, `_EstadoDeuda`
-  - Funciones: `_cuotas_mensuales`, `_estados`, `_ordenar`, `_simular`, `_altura`, `_serie_comparada`, `_meses_de_texto`, `_consejo_deuda`, `_consejo_ahorro`, `consejo_financiero`
+  - Funciones: `_cuotas_mensuales`, `_estados`, `_ordenar`, `_simular`, `_altura`, `_serie_comparada`, `_meses_de_texto`, `_fecha_cierre`, `_datos_cierre`, `_consejo_deuda`, `_consejo_ahorro`, `consejo_financiero`
 - **`correo.py`** · 261 líneas — Envío de correos del sistema: APIs transaccionales HTTPS o SMTP (SRS v3.1).
   - Funciones: `_destinatario`, `_enviar_por_api`, `enviar_correo`, `configuracion_valida`, `enviar_recuperacion`
 - **`deducciones_fijas.py`** · 335 líneas — Deducciones fijas del salario (SRS v1.4, REQ-08; vinculación SRS v1.9).
@@ -257,7 +257,7 @@ Principios que explican el resto del código:
 
 #### `backend/app/static/css/`
 
-- **`estilos.css`** · 5097 líneas — Fondo y superficies
+- **`estilos.css`** · 5244 líneas — Fondo y superficies
 - **`factura-olb.css`** · 711 líneas — Sello de Anulada si aplica
 
 #### `backend/app/static/js/`
@@ -266,14 +266,16 @@ Principios que explican el resto del código:
   - Funciones: `restaurarBotonCopiar`, `confirmarCopia`, `copiar`, `seleccionarManual`, `cerrarEdicion`
 - **`ayuda.js`** · 124 líneas — Envío de reportes desde «Ayuda y comentarios» (SRS v2.0, sección 5.3).
   - Funciones: `escapar`, `cargarMisReportes`
-- **`categorias.js`** · 498 líneas — Selector cerrado de categorías, vinculación con deudas y conservación de
-  - Funciones: `datosFormulario`, `restaurarDatos`, `cerrar`, `abrir`, `alternar`, `sincronizar`, `sincronizar`, `vinculado`, `sincronizarValor`
+- **`categorias.js`** · 526 líneas — Selector cerrado de categorías, vinculación con deudas y conservación de
+  - Funciones: `idsDeudasActuales`, `datosFormulario`, `restaurarDatos`, `cerrar`, `abrir`, `alternar`, `sincronizar`, `sincronizar`, `vinculado`, `sincronizarValor`
 - **`comentarios.js`** · 46 líneas — Cambio de estado en el panel administrativo de reportes (SRS v2.0, 5.5).
+- **`consejero.js`** · 41 líneas — Tooltip táctil de la gráfica «Comparativa de cierre de deuda» (SRS v3.7).
+  - Funciones: `mostrar`
 - **`deudas.js`** · 171 líneas — Interacción de filas con modal centrado (SRS v1.9, secciones 2.3 y 3.3).
   - Funciones: `esMovil`, `sacarDeLaTabla`, `devolverALaTabla`, `vigilarPortabilidad`, `cerrarOtras`, `conectarFilas`, `pendienteDeDeuda`
 - **`dona.js`** · 122 líneas — Interacción de las gráficas tipo dona (capacidad de endeudamiento y cartera).
   - Funciones: `centro`, `mostrar`, `restaurar`, `iniciar`
-- **`factura.js`** · 411 líneas — Factura y recibo de abono de OLB_BYTE como imagen PNG (ADR-50).
+- **`factura.js`** · 422 líneas — Factura y recibo de abono de OLB_BYTE como imagen PNG (ADR-50).
   - Funciones: `descargar`, `esperar`, `esperarImagen`, `protegerLogoVisible`, `mostrarAviso`, `montarHoja`, `crearPng`, `imagenDe`, `copiarImagen`, `mensajeDelEnlace`, `numeroDelEnlace`, `enviarPorWhatsapp`, `finalizar`, `descargarImagen`
 - **`finanzas.js`** · 540 líneas — Mejora progresiva de "Mis Finanzas".
   - Funciones: `leerFormulario`, `pintarCampo`, `pintarDeduccion`, `pintarValorAuxilio`, `pintarErrores`, `pintarDetalle`, `pintarAuxilio`, `aplicarResultado`, `pintarTramos`, `pintarIncapacidad`, `pintarQuincenas`, `pintarTexto`, `calcular`, `programarCalculo`, `marcarCambios`, `aplicarPlantilla`
@@ -296,7 +298,7 @@ Principios que explican el resto del código:
 #### `backend/app/templates/`
 
 - **`_categorias.html`** · 126 líneas
-- **`base.html`** · 120 líneas — Vista previa al compartir el enlace (WhatsApp, redes). La URL pública sale de APP_URL;
+- **`base.html`** · 122 líneas — Vista previa al compartir el enlace (WhatsApp, redes). La URL pública sale de APP_URL;
 - **`dashboard.html`** · 82 líneas — Plantilla: Panel principal
 - **`login.html`** · 95 líneas — Plantilla: Iniciar sesión
 - **`olvide_contrasena.html`** · 35 líneas — Plantilla: Recuperar contraseña
@@ -331,7 +333,7 @@ Principios que explican el resto del código:
 - **`_capacidad.html`** · 132 líneas
 - **`_gasto_fijo.html`** · 202 líneas
 - **`_subnav.html`** · 27 líneas — Subnavegación interna del módulo "Mis Finanzas" (SRS v1.3, bloque 1).
-- **`index.html`** · 761 líneas — Plantilla: Mis Finanzas
+- **`index.html`** · 762 líneas — Plantilla: Mis Finanzas
 
 #### `backend/app/templates/gastos/`
 
@@ -368,7 +370,7 @@ Principios que explican el resto del código:
 
 #### `backend/app/templates/presupuesto/`
 
-- **`index.html`** · 601 líneas — Plantilla: Gastos y Presupuesto
+- **`index.html`** · 693 líneas — Plantilla: Gastos y Presupuesto
 
 #### `backend/app/templates/privado/`
 
@@ -376,7 +378,7 @@ Principios que explican el resto del código:
 
 #### `backend/app/templates/trabajos/`
 
-- **`index.html`** · 327 líneas — Plantilla: Trabajos Extras
+- **`index.html`** · 328 líneas — Plantilla: Trabajos Extras
 
 <!-- INVENTARIO:FIN -->
 
@@ -842,7 +844,11 @@ ordena por liberación de flujo de caja (`_ordenar`): primero la deuda que el
 excedente cancela completa con más cuotas por delante; si no alcanza, la de menor
 saldo. Sin deudas dirige el excedente a las metas (`ahorro.resumen_metas`) o
 sugiere crear una. `_serie_comparada` entrega las doce filas de la gráfica base
-frente a optimizado. No escribe en la base.
+frente a optimizado. No escribe en la base. SRS v3.7: `_datos_cierre` produce
+el diccionario `cierre` de la gráfica unificada (puntos de doce meses, índice
+`mes_libre_index`, meses ahorrados, fecha de cierre y totales). Si ambas curvas
+llegan a cero en el año, el ahorro mostrado es la cuota liberada por los meses
+ahorrados; nunca se inventan intereses.
 
 ### `backend/app/servicios/comercial.py`
 
@@ -940,6 +946,13 @@ cargar la vista lee `misfinanzas_pending_debt_link` y ajusta la etiqueta del
 enlace de regreso con `origin_label`, sin alterar el `volver` que pinta el
 servidor. **Nunca elimina la clave**: solo el formulario de origen la borra tras
 restaurar sus datos, así que el enlace sigue vivo después de guardar la deuda.
+
+### `backend/app/static/js/consejero.js`
+
+Tooltip táctil de la comparativa de cierre de deuda (SRS v3.7). Escucha los
+botones de mes del bloque SVG y muestra el salto «Base / Opt» del mes tocado o
+sobrevolado. Las cifras y la curva las calcula Python; aquí solo se muestra el
+detalle, sin lógica financiera.
 
 ### `backend/app/static/js/categorias.js`
 
@@ -1206,10 +1219,11 @@ red para el resto.
 ### `backend/app/static/manifest.webmanifest`
 
 Manifiesto PWA: nombre, colores de la paleta, `display: standalone`, íconos y
-`start_url`. Lo sirve `routers/pwa.py`. Los PNG de `static/img/` se generan desde
-`assets/Icono OLB BYTE Finanzas App Nativa.png`: `icono-180.png` (apple-touch-icon
-de iOS), `icono-192.png`, `icono-512.png` y `icono-512-maskable.png` (contenido al
-80 % central). `favicon.svg` es aparte, solo para la pestaña del navegador.
+`start_url`. Lo sirve `routers/pwa.py`. SRS v3.7: los PNG se generan desde
+`assets/Logotipo OLB BYTE futurista en neón azul.png` (ícono oficial): `favicon-32.png`,
+`icono-180.png` (apple-touch-icon), `icono-192.png` e `icono-512.png` con
+`purpose: "any maskable"`, más `icono-512-maskable.png` con el contenido al 80 %
+central. `favicon.svg` sigue disponible para la pestaña del navegador.
 
 ### 5.6 Plantillas
 
@@ -1221,7 +1235,9 @@ el enlace: título «Mis Finanzas», descripción comercial, `og:url`, `twitter:
 es `APP_URL`; sin esa variable usa `https://misfinanzas-odbc.onrender.com` (SRS v1.8).
 
 El pie muestra solo «Finanzas · v1.0.0 | © año», sin el entorno (SRS v1.8). El `body` acepta
-la clase de cada pantalla mediante el bloque `clase_cuerpo`.
+la clase de cada pantalla mediante el bloque `clase_cuerpo`. SRS v3.7: el `<head>`
+declara `icon` PNG de 32×32 y 192×192 y `apple-touch-icon` de 180×180 con el
+logotipo neón azul oficial.
 
 El encabezado usa la macro `avatar` en tamaño compacto antes del saludo (SRS v1.8).
 

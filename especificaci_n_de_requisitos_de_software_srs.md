@@ -396,3 +396,37 @@ Desde 767 px, columnas `fit-content(160px)` + `max-content`, gap de 11 px, descr
 ### 10.6 Cierre documental
 
 Diccionario §15, constitución, `Guia.md`, `USER_GUIDE.md`, `AGENTS.md`, `MEMORY.md` (ADR-70) y esta SRS quedan sincronizados con la versión activa v3.4. El icono nativo de la PWA se genera desde `assets/Icono OLB BYTE Finanzas App Nativa.png` en los tamaños 180/192/512 y 512 maskable; `sw.js` quedó en `olb-finanzas-v96`.
+
+---
+
+## 11. SRS v3.7 — Final Consolidada con Código Completo
+
+Versión 3.7 y **línea base vigente**. Cinco ajustes finales más el cierre documental, sin modificar los módulos ya aprobados en v3.4.
+
+### 11.1 No regresión
+
+Se conservan intactos: el copiado del PNG al portapapeles en los tres puntos de WhatsApp, el scroll bidireccional de deudas, el bloqueo reactivo del valor por categoría, la paleta de diez colores, el botón «Registrar Pago», la tarjeta «Estado de Cartera» y los módulos de Ayuda y soporte.
+
+### 11.2 Atajos en móvil
+
+El contenedor usa `w-full overflow-x-hidden`; encabezado y filas comparten la misma rejilla de tres columnas. Descripción a la izquierda con truncate, Valor y Días a la derecha sin espacio sobrante.
+
+### 11.3 WhatsApp nativo
+
+Sin descarga automática de PNG al compartir. En iOS/Android se abre `whatsapp://send?phone=…&text=…` con `window.location.href`, directo a la app y sin pestaña intermedia en blanco. En escritorio se mantiene `wa.me` con `_blank`, `noopener,noreferrer`. La copia con `ClipboardItem` no se modifica.
+
+### 11.4 Validación real de deuda
+
+Los formularios publican `data-deudas-actuales`; el payload guarda `existing_debt_ids`; al regresar se comparan con los IDs reales del servidor. Solo se marca SI si hay un ID nuevo o si el backend confirmó `debt_created` con un ID presente. Sin deuda creada: NO, aviso visible y guardado bloqueado.
+
+### 11.5 Icono nativo oficial
+
+El icono pasa a ser `assets/Logotipo OLB BYTE futurista en neón azul.png`, desplegado en `favicon-32.png`, `icono-180.png`, `icono-192.png`, `icono-512.png` y `icono-512-maskable.png`. `base.html` declara los `link` de 32, 192 y apple-touch-icon 180; el manifiesto usa `purpose: "any maskable"`; `sw.js` en `olb-finanzas-v98`.
+
+### 11.6 Comparativa de cierre de deuda (Consejero)
+
+Se sustituyen las 24 barras por un componente SVG único: píldora verde con ahorro y meses ahorrados, dos velocímetros semicirculares («Pago mínimo» azul frente a «Con excedente» verde) con fecha y total de cierre, y gráfica de área de 12 meses con línea azul punteada (Base), curva verde degradada (Optimizado), hito «¡Libre de deuda!» en el mes exacto en que el saldo llega a cero y tooltip táctil por mes. `saldoOptimizado <= saldoBase` en todos los meses. El cálculo vive en `Consejo.cierre` (Python); el SVG y `consejero.js` solo presentan. Proyección educativa sin intereses.
+
+### 11.7 Cierre documental
+
+Guía, Constitución, Diccionario, `MEMORY.md` (ADR-71), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v3.7.

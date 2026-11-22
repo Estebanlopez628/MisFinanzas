@@ -39,6 +39,20 @@
     }
   };
 
+  /**
+   * Lee los IDs de deuda que existían al salir hacia el módulo de deudas.
+   *
+   * @param {HTMLFormElement} formulario Formulario de origen.
+   * @returns {string[]} Identificadores actuales.
+   */
+  function idsDeudasActuales(formulario) {
+    var texto = formulario.getAttribute("data-deudas-actuales") || "";
+    return texto
+      .split(",")
+      .map(function (id) { return id.trim(); })
+      .filter(function (id) { return id.length > 0; });
+  }
+
   function datosFormulario(formulario) {
     var datos = {};
     Array.prototype.forEach.call(formulario.elements, function (campo) {
@@ -354,6 +368,7 @@
         origin_objetivo: origen.objetivo,
         debt_created: false,
         created_debt_id: null,
+        existing_debt_ids: idsDeudasActuales(formulario),
         form_data: datosFormulario(formulario)
       };
       try {
@@ -401,13 +416,26 @@
       // SRS v3.4, punto 4.2: solo se marca SI si el backend confirmó una deuda
       // creada. Sin registro, se restaura el formulario pero se mantiene NO,
       // con el enlace a deudas y el botón guardar bloqueado.
+      // SRS v3.7, sección 3: comparación real de IDs. El servidor vuelve a
+      // renderizar el formulario con la lista actual de deudas; cualquier ID
+      // que no estuviera en `existing_debt_ids` es una deuda creada de verdad.
+      var anteriores = (pendiente && pendiente.existing_debt_ids) || [];
+      var actuales = idsDeudasActuales(formulario);
+      var nueva = actuales.find(function (id) {
+        return anteriores.indexOf(id) === -1;
+      });
+      var confirmada =
+        pendiente &&
+        pendiente.debt_created === true &&
+        actuales.indexOf(pendiente.created_debt_id) !== -1;
       var creada =
-        (pendiente && pendiente.debt_created === true) ||
+        Boolean(nueva) ||
+        Boolean(confirmada) ||
         Boolean(parametros.get("deuda_id"));
-      var deudaId =
-        parametros.get("deuda_id") ||
-        (pendiente && pendiente.created_debt_id) ||
-        "";
+      var deudaId = nueva || parametros.get("deuda_id") || "";
+      if (!deudaId && confirmada) {
+        deudaId = pendiente.created_debt_id;
+      }
       var opcionSi = formulario.querySelector("[data-vincular-si]");
       var opcionNo = formulario.querySelector("[data-vincular-no]");
       var selectorDeuda = formulario.querySelector("[data-deuda-opciones]");

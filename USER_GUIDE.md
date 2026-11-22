@@ -8,7 +8,7 @@
 1. Abre el enlace de MisFinanzas en Google Chrome.
 2. Toca el menú de los tres puntos (⋮) en la esquina superior derecha.
 3. Selecciona 'Agregar a la pantalla principal' .
-4. Confirma tocando 'Agregar'. El ícono quedará en tu inicio y abrirá en pantalla completa como una app nativa. El ícono es el nuevo arte de OLB BYTE Finanzas (fondo oscuro con el logotipo azul, monedas y billetera).
+4. Confirma tocando 'Agregar'. El ícono quedará en tu inicio y abrirá en pantalla completa como una app nativa. El ícono es el logotipo oficial de OLB BYTE en neón azul sobre fondo oscuro.
 
 ### En iPhone / iOS (usando Safari- Google Chrome)
 1. Abre el enlace de MisFinanzas desde Safari- Google Chrome)
@@ -56,7 +56,7 @@ En la parte inferior de Inicio encontrarás **Ayuda y comentarios**. Allí puede
 
 Desde el teléfono también verás **Invitar amigos**: abre WhatsApp con un mensaje listo para compartir la aplicación con tus contactos.
 
-Cuando compartas una factura o un recibo, el botón de WhatsApp abre directamente el chat del cliente con el número registrado y el mensaje ya escrito. La imagen del comprobante queda copiada al portapapeles y verás un aviso discreto: si quieres adjuntarla, solo pulsa «Pegar» en el chat. El logo de la factura permanece visible en todo momento. Si el cliente no tiene celular, la aplicación te lo avisa antes de abrir nada.
+Cuando compartas una factura o un recibo, el botón de WhatsApp abre directamente el chat del cliente con el número registrado y el mensaje ya escrito. En iPhone y Android entra a la app nativa de WhatsApp sin dejar pestañas en blanco y **sin descargar imágenes**: el comprobante queda copiado al portapapeles y solo tienes que pulsar «Pegar» en el chat. En la computadora se abre WhatsApp Web en una pestaña nueva. El logo de la factura permanece visible en todo momento. Si el cliente no tiene celular, la aplicación te lo avisa antes de abrir nada.
 
 ### Mis reportes enviados
 
@@ -75,5 +75,9 @@ Las donas usan diez colores distintos: la base mínima de liquidez es verde esme
 Al ir a «Registro y Detalles de deudas» desde un gasto o deducción, la página baja sola hasta el formulario «Nueva deuda». Si guardas la deuda, al volver se marca SI y se carga su cuota; si vuelves sin registrar nada, el formulario conserva lo que escribiste pero permanece en NO y no se puede guardar hasta que registres la deuda. Mientras la categoría sea «Créditos y Obligaciones», el valor queda bloqueado con el valor de la cuota; al elegir otra categoría se desbloquea y puedes digitar un monto libre.
 
 En «Atajos de Pago» en el celular, la descripción se ajusta a su texto y el espacio hasta el valor es corto. Para registrar un abono en OLB_BYTE usa el botón «Registrar Pago».
+
+### Nueva comparativa de cierre de deuda
+
+Dentro del Consejero, la antigua gráfica de barras fue reemplazada por una comparativa de cierre con tres partes: una píldora verde con el dinero y los meses que te ahorras, dos velocímetros (azul «Pago mínimo» frente a verde «Con excedente») con la fecha y el total de cada camino, y una curva de saldo a 12 meses. La línea azul punteada es pagar solo lo mínimo; la curva verde es hacerlo con tu excedente. El hito «¡Libre de deuda!» marca el mes exacto en que el saldo llega a cero. Toca cualquier mes para ver ambos saldos. Es una proyección educativa, no una promesa ni asesoría financiera.
 
 © 2026 MisFinanzas

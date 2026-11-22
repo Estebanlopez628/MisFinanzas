@@ -137,6 +137,7 @@ contenido %}
         data-proteccion
         data-guardar-formulario="crear-gasto-finanzas"
         data-origen-modulo="finanzas"
+        data-deudas-actuales="{{ deudas_activas | map(attribute='id_deuda') | join(',') }}"
       >
         <input type="hidden" name="origen" value="finanzas" />
         <input type="hidden" name="es_fijo" value="1" />

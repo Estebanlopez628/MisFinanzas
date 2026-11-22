@@ -22,8 +22,10 @@
   <meta name="twitter:image" content="{{ base_social }}/estaticos/img/vista-previa.jpg?v=5" />
   <meta name="description" content="Finanzas personales, nómina colombiana y administración OLB_BYTE." />
   <title>{% block titulo %}{{ titulo_pagina or "Finanzas y OLB_BYTE" }}{% endblock %} · OLB_BYTE</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('estaticos', path='img/favicon-32.png') }}" />
   <link rel="icon" type="image/svg+xml" href="{{ url_for('estaticos', path='img/favicon.svg') }}" />
-  <link rel="apple-touch-icon" href="{{ url_for('estaticos', path='img/icono-180.png') }}" />
+  <link rel="icon" type="image/png" sizes="192x192" href="{{ url_for('estaticos', path='img/icono-192.png') }}" />
+  <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('estaticos', path='img/icono-180.png') }}" />
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="stylesheet" href="{{ url_for('estaticos', path='css/estilos.css') }}" />
   {% block estilos %}{% endblock %}
