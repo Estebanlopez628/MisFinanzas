@@ -395,4 +395,4 @@ Desde 767 px, columnas `fit-content(160px)` + `max-content`, gap de 11 px, descr
 
 ### 10.6 Cierre documental
 
-Diccionario §15, constitución, `Guia.md`, `USER_GUIDE.md`, `AGENTS.md`, `MEMORY.md` (ADR-70) y esta SRS quedan sincronizados con la versión activa v3.4.
+Diccionario §15, constitución, `Guia.md`, `USER_GUIDE.md`, `AGENTS.md`, `MEMORY.md` (ADR-70) y esta SRS quedan sincronizados con la versión activa v3.4. El icono nativo de la PWA se genera desde `assets/Icono OLB BYTE Finanzas App Nativa.png` en los tamaños 180/192/512 y 512 maskable; `sw.js` quedó en `olb-finanzas-v96`.

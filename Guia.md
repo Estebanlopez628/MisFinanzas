@@ -1206,7 +1206,10 @@ red para el resto.
 ### `backend/app/static/manifest.webmanifest`
 
 Manifiesto PWA: nombre, colores de la paleta, `display: standalone`, íconos y
-`start_url`. Lo sirve `routers/pwa.py`.
+`start_url`. Lo sirve `routers/pwa.py`. Los PNG de `static/img/` se generan desde
+`assets/Icono OLB BYTE Finanzas App Nativa.png`: `icono-180.png` (apple-touch-icon
+de iOS), `icono-192.png`, `icono-512.png` y `icono-512-maskable.png` (contenido al
+80 % central). `favicon.svg` es aparte, solo para la pestaña del navegador.
 
 ### 5.6 Plantillas
 

@@ -8,7 +8,7 @@
 1. Abre el enlace de MisFinanzas en Google Chrome.
 2. Toca el menú de los tres puntos (⋮) en la esquina superior derecha.
 3. Selecciona 'Agregar a la pantalla principal' .
-4. Confirma tocando 'Agregar'. El ícono quedará en tu inicio y abrirá en pantalla completa como una app nativa.
+4. Confirma tocando 'Agregar'. El ícono quedará en tu inicio y abrirá en pantalla completa como una app nativa. El ícono es el nuevo arte de OLB BYTE Finanzas (fondo oscuro con el logotipo azul, monedas y billetera).
 
 ### En iPhone / iOS (usando Safari- Google Chrome)
 1. Abre el enlace de MisFinanzas desde Safari- Google Chrome)
