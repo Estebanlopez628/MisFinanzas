@@ -13,9 +13,8 @@ def test_mensaje_amigable_sin_codigo_http() -> None:
     """El backend devuelve el texto literal, sin prefijo de error técnico."""
     mensaje = deudas.MENSAJE_CUOTAS_INSUFICIENTES
     assert mensaje == (
-        "El valor total calculado entre el valor de la cuota y la cantidad de "
-        "cuotas no alcanza a cubrir la totalidad de la deuda. Por favor, "
-        "verifica nuevamente la información y digita correctamente los datos."
+        "El número de cuotas por el valor de cuota no alcanza a cubrir el valor "
+        "total de la deuda. Revisa los datos y digítalos nuevamente."
     )
     assert "Error 400" not in mensaje
     assert "400" not in mensaje

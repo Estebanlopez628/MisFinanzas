@@ -132,7 +132,10 @@
     var lista = document.createElement("ul");
     errores.forEach(function (mensaje) {
       var item = document.createElement("li");
-      item.textContent = mensaje;
+      item.textContent =
+        typeof window.limpiarMensajeError === "function"
+          ? window.limpiarMensajeError(mensaje)
+          : mensaje;
       lista.appendChild(item);
     });
 

@@ -109,7 +109,10 @@
         })
         .catch(function (fallo) {
           if (error) {
-            error.textContent = fallo.message || "No se pudo enviar el reporte.";
+            error.textContent =
+              typeof window.limpiarMensajeError === "function"
+                ? window.limpiarMensajeError(fallo.message)
+                : fallo.message || "No se pudo enviar el reporte.";
             error.hidden = false;
           }
         })

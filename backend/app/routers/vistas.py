@@ -67,8 +67,18 @@ TARJETAS_DASHBOARD: list[dict[str, Any]] = [
     {
         "clave": "olb-byte",
         "titulo": "OLB_BYTE",
-        "descripcion": "Inventario, ventas, cartera y abonos de la tienda.",
-        "icono": "🛠️",
+        "descripcion": "Ventas, cartera y abonos de la tienda.",
+        # SRS v3.9.3: escaparate comercial en vez de llave inglesa. El icono
+        # nativo PWA no se toca.
+        "icono": "",
+        "icono_svg": (
+            '<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+            'stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'
+            '<path d="M3 9l1.5-5h15L21 9"/>'
+            '<path d="M3 9a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0"/>'
+            '<path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/>'
+            '<path d="M9 21v-6h6v6"/></svg>'
+        ),
         "url": "/olb-byte",
         "solo_autorizados": True,
         "disponible": True,

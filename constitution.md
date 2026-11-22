@@ -6,7 +6,7 @@ Principios innegociables. Toda especificación, plan y tarea debe cumplirlos de 
    - El sistema es público para la gestión de finanzas personales (`USER_FINANZAS`) y privado exclusivamente para el administrador (`ADMIN_OLB`), protegiendo el módulo de ventas, cartera y enlaces de pago ("chancucos").
 
 2. **La Especificación Activa Manda:**
-   - La especificación vigente es la **SRS v3.9.1** (sección 12 del archivo `especificaci_n_de_requisitos_de_software_srs.md`), que conserva las reglas de v1.1.0 a v3.7 salvo contradicción explícita.
+   - La especificación vigente es la **SRS v3.9.3** (sección 13 del archivo `especificaci_n_de_requisitos_de_software_srs.md`), que conserva las reglas de v1.1.0 a v3.9.1 salvo contradicción explícita.
    - Ninguna funcionalidad de cálculo salarial, recargos, incapacidades o control de quincenas se implementa si no está formalmente detallada en la especificación activa.
 
 3. **Cálculos Financieros Transparentes y Automáticos:**
@@ -56,6 +56,11 @@ Principios innegociables. Toda especificación, plan y tarea debe cumplirlos de 
     - Los campos de fecha mantienen el icono legible en tema oscuro y se abren con un clic en escritorio.
     - La identidad visual oscura, la separación de roles y la reserva de $300.000 con cero duplicidad de cuotas se conservan sin cambios.
 
-13. **Documentación Viva Completa:**
+13. **Uniformidad Visual de Gráficas e Iconos (SRS v3.9.3):**
+    - La gráfica del Consejero usa la misma superficie y borde que las tarjetas de gráficas de OLB_BYTE; en móvil se conservan sus proporciones y en escritorio los velocímetros son compactos (120×68 px) y lado a lado.
+    - El ícono del menú de OLB_BYTE es un escaparate comercial, no una herramienta; el ícono nativo PWA neón azul no se modifica.
+    - Los mensajes de validación no exponen nombres de campo ni prefijos de Pydantic.
+
+14. **Documentación Viva Completa:**
    - Además de `AGENTS.md` y `MEMORY.md`, son obligatorios esta misma `constitution.md`, `diccionario_datos.md`, `Guia.md` (fichas por archivo + inventario regenerado con `--verificar`), `USER_GUIDE.md` (manual del usuario) y la SRS del repositorio, con la versión activa reflejada en todos ellos.
    - Ningún bloque se considera terminado si `compileall`, `pytest`, `node --check` y `generar_guia.py --verificar` no están en verde.

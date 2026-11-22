@@ -19,6 +19,7 @@ esperan las plantillas. Así no se rompe el respaldo sin JavaScript.
 
 from __future__ import annotations
 
+import re
 from decimal import Decimal
 from typing import TypeVar
 
@@ -474,8 +475,14 @@ def validar_formulario(modelo: type[Modelo], **datos: object) -> Modelo:
     try:
         return modelo(**datos)
     except ValidationError as error:
-        partes = [
-            f"{'.'.join(str(parte) for parte in fallo['loc'])}: {fallo['msg']}"
-            for fallo in error.errors()
-        ]
+        partes: list[str] = []
+        for fallo in error.errors():
+            mensaje = re.sub(
+                r"^Value error,\s*", "", str(fallo.get("msg", "")), flags=re.IGNORECASE
+            ).strip()
+            campo = ".".join(str(parte) for parte in fallo.get("loc", ()))
+            # SRS v3.9.3: la tasa simulada es un detalle técnico; el usuario
+            # solo debe ver el mensaje de negocio, sin nombre de campo ni
+            # prefijos de Pydantic.
+            partes.append(mensaje if campo == "tasa_implicita" else f"{campo}: {mensaje}")
         raise ValueError("; ".join(partes)) from error

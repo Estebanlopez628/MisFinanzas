@@ -182,6 +182,8 @@ Plataforma web/móvil híbrida (PWA) con backend y frontend **100% Python**, arq
 17. **Cero diálogos nativos (SRS v3.9.1):** prohibición absoluta de alertas, confirmaciones y prompts del navegador en cualquier módulo. Usar siempre `#modal-confirmacion` / `#modal-aviso` de `base.html` con `data-confirmar` o `mostrarAvisoApp()`.
 18. **Validación preventiva (SRS v3.9.1):** en deudas, bloquear «Guardar deuda» en vivo cuando `cuota × cuotas < total`, con la alerta roja de texto amigable; el backend devuelve el mismo mensaje en `detail`.
 19. **Fechas (SRS v3.9.1):** icono gris visible y `showPicker()` al hacer clic en escritorio para `input[type="date"]`.
+20. **Uniformidad visual (SRS v3.9.3):** la gráfica del Consejero usa el fondo/borde de las gráficas de OLB_BYTE; velocímetros compactos 120×68 en escritorio; el ícono del menú de OLB_BYTE es un escaparate, nunca una llave inglesa.
+21. **Mensajes limpios (SRS v3.9.3):** prohibido mostrar `tasa_implicita: Value error,` o nombres de campo de Pydantic; `validar_formulario` y `limpiarMensajeError()` los eliminan.
 
 ---
 
@@ -464,3 +466,7 @@ La configuración vive en `.vscode/launch.json`. También existe **Pruebas (pyte
 - [x] **SRS v3.9.1 — Sección 2 (fechas):** icono gris `invert(0.82) brightness(1.15)`, `opacity: .9` y `padding: 4px`; `showPicker()` global en escritorio con clic en cualquier zona del campo.
 - [x] **SRS v3.9.1 — Sección 3 (modales propios):** auditoría total y reemplazo del 100% de `alert`/`confirm`/`prompt` por `#modal-confirmacion` y `#modal-aviso` oscuros con `data-confirmar`, `requestSubmit` y toast oficial; cero diálogos nativos en el código.
 - [x] **SRS v3.9.1 — Cierre documental (sección 4):** Guías, Diccionario, Constitución, `MEMORY.md` (ADR-72), `AGENTS.md` y SRS §12 sincronizados. `sw.js` en `olb-finanzas-v99`. Verificación: **768 pruebas** en verde.
+- [x] **SRS v3.9.3 — Sección 1 (uniformidad):** la tarjeta «Comparativa de cierre de deuda» usa el fondo `rgba(30,41,59,.75)`, borde `var(--borde-suave)` y radio `var(--radio-lg)` de `.panel`, igual que las gráficas de OLB_BYTE; en escritorio velocímetros en 2 columnas de máximo 520 px con SVG 120×68 y curva limitada a 170 px; botones de meses sin cajas.
+- [x] **SRS v3.9.3 — Sección 2 (mensajes):** texto de validación de deudas unificado al mensaje limpio; `validar_formulario` elimina `Value error,` y el prefijo `tasa_implicita`; `limpiarMensajeError()` hace lo propio en el frontend.
+- [x] **SRS v3.9.3 — Sección 3 (icono OLB_BYTE):** la tarjeta del módulo usa un SVG de escaparate comercial (`icono_svg` + `| safe`) en vez de la llave inglesa; el ícono PWA neón azul no se toca.
+- [x] **SRS v3.9.3 — Cierre documental (sección 4):** Guías, Diccionario, Constitución, `MEMORY.md` (ADR-73), `AGENTS.md` y SRS §13 sincronizados como línea base vigente.

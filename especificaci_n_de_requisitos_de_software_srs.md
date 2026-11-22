@@ -456,3 +456,29 @@ Se auditan y eliminan el 100% de `alert`, `confirm` y `prompt` del código. `bas
 ### 12.5 Cierre documental
 
 Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-72), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v3.9.1.
+
+---
+
+## 13. SRS v3.9.3 — Uniformidad Visual de Gráficas + Ícono Comercial OLB_BYTE
+
+Versión 3.9.3 y **línea base vigente**. Tres ajustes finales de identidad visual y mensajes, sin tocar los módulos aprobados en v3.9.1.
+
+### 13.1 No regresión
+
+No se modifican las proporciones móviles de los velocímetros ni de la curva del Consejero, los selectores de fecha con `showPicker()`, los modales propios, el ícono PWA neón azul, WhatsApp nativo, Atajos Guardados, el flujo de Deudas ni la paleta de diez colores.
+
+### 13.2 Uniformidad de la gráfica del Consejero
+
+La tarjeta «Comparativa de cierre de deuda» adopta exactamente la superficie de las tarjetas de gráficas de OLB_BYTE: fondo `rgba(30, 41, 59, 0.75)`, borde `var(--borde-suave)` y radio `var(--radio-lg)`, sin `#0F172A`. En escritorio (≥768 px) los dos velocímetros van en una fila de dos columnas de hasta 520 px, con SVG de 120×68 px; la curva de 12 meses se limita a 170 px y los botones de meses no tienen caja ni borde. En móvil se conservan tamaño y disposición previos, cambiando solo fondo y borde.
+
+### 13.3 Mensaje de validación limpio
+
+El mensaje único es: «El número de cuotas por el valor de cuota no alcanza a cubrir el valor total de la deuda. Revisa los datos y digítalos nuevamente.». Aparece bajo «Guardar deuda» con fondo rojo, bloqueando el botón mientras `cuota × cuotas < total`. `validar_formulario` elimina `Value error,` y el prefijo `tasa_implicita:`; `limpiarMensajeError()` aplica la misma limpieza en el frontend. Ningún usuario ve nombres de variables ni errores crudos.
+
+### 13.4 Ícono comercial de OLB_BYTE
+
+La entrada del menú exclusiva del administrador cambia la llave inglesa por un SVG de escaparate comercial (trazo 1.8, `currentColor`, 20 px), inyectado desde `icono_svg` con `| safe`. El ícono nativo de la PWA no se modifica.
+
+### 13.5 Cierre documental
+
+Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-73), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v3.9.3.

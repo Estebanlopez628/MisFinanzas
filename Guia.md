@@ -106,7 +106,7 @@ Principios que explican el resto del código:
 ### Resumen del inventario
 
 - **115 archivos** documentados: 56 Python, 40 plantillas Jinja2 y 19 recursos estáticos.
-- **69 clases**, **616 funciones** y **43 métodos** de clase.
+- **69 clases**, **617 funciones** y **43 métodos** de clase.
 
 ### Detalle por archivo
 
@@ -116,7 +116,7 @@ Principios que explican el resto del código:
 - **`dependencias.py`** · 226 líneas — Dependencias de sesión y autorización (RBAC).
   - Clases: `SesionRequerida`, `OnboardingRequerido`, `UsuarioSesion`
   - Funciones: `_usuario_desde_token`, `usuario_opcional`, `obtener_usuario_actual`, `obtener_usuario_sin_onboarding`, `exigir_administrador`, `exigir_olb_byte`
-- **`esquemas.py`** · 482 líneas — Esquemas Pydantic de las entradas de gastos, deducciones y deudas.
+- **`esquemas.py`** · 489 líneas — Esquemas Pydantic de las entradas de gastos, deducciones y deudas.
   - Clases: `_FormularioBase`, `GastoNuevo`, `GastoEditar`, `DeduccionNueva`, `DeduccionEditar`, `DeudaNueva`, `DeudaEditar`, `FeedbackNuevo`
   - Funciones: `_categoria_cerrada`, `_exigir_deuda_si_es_credito`, `validar_formulario`
 - **`main.py`** · 224 líneas — Punto de entrada de la aplicación **Finanzas y OLB_BYTE**.
@@ -183,7 +183,7 @@ Principios que explican el resto del código:
   - Funciones: `manifiesto`, `service_worker`, `favicon`
 - **`trabajos.py`** · 317 líneas — Rutas del módulo "Trabajos Extras".
   - Funciones: `_fecha_opcional`, `_contexto`, `ver_trabajos_extras`, `crear_trabajo`, `cambiar_estado`, `eliminar_trabajo`, `agregar_gasto_trabajo`
-- **`vistas.py`** · 223 líneas — Rutas de navegación principal y endpoint de salud.
+- **`vistas.py`** · 233 líneas — Rutas de navegación principal y endpoint de salud.
   - Funciones: `iniciales_alias`, `contexto_base`, `verificar_salud`, `ver_dashboard`
 
 #### `backend/app/servicios/`
@@ -218,7 +218,7 @@ Principios que explican el resto del código:
   - Funciones: `_destinatario`, `_enviar_por_api`, `enviar_correo`, `configuracion_valida`, `enviar_recuperacion`
 - **`deducciones_fijas.py`** · 335 líneas — Deducciones fijas del salario (SRS v1.4, REQ-08; vinculación SRS v1.9).
   - Funciones: `_validar`, `_deuda_vinculable`, `crear_deduccion`, `actualizar_deduccion`, `eliminar_deduccion`, `listar_deducciones`, `listar_vigentes`, `sin_vinculo`, `total_creditos_sin_vinculo`, `vinculadas_activas`, `cuota_de_vinculadas`, `total_por_quincena`
-- **`deudas.py`** · 756 líneas — Pasivos del usuario y amortización automática ("Registro y Detalles de deudas").
+- **`deudas.py`** · 755 líneas — Pasivos del usuario y amortización automática ("Registro y Detalles de deudas").
   - Clases: `CuotaProyectada`
   - Funciones: `_limpiar_periodicidad`, `_sumar_periodo`, `_periodos_transcurridos`, `_validar_datos_plan`, `validar_plan`, `_valor_presente`, `tasa_implicita_simulada`, `amortizacion_simulada`, `deuda_vinculable`, `crear_deuda`, `actualizar_deuda`, `listar_deudas`, `listar_vinculables`, `listar_pagos`, `_aplicar_pago`, `aplicar_cuotas_vencidas`, `proyeccion_deuda`, `cuota_mensual_equivalente`, `eliminar_deuda`, `resumen_deudas`
 - **`factura_pdf.py`** · 159 líneas — Factura de OLB_BYTE: datos, logos, diseño compartido y conversión a PDF (ADR-36).
@@ -257,14 +257,14 @@ Principios que explican el resto del código:
 
 #### `backend/app/static/css/`
 
-- **`estilos.css`** · 5332 líneas — Fondo y superficies
+- **`estilos.css`** · 5361 líneas — Fondo y superficies
 - **`factura-olb.css`** · 711 líneas — Sello de Anulada si aplica
 
 #### `backend/app/static/js/`
 
-- **`app.js`** · 525 líneas — Mejoras progresivas globales.
-  - Funciones: `restaurarBotonCopiar`, `confirmarCopia`, `copiar`, `seleccionarManual`, `cerrarEdicion`, `cerrarConfirmacion`, `pedirConfirmacion`, `mostrarAvisoApp`
-- **`ayuda.js`** · 124 líneas — Envío de reportes desde «Ayuda y comentarios» (SRS v2.0, sección 5.3).
+- **`app.js`** · 539 líneas — Mejoras progresivas globales.
+  - Funciones: `restaurarBotonCopiar`, `confirmarCopia`, `copiar`, `seleccionarManual`, `cerrarEdicion`, `limpiarMensajeError`, `cerrarConfirmacion`, `pedirConfirmacion`, `mostrarAvisoApp`
+- **`ayuda.js`** · 127 líneas — Envío de reportes desde «Ayuda y comentarios» (SRS v2.0, sección 5.3).
   - Funciones: `escapar`, `cargarMisReportes`
 - **`categorias.js`** · 526 líneas — Selector cerrado de categorías, vinculación con deudas y conservación de
   - Funciones: `idsDeudasActuales`, `datosFormulario`, `restaurarDatos`, `cerrar`, `abrir`, `alternar`, `sincronizar`, `sincronizar`, `vinculado`, `sincronizarValor`
@@ -277,7 +277,7 @@ Principios que explican el resto del código:
   - Funciones: `centro`, `mostrar`, `restaurar`, `iniciar`
 - **`factura.js`** · 422 líneas — Factura y recibo de abono de OLB_BYTE como imagen PNG (ADR-50).
   - Funciones: `descargar`, `esperar`, `esperarImagen`, `protegerLogoVisible`, `mostrarAviso`, `montarHoja`, `crearPng`, `imagenDe`, `copiarImagen`, `mensajeDelEnlace`, `numeroDelEnlace`, `enviarPorWhatsapp`, `finalizar`, `descargarImagen`
-- **`finanzas.js`** · 540 líneas — Mejora progresiva de "Mis Finanzas".
+- **`finanzas.js`** · 543 líneas — Mejora progresiva de "Mis Finanzas".
   - Funciones: `leerFormulario`, `pintarCampo`, `pintarDeduccion`, `pintarValorAuxilio`, `pintarErrores`, `pintarDetalle`, `pintarAuxilio`, `aplicarResultado`, `pintarTramos`, `pintarIncapacidad`, `pintarQuincenas`, `pintarTexto`, `calcular`, `programarCalculo`, `marcarCambios`, `aplicarPlantilla`
 - **`incapacidades.js`** · 129 líneas — Cálculo automático del módulo de incapacidades (SRS v1.5).
   - Funciones: `fechasListas`, `reemplazar`, `actualizar`, `programar`
@@ -299,7 +299,7 @@ Principios que explican el resto del código:
 
 - **`_categorias.html`** · 126 líneas
 - **`base.html`** · 148 líneas — Vista previa al compartir el enlace (WhatsApp, redes). La URL pública sale de APP_URL;
-- **`dashboard.html`** · 82 líneas — Plantilla: Panel principal
+- **`dashboard.html`** · 94 líneas — Plantilla: Panel principal
 - **`login.html`** · 95 líneas — Plantilla: Iniciar sesión
 - **`olvide_contrasena.html`** · 35 líneas — Plantilla: Recuperar contraseña
 - **`registro.html`** · 59 líneas — Plantilla: Crear cuenta
@@ -326,7 +326,7 @@ Principios que explican el resto del código:
 
 #### `backend/app/templates/deudas/`
 
-- **`index.html`** · 253 líneas — Plantilla: Registro y Detalles de deudas
+- **`index.html`** · 252 líneas — Plantilla: Registro y Detalles de deudas
 
 #### `backend/app/templates/finanzas/`
 
@@ -469,7 +469,9 @@ en el `ValueError` que ya entienden los routers. Todos los esquemas usan
 `_categoria_cerrada`, que rechaza texto libre y reserva «Créditos y
 Obligaciones» para el cálculo automático con deudas. `DeudaNueva` calcula
 `tasa_implicita` con la simulación de `servicios/deudas.py`: es solo una
-comprobación del plan, no se persiste ni se cobra (ADR-53).
+comprobación del plan, no se persiste ni se cobra (ADR-53). V3.9.3:
+`validar_formulario` quita los prefijos técnicos de Pydantic y, para
+`tasa_implicita`, devuelve únicamente el mensaje de negocio.
 
 ### `backend/app/core/categorias.py`
 
@@ -556,7 +558,10 @@ publicidad, ruta activa) que consumen todas las plantillas; `ver_dashboard`
 muestra las 4 tarjetas según rol; `verificar_salud` responde `/salud` para
 monitoreo. Aquí viven también la instancia de `Jinja2Templates`, los filtros
 (`cop`, `porcentaje`, `fecha_larga`) y los globales de plantilla. `contexto_base` también
-entrega `cafe` (monto y QR de Bre-B en data URI) para el apoyo voluntario.
+entrega `cafe` (monto y QR de Bre-B en data URI) para el apoyo voluntario. V3.9.3:
+la tarjeta de OLB_BYTE lleva `icono_svg` con un escaparate comercial en vez del
+ícono de herramientas; `dashboard.html` lo inyecta con `| safe`. El ícono PWA no
+se modifica.
 
 ### `backend/app/routers/auth.py`
 

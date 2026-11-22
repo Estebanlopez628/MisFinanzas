@@ -262,6 +262,12 @@ Recálculo en tiempo real (<100 ms) sin recargar página. Se implementa con func
 - **Decisión:** `trabajos_extras` gana `tipo_contrato` (`INDEFINIDO` | `TERMINO_FIJO`), `frecuencia` (`MENSUAL` | `QUINCENAL`), `fecha_fin` y `fecha_pago`. `valor` es el monto **de cada pago**. Los pagos se generan de forma idempotente como filas de `gastos` con `id_trabajo`: reutilizan la macro `fila_gasto` (lápiz, «Cancelar», ×, ✔ y abono manual) pero `gastos.listar_gastos` los excluye, así que no tocan el sueldo, las quincenas ni los totales de gastos. El ✔ registra el cobro y `trabajos.extras_cobrados_mes` lo suma al `disponible` del diagnóstico del mes. La frecuencia quincenal crea dos pagos (día 15 y día 30 ajustado al último día); la mensual, uno en el día de `fecha_pago`. Un contrato indefinido mantiene una ventana móvil de 12 meses desde el mes visible; un término fijo se detiene en `fecha_fin`. La × inhabilita el pago 15 días en lugar de borrarlo, para que la generación idempotente no lo recree. Los trabajos anteriores se migran como término fijo de un solo mes para no inventar ingresos recurrentes.
 - **Archivos:** `modelos.py` (`TrabajoExtra`, `Gasto.id_trabajo`), `core/base_datos.py` (`_migrar_columnas_trabajos`, `id_trabajo` en `_migrar_columnas_gastos`), `servicios/trabajos.py`, `servicios/gastos.py`, `servicios/pagos_metas.py` (`quitar_gasto`), `servicios/ahorro.py` (`diagnostico`), `routers/trabajos.py`, `routers/gastos.py` (`_volver`), `templates/trabajos/index.html`, `templates/finanzas/_gasto_fijo.html`, `templates/presupuesto/index.html`, `static/js/app.js`, `diccionario_datos.md` §7 y §12, `tests/test_trabajos_extras.py`.
 
+### ADR-73 — Uniformidad visual v3.9.3 y mensajes limpios
+- **Contexto:** la gráfica del Consejero tenía un fondo negro profundo distinto al de las gráficas de OLB_BYTE; en escritorio los velocímetros se estiraban; el mensaje de validación de deudas cambió de redacción y Pydantic filtraba `tasa_implicita: Value error,`; y la tarjeta de OLB_BYTE usaba una llave inglesa que parecía configuración técnica.
+- **Decisión:** la tarjeta del Consejero adopta la superficie de `.panel` (fondo `rgba(30,41,59,.75)`, borde suave y radio grande); en escritorio los velocímetros quedan en dos columnas de hasta 520 px con SVG 120×68 y la curva a 170 px; los botones de meses van sin caja. El mensaje de deudas se unifica al texto limpio y `validar_formulario` quita los prefijos de Pydantic, con `limpiarMensajeError()` como respaldo en el frontend. El ícono del menú de OLB_BYTE pasa a un escaparate SVG, sin tocar el ícono PWA neón.
+- **Consecuencia:** las gráficas comparten identidad visual, los mensajes nunca muestran nombres de variables y OLB_BYTE se reconoce como módulo comercial. No se modificaron las proporciones móviles del Consejero ni ningún módulo aprobado en v3.9.1.
+- **Archivos:** `static/css/estilos.css`, `templates/presupuesto/index.html`, `templates/deudas/index.html`, `servicios/deudas.py`, `esquemas.py`, `static/js/app.js`, `static/js/finanzas.js`, `static/js/ayuda.js`, `routers/vistas.py`, `templates/dashboard.html`, `tests/test_srs_v3_9_3.py`.
+
 ### ADR-72 — Blindaje UX v3.9.1: validación en vivo, fechas y modales propios
 - **Contexto:** el formulario de deudas solo avisaba del plan inválido después del POST (error 400); el icono de fecha era poco visible y no se abría al hacer clic en escritorio; y varias acciones usaban `window.confirm`/`window.alert`, que muestran cuadros blancos nativos que rompen la identidad oscura.
 - **Decisión:** `deudas.js` calcula `cuota × cuotas` en cada entrada y bloquea «Guardar deuda» con alerta roja amigable; el backend comparte el mismo mensaje exacto en `detail`. Los `<input type=date>` llevan icono gris de alto contraste y `showPicker()` global en escritorio. Se auditó todo el código y se eliminó el 100% de diálogos nativos: `base.html` aporta `#modal-confirmacion` y `#modal-aviso`, y `app.js` gestiona `data-confirmar` con `requestSubmit`; los avisos de factura usan el toast oscuro.
@@ -513,6 +519,13 @@ Recálculo en tiempo real (<100 ms) sin recargar página. Se implementa con func
 ---
 
 ## Bitácora de Cambios
+
+### 2026-11-22 — SRS v3.9.3: uniformidad visual e ícono comercial (ADR-73)
+
+- Gráfica del Consejero con el mismo fondo/borde que OLB_BYTE; velocímetros compactos 120×68 en escritorio y curva a 170 px.
+- Mensaje de validación de deudas unificado y sin prefijos de Pydantic en backend ni frontend.
+- Ícono del menú de OLB_BYTE cambiado de llave inglesa a escaparate comercial; ícono PWA intacto.
+- Verificación: 6 pruebas nuevas de v3.9.3 en verde y suite completa sin regresiones.
 
 ### 2026-11-22 — SRS v3.9.1: blindaje UX y cierre documental (ADR-72)
 

@@ -340,6 +340,13 @@ a.tarjeta:focus-visible {
   line-height: 1;
 }
 
+.tarjeta__icono svg {
+  width: 20px;
+  height: 20px;
+  color: currentColor;
+  vertical-align: middle;
+}
+
 .tarjeta__titulo {
   margin: 0;
   font-size: 1.12rem;
@@ -4274,13 +4281,15 @@ strong.valor-negativo.recibo__cifra--saldo {
 }
 
 /* SRS v3.7, sección 5: comparativa de cierre de deuda en el Consejero. */
+/* SRS v3.9.3: misma superficie que las tarjetas de gráficas de OLB_BYTE
+   (`.panel`), sin el negro profundo que rompía la uniformidad. */
 .cierre-deuda {
   margin-top: 16px;
-  padding: 14px;
-  border: 1px solid rgba(30, 41, 59, 0.9);
-  border-radius: 16px;
-  background: #0F172A;
-  color: #F8FAFC;
+  padding: 22px;
+  border: 1px solid var(--borde-suave);
+  border-radius: var(--radio-lg);
+  background: rgba(30, 41, 59, 0.75);
+  color: var(--text-primary);
 }
 
 .cierre-deuda__titulo {
@@ -4315,9 +4324,8 @@ strong.valor-negativo.recibo__cifra--saldo {
   flex-direction: column;
   align-items: center;
   padding: 10px 6px;
-  border: 1px solid rgba(30, 41, 59, 0.8);
   border-radius: 12px;
-  background: rgba(15, 23, 42, 0.6);
+  background: rgba(15, 23, 42, 0.45);
   text-align: center;
 }
 
@@ -4326,8 +4334,29 @@ strong.valor-negativo.recibo__cifra--saldo {
 }
 
 .cierre-deuda__velocimetro svg {
-  width: 100px;
-  height: 58px;
+  width: 120px;
+  height: 68px;
+  max-width: 120px;
+  flex-shrink: 0;
+}
+
+@media (min-width: 768px) {
+  .cierre-deuda__velocimetros {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    max-width: 520px;
+    margin: 0 auto 20px auto;
+  }
+
+  .cierre-deuda__grafica svg {
+    max-height: 170px;
+  }
+}
+
+.cierre-deuda__meses button {
+  background: transparent !important;
+  border: none;
+  color: #94A3B8;
 }
 
 .cierre-deuda__velocimetro > span {

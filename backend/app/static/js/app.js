@@ -233,6 +233,20 @@
     }
   });
 
+  /**
+   * Quita prefijos técnicos de Pydantic antes de mostrar un error (SRS v3.9.3).
+   *
+   * @param {string} texto Mensaje recibido del servidor.
+   * @returns {string} Mensaje limpio y legible.
+   */
+  function limpiarMensajeError(texto) {
+    return String(texto || "")
+      .replace(/^tasa_implicita:\s*Value error,\s*/i, "")
+      .replace(/^Value error,\s*/i, "")
+      .trim();
+  }
+  window.limpiarMensajeError = limpiarMensajeError;
+
   // SRS v3.9.1, sección 3: sistema global de modales. Ningún flujo dispara
   // diálogos nativos del navegador (alertas, confirmaciones o prompts).
   var modalConfirmacion = document.getElementById("modal-confirmacion");
