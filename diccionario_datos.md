@@ -609,3 +609,34 @@ entre paréntesis se indica el nombre del campo que aparece en la SRS.
   y muestra a cada usuario únicamente sus propios tickets con su estado actual.
 - La tabla se crea con `create_all` en SQLite y PostgreSQL al arrancar
   (`aplicar_migraciones()`), sin borrar datos existentes.
+
+---
+
+## 15. Paleta oficial de donas (SRS v3.4, sección 1)
+
+`backend/app/core/categorias.py` es la **única fuente de verdad** de los colores de
+los gráficos. No se hardcodea ningún HEX en plantillas, JavaScript ni servicios;
+los arcos y los puntos de la leyenda leen el mismo diccionario. Los diez HEX son
+distintos (`catalogo.paleta_es_unica()` lo certifica).
+
+| Ítem | HEX | Uso |
+| --- | --- | --- |
+| Base mínima de liquidez ($300.000) | `#10B981` | Dona de categorías y de capacidad |
+| Alimentación y Mercado | `#F97316` | Categoría 2 |
+| Vivienda y Servicios Públicos | `#3B82F6` | Categoría 1 y «Gastos fijos» en capacidad |
+| Créditos y Obligaciones | `#EF4444` | Categoría 8 y «Cuota de deudas» |
+| Transporte y Movilidad | `#EAB308` | Categoría 3 |
+| Salud y Bienestar | `#06B6D4` | Categoría 4 |
+| Educación y Desarrollo | `#8B5CF6` | Categoría 6 (Educación y Familia) |
+| Entretenimiento y Ocio | `#EC4899` | Categoría 5 (Telefonía y Suscripciones) |
+| Otros / Imprevistos | `#64748B` | Categoría 7 (Otros Gastos Fijos) |
+| Dinero Libre / Excedente | `#84CC16` | «Disponible para abonar» |
+
+El cambio crítico fue separar la base mínima (`#10B981`) de Alimentación
+(antes `#10B981`, ahora `#F97316`), que antes compartían el mismo verde.
+
+**Campos y flujos relacionados (sin cambios de esquema en v3.4):**
+- `gastos.id_deuda` y `deducciones_fijas.id_deuda` sincronizan la cuota_oficial
+  de `deudas.cuota_mensual` sin duplicarla en dona ni consejero.
+- `feedback_usuarios` conserva `estado` y `fecha_resolucion` para «Mis reportes
+  enviados» y el badge administrativo.

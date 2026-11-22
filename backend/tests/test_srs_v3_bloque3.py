@@ -76,7 +76,7 @@ def test_boton_agregar_gasto_igual_a_guardar_incapacidad() -> None:
 def test_campo_bloqueado_con_candado() -> None:
     """El valor vinculado se pinta gris con candado y cursor de no escritura."""
     js = (RUTA_APP / "static/js/categorias.js").read_text(encoding="utf-8")
-    assert 'classList.toggle("campo__control--bloqueado", loEsta)' in js
+    assert 'classList.add("campo__control--bloqueado")' in js
     assert "background-color: rgba(30, 41, 59, 0.85)" in CSS
     assert "cursor: not-allowed" in CSS
     assert "rect x='4' y='10'" in CSS  # candado SVG

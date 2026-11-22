@@ -144,4 +144,27 @@
       }
     }
   }
+
+  // SRS v3.4, punto 4.1: scroll de ida hasta «Nueva deuda», igual que el de
+  // retorno al formulario de origen. El flag se consume una sola vez.
+  if (sessionStorage.getItem("misfinanzas_scroll_to_new_debt") === "true") {
+    sessionStorage.removeItem("misfinanzas_scroll_to_new_debt");
+    window.requestAnimationFrame(function () {
+      window.setTimeout(function () {
+        var seccion = document.getElementById("seccion-nueva-deuda");
+        if (!seccion) {
+          return;
+        }
+        seccion.scrollIntoView({ behavior: "smooth", block: "center" });
+        seccion.classList.add("retorno-resaltado");
+        window.setTimeout(function () {
+          seccion.classList.remove("retorno-resaltado");
+        }, 1500);
+        var primerInput = seccion.querySelector("input");
+        if (primerInput && primerInput.focus) {
+          primerInput.focus({ preventScroll: true });
+        }
+      }, 150);
+    });
+  }
 })();

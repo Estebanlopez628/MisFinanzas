@@ -262,6 +262,12 @@ Recálculo en tiempo real (<100 ms) sin recargar página. Se implementa con func
 - **Decisión:** `trabajos_extras` gana `tipo_contrato` (`INDEFINIDO` | `TERMINO_FIJO`), `frecuencia` (`MENSUAL` | `QUINCENAL`), `fecha_fin` y `fecha_pago`. `valor` es el monto **de cada pago**. Los pagos se generan de forma idempotente como filas de `gastos` con `id_trabajo`: reutilizan la macro `fila_gasto` (lápiz, «Cancelar», ×, ✔ y abono manual) pero `gastos.listar_gastos` los excluye, así que no tocan el sueldo, las quincenas ni los totales de gastos. El ✔ registra el cobro y `trabajos.extras_cobrados_mes` lo suma al `disponible` del diagnóstico del mes. La frecuencia quincenal crea dos pagos (día 15 y día 30 ajustado al último día); la mensual, uno en el día de `fecha_pago`. Un contrato indefinido mantiene una ventana móvil de 12 meses desde el mes visible; un término fijo se detiene en `fecha_fin`. La × inhabilita el pago 15 días en lugar de borrarlo, para que la generación idempotente no lo recree. Los trabajos anteriores se migran como término fijo de un solo mes para no inventar ingresos recurrentes.
 - **Archivos:** `modelos.py` (`TrabajoExtra`, `Gasto.id_trabajo`), `core/base_datos.py` (`_migrar_columnas_trabajos`, `id_trabajo` en `_migrar_columnas_gastos`), `servicios/trabajos.py`, `servicios/gastos.py`, `servicios/pagos_metas.py` (`quitar_gasto`), `servicios/ahorro.py` (`diagnostico`), `routers/trabajos.py`, `routers/gastos.py` (`_volver`), `templates/trabajos/index.html`, `templates/finanzas/_gasto_fijo.html`, `templates/presupuesto/index.html`, `static/js/app.js`, `diccionario_datos.md` §7 y §12, `tests/test_trabajos_extras.py`.
 
+### ADR-70 — Blindaje anti-regresión v3.4: paleta, atajos, WhatsApp y deudas
+- **Contexto:** la base mínima de liquidez y Alimentación compartían `#10B981`; los atajos guardados dejaban huecos amplios en móvil; el botón «Compartir por WhatsApp» del modal parecía no copiar la imagen y dejaba pantalla en blanco al abrir el chat; ir a registrar deudas llevaba arriba de la página; y volver sin registrar marcaba SI igualmente.
+- **Decisión:** se centralizaron diez HEX únicos en `core/categorias.py` con `COLORES_DONA` y `paleta_es_unica()`; la columna de descripción de atajos usa `fit-content(160px)` con `w-fit` y gap de 11 px; el modal reutiliza la función maestra sin alterar su copia de PNG ni su mensaje, abre con `_blank`/`noopener,noreferrer` y mantiene el ícono visible con `aria-busy`; el flag `misfinanzas_scroll_to_new_debt` lleva a «Nueva deuda» y `debt_created` se confirma solo tras el POST exitoso, con bloqueo reactivo del valor por categoría.
+- **Consecuencia:** queda prohibido reescribir la función maestra de WhatsApp; ninguna dona repite color; el retorno a deudas es bidireccional y honesto sobre si se creó o no la deuda. No se tocó la lógica contable ni los textos aprobados.
+- **Archivos:** `core/categorias.py`, `servicios/capacidad.py`, `static/css/estilos.css`, `static/js/factura.js`, `static/js/categorias.js`, `static/js/deudas.js`, `templates/olb_byte/factura.html`, `templates/olb_byte/cobro.html`, `templates/olb_byte/pendientes.html`, `templates/olb_byte/cartera.html`, `templates/deudas/index.html`, `tests/test_srs_v3_4_*.py`.
+
 ### ADR-69 — Ajustes finos v3.1: scroll, logo, correo y botones azules
 - **Contexto:** al volver de registrar una deuda la página quedaba arriba y había que buscar el formulario; compartir una factura parecía quitar el logo del modal; el correo de recuperación seguía sin llegar en Render por bloqueo de puertos SMTP; y los botones de alta y retorno no compartían el azul institucional.
 - **Decisión:** los tres formularios de origen exponen IDs estables y `categorias.js` desplaza con `scrollIntoView`, resalta 1,5 s y enfoca el selector de deudas. El logo lleva carga temprana, dimensiones y fallback; la captura usa un clon fuera de pantalla y se restaura el nodo visible; el PNG va al portapapeles con un toast discreto. El correo prioriza APIs HTTPS (Resend → Brevo → SendGrid) con `urllib.request` de la librería estándar, y de fallback SMTP SSL 465 con timeout 15 s; se registra el código exacto de respuesta. Todos los botones de alta y retorno usan `boton--primario`.
@@ -495,6 +501,14 @@ Recálculo en tiempo real (<100 ms) sin recargar página. Se implementa con func
 ---
 
 ## Bitácora de Cambios
+
+### 2026-11-22 — SRS v3.4: blindaje anti-regresión y cierre documental (ADR-70)
+
+- Paleta de diez colores únicos centralizada; Alimentación ya no comparte verde con la base mínima.
+- Atajos guardados con columnas ajustadas al contenido en móvil.
+- WhatsApp: modal «Ver factura» conectado a la función maestra, apertura externa sin pantalla en blanco e ícono siempre visible; botones de abono renombrados a «Registrar Pago».
+- Deudas: scroll bidireccional, validación `debt_created` y bloqueo reactivo del valor por categoría.
+- `sw.js` en `olb-finanzas-v95`. Verificación: **747 pruebas** en verde y `node --check` OK.
 
 ### 2026-11-21 — SRS v3.1: ajustes finos de UX, logo, correo y botones (ADR-69)
 

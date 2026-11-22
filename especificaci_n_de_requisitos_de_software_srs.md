@@ -360,3 +360,39 @@ Versión 3.1 del alcance de **MisFinanzas**. Cuatro ajustes quirúrgicos sobre l
 ### 9.5 Documentación
 
 - `AGENTS.md`, `MEMORY.md` (ADR-69), `Guia.md`, `USER_GUIDE.md`, `constitution.md` y esta SRS quedan sincronizados con la versión activa v3.1.
+
+---
+
+## 10. SRS v3.4 — Blindaje Anti-Regresión + Cierre Documental Integral
+
+Versión 3.4 y **línea base vigente**. Cuatro ajustes quirúrgicos sin alterar la lógica contable, las fórmulas de liquidez ni los mensajes aprobados.
+
+### 10.1 Reglas críticas de no regresión
+
+1. La función maestra de WhatsApp (PNG al portapapeles con el logo y chat directo) no se reescribe; el botón «Compartir por WhatsApp» del modal «Ver factura» la invoca exactamente igual que el ícono rápido y los recibos.
+2. WhatsApp se abre con `window.open(url, '_blank', 'noopener,noreferrer')`: prohibido navegar en la misma pestaña o dejar pantalla en blanco; el ícono permanece siempre visible.
+3. Ningún ítem de las donas comparte color: la paleta de diez HEX se lee de `core/categorias.py`.
+4. El flujo de deudas es bidireccional y honesto: scroll de ida y vuelta, y SI solo si el backend confirmó la creación.
+
+### 10.2 Paleta única de donas
+
+Diez HEX distintos centralizados: base `#10B981`, Alimentación `#F97316`, Vivienda `#3B82F6`, Créditos `#EF4444`, Transporte `#EAB308`, Salud `#06B6D4`, Educación `#8B5CF6`, Ocio `#EC4899`, Otros `#64748B` y Dinero Libre `#84CC16`. Arcos y leyenda leen el mismo diccionario.
+
+### 10.3 Atajos guardados en móvil
+
+Desde 767 px, columnas `fit-content(160px)` + `max-content`, gap de 11 px, descripción `w-fit` con truncate a 160 px para textos extensos.
+
+### 10.4 WhatsApp y registro de pagos
+
+- Modal «Ver factura» conectado a la función maestra; sin Web Share API, sin pantalla en blanco y sin ocultar el ícono.
+- Botones de abono renombrados a «Registrar Pago»; se conserva el título «Registrar Abono / Pago Total» y no hay líneas de guiones.
+
+### 10.5 Deudas bidireccionales
+
+- Flag `misfinanzas_scroll_to_new_debt` → scroll/resaltado/foco en `#seccion-nueva-deuda`.
+- `misfinanzas_pending_debt_link` incorpora `debt_created` y `created_debt_id`; solo se marcan SI y la cuota cuando el POST se completó. Sin registro se mantiene NO con guardado bloqueado.
+- El campo Valor se bloquea y desbloquea de inmediato al cambiar la categoría.
+
+### 10.6 Cierre documental
+
+Diccionario §15, constitución, `Guia.md`, `USER_GUIDE.md`, `AGENTS.md`, `MEMORY.md` (ADR-70) y esta SRS quedan sincronizados con la versión activa v3.4.

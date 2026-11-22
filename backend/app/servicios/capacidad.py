@@ -270,11 +270,11 @@ def _arcos_categoria(
             )
     if base > CERO:
         candidatos.append(
-            ("Base mínima de liquidez", base, "var(--accent-green)", "valor-positivo")
+            ("Base mínima de liquidez", base, catalogo.COLOR_BASE_MINIMA, "valor-positivo")
         )
     if disponible > CERO:
         candidatos.append(
-            ("Disponible para abonar", disponible, "var(--accent-amber)", "valor-positivo")
+            ("Disponible para abonar", disponible, catalogo.COLOR_DINERO_LIBRE, "valor-positivo")
         )
     if not candidatos:
         return []
@@ -365,11 +365,13 @@ def _repartir_arcos(
     # `clase` pinta la cifra de la leyenda con la paleta de referencia: rojo para
     # lo que sale del bolsillo (gastos y deudas) y verde para lo que queda a favor
     # (base mínima y disponible). El color del arco se conserva como guía visual.
+    # Todos los colores salen del catálogo centralizado (SRS v3.4): dentro de
+    # cada dona no se repite ningún HEX y la leyenda lee el mismo valor.
     candidatos = [
-        ("Gastos fijos", gastos_positivos, porcentaje_gastos, "var(--accent-blue)", "valor-negativo"),
-        ("Cuota de deudas", deudas_positivas, porcentaje_deudas, "var(--accent-red)", "valor-negativo"),
-        ("Base mínima de liquidez", base, porcentaje_base, "var(--accent-green)", "valor-positivo"),
-        ("Disponible para abonar", disponible, porcentaje_disponible, "var(--accent-amber)", "valor-positivo"),
+        ("Gastos fijos", gastos_positivos, porcentaje_gastos, catalogo.COLOR_VIVIENDA, "valor-negativo"),
+        ("Cuota de deudas", deudas_positivas, porcentaje_deudas, catalogo.COLOR_CREDITOS, "valor-negativo"),
+        ("Base mínima de liquidez", base, porcentaje_base, catalogo.COLOR_BASE_MINIMA, "valor-positivo"),
+        ("Disponible para abonar", disponible, porcentaje_disponible, catalogo.COLOR_DINERO_LIBRE, "valor-positivo"),
     ]
 
     # Los porcentajes se muestran con un decimal; el redondeo de cada uno puede

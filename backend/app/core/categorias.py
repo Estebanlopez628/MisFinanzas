@@ -18,6 +18,10 @@ Reglas de negocio
 - Un texto que no corresponde a ninguna categoría conocida se reclasifica como
   «Otros Gastos Fijos» cuando se normaliza en modo laxo (datos históricos), y
   se rechaza cuando la validación es estricta (formularios nuevos).
+- La paleta de la dona tiene **diez colores distintos** (SRS v3.4 §1.2): ocho
+  categorías, la base mínima de liquidez y el dinero libre. Los arcos y los
+  puntos de la leyenda leen del mismo diccionario; no se hardcodea ningún HEX
+  en plantillas, JavaScript ni servicios.
 """
 
 from __future__ import annotations
@@ -42,22 +46,49 @@ class Categoria:
     color: str
 
 
+# SRS v3.4, sección 1: paleta oficial de diez colores **únicos**. Los arcos y
+# los puntos de la leyenda leen estos nombres; no hay HEX repetidos ni valores
+# hardcodeados en plantillas, JavaScript ni servicios.
+COLOR_BASE_MINIMA = "#10B981"
+COLOR_ALIMENTACION = "#F97316"
+COLOR_VIVIENDA = "#3B82F6"
+COLOR_CREDITOS = "#EF4444"
+COLOR_TRANSPORTE = "#EAB308"
+COLOR_SALUD = "#06B6D4"
+COLOR_EDUCACION = "#8B5CF6"
+COLOR_ENTRETENIMIENTO = "#EC4899"
+COLOR_OTROS = "#64748B"
+COLOR_DINERO_LIBRE = "#84CC16"
+
+COLORES_DONA: tuple[str, ...] = (
+    COLOR_BASE_MINIMA,
+    COLOR_ALIMENTACION,
+    COLOR_VIVIENDA,
+    COLOR_CREDITOS,
+    COLOR_TRANSPORTE,
+    COLOR_SALUD,
+    COLOR_EDUCACION,
+    COLOR_ENTRETENIMIENTO,
+    COLOR_OTROS,
+    COLOR_DINERO_LIBRE,
+)
+
 # Los ocho nombres y colores son innegociables: los consume la dona y los
 # selectores cerrados de Mis Finanzas, Gastos y Presupuesto y Trabajos Extras.
 CATEGORIAS: tuple[Categoria, ...] = (
-    Categoria("Vivienda y Servicios", "#3B82F6"),
-    Categoria("Alimentación y Mercado", "#10B981"),
-    Categoria("Transporte y Movilidad", "#F59E0B"),
-    Categoria("Salud y Bienestar", "#06B6D4"),
-    Categoria("Telefonía y Suscripciones", "#8B5CF6"),
-    Categoria("Educación y Familia", "#EC4899"),
-    Categoria("Otros Gastos Fijos", "#64748B"),
-    Categoria("Créditos y Obligaciones", "#EF4444"),
+    Categoria("Vivienda y Servicios", COLOR_VIVIENDA),
+    Categoria("Alimentación y Mercado", COLOR_ALIMENTACION),
+    Categoria("Transporte y Movilidad", COLOR_TRANSPORTE),
+    Categoria("Salud y Bienestar", COLOR_SALUD),
+    Categoria("Telefonía y Suscripciones", COLOR_ENTRETENIMIENTO),
+    Categoria("Educación y Familia", COLOR_EDUCACION),
+    Categoria("Otros Gastos Fijos", COLOR_OTROS),
+    Categoria("Créditos y Obligaciones", COLOR_CREDITOS),
 )
 
 CATEGORIA_CREDITOS = "Créditos y Obligaciones"
 CATEGORIA_OTROS = "Otros Gastos Fijos"
-CATEGORIA_OTROS_COLOR = "#64748B"
+CATEGORIA_OTROS_COLOR = COLOR_OTROS
 # Categoría técnica de los pagos generados por «Trabajos Extras». No pertenece
 # al catálogo cerrado de ocho y la migración de datos históricos debe respetarla:
 # si se normalizara a «Otros Gastos Fijos», la idempotencia de los pagos dejaría
@@ -183,6 +214,20 @@ def es_credito(descripcion: str) -> bool:
         mayúsculas.
     """
     return bool(PATRON_CREDITO.search(_clave(descripcion)))
+
+
+def paleta_es_unica() -> bool:
+    """Certifica que la paleta de la dona no repite ningún color.
+
+    Returns:
+        `True` si los diez HEX oficiales son distintos, incluidos los de las
+        ocho categorías, la base mínima y el dinero libre.
+    """
+    todos = [categoria.color for categoria in CATEGORIAS] + [
+        COLOR_BASE_MINIMA,
+        COLOR_DINERO_LIBRE,
+    ]
+    return len(todos) == len(set(todos)) and len(COLORES_DONA) == len(set(COLORES_DONA))
 
 
 def lista_categorias() -> list[dict[str, str]]:

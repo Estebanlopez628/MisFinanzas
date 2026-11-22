@@ -261,45 +261,59 @@
       return true;
     }
 
+    var placeholderOriginal = campoValor.getAttribute("placeholder") || "";
+    var bloqueadoAntes = false;
+
     function sincronizarValor() {
-      // En la edición de un gasto, cambiar a otra categoría desvincula la
-      // deuda y devuelve el valor al usuario (SRS v2.0, 3.2). Se limita a los
-      // formularios de gastos para no alterar las libranzas de deducciones.
-      var accion = formulario && formulario.getAttribute("action");
-      var esEdicionGasto = accion && accion.indexOf("/gastos/") !== -1;
-      if (
-        esEdicionGasto &&
-        entradaCategoria &&
-        entradaCategoria.value !== CATEGORIA_CREDITO &&
-        selectorDeuda.value
-      ) {
-        selectorDeuda.value = "";
-        if (caja) {
+      // SRS v3.4, punto 4.3: la categoría manda. Con «Créditos y Obligaciones»
+      // el valor se bloquea y se toma de la deuda; con cualquier otra categoría
+      // se desvincula de inmediato y el valor vuelve a ser editable.
+      var esCredito =
+        Boolean(entradaCategoria) && entradaCategoria.value === CATEGORIA_CREDITO;
+      var opcion = selectorDeuda.options[selectorDeuda.selectedIndex];
+
+      if (!esCredito) {
+        if (selectorDeuda.value) {
+          selectorDeuda.value = "";
+          selectorDeuda.dispatchEvent(new Event("change", { bubbles: true }));
+        }
+        if (caja && caja.checked) {
           caja.checked = false;
           caja.dispatchEvent(new Event("change", { bubbles: true }));
         }
-      }
-      var loEsta = vinculado();
-      var opcion = selectorDeuda.options[selectorDeuda.selectedIndex];
-      if (loEsta && opcion) {
-        var cuota = opcion.getAttribute("data-cuota");
-        if (cuota) {
-          campoValor.value = cuota;
-        }
         if (nota) {
-          nota.hidden = false;
-          if (notaAcreedor) {
-            notaAcreedor.textContent = opcion.textContent.split("·")[0].trim();
-          }
+          nota.hidden = true;
         }
-      } else if (nota) {
-        nota.hidden = true;
+        if (bloqueadoAntes) {
+          campoValor.value = "";
+          bloqueadoAntes = false;
+        }
+        campoValor.readOnly = false;
+        campoValor.placeholder = placeholderOriginal;
+        if (campoValor.classList) {
+          campoValor.classList.remove("campo__control--bloqueado");
+        }
+        return;
       }
-      campoValor.readOnly = loEsta;
-      // SRS v3.0, punto 9: el bloqueo debe verse, no solo sentirse al intentar
-      // escribir. El candado y el fondo gris viven en CSS.
+
+      bloqueadoAntes = true;
+      campoValor.readOnly = true;
       if (campoValor.classList) {
-        campoValor.classList.toggle("campo__control--bloqueado", loEsta);
+        campoValor.classList.add("campo__control--bloqueado");
+      }
+      var cuota = opcion && opcion.getAttribute("data-cuota");
+      if (cuota) {
+        campoValor.value = cuota;
+        campoValor.placeholder = placeholderOriginal;
+      } else {
+        campoValor.value = "";
+        campoValor.placeholder = "Se cargará desde la deuda";
+      }
+      if (nota) {
+        nota.hidden = false;
+        if (notaAcreedor && opcion) {
+          notaAcreedor.textContent = opcion.textContent.split("·")[0].trim();
+        }
       }
     }
 
@@ -338,10 +352,14 @@
         origin_label: origen.etiqueta,
         origin_destino: origen.destino,
         origin_objetivo: origen.objetivo,
+        debt_created: false,
+        created_debt_id: null,
         form_data: datosFormulario(formulario)
       };
       try {
         sessionStorage.setItem(CLAVE_PENDIENTE, JSON.stringify(pendiente));
+        // SRS v3.4, punto 4.1: al llegar a deudas se baja hasta «Nueva deuda».
+        sessionStorage.setItem("misfinanzas_scroll_to_new_debt", "true");
         // Clave heredada: conserva el respaldo sin JS de versiones anteriores.
         sessionStorage.setItem(
           "deuda-origen:" + modulo,
@@ -380,18 +398,32 @@
       }
       restaurarDatos(formulario, guardado);
 
-      // La especificación pide marcar SI por defecto al regresar. No se toca la
-      // validación de categoría: solo se preselecciona la respuesta.
+      // SRS v3.4, punto 4.2: solo se marca SI si el backend confirmó una deuda
+      // creada. Sin registro, se restaura el formulario pero se mantiene NO,
+      // con el enlace a deudas y el botón guardar bloqueado.
+      var creada =
+        (pendiente && pendiente.debt_created === true) ||
+        Boolean(parametros.get("deuda_id"));
+      var deudaId =
+        parametros.get("deuda_id") ||
+        (pendiente && pendiente.created_debt_id) ||
+        "";
       var opcionSi = formulario.querySelector("[data-vincular-si]");
-      if (opcionSi) {
-        opcionSi.checked = true;
-        opcionSi.dispatchEvent(new Event("change", { bubbles: true }));
-      }
-      var deudaId = parametros.get("deuda_id");
+      var opcionNo = formulario.querySelector("[data-vincular-no]");
       var selectorDeuda = formulario.querySelector("[data-deuda-opciones]");
-      if (selectorDeuda && deudaId) {
-        selectorDeuda.value = deudaId;
-        selectorDeuda.dispatchEvent(new Event("change", { bubbles: true }));
+
+      if (creada) {
+        if (opcionSi) {
+          opcionSi.checked = true;
+          opcionSi.dispatchEvent(new Event("change", { bubbles: true }));
+        }
+        if (selectorDeuda && deudaId) {
+          selectorDeuda.value = deudaId;
+          selectorDeuda.dispatchEvent(new Event("change", { bubbles: true }));
+        }
+      } else if (opcionNo) {
+        opcionNo.checked = true;
+        opcionNo.dispatchEvent(new Event("change", { bubbles: true }));
       }
       try {
         sessionStorage.removeItem(clave);

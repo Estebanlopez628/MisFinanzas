@@ -71,7 +71,7 @@ def test_clave_de_session_storage_no_se_borra_en_deudas() -> None:
     js_categorias = (RUTA_APP / "static/js/categorias.js").read_text(encoding="utf-8")
 
     assert "misfinanzas_pending_debt_link" in js_deudas
-    assert "removeItem" not in js_deudas
+    assert 'removeItem("misfinanzas_pending_debt_link")' not in js_deudas
     assert "sessionStorage.removeItem(CLAVE_PENDIENTE)" in js_categorias
 
 
@@ -83,8 +83,8 @@ def test_whatsapp_directo_sin_selector_de_aplicaciones() -> None:
     assert "compartirArchivo" not in js
     assert 'var numero = numeroDelEnlace(whatsapp);' in js
     assert '"https://wa.me/" + numero + "?text=" + encodeURIComponent(texto)' in js
-    assert 'window.open(enlaceDirecto, "_blank")' in js
-    assert "window.location.href = enlaceDirecto" in js
+    assert 'window.open(enlaceDirecto, "_blank", "noopener,noreferrer")' in js
+    assert "window.location.href = enlaceDirecto" not in js
 
     # Los tres puntos comparten el mismo manejador.
     assert '[data-compartir], [data-compartir-factura]' in js

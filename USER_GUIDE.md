@@ -68,4 +68,12 @@ El enlace «¿Olvidaste tu contraseña?» está únicamente en la pantalla de in
 
 > Los textos completos y literales de las guías y la política de privacidad están en la sección «Ayuda y comentarios» de la aplicación (`/ayuda`).
 
+### Lectura de las donas y deudas (v3.4)
+
+Las donas usan diez colores distintos: la base mínima de liquidez es verde esmeralda y Alimentación es naranja, así que ya no se confunden. Cada categoría tiene su propio tono y la leyenda usa exactamente el mismo color que el arco.
+
+Al ir a «Registro y Detalles de deudas» desde un gasto o deducción, la página baja sola hasta el formulario «Nueva deuda». Si guardas la deuda, al volver se marca SI y se carga su cuota; si vuelves sin registrar nada, el formulario conserva lo que escribiste pero permanece en NO y no se puede guardar hasta que registres la deuda. Mientras la categoría sea «Créditos y Obligaciones», el valor queda bloqueado con el valor de la cuota; al elegir otra categoría se desbloquea y puedes digitar un monto libre.
+
+En «Atajos de Pago» en el celular, la descripción se ajusta a su texto y el espacio hasta el valor es corto. Para registrar un abono en OLB_BYTE usa el botón «Registrar Pago».
+
 © 2026 MisFinanzas

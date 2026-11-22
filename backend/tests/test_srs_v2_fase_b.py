@@ -42,7 +42,7 @@ def test_factura_js_normaliza_y_abre_chat_dirigido() -> None:
     assert '/^57\\d{10}$/.test(limpio)' in js
     assert 'return "57" + limpio;' in js
     assert "var enlaceDirecto = \"https://wa.me/\" + numero + \"?text=\" + encodeURIComponent(texto);" in js
-    assert "window.open(enlaceDirecto, \"_blank\")" in js
+    assert 'window.open(enlaceDirecto, "_blank", "noopener,noreferrer")' in js
     # La apertura genérica ya no se usa en el evento de compartir.
     assert "window.open(whatsapp" not in js
 
@@ -109,7 +109,8 @@ def test_cuota_se_autocompleta_y_bloquea() -> None:
 
     js = (RUTA_APP / "static/js/categorias.js").read_text(encoding="utf-8")
     assert "campoValor.value = cuota;" in js
-    assert "campoValor.readOnly = loEsta;" in js
+    assert "campoValor.readOnly = true;" in js
+    assert "campoValor.readOnly = false;" in js
 
 
 def test_gasto_vinculado_visible_en_finanzas_y_gastos(

@@ -155,7 +155,7 @@ def test_pago_a_credito_con_anticipo_muestra_el_formulario_de_cobro(cliente_admi
     assert respuesta.status_code == 200
     assert "Registrar Abono / Pago Total" in respuesta.text
     assert "Opción 2 · Recordatorio por WhatsApp" in respuesta.text
-    assert "Registrar pago" in respuesta.text
+    assert "Registrar Pago" in respuesta.text
     assert "Enviar recordatorio por WhatsApp" in respuesta.text
     assert "$40.000" in respuesta.text
     assert "Saldo por pagar" in respuesta.text

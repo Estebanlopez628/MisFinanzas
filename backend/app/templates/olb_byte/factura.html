@@ -15,6 +15,7 @@
               data-nombre="{{ nombre_archivo }}">Descargar imagen</button>
       <button class="boton boton--secundario boton--pequeno" type="button"
               data-compartir
+              data-compartir-factura
               data-fragmento="{{ url_for('ver_factura_hoja', id_venta=venta.id_venta) }}"
               data-nombre="{{ nombre_archivo }}"
               data-texto="{{ texto_compartir }}"

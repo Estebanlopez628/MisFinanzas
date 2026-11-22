@@ -6,7 +6,7 @@ Principios innegociables. Toda especificación, plan y tarea debe cumplirlos de 
    - El sistema es público para la gestión de finanzas personales (`USER_FINANZAS`) y privado exclusivamente para el administrador (`ADMIN_OLB`), protegiendo el módulo de ventas, cartera y enlaces de pago ("chancucos").
 
 2. **La Especificación Activa Manda:**
-   - La especificación vigente es la **SRS v3.1** (sección 9 del archivo `especificaci_n_de_requisitos_de_software_srs.md`), que conserva las reglas de v1.1.0 a v3.0 salvo contradicción explícita.
+   - La especificación vigente es la **SRS v3.4** (sección 10 del archivo `especificaci_n_de_requisitos_de_software_srs.md`), que conserva las reglas de v1.1.0 a v3.1 salvo contradicción explícita.
    - Ninguna funcionalidad de cálculo salarial, recargos, incapacidades o control de quincenas se implementa si no está formalmente detallada en la especificación activa.
 
 3. **Cálculos Financieros Transparentes y Automáticos:**
@@ -37,6 +37,12 @@ Principios innegociables. Toda especificación, plan y tarea debe cumplirlos de 
    - La recuperación de contraseña por olvido pertenece exclusivamente al Login; dentro de la app solo existe el cambio autenticado.
    - `misfinanzas_pending_debt_link` permanece en `sessionStorage` durante toda la estancia en deudas y se elimina únicamente al restaurar el formulario de origen.
 
-10. **Documentación Viva Completa:**
+10. **Paleta Única y Flujos Sin Pantalla en Blanco (SRS v3.4):**
+    - Los diez HEX de las donas son distintos y se leen de `core/categorias.py`; la base mínima `#10B981` nunca comparte color con Alimentación `#F97316`.
+    - La función maestra de WhatsApp (PNG al portapapeles + chat directo) no se reescribe: el modal «Ver factura» la invoca igual que el ícono rápido y los recibos.
+    - WhatsApp se abre siempre con `window.open(url, '_blank', 'noopener,noreferrer')`: nunca se navega en la misma pestaña ni se oculta el ícono del botón.
+    - El flujo de deudas es bidireccional: scroll de ida a «Nueva deuda» y de retorno al formulario de origen; solo se marca SI si el backend confirmó la deuda (`debt_created: true`), y el campo Valor se bloquea/desbloquea al instante según la categoría.
+
+11. **Documentación Viva Completa:**
    - Además de `AGENTS.md` y `MEMORY.md`, son obligatorios esta misma `constitution.md`, `diccionario_datos.md`, `Guia.md` (fichas por archivo + inventario regenerado con `--verificar`), `USER_GUIDE.md` (manual del usuario) y la SRS del repositorio, con la versión activa reflejada en todos ellos.
    - Ningún bloque se considera terminado si `compileall`, `pytest`, `node --check` y `generar_guia.py --verificar` no están en verde.

@@ -301,7 +301,6 @@
     var nombre = boton.getAttribute("data-nombre") || "imagen.png";
     var whatsapp = boton.getAttribute("data-whatsapp") || "";
     var texto = boton.getAttribute("data-texto") || mensajeDelEnlace(whatsapp);
-    var etiqueta = boton.textContent;
     // SRS v2.0, sección 1: el destinatario se toma del celular registrado en la
     // factura activa (ya presente en `data-whatsapp`) y se sanea aquí, en el
     // único punto que abre el chat. El mensaje no se toca: se reutiliza el mismo
@@ -315,37 +314,49 @@
 
     var enlaceDirecto = "https://wa.me/" + numero + "?text=" + encodeURIComponent(texto);
 
-    boton.disabled = true;
-    boton.textContent = "Preparando…";
     // Guardia del logo del modal: la captura usa un clon fuera de pantalla y
     // aquí se garantiza que el nodo visible quede exactamente como estaba.
     var restaurarLogo = protegerLogoVisible();
     var promesaImagen = imagenDe(url);
     var copiada = copiarImagen(promesaImagen);
-    // Apertura directa del chat. Si el navegador bloquea la ventana nueva, se
-    // navega en la misma pestaña para no caer en el selector de aplicaciones.
-    var ventana = window.open(enlaceDirecto, "_blank");
-    if (!ventana) {
-      window.location.href = enlaceDirecto;
+
+    /**
+     * Libera cualquier estado de carga sin tocar el ícono del botón.
+     */
+    function finalizar() {
+      restaurarLogo();
+      boton.removeAttribute("aria-busy");
     }
 
-    Promise.all([promesaImagen, copiada])
-      .then(function (resultado) {
-        descargar(resultado[0], nombre);
-        mostrarAviso(
-          resultado[1]
-            ? "Chat abierto y comprobante copiado: si deseas adjuntar la imagen, solo pulsa Pegar en el chat de WhatsApp"
-            : "Chat abierto y comprobante descargado: adjúntalo con el clip antes de enviar."
-        );
-      })
-      .catch(function (error) {
-        mostrarAviso((error && error.message) || "No se pudo preparar la imagen.");
-      })
-      .then(function () {
-        restaurarLogo();
-        boton.disabled = false;
-        boton.textContent = etiqueta;
-      });
+    // SRS v3.4, punto 3.2: el ícono de WhatsApp permanece siempre visible.
+    // No se sustituye `textContent` ni se desmonta el SVG; solo se marca
+    // `aria-busy` mientras se prepara el comprobante.
+    boton.setAttribute("aria-busy", "true");
+    try {
+      // Apertura externa limpia: nunca se navega en la misma pestaña (eso
+      // producía la pantalla en blanco) ni se abre una pestaña intermedia.
+      var ventana = window.open(enlaceDirecto, "_blank", "noopener,noreferrer");
+      if (!ventana) {
+        mostrarAviso("Permite ventanas emergentes para abrir WhatsApp. El comprobante ya quedó copiado.");
+      }
+
+      Promise.all([promesaImagen, copiada])
+        .then(function (resultado) {
+          descargar(resultado[0], nombre);
+          mostrarAviso(
+            resultado[1]
+              ? "Chat abierto y comprobante copiado: si deseas adjuntar la imagen, solo pulsa Pegar en el chat de WhatsApp"
+              : "Chat abierto y comprobante descargado: adjúntalo con el clip antes de enviar."
+          );
+        })
+        .catch(function (error) {
+          mostrarAviso((error && error.message) || "No se pudo preparar la imagen.");
+        })
+        .then(finalizar);
+    } catch (error) {
+      finalizar();
+      mostrarAviso("No se pudo abrir WhatsApp. Intenta de nuevo.");
+    }
   }
 
   /**
@@ -356,11 +367,11 @@
   function descargarImagen(boton) {
     var url = boton.getAttribute("data-fragmento");
     var nombre = boton.getAttribute("data-nombre") || "imagen.png";
-    var etiqueta = boton.textContent;
-    boton.disabled = true;
-    boton.textContent = "Preparando…";
-
     var restaurarLogo = protegerLogoVisible();
+
+    // Tampoco aquí se sustituye el contenido del botón: su etiqueta e ícono
+    // permanecen visibles mientras se genera el PNG.
+    boton.setAttribute("aria-busy", "true");
     imagenDe(url)
       .then(function (blob) {
         descargar(blob, nombre);
@@ -370,8 +381,7 @@
       })
       .then(function () {
         restaurarLogo();
-        boton.disabled = false;
-        boton.textContent = etiqueta;
+        boton.removeAttribute("aria-busy");
       });
   }
 

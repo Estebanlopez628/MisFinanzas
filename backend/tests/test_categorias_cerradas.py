@@ -40,11 +40,12 @@ def test_catalogo_tiene_ocho_categorias_con_los_colores_exactos() -> None:
     """El catálogo cerrado coincide con el SRS, incluido el orden y los colores."""
     esperado = (
         ("Vivienda y Servicios", "#3B82F6"),
-        ("Alimentación y Mercado", "#10B981"),
-        ("Transporte y Movilidad", "#F59E0B"),
+        # SRS v3.4: paleta de diez colores únicos, sin colisiones en la dona.
+        ("Alimentación y Mercado", "#F97316"),
+        ("Transporte y Movilidad", "#EAB308"),
         ("Salud y Bienestar", "#06B6D4"),
-        ("Telefonía y Suscripciones", "#8B5CF6"),
-        ("Educación y Familia", "#EC4899"),
+        ("Telefonía y Suscripciones", "#EC4899"),
+        ("Educación y Familia", "#8B5CF6"),
         ("Otros Gastos Fijos", "#64748B"),
         ("Créditos y Obligaciones", "#EF4444"),
     )

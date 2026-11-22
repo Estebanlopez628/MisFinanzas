@@ -4194,7 +4194,7 @@ strong.valor-negativo.recibo__cifra--saldo {
   font-weight: 600;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 767px) {
   .tabla--atajos {
     display: block;
   }
@@ -4207,8 +4207,9 @@ strong.valor-negativo.recibo__cifra--saldo {
 
   .tabla--atajos thead tr {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) max-content max-content;
-    gap: 6px;
+    grid-template-columns: fit-content(160px) max-content max-content;
+    justify-content: start;
+    gap: 11px;
     padding: 0 10px;
   }
 
@@ -4232,16 +4233,23 @@ strong.valor-negativo.recibo__cifra--saldo {
     display: block;
   }
 
-  /* Solo móvil y solo la descripción de Atajos guardados. */
+  /* SRS v3.4, sección 2: la descripción abraza su texto (w-fit) y se recorta a
+     160 px solo si es extensa; el hueco hasta el valor es corto (11 px). */
   .tabla--atajos .atajo-descripcion {
     font-size: 0.74rem;
+    max-width: 160px;
+    width: fit-content;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .tabla--atajos tr[data-chancuco-fila] {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) max-content max-content;
+    grid-template-columns: fit-content(160px) max-content max-content;
+    justify-content: start;
     align-items: center;
-    gap: 6px;
+    gap: 11px;
     margin-bottom: 8px;
     padding: 8px 10px;
     border: 1px solid var(--borde-suave);

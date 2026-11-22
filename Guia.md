@@ -106,7 +106,7 @@ Principios que explican el resto del código:
 ### Resumen del inventario
 
 - **114 archivos** documentados: 56 Python, 40 plantillas Jinja2 y 18 recursos estáticos.
-- **69 clases**, **605 funciones** y **43 métodos** de clase.
+- **69 clases**, **607 funciones** y **43 métodos** de clase.
 
 ### Detalle por archivo
 
@@ -131,9 +131,9 @@ Principios que explican el resto del código:
 - **`base_datos.py`** · 916 líneas — Conexión a la base de datos y sesión por petición.
   - Clases: `Base`
   - Funciones: `_cargar_archivo_entorno`, `_url_con_driver`, `obtener_bd`, `crear_esquema`, `_renombrar_referencia_a_categoria`, `_reconstruir_comercial_sin_stock`, `_migrar_columnas_trabajos`, `_migrar_columnas_chancucos`, `_migrar_columnas_metas`, `_migrar_dias_quincena_postgres`, `_migrar_columnas_perfil`, `_migrar_columnas_gastos`, `_migrar_chancucos`, `_migrar_columnas_deudas`, `_migrar_proyeccion_quincena`, `_migrar_saldos_incapacidad`, `_migrar_columnas_usuarios`, `_migrar_garantia_detalle`, `_migrar_deduccion_vinculada`, `_migrar_categorias_y_vinculos`, `_migrar_valor_atajo`, `_migrar_feedback_resolucion`, `aplicar_migraciones`, `inicializar_base_datos`
-- **`categorias.py`** · 195 líneas — Catálogo cerrado de categorías de egresos y colores de la dona.
+- **`categorias.py`** · 240 líneas — Catálogo cerrado de categorías de egresos y colores de la dona.
   - Clases: `Categoria`
-  - Funciones: `_clave`, `normalizar_categoria`, `es_categoria_valida`, `color_de_categoria`, `es_credito`, `lista_categorias`
+  - Funciones: `_clave`, `normalizar_categoria`, `es_categoria_valida`, `color_de_categoria`, `es_credito`, `paleta_es_unica`, `lista_categorias`
 - **`config.py`** · 325 líneas — Parámetros de negocio y configuración de la plataforma.
   - Clases: `ParametrosNomina`, `ConfiguracionApp`
   - Funciones: `_decimal_desde_entorno`, `_lista_desde_entorno`, `obtener_parametros`, `obtener_configuracion`
@@ -203,7 +203,7 @@ Principios que explican el resto del código:
 - **`auxilio.py`** · 146 líneas — Evaluación del derecho al auxilio de transporte (SRS RF-07).
   - Clases: `EvaluacionAuxilio`
   - Funciones: `evaluar_auxilio_transporte`, `evaluar_auxilio_salarial`
-- **`capacidad.py`** · 780 líneas — Capacidad de endeudamiento y proyección a doce meses (SRS v1.7, bloque F).
+- **`capacidad.py`** · 782 líneas — Capacidad de endeudamiento y proyección a doce meses (SRS v1.7, bloque F).
   - Clases: `Capacidad`
   - Funciones: `repartir_libre`, `es_credito`, `_porcentaje`, `agrupar_por_categoria`, `resumen_categorias`, `_arcos_categoria`, `_repartir_arcos`, `_meses_equivalentes`, `_etiqueta_mes`, `_mover_mes`, `meses_siguientes`, `deudas_por_terminar`, `proyeccion_capacidad`, `_mensaje_semaforo`, `capacidad_trabajos`, `capacidad_endeudamiento`
 - **`chancucos.py`** · 276 líneas — Referencias de pago rápido ("Chancucos").
@@ -257,7 +257,7 @@ Principios que explican el resto del código:
 
 #### `backend/app/static/css/`
 
-- **`estilos.css`** · 5089 líneas — Fondo y superficies
+- **`estilos.css`** · 5097 líneas — Fondo y superficies
 - **`factura-olb.css`** · 711 líneas — Sello de Anulada si aplica
 
 #### `backend/app/static/js/`
@@ -266,15 +266,15 @@ Principios que explican el resto del código:
   - Funciones: `restaurarBotonCopiar`, `confirmarCopia`, `copiar`, `seleccionarManual`, `cerrarEdicion`
 - **`ayuda.js`** · 124 líneas — Envío de reportes desde «Ayuda y comentarios» (SRS v2.0, sección 5.3).
   - Funciones: `escapar`, `cargarMisReportes`
-- **`categorias.js`** · 466 líneas — Selector cerrado de categorías, vinculación con deudas y conservación de
+- **`categorias.js`** · 498 líneas — Selector cerrado de categorías, vinculación con deudas y conservación de
   - Funciones: `datosFormulario`, `restaurarDatos`, `cerrar`, `abrir`, `alternar`, `sincronizar`, `sincronizar`, `vinculado`, `sincronizarValor`
 - **`comentarios.js`** · 46 líneas — Cambio de estado en el panel administrativo de reportes (SRS v2.0, 5.5).
-- **`deudas.js`** · 148 líneas — Interacción de filas con modal centrado (SRS v1.9, secciones 2.3 y 3.3).
+- **`deudas.js`** · 171 líneas — Interacción de filas con modal centrado (SRS v1.9, secciones 2.3 y 3.3).
   - Funciones: `esMovil`, `sacarDeLaTabla`, `devolverALaTabla`, `vigilarPortabilidad`, `cerrarOtras`, `conectarFilas`, `pendienteDeDeuda`
 - **`dona.js`** · 122 líneas — Interacción de las gráficas tipo dona (capacidad de endeudamiento y cartera).
   - Funciones: `centro`, `mostrar`, `restaurar`, `iniciar`
-- **`factura.js`** · 401 líneas — Factura y recibo de abono de OLB_BYTE como imagen PNG (ADR-50).
-  - Funciones: `descargar`, `esperar`, `esperarImagen`, `protegerLogoVisible`, `mostrarAviso`, `montarHoja`, `crearPng`, `imagenDe`, `copiarImagen`, `mensajeDelEnlace`, `numeroDelEnlace`, `enviarPorWhatsapp`, `descargarImagen`
+- **`factura.js`** · 411 líneas — Factura y recibo de abono de OLB_BYTE como imagen PNG (ADR-50).
+  - Funciones: `descargar`, `esperar`, `esperarImagen`, `protegerLogoVisible`, `mostrarAviso`, `montarHoja`, `crearPng`, `imagenDe`, `copiarImagen`, `mensajeDelEnlace`, `numeroDelEnlace`, `enviarPorWhatsapp`, `finalizar`, `descargarImagen`
 - **`finanzas.js`** · 540 líneas — Mejora progresiva de "Mis Finanzas".
   - Funciones: `leerFormulario`, `pintarCampo`, `pintarDeduccion`, `pintarValorAuxilio`, `pintarErrores`, `pintarDetalle`, `pintarAuxilio`, `aplicarResultado`, `pintarTramos`, `pintarIncapacidad`, `pintarQuincenas`, `pintarTexto`, `calcular`, `programarCalculo`, `marcarCambios`, `aplicarPlantilla`
 - **`incapacidades.js`** · 129 líneas — Cálculo automático del módulo de incapacidades (SRS v1.5).
@@ -324,7 +324,7 @@ Principios que explican el resto del código:
 
 #### `backend/app/templates/deudas/`
 
-- **`index.html`** · 227 líneas — Plantilla: Registro y Detalles de deudas
+- **`index.html`** · 246 líneas — Plantilla: Registro y Detalles de deudas
 
 #### `backend/app/templates/finanzas/`
 
@@ -356,7 +356,7 @@ Principios que explican el resto del código:
 - **`analitica.html`** · 315 líneas — Plantilla: Analítica
 - **`cartera.html`** · 223 líneas — Plantilla: Cartera y liquidez
 - **`cobro.html`** · 93 líneas — Plantilla: Gestionar cobro
-- **`factura.html`** · 38 líneas — Plantilla: Factura No.
+- **`factura.html`** · 39 líneas — Plantilla: Factura No.
 - **`garantias.html`** · 148 líneas — Plantilla: Garantías
 - **`index.html`** · 466 líneas — Plantilla: OLB_BYTE
 - **`pendientes.html`** · 117 líneas — Plantilla: Pendientes de pago
@@ -476,7 +476,10 @@ la dona. `CATEGORIAS` fija nombres y hexadecimales; `normalizar_categoria`
 traduce el texto heredado en modo laxo y lo rechaza en modo estricto;
 `es_categoria_valida`, `color_de_categoria` y `lista_categorias` alimentan
 backend y frontend. `es_credito` reconoce libranzas para clasificarlas en la
-categoría 8 sin depender de `capacidad.py`.
+categoría 8 sin depender de `capacidad.py`. SRS v3.4: `COLORES_DONA` reúne diez
+HEX únicos (ocho categorías, base mínima `#10B981` y dinero libre `#84CC16`);
+`paleta_es_unica()` certifica que no hay repeticiones. Alimentación usa
+`#F97316` para no chocar con la base mínima.
 
 ### `backend/app/core/config.py`
 
@@ -826,7 +829,9 @@ siempre cierran en 100,0 %. El semáforo usa el porcentaje de deuda sobre el
 ingreso (`UMBRAL_VERDE = 20`, `UMBRAL_AMBAR = 35`). `deudas_por_terminar` lista
 las deudas con tres cuotas o menos y su fecha de cierre; `proyeccion_capacidad`
 simula doce meses en los que la cuota baja cuando cada deuda termina. No escribe
-en la base de datos.
+en la base de datos. SRS v3.4: `_arcos_categoria` y `_repartir_arcos` toman todos
+los colores del catálogo centralizado (`catalogo.COLOR_*`), sin CSS variables
+hardcodeadas, de modo que dentro de cada dona no se repite ningún HEX.
 
 ### `backend/app/servicios/consejero.py`
 
@@ -956,7 +961,10 @@ ese campo lleva la clase `campo__control--bloqueado` (gris y candado) y la clave
 se borra solo tras restaurar el origen. SRS v3.1: el payload incluye
 `origin_objetivo` con el ID del bloque; tras restaurar, `requestAnimationFrame` +
 150 ms preceden un `scrollIntoView` suave, un resaltado de 1,5 s
-(`retorno-resaltado`) y el foco en el selector de deudas.
+(`retorno-resaltado`) y el foco en el selector de deudas. SRS v3.4: el payload
+lleva `debt_created: false`; el flag `misfinanzas_scroll_to_new_debt` baja a
+«Nueva deuda»; solo se marca SI si la deuda se creó realmente, y el campo Valor
+se bloquea/desbloquea al instante según la categoría.
 
 ### `backend/app/static/js/moneda.js`
 
@@ -1057,7 +1065,7 @@ STARTTLS en el puerto configurado.
 
 ### `backend/app/static/js/factura.js`
 
-Acciones de la factura. Captura la hoja como PNG con `html-to-image` en el navegador (ADR-50). La imagen se prepara al cargar la página. Los tres botones de WhatsApp (Compartir en Ver factura, ícono rápido y recibos de abono) comparten `enviarPorWhatsapp`. SRS v2.0 (sección 1) y v3.0 (punto 2): `numeroDelEnlace` limpia espacios, guiones, paréntesis y `+`, antepone `57` a los 10 dígitos y conserva los 12 que ya empiezan por 57; se abre `https://wa.me/<numero>?text=<encodeURIComponent(texto)>` con el mismo mensaje aprobado. **Nunca se usa la Web Share API**: se eliminó la hoja de compartir del sistema para evitar el selector de aplicaciones; si la ventana nueva es bloqueada se navega en la misma pestaña. Sin número válido se avisa antes de abrir. El PNG se copia al portapapeles y se descarga para adjuntarlo manualmente. «Descargar imagen» solo descarga el PNG. SRS v3.1: `protegerLogoVisible()` guarda y restaura `src`, `display`, `visibility` y `opacity` del logo del modal; la captura sigue ocurriendo en un clon fuera de pantalla y `mostrarAviso()` muestra un toast discreto con el texto aprobado.
+Acciones de la factura. Captura la hoja como PNG con `html-to-image` en el navegador (ADR-50). La imagen se prepara al cargar la página. Los tres botones de WhatsApp (Compartir en Ver factura, ícono rápido y recibos de abono) comparten `enviarPorWhatsapp`. SRS v2.0 (sección 1) y v3.0 (punto 2): `numeroDelEnlace` limpia espacios, guiones, paréntesis y `+`, antepone `57` a los 10 dígitos y conserva los 12 que ya empiezan por 57; se abre `https://wa.me/<numero>?text=<encodeURIComponent(texto)>` con el mismo mensaje aprobado. **Nunca se usa la Web Share API** ni se navega en la misma pestaña: SRS v3.4 exige `window.open(enlaceDirecto, '_blank', 'noopener,noreferrer')` para no dejar pantalla en blanco; si el navegador bloquea la ventana se avisa con un toast. El ícono de WhatsApp nunca se sustituye por texto de carga: solo se marca `aria-busy` y se libera en `finally` (`finalizar()`). Sin número válido se avisa antes de abrir. El PNG se copia al portapapeles y se descarga para adjuntarlo manualmente; esa lógica maestra no se reescribió. «Descargar imagen» solo descarga el PNG. SRS v3.1: `protegerLogoVisible()` guarda y restaura `src`, `display`, `visibility` y `opacity` del logo del modal; la captura sigue ocurriendo en un clon fuera de pantalla y `mostrarAviso()` muestra un toast discreto con el texto aprobado.
 
 ### `backend/app/static/js/ayuda.js`
 

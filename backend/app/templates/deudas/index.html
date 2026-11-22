@@ -17,6 +17,25 @@
 
   {% if guardado %}
     <div class="alerta alerta--exito" role="status">Deuda registrada.</div>
+    {# SRS v3.4, punto 4.2: el POST terminó con éxito. Esta página se sirve
+       tras el redirect 303, así que aquí ya podemos confirmar el registro en
+       sessionStorage antes de que el usuario pulse «Volver». #}
+    <script>
+      (function () {
+        try {
+          var clave = "misfinanzas_pending_debt_link";
+          var pendiente = JSON.parse(sessionStorage.getItem(clave) || "null");
+          if (!pendiente) {
+            return;
+          }
+          pendiente.debt_created = true;
+          pendiente.created_debt_id = "{{ deuda_reciente.id_deuda if deuda_reciente else '' }}";
+          sessionStorage.setItem(clave, JSON.stringify(pendiente));
+        } catch (error) {
+          // Sin sessionStorage el flujo sigue con el parámetro de la URL.
+        }
+      })();
+    </script>
   {% endif %}
   {% if aplicadas %}
     <div class="alerta alerta--aviso" role="status">
@@ -51,7 +70,7 @@
   </div>
 
   <div class="rejilla-paneles rejilla-paneles--deudas">
-    <section class="panel">
+    <section class="panel" id="seccion-nueva-deuda">
       <h2 class="panel__titulo">Nueva deuda</h2>
       <p class="panel__descripcion">
         Escribe el total adeudado, la cuota y las cuotas que faltan. La cuota por
