@@ -715,3 +715,12 @@ Cada arco expone `desglose: [{origen, valor, porcentaje}]`. El sub-desglose se e
 - `total_devengado_consolidado`: suma de `devengado_neto` de todos los cortes del mes.
 
 **Nomenclatura:** «Ingreso proyectado» → `Sueldo devengado`; «Sueldo-percibido» → `Total devengado`. El campo JSON reactivo `total_devengado_consolidado` expone el valor formateado; `saldo_bolsillo` se mantiene por compatibilidad.
+
+## 18. SRS v4.10 — Estructura del resumen (sin cambios de esquema)
+
+- `ResumenQuincena.ingreso` conserva el valor bruto del corte (sueldo + auxilio + recargos) porque la dona global y el Consejero lo consumen. `ResumenQuincena.devengado_neto` es `ingreso − deducciones de ley del corte` y es lo que muestra la tarjeta como «Sueldo devengado».
+- Fórmula visual por corte: `saldo_libre = devengado_neto − gastos fijos del corte (con créditos vinculados) − deducciones fijas del corte`. No se resta la ley por segunda vez.
+- `resumen_quincenas()` acepta `sueldo_basico` opcional: si llega, sustituye al del perfil para que los cortes cuadren con la liquidación en vivo.
+- El JSON reactivo dejó de enviar `deducciones` por corte y envía el sueldo neto en `ingreso`; `finanzas.js` ya no pinta ese campo.
+- `total_gastos_mes` = gastos fijos del mes + deducciones fijas vigentes; alimenta la línea «Total de Gastos del mes» del resultado y está disponible en el JSON reactivo.
+- Desglose del resultado, en orden: `valor_hora`, `total_recargos`, `total_devengado`, `auxilio_transporte`, `total_ingresos`, separador, `deduccion_salud`, `deduccion_pension`, `deduccion_incapacidad`, `total_deducciones`. Se retiró «Disponible después de gastos». La dona global no se calcula nunca desde estos saldos parciales.

@@ -1653,6 +1653,14 @@ textarea.campo__control {
   color: var(--accent-green);
 }
 
+/* SRS v4.10: separador entre el bloque de ingresos y el de deducciones. */
+.lista-parametros__separador {
+  height: 8px;
+  padding: 0;
+  border-bottom: 1px solid var(--borde-suave) !important;
+  background: transparent;
+}
+
 /* Cifras de la calculadora: el color comunica el efecto del concepto. */
 .valor-negativo {
   color: #fca5a5;

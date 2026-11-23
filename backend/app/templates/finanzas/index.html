@@ -81,18 +81,14 @@ contenido %}
       <ul class="lista-parametros lista-parametros--compacta">
         <li>
           <span>Sueldo devengado</span>
-          <strong data-ingreso-quincena="{{ quincena.numero }}">{{ quincena.ingreso | cop }}</strong>
+          <strong data-ingreso-quincena="{{ quincena.numero }}">{{ quincena.devengado_neto | cop }}</strong>
         </li>
         <li>
           <span>Gastos fijos</span>
           <strong class="valor-negativo">− {{ quincena.gastos | cop }}</strong>
         </li>
-        <li>
-          <span>Deducciones de ley</span>
-          <strong class="valor-negativo" data-deducciones-quincena="{{ quincena.numero }}"
-            >− {{ quincena.deducciones | cop }}</strong
-          >
-        </li>
+        {# SRS v4.10: la ley ya viene descontada en el sueldo devengado de la
+           tarjeta; pintarla aquí sería un doble descuento. #}
         <li>
           <span>Deducciones fijas del salario</span>
           <strong class="valor-negativo" data-fijas-quincena="{{ quincena.numero }}"
@@ -101,12 +97,7 @@ contenido %}
         </li>
       </ul>
 
-      {% if quincena.deducciones > 0 %}
-      <p class="ayuda">
-        Incluye 4 % de salud y 4 % de pensión del mes, descontados en esta
-        quincena según tu perfil.
-      </p>
-      {% endif %} {# Gastos fijos asignados: cada uno se puede editar o
+      {# Gastos fijos asignados: cada uno se puede editar o
       eliminar. #}
       <div class="bloque-gastos-quincena">
         <h4 class="bloque-gastos__subtitulo">Gastos fijos asignados</h4>
@@ -660,15 +651,19 @@ contenido %}
 
       <div class="resultado-principal">
         <span class="resultado-principal__etiqueta"
-          >Total devengado</span
+          >TOTAL DEVENGADO</span
         >
         <strong class="resultado-principal__valor" data-campo="total_devengado_consolidado">
           {%- if resultado %}{{ total_devengado_consolidado | cop }}{% else %}—{%
           endif -%}
         </strong>
+        {# SRS v4.10: dos líneas independientes para no confundir el monto con
+           el total de gastos del mes. #}
         <span class="resultado-principal__nota">
-          Ingresos totales menos deducciones de ley e incapacidad. Gastos del
-          periodo: {{ gasto_periodo | cop }}.
+          Ingresos totales menos deducciones de ley e incapacidad.<br />
+          <strong>Total de Gastos del mes:
+            <span data-campo="total_gastos_mes">{{ total_gastos_mes | cop }}</span>
+          </strong>
         </span>
       </div>
 
@@ -687,6 +682,30 @@ contenido %}
             endif -%}
           </strong>
         </li>
+        {# SRS v4.10, sección 2.2: primero los cinco conceptos positivos y su
+           subtotal; después, separados, los cuatro conceptos negativos. #}
+        <li>
+          <span>Total devengado (sueldo + recargos)</span>
+          <strong data-campo="total_devengado">
+            {%- if resultado %}{{ resultado.total_devengado | cop }}{% else
+            %}—{% endif -%}
+          </strong>
+        </li>
+        <li>
+          <span>Auxilio de transporte</span>
+          <strong class="valor-positivo" data-campo="auxilio_transporte">
+            {%- if resultado %}{{ resultado.auxilio_transporte | cop }}{% else
+            %}—{% endif -%}
+          </strong>
+        </li>
+        <li>
+          <span>Total ingresos</span>
+          <strong data-campo="total_ingresos">
+            {%- if resultado %}{{ resultado.total_ingresos | cop }}{% else %}—{%
+            endif -%}
+          </strong>
+        </li>
+        <li class="lista-parametros__separador" aria-hidden="true"></li>
         <li>
           <span
             >Salud ({{ (parametros.porcentaje_salud * 100) | porcentaje
@@ -708,31 +727,10 @@ contenido %}
           </strong>
         </li>
         <li>
-          <span>Auxilio de transporte</span>
-          <strong class="valor-positivo" data-campo="auxilio_transporte">
-            {%- if resultado %}{{ resultado.auxilio_transporte | cop }}{% else
-            %}—{% endif -%}
-          </strong>
-        </li>
-        <li>
           <span>Descuento por incapacidad</span>
           <strong class="valor-negativo" data-campo="deduccion_incapacidad">
             {%- if resultado %}{{ resultado.deduccion_incapacidad | cop }}{%
             else %}—{% endif -%}
-          </strong>
-        </li>
-        <li>
-          <span>Total devengado (sueldo + recargos)</span>
-          <strong data-campo="total_devengado">
-            {%- if resultado %}{{ resultado.total_devengado | cop }}{% else
-            %}—{% endif -%}
-          </strong>
-        </li>
-        <li>
-          <span>Total ingresos</span>
-          <strong data-campo="total_ingresos">
-            {%- if resultado %}{{ resultado.total_ingresos | cop }}{% else %}—{%
-            endif -%}
           </strong>
         </li>
         <li>
@@ -742,14 +740,6 @@ contenido %}
             %}—{% endif -%}
           </strong>
         </li>
-        {% if resultado %}
-        <li class="lista-parametros__total">
-          <span>Disponible después de gastos</span>
-          <strong
-            >{{ (resultado.saldo_bolsillo - gasto_periodo) | cop }}</strong
-          >
-        </li>
-        {% endif %}
       </ul>
 
       {% if periodo_guardado %}

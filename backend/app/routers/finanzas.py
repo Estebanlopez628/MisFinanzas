@@ -548,12 +548,14 @@ def _saldos_quincenas(
         recargos=liquidacion.total_recargos,
         descuento_incapacidad=entrada.deduccion_incapacidad,
         auxilio_transporte=liquidacion.auxilio_transporte,
+        sueldo_basico=entrada.sueldo,
     )
     return [
         {
             "numero": fila.numero,
-            "ingreso": formatear_cop(fila.ingreso),
-            "deducciones": formatear_cop(fila.deducciones),
+            # SRS v4.10: la tarjeta muestra el sueldo ya neto de ley para no
+            # restarlo dos veces. La dona sigue leyendo `fila.ingreso`.
+            "ingreso": formatear_cop(fila.devengado_neto),
             "deducciones_fijas": formatear_cop(fila.deducciones_fijas),
             "saldo_libre": formatear_cop(fila.saldo_libre),
             "negativo": fila.saldo_libre < CERO,
@@ -606,6 +608,7 @@ def _contexto_calculadora(
         recargos=resultado.total_recargos if resultado else CERO,
         descuento_incapacidad=entrada.deduccion_incapacidad,
         auxilio_transporte=resultado.auxilio_transporte if resultado else None,
+        sueldo_basico=entrada.sueldo,
     )
     contexto = contexto_base(usuario)
     contexto.update(
@@ -636,6 +639,14 @@ def _contexto_calculadora(
             "tramos_incapacidad": entrada.tramos_incapacidad,
             "gasto_mes": gastos.total_gastos_mes(
                 bd, usuario.id_usuario, entrada.anio, entrada.mes
+            ),
+            # SRS v4.10: total de gastos del mes para la nota del resultado.
+            "total_gastos_mes": redondear_dinero(
+                gastos.total_gastos_mes(bd, usuario.id_usuario, entrada.anio, entrada.mes)
+                + sum(
+                    (fija.valor for fija in deducciones_fijas.listar_vigentes(bd, usuario.id_usuario)),
+                    start=CERO,
+                )
             ),
             # Gastos del bloque visible: quincena seleccionada o mes completo.
             "gasto_periodo": gastos.total_gastos_periodo(
@@ -815,6 +826,7 @@ async def calcular_finanzas_json(
         recargos=liquidacion.total_recargos,
         descuento_incapacidad=entrada.deduccion_incapacidad,
         auxilio_transporte=liquidacion.auxilio_transporte,
+        sueldo_basico=entrada.sueldo,
     )
     total_neto = redondear_dinero(
         sum((fila.devengado_neto for fila in resumen_actual), start=CERO)
@@ -825,6 +837,22 @@ async def calcular_finanzas_json(
             "datos": {
                 **_datos_formateados(liquidacion),
                 "total_devengado_consolidado": formatear_cop(total_neto),
+                "total_gastos_mes": formatear_cop(
+                    redondear_dinero(
+                        gastos.total_gastos_mes(
+                            bd, usuario.id_usuario, entrada.anio, entrada.mes
+                        )
+                        + sum(
+                            (
+                                fija.valor
+                                for fija in deducciones_fijas.listar_vigentes(
+                                    bd, usuario.id_usuario
+                                )
+                            ),
+                            start=CERO,
+                        )
+                    )
+                ),
             },
             "detalle": _detalle_formateado(liquidacion),
             "mensaje_auxilio": mensaje,

@@ -2329,6 +2329,19 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v102`; **813 pruebas** en verde, `compileall`, `node --check` y `generar_guia.py --verificar` correctos. Gate QA `scripts/qa_v4_8.py`: **19/19 comprobaciones** en Chromium a 360/390/768/1280 px. Las pruebas históricas se ajustaron a los nuevos factores y al divisor 220 sin relajar ninguna aserción.
 
+### 2026-11-22 — SRS v4.10: integridad del resumen (ADR-78)
+
+**Decisión (ADR-78).** Las tarjetas de corte no pueden restar la ley dos veces: el «Sueldo devengado» que muestran ya es neto. Se elimina la fila y la nota de «Deducciones de ley» dentro de las tarjetas. La dona global y el Consejero quedan blindados: siguen consumiendo el `Total devengado` consolidado, nunca la suma de saldos parciales de las tarjetas.
+
+**Consecuencias aplicadas.**
+- `ResumenQuincena` ya exponía `devengado_neto`; las tarjetas lo muestran ahora. `saldo_libre` no cambia su aritmética (ley - gastos - fijas), así que no hay regresión contable.
+- `resumen_quincenas()` acepta `sueldo_basico` opcional para que los cortes concuerden con la liquidación en vivo cuando el sueldo inyectado difiere del perfil. El campo `ingreso` (bruto) se conserva para la dona.
+- El JSON reactivo dejó de enviar `deducciones` por corte y envía el sueldo neto en la clave `ingreso`; se retiró su pintado en `finanzas.js`.
+- «Resultado del periodo» usa la etiqueta **TOTAL DEVENGADO** y una nota en dos líneas con `<br />`, la segunda con `Total de Gastos del mes: $X` (`total_gastos_mes`, gastos fijos + deducciones fijas del mes, disponible también en el JSON).
+- El desglose inferior se reordena a las nueve filas exigidas, con un separador entre el bloque positivo y el negativo y sin la fila «Disponible después de gastos».
+
+**Verificación.** `sw.js` en `olb-finanzas-v103`; **819 pruebas** en verde, `compileall`, `node --check` y `generar_guia.py --verificar` correctos. Gate QA `scripts/qa_v4_10.py`: **14/14 comprobaciones** en Chromium. Se verificó quincenal y mensual sin doble descuento y con la dona global inalterada.
+
 
 
 

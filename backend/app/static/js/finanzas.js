@@ -346,7 +346,7 @@
    * Cada tarjeta se identifica por el número de pago que devuelve el servidor.
    * El saldo libre cambia de color cuando queda negativo.
    *
-   * @param {Array<{numero: number, ingreso: string, deducciones: string,
+   * @param {Array<{numero: number, ingreso: string,
    *   deducciones_fijas: string, saldo_libre: string, negativo: boolean}>} filas
    */
   function pintarQuincenas(filas) {
@@ -357,7 +357,6 @@
         saldo.classList.toggle("valor-negativo", Boolean(fila.negativo));
       }
       pintarTexto('[data-ingreso-quincena="' + fila.numero + '"]', fila.ingreso);
-      pintarTexto('[data-deducciones-quincena="' + fila.numero + '"]', "− " + fila.deducciones);
       pintarTexto('[data-fijas-quincena="' + fila.numero + '"]', "− " + fila.deducciones_fijas);
     });
   }

@@ -637,3 +637,31 @@ Los registros históricos bajo `Recargo Dominical o Festivo Diurno/Nocturno` se 
 - Usuarios QA: `prueba_qa@misfinanzas.local` / `QA_MisFinanzas_2026!` y `prueba_qa_admin@misfinanzas.local` / `QA_Admin_2026!`.
 - `scripts/qa_v4_8.py`: **19/19 comprobaciones** en Chromium, incluidos los siete conceptos, 10,4 h del nuevo recargo, el caso base de quincenas y la no regresión. Solo tras el gate se ejecutaron `git add`, `commit` y `push`.
 - Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-77), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.8.
+
+---
+
+## 18. SRS v4.10 — Integridad contable del resumen y claridad del periodo
+
+Versión 4.10 y **línea base vigente**. Dos ajustes visuales y contables sobre v4.8.
+
+### 18.1 No regresión
+
+No se tocan los siete factores 2026, la dona global con desglose apilado, la dona de Trabajos Extras, el Consejero, los velocímetros 156×88, Deudas, Atajos Guardados, selectores de fecha, modales propios, WhatsApp, OLB_BYTE ni Ayuda. La dona y el Consejero siguen leyendo el `Total devengado` consolidado del periodo, nunca los saldos parciales de las tarjetas.
+
+### 18.2 Fin del doble descuento de ley en los cortes
+
+El «Sueldo devengado» que muestra cada tarjeta de Quincena 1, Quincena 2 o Pago Único Mensual ya está neto de deducciones de ley. Se elimina la fila «Deducciones de ley» y su nota dentro de esas tarjetas. El saldo de cada corte queda:
+
+`Saldo libre restante = Sueldo devengado (neto de ley) − Gastos fijos del corte (incluidos créditos vinculados) − Deducciones fijas del salario del corte`.
+
+### 18.3 Resultado del periodo y desglose ordenado
+
+- Etiqueta superior: **TOTAL DEVENGADO**, sin guion.
+- Bajo el valor grande, dos líneas separadas por salto real: `Ingresos totales menos deducciones de ley e incapacidad.` y `Total de Gastos del mes: $X` (gastos fijos + deducciones fijas del mes, actualizable en vivo).
+- El desglose inferior sigue exactamente este orden: Valor hora ordinaria; Horas extras y recargos; Total devengado (sueldo + recargos); Auxilio de transporte; Total ingresos; separador; Salud (4,00 %); Pensión (4,00 %); Descuento por incapacidad; Total deducciones. Los cinco primeros son positivos/verdes y los cuatro últimos negativos/rojos.
+
+### 18.4 Gate QA y cierre documental
+
+- Usuarios QA: `prueba_qa@misfinanzas.local` / `QA_MisFinanzas_2026!` y `prueba_qa_admin@misfinanzas.local` / `QA_Admin_2026!`.
+- `scripts/qa_v4_10.py`: **14/14 comprobaciones** en Chromium, incluidos quincenal y mensual, la dona intacta y 360/390/768/1280 px. Solo tras el gate se ejecutaron `git add`, `commit` y `push`.
+- Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-78), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.10.

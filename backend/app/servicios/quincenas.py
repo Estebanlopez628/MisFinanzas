@@ -109,6 +109,7 @@ def resumen_quincenas(
     recargos: Decimal | int | str = CERO,
     descuento_incapacidad: Decimal | int | str = CERO,
     auxilio_transporte: Decimal | int | str | None = None,
+    sueldo_basico: Decimal | int | str | None = None,
 ) -> list[ResumenQuincena]:
     """Calcula el resumen de pagos y saldos libres del mes.
 
@@ -124,6 +125,8 @@ def resumen_quincenas(
             REQ-05). Se resta del sueldo base antes de repartirlo.
         auxilio_transporte: Auxilio legal del mes. Si se omite, se deriva del
             devengado con los parámetros vigentes (SRS v4.8).
+        sueldo_basico: Salario que se está liquidando; si se omite se toma del
+            perfil. Permite que los cortes concuerden con la liquidación en vivo.
 
     Returns:
         Lista con una tarjeta para modalidad MENSUAL o dos para QUINCENAL.
@@ -165,8 +168,13 @@ def resumen_quincenas(
         ]
 
     # REQ-05: la incapacidad reduce el sueldo base del periodo antes del reparto.
+    sueldo_del_mes = (
+        redondear_dinero(_a_decimal(sueldo_basico))
+        if sueldo_basico is not None
+        else perfil.sueldo_basico
+    )
     sueldo_ajustado = redondear_dinero(
-        perfil.sueldo_basico - _a_decimal(descuento_incapacidad)
+        sueldo_del_mes - _a_decimal(descuento_incapacidad)
     )
     recargos_periodo = redondear_dinero(_a_decimal(recargos))
     # SRS v1.4: salud y pensión se calculan sobre el salario devengado que queda

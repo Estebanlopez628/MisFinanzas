@@ -114,4 +114,12 @@ Las quincenas muestran ahora el dinero real que recibes. La primera lleva su por
 
 Por eso las etiquetas cambiaron: en cada tarjeta de pago verás **«Sueldo devengado»** y en el resultado del periodo **«Total devengado»**, ambas sin guiones.
 
+### Cambios de la versión 4.10
+
+Las tarjetas de Quincena 1, Quincena 2 y Pago Mensual ya no repiten la fila «Deducciones de ley»: el **Sueldo devengado** que ves en cada una viene con salud y pensión ya descontadas. Por eso el saldo libre de cada corte solo resta tus gastos fijos y deducciones fijas. La gráfica de Gastos y Presupuesto y el Consejero no cambiaron: siguen usando el total consolidado del mes.
+
+En **Resultado del periodo** verás la etiqueta **TOTAL DEVENGADO** sin guion. Debajo del valor grande hay dos líneas: primero la explicación del monto y, en la línea siguiente, **Total de Gastos del mes** con la suma de tus gastos y deducciones fijas.
+
+El desglose de abajo ahora se lee en dos bloques: primero las entradas (valor de la hora, horas extras, total devengado, auxilio y total de ingresos) y, después de una línea separadora, los descuentos (salud, pensión, incapacidad y total de deducciones).
+
 © 2026 MisFinanzas

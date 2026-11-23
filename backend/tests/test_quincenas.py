@@ -236,13 +236,20 @@ def test_gastos_del_periodo_separan_las_quincenas(
         quincena=2,
     )
 
-    # El texto del HTML puede partirse en varias líneas; se normalizan los espacios.
+    # SRS v4.10: la nota del resultado habla del mes completo, no del corte.
     html_quincena_2 = " ".join(
         cliente_admin.get("/finanzas?anio=2026&mes=11&quincena=2").text.split()
     )
-    assert "Gastos del periodo: $120.000" in html_quincena_2
+    assert "Total de Gastos del mes:" in html_quincena_2
 
     html_quincena_1 = " ".join(
         cliente_admin.get("/finanzas?anio=2026&mes=11&quincena=1").text.split()
     )
-    assert "Gastos del periodo: $0" in html_quincena_1
+    assert "Total de Gastos del mes:" in html_quincena_1
+
+    # La separación por corte sigue vigente en el servicio.
+    assert (
+        gastos.total_gastos_periodo(bd, _id_admin(bd), 2026, 11, 2)
+        == Decimal("120000.00")
+    )
+    assert gastos.total_gastos_periodo(bd, _id_admin(bd), 2026, 11, 1) == Decimal("0.00")

@@ -88,3 +88,9 @@ Principios innegociables. Toda especificación, plan y tarea debe cumplirlos de 
     - El auxilio de transporte se liquidó realmente en el corte que lleva las deducciones de ley, y el saldo neto de cada quincena refleja el valor consignado.
     - La nomenclatura visual es «Sueldo devengado» y «Total devengado», sin guiones.
     - El motor de nómina, la tabla de factores, la migración y las etiquetas se verifican con el usuario de prueba antes de cualquier publicación.
+
+18. **Integridad contable del resumen de periodo (SRS v4.10):**
+    - El sueldo devengado de cada corte es neto de ley; está prohibido volver a restar salud y pensión dentro de la tarjeta de pago.
+    - La dona global y el Consejero Financiero se alimentan del total consolidado del mes, nunca de la suma de saldos parciales de las tarjetas.
+    - El resultado del periodo separa en dos líneas la explicación del monto y el total de gastos del mes, con la etiqueta «TOTAL DEVENGADO» sin guiones.
+    - El desglose inferior presenta primero los ingresos y su subtotal y después las deducciones y su subtotal, con un separador visible entre ambos bloques.
