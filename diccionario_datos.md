@@ -724,3 +724,24 @@ Cada arco expone `desglose: [{origen, valor, porcentaje}]`. El sub-desglose se e
 - El JSON reactivo dejó de enviar `deducciones` por corte y envía el sueldo neto en `ingreso`; `finanzas.js` ya no pinta ese campo.
 - `total_gastos_mes` = gastos fijos del mes + deducciones fijas vigentes; alimenta la línea «Total de Gastos del mes» del resultado y está disponible en el JSON reactivo.
 - Desglose del resultado, en orden: `valor_hora`, `total_recargos`, `total_devengado`, `auxilio_transporte`, `total_ingresos`, separador, `deduccion_salud`, `deduccion_pension`, `deduccion_incapacidad`, `total_deducciones`. Se retiró «Disponible después de gastos». La dona global no se calcula nunca desde estos saldos parciales.
+
+## 19. SRS v4.13 — Neto por corte y salidas del Consejero (sin cambios de esquema)
+
+**Bloques de liquidación:**
+- `sueldo_devengado_neto_corte` (`ResumenQuincena.sueldo_neto_corte`): `devengado_neto − deducciones fijas del corte`. Es el valor que ve el usuario en la tarjeta.
+- `gastos_fijos_corte` (`ResumenQuincena.gastos`): gastos fijos del corte, con créditos vinculados.
+- `saldo_libre = sueldo_devengado_neto_corte − gastos_fijos_corte`.
+- El JSON reactivo expone el neto en `ingreso` y ya no envía `deducciones_fijas`.
+
+**Salidas del motor del Consejero** (`Consejo.cierre`, todas derivadas del saldo real):
+| Campo | Significado |
+| --- | --- |
+| `saldo_actual` / `deuda_inicial` | Saldo pendiente registrado, sin inflar. |
+| `meses_minimo` | Plazo exacto pagando solo cuotas. |
+| `meses_con_excedente` | Plazo exacto aplicando el excedente mensual. |
+| `meses_ahorrados` | Diferencia entre ambos plazos. |
+| `reduccion_capital_12m` | Diferencia real entre las dos curvas a 12 meses. |
+| `deudas_detalle` | Lista `{nombre, saldo, cuota}` de cada deuda activa. |
+| `cuotas_liberadas_detalle` | Lista `{nombre, saldo, cuota}` de las deudas que cierran. |
+
+`ahorro_mostrado` es un alias de `reduccion_capital_12m`; no existe ningún campo de intereses. Las fechas usan nombres completos de meses en español y el detalle del mes seleccionado se calcula en `punto.base − punto.optimizado`.

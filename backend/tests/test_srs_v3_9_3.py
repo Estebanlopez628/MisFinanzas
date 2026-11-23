@@ -31,7 +31,7 @@ def test_velocimetros_compactos_en_escritorio() -> None:
     assert "height: 68px" in CSS
     assert "width: 156px" in CSS  # escritorio >= 768 px
     assert "height: 88px" in CSS
-    assert "max-height: 170px" in CSS
+    assert "max-width: none !important" in CSS  # curva al 100 % en escritorio
     assert ".cierre-deuda__meses button" in CSS
     assert "background: transparent !important" in CSS
 

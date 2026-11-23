@@ -94,3 +94,9 @@ Principios innegociables. Toda especificación, plan y tarea debe cumplirlos de 
     - La dona global y el Consejero Financiero se alimentan del total consolidado del mes, nunca de la suma de saldos parciales de las tarjetas.
     - El resultado del periodo separa en dos líneas la explicación del monto y el total de gastos del mes, con la etiqueta «TOTAL DEVENGADO» sin guiones.
     - El desglose inferior presenta primero los ingresos y su subtotal y después las deducciones y su subtotal, con un separador visible entre ambos bloques.
+
+19. **Simplicidad de captura y cero intereses ficticios (SRS v4.13):**
+    - Las tarjetas de corte muestran solo el sueldo devengado neto real y los gastos fijos; el detalle de deducciones permanece en el resumen del periodo.
+    - El Consejero y sus gráficas nunca inventan intereses ni totales inflados: comunican reducción real de capital, plazos exactos y fechas con meses completos en español.
+    - Cada deuda se identifica con nombre, saldo y cuota; la cuota liberada se desglosa por deuda.
+    - El ajuste de layout del panel de gráficas es exclusivo de escritorio; la vista móvil se conserva.

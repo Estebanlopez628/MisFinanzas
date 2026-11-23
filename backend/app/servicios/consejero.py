@@ -110,14 +110,16 @@ class _EstadoDeuda:
     Attributes:
         deuda: Registro original, del que se toma el acreedor.
         saldo: Capital pendiente en el mes simulado.
+        saldo_inicial: Capital pendiente al iniciar la simulación.
         cuota: Cuota mensual equivalente.
         cuotas: Cuotas que faltan, expresadas en meses de pago.
     """
 
     deuda: Deuda
     saldo: Decimal
-    cuota: Decimal
-    cuotas: int
+    saldo_inicial: Decimal = CERO
+    cuota: Decimal = CERO
+    cuotas: int = 1
 
 
 def _cuotas_mensuales(deuda: Deuda) -> int:
@@ -159,6 +161,7 @@ def _estados(deudas: list[Deuda]) -> list[_EstadoDeuda]:
             _EstadoDeuda(
                 deuda=deuda,
                 saldo=saldo,
+                saldo_inicial=saldo,
                 cuota=cuota,
                 cuotas=_cuotas_mensuales(deuda),
             )
@@ -192,7 +195,7 @@ def _simular(
     estados: list[_EstadoDeuda],
     excedente: Decimal,
     aplicar_excedente: bool = True,
-) -> tuple[list[Decimal], int | None, Decimal]:
+) -> tuple[list[Decimal], int | None, Decimal, list[dict[str, object]]]:
     """Simula doce meses de pagos sobre un conjunto de deudas.
 
     Sin intereses: cada mes se paga la cuota mínima de todas las deudas y, si se
@@ -205,15 +208,19 @@ def _simular(
         aplicar_excedente: `False` simula solo las cuotas mínimas (base).
 
     Returns:
-        Tupla `(saldo_restante_por_mes, mes_liquidacion, cuota_liberada)`. La
-        cuota liberada suma las cuotas de las deudas que se cierran.
+        Tupla `(saldo_restante_por_mes, mes_liquidacion, cuota_liberada,
+        detalle)`. El detalle lista nombre, saldo y cuota de cada deuda que
+        cierra, para que el Consejero pueda explicar la suma sin intereses.
     """
     copia = [
-        _EstadoDeuda(estado.deuda, estado.saldo, estado.cuota, estado.cuotas)
+        _EstadoDeuda(
+            estado.deuda, estado.saldo, estado.saldo_inicial, estado.cuota, estado.cuotas
+        )
         for estado in estados
     ]
     orden = _ordenar(copia, excedente) if aplicar_excedente else []
     cerradas: set[str] = set()
+    detalle: list[dict[str, object]] = []
     liberada = CERO
     serie: list[Decimal] = []
     liquidacion: int | None = None
@@ -227,6 +234,13 @@ def _simular(
             if estado.saldo <= CERO and estado.deuda.id_deuda not in cerradas:
                 cerradas.add(estado.deuda.id_deuda)
                 liberada = redondear_dinero(liberada + estado.cuota)
+                detalle.append(
+                    {
+                        "nombre": estado.deuda.acreedor,
+                        "saldo": estado.saldo_inicial,
+                        "cuota": estado.cuota,
+                    }
+                )
 
         if aplicar_excedente and excedente > CERO:
             resto = excedente
@@ -241,13 +255,20 @@ def _simular(
                 if estado.saldo <= CERO and estado.deuda.id_deuda not in cerradas:
                     cerradas.add(estado.deuda.id_deuda)
                     liberada = redondear_dinero(liberada + estado.cuota)
+                    detalle.append(
+                        {
+                            "nombre": estado.deuda.acreedor,
+                            "saldo": estado.saldo_inicial,
+                            "cuota": estado.cuota,
+                        }
+                    )
 
         total = redondear_dinero(sum((estado.saldo for estado in copia), start=CERO))
         serie.append(total)
         if liquidacion is None and total <= CERO:
             liquidacion = avance + 1
 
-    return serie, liquidacion, liberada
+    return serie, liquidacion, liberada, detalle
 
 
 def _altura(valor: Decimal, maximo: Decimal) -> Decimal:
@@ -300,42 +321,26 @@ def _serie_comparada(
     return filas, maximo
 
 
-def _meses_de_texto(meses: int | None) -> str:
-    """Describe un plazo en meses para el mensaje del consejo.
-
-    Args:
-        meses: Número de meses; `None` cuando no se cierra dentro del año.
-
-    Returns:
-        Texto como «en 3 meses» o «en más de 12 meses».
-    """
-    if meses is None:
-        return f"en más de {MESES} meses"
-    if meses == 1:
-        return "en 1 mes"
-    return f"en {meses} meses"
-
-
-_MESES_CORTOS = (
-    "ene", "feb", "mar", "abr", "may", "jun",
-    "jul", "ago", "sep", "oct", "nov", "dic",
+# SRS v4.13: nombres completos en español, con inicial mayúscula, en web y móvil.
+_MESES_COMPLETOS = (
+    "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+    "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
 )
 
 
 def _fecha_cierre(referencia: date, offset_meses: int) -> str:
-    """Devuelve «Mes Año» para el mes en que se cierra una deuda.
+    """Devuelve «Mes Año» con el nombre completo del mes (SRS v4.13).
 
     Args:
         referencia: Mes de partida de la proyección.
         offset_meses: Cuántos meses después cae el cierre.
 
     Returns:
-        Etiqueta corta con la primera letra en mayúscula.
+        Etiqueta como «Mayo 2030».
     """
     indice = (referencia.month - 1 + max(0, offset_meses)) % 12
     anio = referencia.year + (referencia.month - 1 + max(0, offset_meses)) // 12
-    nombre = _MESES_CORTOS[indice]
-    return f"{nombre[0].upper() + nombre[1:]} {anio}"
+    return f"{_MESES_COMPLETOS[indice]} {anio}"
 
 
 def _datos_cierre(
@@ -343,6 +348,7 @@ def _datos_cierre(
     consejo: Consejo,
     etiquetas: list[str],
     referencia: date,
+    cuotas_liberadas_detalle: list[dict[str, object]] | None = None,
 ) -> dict[str, object]:
     """Prepara la proyección de la gráfica unificada de cierre de deuda.
 
@@ -351,6 +357,7 @@ def _datos_cierre(
         consejo: Consejo ya calculado, cuya serie se reutiliza.
         etiquetas: Rótulos de los doce meses.
         referencia: Mes de partida.
+        cuotas_liberadas_detalle: Deudas que cierran con su saldo y cuota.
 
     Returns:
         Diccionario con puntos, hitos y totales para la plantilla SVG.
@@ -366,13 +373,6 @@ def _datos_cierre(
     meses_optimo = math.ceil(deuda_inicial / ritmo_optimo) if ritmo_optimo > CERO else 0
     meses_ahorrados = max(0, meses_base - meses_optimo)
     ahorro_saldo = max(CERO, redondear_dinero(serie_base[-1] - serie_optima[-1]))
-    # Si ambas curvas llegan a cero dentro del año, el ahorro visible es la
-    # cuota que dejas de pagar por los meses que te ahorras (sin intereses).
-    ahorro = (
-        ahorro_saldo
-        if ahorro_saldo > CERO
-        else redondear_dinero(cuota * meses_ahorrados)
-    )
 
     mes_libre: int | None = None
     if deuda_inicial > CERO:
@@ -382,30 +382,44 @@ def _datos_cierre(
                 break
 
     puntos: list[dict[str, object]] = []
-    for indice, etiqueta in enumerate(etiquetas):
-        partes = etiqueta.rsplit(" ", 1)
+    for indice, _etiqueta in enumerate(etiquetas):
+        posicion = referencia.month - 1 + indice
         puntos.append(
             {
                 "index": indice,
-                "mes": partes[0],
-                "anio": partes[1] if len(partes) > 1 else str(referencia.year),
+                "mes": _MESES_COMPLETOS[posicion % 12],
+                "anio": str(referencia.year + posicion // 12),
                 "base": serie_base[indice],
                 "optimizado": serie_optima[indice],
             }
         )
 
+    # SRS v4.13: solo cifras verificables. La reducción a 12 meses es la
+    # diferencia real entre ambas curvas; nunca se inventan intereses.
     return {
         "deuda_inicial": deuda_inicial,
+        "saldo_actual": deuda_inicial,
         "cuota_mensual": cuota,
         "excedente_mensual": extra,
         "puntos": puntos,
         "mes_libre_index": mes_libre,
+        "meses_minimo": meses_base,
+        "meses_con_excedente": meses_optimo,
         "meses_ahorrados": meses_ahorrados,
-        "ahorro_mostrado": ahorro,
+        "reduccion_capital_12m": ahorro_saldo,
+        "ahorro_mostrado": ahorro_saldo,
         "fecha_cierre_base": _fecha_cierre(referencia, meses_base),
         "fecha_cierre_opt": _fecha_cierre(referencia, meses_optimo),
-        # Sin intereses: el costo es lo pagado en cuotas frente al capital.
-        "costo_total_base": redondear_dinero(cuota * meses_base),
+        "deudas_detalle": [
+            {
+                "nombre": estado.deuda.acreedor,
+                "saldo": estado.saldo_inicial,
+                "cuota": estado.cuota,
+            }
+            for estado in estados
+        ],
+        "cuotas_liberadas_detalle": cuotas_liberadas_detalle or [],
+        "costo_total_base": deuda_inicial,
         "costo_total_opt": deuda_inicial,
     }
 
@@ -429,8 +443,12 @@ def _consejo_deuda(
     Returns:
         El consejo configurado en modo deuda.
     """
-    serie_base, meses_base, _ = _simular(estados, excedente, aplicar_excedente=False)
-    serie_optima, meses, liberada = _simular(estados, excedente)
+    serie_base, _liquidacion_base, _liberada_base, _detalle_base = _simular(
+        estados, excedente, aplicar_excedente=False
+    )
+    serie_optima, _liquidacion, liberada, detalle_cerradas = _simular(
+        estados, excedente
+    )
     orden = _ordenar(estados, excedente)
     objetivo = orden[0]
     cancela_completa = objetivo.saldo <= excedente
@@ -443,26 +461,56 @@ def _consejo_deuda(
     else:
         criterio = "es la de menor saldo y la cierras antes"
 
+    # SRS v4.13: plazos exactos hasta saldo cero, sin la frase «más de 12 meses».
+    referencia_efectiva = referencia or date.today()
+    deuda_inicial = redondear_dinero(sum((e.saldo for e in estados), start=CERO))
+    cuota_total = redondear_dinero(sum((e.cuota for e in estados), start=CERO))
+    ritmo = redondear_dinero(cuota_total + excedente)
+    meses_minimo = math.ceil(deuda_inicial / cuota_total) if cuota_total > CERO else 0
+    meses_excedente = math.ceil(deuda_inicial / ritmo) if ritmo > CERO else 0
+    fecha_minimo = _fecha_cierre(referencia_efectiva, meses_minimo)
+    fecha_excedente = _fecha_cierre(referencia_efectiva, meses_excedente)
+    meses_antes = max(0, meses_minimo - meses_excedente)
+
     serie, maximo = _serie_comparada(serie_base, serie_optima, etiquetas)
+    objetivo_detalle = (
+        f"saldo: {formatear_cop(objetivo.saldo_inicial)} · "
+        f"cuota: {formatear_cop(objetivo.cuota)}/mes"
+    )
 
     pasos = [
         f"Concentra el excedente de {formatear_cop(excedente)} en "
-        f"{objetivo.deuda.acreedor}: {criterio}."
+        f"{objetivo.deuda.acreedor} ({objetivo_detalle}): {criterio}."
     ]
     if len(orden) > 1:
-        siguientes = ", ".join(estado.deuda.acreedor for estado in orden[1:3])
+        siguientes = "; ".join(
+            f"{estado.deuda.acreedor} (saldo: {formatear_cop(estado.saldo_inicial)} · "
+            f"cuota: {formatear_cop(estado.cuota)}/mes)"
+            for estado in orden[1:3]
+        )
         pasos.append(f"Cuando esa deuda cierre, sigue con {siguientes}.")
     if liberada > CERO:
+        desglose = "; ".join(
+            f"{fila['nombre']} {formatear_cop(fila['cuota'])}"
+            for fila in detalle_cerradas
+        )
+        detalle_texto = f" ({desglose})" if desglose else ""
         pasos.append(
             f"Al cerrar esas deudas liberarás {formatear_cop(liberada)} de cuota "
-            "mensual para tus metas."
+            f"mensual para tus metas{detalle_texto}."
         )
-    pasos.append(f"Pagando solo lo mínimo quedarías libre {_meses_de_texto(meses_base)}.")
+    pasos.append(
+        f"Pagando solo lo mínimo quedarías libre en {meses_minimo} meses "
+        f"({fecha_minimo}); con tu excedente bajas a {meses_excedente} meses "
+        f"({fecha_excedente})."
+    )
 
     mensaje = (
         f"{alias}, con {formatear_cop(excedente)} de excedente te conviene atacar "
-        f"primero {objetivo.deuda.acreedor}. Con ese ritmo quedarías libre de "
-        f"deudas {_meses_de_texto(meses)}."
+        f"primero {objetivo.deuda.acreedor} ({objetivo_detalle}). Con ese ritmo "
+        f"quedarías libre de deudas en {meses_excedente} meses ({fecha_excedente}), "
+        f"{meses_antes} meses antes que pagando solo lo mínimo "
+        f"({meses_minimo} meses · {fecha_minimo})."
     )
 
     resultado = Consejo(
@@ -476,15 +524,19 @@ def _consejo_deuda(
         mensaje=mensaje,
         pasos=pasos,
         deuda_objetivo=objetivo.deuda.acreedor,
-        meses_base=meses_base,
-        meses_optimizado=meses,
+        meses_base=meses_minimo,
+        meses_optimizado=meses_excedente,
         cuota_liberada=liberada,
-        meses_liquidacion=meses,
+        meses_liquidacion=meses_excedente,
         serie=serie,
         maximo=maximo,
     )
     cierre = _datos_cierre(
-        estados, resultado, etiquetas, referencia or date.today()
+        estados,
+        resultado,
+        etiquetas,
+        referencia_efectiva,
+        detalle_cerradas,
     )
     return replace(resultado, cierre=cierre)
 

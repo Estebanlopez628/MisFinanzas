@@ -555,8 +555,7 @@ def _saldos_quincenas(
             "numero": fila.numero,
             # SRS v4.10: la tarjeta muestra el sueldo ya neto de ley para no
             # restarlo dos veces. La dona sigue leyendo `fila.ingreso`.
-            "ingreso": formatear_cop(fila.devengado_neto),
-            "deducciones_fijas": formatear_cop(fila.deducciones_fijas),
+            "ingreso": formatear_cop(fila.sueldo_neto_corte),
             "saldo_libre": formatear_cop(fila.saldo_libre),
             "negativo": fila.saldo_libre < CERO,
         }

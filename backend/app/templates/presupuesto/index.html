@@ -106,14 +106,15 @@
           <article class="tarjeta">
             <span class="tarjeta__icono" aria-hidden="true">💸</span>
             <h3 class="tarjeta__titulo">
-              {%- if consejo.meses_base is not none -%}
-                {{ consejo.meses_base }} mes(es)
-              {%- else -%}
-                Más de 12 meses
-              {%- endif -%}
+              {{ consejo.cierre.meses_con_excedente if consejo.cierre else consejo.meses_optimizado }} meses
             </h3>
             <p class="tarjeta__descripcion">
-              Para quedar libre de deudas pagando solo lo mínimo.
+              {% if consejo.cierre %}
+                Libre en {{ consejo.cierre.fecha_cierre_opt }} (vs.
+                {{ consejo.cierre.meses_minimo }} meses pagando solo lo mínimo).
+              {% else %}
+                Para quedar libre de deudas pagando solo lo mínimo.
+              {% endif %}
             </p>
           </article>
           <article class="tarjeta tarjeta--verde">
@@ -149,12 +150,14 @@
             Comparativa de cierre de deuda
           </h3>
 
+          {# SRS v4.13: solo cifras reales, sin intereses ficticios. #}
           <p class="cierre-deuda__pill">
-            ¡Ahorras {{ consejo.cierre.ahorro_mostrado | cop }}
-            {% if consejo.cierre.meses_ahorrados > 0 %}
-              y {{ consejo.cierre.meses_ahorrados }}
-              {{ 'mes' if consejo.cierre.meses_ahorrados == 1 else 'meses' }}
-            {% endif %}!
+            ¡Terminas {{ consejo.cierre.meses_ahorrados }} meses antes (en
+            {{ consejo.cierre.fecha_cierre_opt }} en lugar de
+            {{ consejo.cierre.fecha_cierre_base }}) y reduces
+            {{ consejo.cierre.reduccion_capital_12m | cop }} adicionales de capital
+            en los próximos 12 meses aplicando tu excedente de
+            {{ consejo.cierre.excedente_mensual | cop }}/mes!
           </p>
 
           <div class="cierre-deuda__velocimetros"
@@ -170,8 +173,10 @@
                 <circle cx="60" cy="60" r="4" fill="#3B82F6" />
               </svg>
               <span>Pago mínimo</span>
+              <span class="cierre-deuda__insignia">{{ consejo.cierre.meses_minimo }} meses</span>
               <strong>{{ consejo.cierre.fecha_cierre_base }}</strong>
-              <small>({{ consejo.cierre.costo_total_base | cop }} total)</small>
+              <small>En {{ consejo.cierre.meses_minimo }} meses</small>
+              <small>Saldo actual: {{ consejo.cierre.saldo_actual | cop }} · Sin abono extra</small>
             </article>
             <article class="cierre-deuda__velocimetro cierre-deuda__velocimetro--optimo"
                      style="min-width: 0; display: flex; flex-direction: column; align-items: center;">
@@ -184,8 +189,12 @@
                 <circle cx="60" cy="60" r="4" fill="#10B981" />
               </svg>
               <span>Con excedente</span>
+              <span class="cierre-deuda__insignia">−{{ consejo.cierre.meses_ahorrados }} meses</span>
               <strong>{{ consejo.cierre.fecha_cierre_opt }}</strong>
-              <small>({{ consejo.cierre.costo_total_opt | cop }} total)</small>
+              <small>En {{ consejo.cierre.meses_con_excedente }} meses ·
+                {{ consejo.cierre.meses_ahorrados }} meses antes</small>
+              <small>Saldo actual: {{ consejo.cierre.saldo_actual | cop }} ·
+                Abonando +{{ consejo.cierre.excedente_mensual | cop }}/mes</small>
             </article>
           </div>
 
@@ -212,6 +221,8 @@
                 </linearGradient>
               </defs>
               <line x1="15" y1="120" x2="345" y2="120" stroke="#334155" stroke-width="1" />
+              <text x="15" y="142" class="cierre-deuda__eje">Inicial: {{ consejo.cierre.saldo_actual | cop }}</text>
+              <text x="345" y="142" text-anchor="end" class="cierre-deuda__eje">Mes 12: {{ consejo.cierre.puntos[-1].optimizado | cop }}</text>
               <polygon points="{{ area_opt }}" fill="url(#gradOptimizado)" />
               <polyline points="{{ puntos_base.valores | join(' ') }}" fill="none"
                         stroke="#3B82F6" stroke-width="2.5" stroke-dasharray="5,5" />
@@ -230,12 +241,20 @@
                 <button type="button" class="cierre-deuda__mes{% if punto.index == consejo.cierre.mes_libre_index %} cierre-deuda__mes--libre{% endif %}"
                         data-mes="{{ punto.mes }} {{ punto.anio }}"
                         data-base="{{ punto.base | cop }}"
-                        data-optimo="{{ punto.optimizado | cop }}">
+                        data-optimo="{{ punto.optimizado | cop }}"
+                         data-reduccion="{{ (punto.base - punto.optimizado) | cop }}">
                   <span>{{ punto.mes }}</span>
                   <small>{{ punto.anio }}</small>
                 </button>
               {% endfor %}
             </div>
+            <p class="cierre-deuda__detalle" data-cierre-detalle>
+              {% set primero = consejo.cierre.puntos[0] %}
+              {{ primero.mes }} {{ primero.anio }} · Saldo Base:
+              {{ primero.base | cop }} · Saldo Optimizado:
+              {{ primero.optimizado | cop }} · Reducción extra acumulada:
+              {{ (primero.base - primero.optimizado) | cop }}
+            </p>
             <div class="cierre-deuda__tooltip" data-cierre-tooltip hidden></div>
           </div>
 

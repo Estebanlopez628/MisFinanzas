@@ -2342,6 +2342,19 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v103`; **819 pruebas** en verde, `compileall`, `node --check` y `generar_guia.py --verificar` correctos. Gate QA `scripts/qa_v4_10.py`: **14/14 comprobaciones** en Chromium. Se verificó quincenal y mensual sin doble descuento y con la dona global inalterada.
 
+### 2026-11-22 — SRS v4.13: tarjetas limpias y Consejero real (ADR-79)
+
+**Decisión (ADR-79).** Las tarjetas de corte muestran directamente el dinero recibido: el «Sueldo devengado» es neto de ley **y** de deducciones fijas, y solo se le restan los gastos fijos. El Consejero deja de hablar de intereses ficticios: mide velocidad de cierre sobre el saldo real y comunica plazos exactos con meses completos en español. Solo el layout del panel de gráficas cambia en escritorio; el móvil conserva su distribución.
+
+**Consecuencias aplicadas.**
+- `ResumenQuincena.sueldo_neto_corte = devengado_neto − deducciones fijas`. `saldo_libre` se reexpresó como `sueldo_neto_corte − gastos`, algebraicamente igual al valor anterior. El JSON reactivo dejó de enviar `deducciones_fijas` por corte.
+- `_simular()` devuelve ahora el detalle de cada deuda que cierra (nombre, saldo inicial, cuota) para desglosar la cuota liberada.
+- `_datos_cierre()` expone `saldo_actual`, `meses_minimo`, `meses_con_excedente`, `reduccion_capital_12m`, `deudas_detalle` y `cuotas_liberadas_detalle`. `ahorro_mostrado` es la reducción real, nunca `cuota × meses`. Se retiró `_meses_de_texto()` porque producía «en más de 12 meses».
+- La plantilla y `consejero.js` muestran fechas completas, plazos exactos, saldo actual, desglose por deuda y el detalle del mes seleccionado.
+- CSS: reglas de escritorio para curva al 100 %, sub-tarjetas de velocímetros y píldoras de meses; sin cambios bajo 768 px.
+
+**Verificación.** `sw.js` en `olb-finanzas-v104`; **826 pruebas** en verde, `compileall`, `node --check` y `generar_guia.py --verificar` correctos. Gate QA `scripts/qa_v4_13.py`: **21/21 comprobaciones** en Chromium, incluida la comparación 156×88/120×68 y la ausencia de cifras ficticias.
+
 
 
 

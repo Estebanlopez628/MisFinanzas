@@ -185,8 +185,11 @@ def test_json_devuelve_saldos_por_quincena_con_recargos(
     assert cuerpo["ok"] is True
     filas = {fila["numero"]: fila for fila in cuerpo["quincenas"]}
     assert set(filas) == {1, 2}
-    assert filas[1]["deducciones_fijas"] == "$100.000"
-    # Los recargos de la quincena 2 hacen subir su ingreso proyectado.
+    # SRS v4.13: el JSON ya no expone las fijas por separado; el `ingreso` de
+    # la tarjeta es el neto real del corte, con ley y fijas descontadas.
+    assert "deducciones_fijas" not in filas[1]
+    assert filas[1]["ingreso"].startswith("$")
+    # Los recargos y las fijas hacen que los cortes difieran.
     assert filas[2]["ingreso"] != filas[1]["ingreso"]
     assert "saldo_libre" in filas[2]
 

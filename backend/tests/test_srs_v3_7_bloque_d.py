@@ -42,10 +42,16 @@ def test_el_consejo_calcula_la_proyeccion_de_cierre(bd) -> None:
     assert len(cierre["puntos"]) == 12
     assert cierre["mes_libre_index"] is not None
     assert cierre["meses_ahorrados"] > 0
-    assert cierre["ahorro_mostrado"] > Decimal("0")
-    assert cierre["fecha_cierre_base"] == "Nov 2027"
-    assert "202" in cierre["fecha_cierre_opt"]
+    # SRS v4.13: solo la reducción real a 12 meses, nunca intereses ficticios.
+    assert cierre["reduccion_capital_12m"] >= Decimal("0")
+    assert cierre["ahorro_mostrado"] == cierre["reduccion_capital_12m"]
+    assert cierre["fecha_cierre_base"] == "Noviembre 2027"
+    assert "2027" in cierre["fecha_cierre_opt"]
     assert cierre["costo_total_opt"] == deuda.saldo_total
+    assert cierre["meses_minimo"] == 12
+    assert cierre["meses_con_excedente"] < cierre["meses_minimo"]
+    assert cierre["puntos"][0]["mes"] == "Noviembre"
+    assert cierre["deudas_detalle"][0]["nombre"] == "Banco"
 
 
 def test_saldo_optimizado_nunca_supera_al_base(bd) -> None:

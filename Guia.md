@@ -106,7 +106,7 @@ Principios que explican el resto del código:
 ### Resumen del inventario
 
 - **115 archivos** documentados: 56 Python, 40 plantillas Jinja2 y 19 recursos estáticos.
-- **69 clases**, **632 funciones** y **43 métodos** de clase.
+- **69 clases**, **631 funciones** y **43 métodos** de clase.
 
 ### Detalle por archivo
 
@@ -165,7 +165,7 @@ Principios que explican el resto del código:
 - **`feedback.py`** · 271 líneas — API de reportes de soporte «Ayuda y comentarios» (SRS v2.0, Fase A).
   - Clases: `CambioEstado`
   - Funciones: `enviar_feedback`, `contar_feedback_pendiente`, `listar_feedback`, `actualizar_estado_feedback`, `actualizar_feedback_api`, `listar_feedback_propio`, `ver_comentarios`
-- **`finanzas.py`** · 1135 líneas — Módulo "Mis Finanzas": liquidación, guardado e historial.
+- **`finanzas.py`** · 1134 líneas — Módulo "Mis Finanzas": liquidación, guardado e historial.
   - Clases: `EntradaFinanzas`
   - Funciones: `_texto`, `_entero`, `_descuento_por_fechas`, `_leer_entradas`, `_liquidar`, `_deducciones_segun_quincena`, `_datos_formateados`, `_detalle_formateado`, `_detalle_incapacidad_json`, `_fijas_del_periodo`, `_total_fijas`, `_total_deducciones_ley`, `_saldos_quincenas`, `_contexto_calculadora`, `ver_finanzas`, `procesar_finanzas`, `calcular_finanzas_json`, `guardar_liquidacion`, `_filas_historial`, `_etiqueta_periodo`, `ver_historial`, `exportar_historial_csv`, `imprimir_periodo`, `eliminar_periodo`
 - **`gastos.py`** · 529 líneas — Rutas del presupuesto de gastos.
@@ -211,9 +211,9 @@ Principios que explican el resto del código:
 - **`comercial.py`** · 1587 líneas — Operación comercial de OLB_BYTE: ventas a crédito, cartera y deuda con proveedor.
   - Clases: `LineaVenta`, `PagoInicial`
   - Funciones: `ahora_tienda`, `normalizar_telefono`, `_dinero`, `_sumar_meses`, `_texto_garantia`, `_validar_linea`, `_cliente_para_venta`, `_siguiente_numero_orden`, `deuda_proveedor`, `_registrar_movimiento_proveedor`, `registrar_cliente`, `listar_clientes`, `buscar_clientes`, `registrar_venta`, `obtener_venta`, `_venta_activa`, `_recalcular_estado_pago`, `_validar_metodo`, `registrar_abono`, `_devuelto`, `_registrar_devolucion`, `anular_venta`, `registrar_devolucion`, `pendiente_devolver`, `obtener_abono`, `abonos_de_venta`, `buscar_cartera`, `registrar_abono_proveedor`, `listar_movimientos_proveedor`, `_texto_busqueda`, `filtrar_ventas`, `listar_ventas`, `cartera`, `resumen_cartera`, `estado_garantia`, `clasificar_saldo`, `_barra_divergente`, `balance_tres_bloques`, `barras_balance`, `segmentos_dona`, `etiqueta_producto`, `opciones_garantia`, `registrar_garantia`, `actualizar_estado_garantia`, `listar_garantias`, `garantia_vigente_al_reclamo`, `ranking_fallas`, `formatear_pesos`, `texto_compartir_factura`, `enlace_whatsapp_factura`, `enlace_whatsapp_recibo`, `enlace_whatsapp_cobro`, `_enlace_wa`
-- **`consejero.py`** · 628 líneas — Consejero financiero del excedente mensual (SRS v1.8).
+- **`consejero.py`** · 680 líneas — Consejero financiero del excedente mensual (SRS v1.8).
   - Clases: `Consejo`, `_EstadoDeuda`
-  - Funciones: `_cuotas_mensuales`, `_estados`, `_ordenar`, `_simular`, `_altura`, `_serie_comparada`, `_meses_de_texto`, `_fecha_cierre`, `_datos_cierre`, `_consejo_deuda`, `_consejo_ahorro`, `consejo_financiero`
+  - Funciones: `_cuotas_mensuales`, `_estados`, `_ordenar`, `_simular`, `_altura`, `_serie_comparada`, `_fecha_cierre`, `_datos_cierre`, `_consejo_deuda`, `_consejo_ahorro`, `consejo_financiero`
 - **`correo.py`** · 261 líneas — Envío de correos del sistema: APIs transaccionales HTTPS o SMTP (SRS v3.1).
   - Funciones: `_destinatario`, `_enviar_por_api`, `enviar_correo`, `configuracion_valida`, `enviar_recuperacion`
 - **`deducciones_fijas.py`** · 335 líneas — Deducciones fijas del salario (SRS v1.4, REQ-08; vinculación SRS v1.9).
@@ -239,7 +239,7 @@ Principios que explican el resto del código:
   - Funciones: `obtener_perfil`, `perfil_configurado`, `_validar_porcentaje`, `parsear_dia_quincena`, `validar_dias_quincena`, `dias_quincena`, `etiquetas_quincena`, `validar_quincenas`, `calcular_quincenas_desde_neto`, `guardar_perfil`, `porcentajes_quincena`, `sueldo_del_periodo`
 - **`periodos.py`** · 191 líneas — Persistencia y consulta de periodos de nómina.
   - Funciones: `obtener_periodo`, `listar_periodos`, `horas_del_periodo`, `guardar_liquidacion`, `eliminar_periodo`
-- **`quincenas.py`** · 283 líneas — Resumen de quincenas para el panel izquierdo de "Mis Finanzas".
+- **`quincenas.py`** · 297 líneas — Resumen de quincenas para el panel izquierdo de "Mis Finanzas".
   - Clases: `ResumenQuincena`
   - Funciones: `_etiqueta`, `resumen_quincenas`, `_a_decimal`
 - **`recibo_imagen.py`** · 74 líneas — Recibo de abono de OLB_BYTE como imagen PNG para compartir por WhatsApp (RF-07).
@@ -257,7 +257,7 @@ Principios que explican el resto del código:
 
 #### `backend/app/static/css/`
 
-- **`estilos.css`** · 5445 líneas — Fondo y superficies
+- **`estilos.css`** · 5489 líneas — Fondo y superficies
 - **`factura-olb.css`** · 711 líneas — Sello de Anulada si aplica
 
 #### `backend/app/static/js/`
@@ -269,7 +269,7 @@ Principios que explican el resto del código:
 - **`categorias.js`** · 526 líneas — Selector cerrado de categorías, vinculación con deudas y conservación de
   - Funciones: `idsDeudasActuales`, `datosFormulario`, `restaurarDatos`, `cerrar`, `abrir`, `alternar`, `sincronizar`, `sincronizar`, `vinculado`, `sincronizarValor`
 - **`comentarios.js`** · 46 líneas — Cambio de estado en el panel administrativo de reportes (SRS v2.0, 5.5).
-- **`consejero.js`** · 41 líneas — Tooltip táctil de la gráfica «Comparativa de cierre de deuda» (SRS v3.7).
+- **`consejero.js`** · 46 líneas — Tooltip táctil de la gráfica «Comparativa de cierre de deuda» (SRS v3.7).
   - Funciones: `mostrar`
 - **`deudas.js`** · 355 líneas — Interacción de filas con modal centrado (SRS v1.9, secciones 2.3 y 3.3).
   - Funciones: `esMovil`, `sacarDeLaTabla`, `devolverALaTabla`, `vigilarPortabilidad`, `cerrarOtras`, `conectarFilas`, `pendienteDeDeuda`, `numeroDeuda`, `validarPlan`, `numero`, `validarEdicion`
@@ -277,7 +277,7 @@ Principios que explican el resto del código:
   - Funciones: `centro`, `mostrar`, `restaurar`, `iniciar`
 - **`factura.js`** · 422 líneas — Factura y recibo de abono de OLB_BYTE como imagen PNG (ADR-50).
   - Funciones: `descargar`, `esperar`, `esperarImagen`, `protegerLogoVisible`, `mostrarAviso`, `montarHoja`, `crearPng`, `imagenDe`, `copiarImagen`, `mensajeDelEnlace`, `numeroDelEnlace`, `enviarPorWhatsapp`, `finalizar`, `descargarImagen`
-- **`finanzas.js`** · 542 líneas — Mejora progresiva de "Mis Finanzas".
+- **`finanzas.js`** · 541 líneas — Mejora progresiva de "Mis Finanzas".
   - Funciones: `leerFormulario`, `pintarCampo`, `pintarDeduccion`, `pintarValorAuxilio`, `pintarErrores`, `pintarDetalle`, `pintarAuxilio`, `aplicarResultado`, `pintarTramos`, `pintarIncapacidad`, `pintarQuincenas`, `pintarTexto`, `calcular`, `programarCalculo`, `marcarCambios`, `aplicarPlantilla`
 - **`incapacidades.js`** · 129 líneas — Cálculo automático del módulo de incapacidades (SRS v1.5).
   - Funciones: `fechasListas`, `reemplazar`, `actualizar`, `programar`
@@ -333,7 +333,7 @@ Principios que explican el resto del código:
 - **`_capacidad.html`** · 143 líneas
 - **`_gasto_fijo.html`** · 202 líneas
 - **`_subnav.html`** · 27 líneas — Subnavegación interna del módulo "Mis Finanzas" (SRS v1.3, bloque 1).
-- **`index.html`** · 761 líneas — Plantilla: Mis Finanzas
+- **`index.html`** · 755 líneas — Plantilla: Mis Finanzas
 
 #### `backend/app/templates/gastos/`
 
@@ -370,7 +370,7 @@ Principios que explican el resto del código:
 
 #### `backend/app/templates/presupuesto/`
 
-- **`index.html`** · 701 líneas — Plantilla: Gastos y Presupuesto
+- **`index.html`** · 720 líneas — Plantilla: Gastos y Presupuesto
 
 #### `backend/app/templates/privado/`
 
@@ -1534,7 +1534,7 @@ el saldo libre total, no contra un pago concreto.
 | Auxilio de transporte | `$ 249.095` si `básico + recargos ≤ 2 SMMLV`, si no `0` (parametrizable con `AUXILIO_TRANSPORTE`) |
 | Incapacidad días 1–2 | `100 %` del valor día |
 | Incapacidad día 3+ | `66,67 %` (descuento `33,33 %`) |
-| Quincena | La tarjeta muestra `devengado_neto` (ya neto de ley); su saldo = ese neto − fijas − gastos del corte. La dona usa el `ingreso` bruto |
+| Quincena | La tarjeta muestra `sueldo_neto_corte` (neto de ley y fijas); su saldo = ese neto − gastos del corte. La dona usa el `ingreso` bruto |
 | Total devengado | Suma del `devengado_neto` de todos los cortes del mes |
 
 La tarjeta «Resultado del periodo» (SRS v4.10) usa la etiqueta **TOTAL DEVENGADO**,
@@ -1544,6 +1544,13 @@ ordena en nueve filas: valor hora ordinaria, horas extras y recargos, total
 devengado, auxilio de transporte y total ingresos; separador; salud, pensión,
 descuento por incapacidad y total deducciones. Las tarjetas de corte no repiten
 la fila de «Deducciones de ley» porque su sueldo devengado ya viene neto de ley.
+En v4.13 esas tarjetas muestran directamente `sueldo_neto_corte` (ley y fijas
+descontadas) y solo restan gastos fijos. El Consejero usa cifras reales:
+`saldo_actual`, `meses_minimo`, `meses_con_excedente`, `reduccion_capital_12m`
+y desglose por deuda con nombre, saldo y cuota; nunca intereses ficticios.
+Las fechas llevan meses completos en español. La curva al 100 %, las
+sub-tarjetas de velocímetros y las píldoras oscuras de meses son exclusivas de
+`@media (min-width: 768px)`; el móvil conserva su distribución.
 | Coherencia de deuda | `cuota × cuotas = total adeudado` (tolerancia `$1 × cuotas`) |
 | Cuota final | `saldo_pendiente` (absorbe el redondeo y deja cero) |
 
@@ -1691,17 +1698,17 @@ Si quieres usar el logo como imagen en lugar del texto «OB / OLB BYTE», reempl
 ## 11. Lista de verificación antes de cerrar un bloque
 
 1. `python -m compileall -q app scripts` sin errores.
-2. `pytest -q` en verde (hoy: **819**; v4.10 añadió 6 y v4.8 cerró con 813).
+2. `pytest -q` en verde (hoy: **826**; v4.13 añadió 7 y v4.10 cerró con 819).
 3. `node --check` de todos los JS que se hayan tocado, sin errores.
 4. Migraciones nuevas probadas **dos veces** sobre copia de `finanzas.db` y aplicadas en Neon.
    Toda migración usa parámetros nombrados con `text()`: el estilo `?` de SQLite falla en PostgreSQL.
-5. `sw.js` con la caché subida si cambió CSS o JS (hoy: `olb-finanzas-v103`).
+5. `sw.js` con la caché subida si cambió CSS o JS (hoy: `olb-finanzas-v104`).
 6. `python scripts\generar_guia.py` y luego `--verificar` sin problemas (115 fichas).
-7. `MEMORY.md` con la bitácora y el ADR si cambió una regla (hoy: ADR-78 para v4.10).
+7. `MEMORY.md` con la bitácora y el ADR si cambió una regla (hoy: ADR-79 para v4.13).
 8. `AGENTS.md` §9 con el estado verificado y el conteo de pruebas.
-9. `constitution.md`, `diccionario_datos.md`, `USER_GUIDE.md` y la SRS con la versión activa (hoy: **v4.10**, sección 18).
-10. Para v4.10, además: `.venv\Scripts\python -m scripts.crear_usuario_qa.py` y
-    `.venv\Scripts\python -m scripts.qa_v4_10.py` con el servidor levantado (14 comprobaciones).
+9. `constitution.md`, `diccionario_datos.md`, `USER_GUIDE.md` y la SRS con la versión activa (hoy: **v4.13**, sección 19).
+10. Para v4.13, además: `.venv\Scripts\python -m scripts.crear_usuario_qa.py` y
+    `.venv\Scripts\python -m scripts.qa_v4_13.py` con el servidor levantado (21 comprobaciones).
 11. La regla de escritorio de los velocímetros debe estar en un `@media (min-width: 768px)`
     de nivel superior: aguas arriba hay un `@media (max-width: 767px)` abierto que anida
     cualquier bloque nuevo y lo deja inactivo en pantallas grandes.

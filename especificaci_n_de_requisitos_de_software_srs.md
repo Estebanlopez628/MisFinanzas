@@ -665,3 +665,38 @@ El «Sueldo devengado» que muestra cada tarjeta de Quincena 1, Quincena 2 o Pag
 - Usuarios QA: `prueba_qa@misfinanzas.local` / `QA_MisFinanzas_2026!` y `prueba_qa_admin@misfinanzas.local` / `QA_Admin_2026!`.
 - `scripts/qa_v4_10.py`: **14/14 comprobaciones** en Chromium, incluidos quincenal y mensual, la dona intacta y 360/390/768/1280 px. Solo tras el gate se ejecutaron `git add`, `commit` y `push`.
 - Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-78), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.10.
+
+---
+
+## 19. SRS v4.13 — Tarjetas limpias y Consejero sin intereses ficticios
+
+Versión 4.13 (unificación de v4.11 y v4.12) y **línea base vigente**.
+
+### 19.1 No regresión
+
+No se tocan los siete factores 2026, «Resultado del periodo» ni su tabla de nueve filas, la dona global con leyenda apilada, la dona de Trabajos Extras, Deudas, Atajos Guardados, selectores de fecha, modales propios, WhatsApp, OLB_BYTE ni Ayuda. Los textos y cifras del Consejero aplican en web y móvil; solo el layout del panel de gráficas es exclusivo de escritorio (`>= 768px`).
+
+### 19.2 Tarjetas de corte simplificadas
+
+Quincena 1, Quincena 2 y Pago Mensual muestran únicamente: encabezado con porcentaje, «SALDO LIBRE RESTANTE», «Sueldo devengado» con el **neto real del corte** (ley y deducciones fijas ya descontadas, auxilio y recargos sumados) y «Gastos fijos» del corte con créditos vinculados. Se eliminan las filas «Deducciones de ley» y «Deducciones fijas del salario».
+
+`Saldo libre restante = Sueldo devengado neto − Gastos fijos del corte`. El detalle completo de deducciones sigue intacto en «Resultado del periodo» y en la dona global.
+
+### 19.3 Consejero y gráficas con cifras reales
+
+- Está prohibido mencionar ahorros de intereses ficticios o totales inflados que contradigan el saldo registrado. La reducción a 12 meses es la diferencia real entre las dos curvas.
+- El titular comunica cuántos meses antes se termina, las fechas completas y la reducción de capital, junto con el excedente mensual aplicado.
+- Los velocímetros muestran nombre completo del mes en español, duración exacta, saldo actual y si el escenario es «Sin abono extra» o «Abonando +$X/mes».
+- Se elimina «en más de 12 meses»: los plazos `meses_minimo` y `meses_con_excedente` son exactos y aparecen en el mensaje, la cuarta viñeta y la tarjeta izquierda.
+- Cada deuda se nombra siempre con su saldo pendiente y su cuota mensual; la cuota liberada se desglosa sumando cada deuda que cierra.
+- Bajo la curva se muestra el detalle del mes seleccionado: saldo base, saldo optimizado y reducción extra acumulada.
+
+### 19.4 Layout exclusivo de escritorio
+
+En `>= 768px`: la curva de 12 meses ocupa el 100 % del ancho con etiquetas de saldo inicial y saldo al mes 12; los velocímetros van en sub-tarjetas oscuras equilibradas; el selector de meses son píldoras oscuras con el mes activo en verde esmeralda. En móvil (`< 768px`) la distribución permanece intacta.
+
+### 19.5 Gate QA y cierre documental
+
+- Usuarios QA: `prueba_qa@misfinanzas.local` / `QA_MisFinanzas_2026!` y `prueba_qa_admin@misfinanzas.local` / `QA_Admin_2026!`.
+- `scripts/qa_v4_13.py`: **21/21 comprobaciones** en Chromium, incluidas tarjetas limpias, Consejero sin cifras ficticias, meses completos y comparación de layout escritorio/móvil. Solo tras el gate se ejecutaron `git add`, `commit` y `push`.
+- Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-79), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.13.

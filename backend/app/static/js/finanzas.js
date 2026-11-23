@@ -347,7 +347,7 @@
    * El saldo libre cambia de color cuando queda negativo.
    *
    * @param {Array<{numero: number, ingreso: string,
-   *   deducciones_fijas: string, saldo_libre: string, negativo: boolean}>} filas
+   *   saldo_libre: string, negativo: boolean}>} filas
    */
   function pintarQuincenas(filas) {
     filas.forEach(function (fila) {
@@ -357,7 +357,6 @@
         saldo.classList.toggle("valor-negativo", Boolean(fila.negativo));
       }
       pintarTexto('[data-ingreso-quincena="' + fila.numero + '"]', fila.ingreso);
-      pintarTexto('[data-fijas-quincena="' + fila.numero + '"]', "− " + fila.deducciones_fijas);
     });
   }
 

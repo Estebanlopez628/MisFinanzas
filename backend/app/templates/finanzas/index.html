@@ -81,20 +81,14 @@ contenido %}
       <ul class="lista-parametros lista-parametros--compacta">
         <li>
           <span>Sueldo devengado</span>
-          <strong data-ingreso-quincena="{{ quincena.numero }}">{{ quincena.devengado_neto | cop }}</strong>
+          <strong data-ingreso-quincena="{{ quincena.numero }}">{{ quincena.sueldo_neto_corte | cop }}</strong>
         </li>
         <li>
           <span>Gastos fijos</span>
           <strong class="valor-negativo">− {{ quincena.gastos | cop }}</strong>
         </li>
-        {# SRS v4.10: la ley ya viene descontada en el sueldo devengado de la
-           tarjeta; pintarla aquí sería un doble descuento. #}
-        <li>
-          <span>Deducciones fijas del salario</span>
-          <strong class="valor-negativo" data-fijas-quincena="{{ quincena.numero }}"
-            >− {{ quincena.deducciones_fijas | cop }}</strong
-          >
-        </li>
+        {# SRS v4.13: la ley y las deducciones fijas ya vienen descontadas del
+           sueldo neto del corte; pintarlas aquí sería un doble descuento. #}
       </ul>
 
       {# Gastos fijos asignados: cada uno se puede editar o

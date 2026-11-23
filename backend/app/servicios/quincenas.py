@@ -53,7 +53,9 @@ class ResumenQuincena:
         porcentaje: Porcentaje del sueldo que se paga en este bloque.
         ingreso: Sueldo devengado del bloque: porcentaje del salario más recargos
             y auxilio de transporte en el corte que las lleva (SRS v4.8).
-        devengado_neto: `ingreso − deducciones de ley`, antes de gastos fijos.
+        devengado_neto: `ingreso − deducciones de ley`, base del total mensual.
+        sueldo_neto_corte: Dinero real recibido en el corte: devengado_neto menos
+            deducciones fijas de nómina (SRS v4.13).
         gastos: Suma de gastos fijos asignados.
         deducciones: Salud y pensión que se descuentan en este bloque.
         saldo_libre: `ingreso − gastos − deducciones − deducciones fijas`.
@@ -75,6 +77,7 @@ class ResumenQuincena:
     deducciones: Decimal
     saldo_libre: Decimal
     devengado_neto: Decimal = CERO
+    sueldo_neto_corte: Decimal = CERO
     gastos_detalle: list[Gasto] = field(default_factory=list)
     gastos_vinculados: list[Gasto] = field(default_factory=list)
     mes_completo: bool = False
@@ -158,7 +161,8 @@ def resumen_quincenas(
                 ingreso=CERO,
                 gastos=total,
                 deducciones=CERO,
-                saldo_libre=redondear_dinero(-total - total_fijas_mes),
+                saldo_libre=redondear_dinero(-total_fijas_mes - total),
+                sueldo_neto_corte=redondear_dinero(-total_fijas_mes),
                 gastos_detalle=del_mes,
                 gastos_vinculados=vinculados,
                 mes_completo=True,
@@ -205,12 +209,19 @@ def resumen_quincenas(
                     sueldo_ajustado
                     + recargos_periodo
                     + auxilio
-                    - total
                     - deducciones_mes
                     - total_fijas_mes
+                    - total
                 ),
                 devengado_neto=redondear_dinero(
                     sueldo_ajustado + recargos_periodo + auxilio - deducciones_mes
+                ),
+                sueldo_neto_corte=redondear_dinero(
+                    sueldo_ajustado
+                    + recargos_periodo
+                    + auxilio
+                    - deducciones_mes
+                    - total_fijas_mes
                 ),
                 gastos_detalle=del_mes,
                 gastos_vinculados=vinculados,
@@ -255,9 +266,12 @@ def resumen_quincenas(
                 gastos=total_gastos,
                 deducciones=deducciones,
                 saldo_libre=redondear_dinero(
-                    ingreso - total_gastos - deducciones - total_fijas
+                    ingreso - deducciones - total_fijas - total_gastos
                 ),
                 devengado_neto=redondear_dinero(ingreso - deducciones),
+                sueldo_neto_corte=redondear_dinero(
+                    ingreso - deducciones - total_fijas
+                ),
                 gastos_detalle=detalle,
                 gastos_vinculados=vinculados_quincena,
                 mes_completo=any(gasto.quincena is None for gasto in detalle),
