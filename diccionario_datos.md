@@ -652,3 +652,20 @@ el esquema el nuevo icono nativo ni el esquema `whatsapp://send`.
 La SRS v3.9.5 tampoco modifica el modelo de datos: sustituye el ícono de menú de
 OLB_BYTE por `static/img/icono_OLBBYTE.png` (recurso visual, 20×20 px) y fuerza
 la rejilla de dos columnas de los velocímetros del Consejero en escritorio.
+
+## 15. SRS v4.4 — Campos derivados (sin cambios de esquema)
+
+La versión 4.4 **no añade columnas ni tablas**. Reutiliza las relaciones ya documentadas:
+
+- `gastos.id_deuda` → `deudas.id_deuda`: un gasto con `id_trabajo = NULL` vincula la deuda al módulo **Finanzas**; con `id_trabajo` presente, a **Trabajos Extras** (§7 y §11).
+- `deducciones_fijas.id_deuda` → `deudas.id_deuda`: siempre vincula al módulo **Finanzas** (§9).
+- `deudas.id_usuario`: dueño de la deuda, usado junto con los valores del formulario para la idempotencia de 10 segundos del alta (§8).
+
+El endpoint `GET /api/deudas` expone dos campos **derivados, no persistidos**:
+
+| Campo | Tipo | Regla |
+| --- | --- | --- |
+| `esta_vinculada` | booleano | `True` si existe al menos un `gastos.id_deuda` o `deducciones_fijas.id_deuda` que apunte a la deuda. |
+| `modulos_vinculados` | arreglo de texto | `[]`, `['Finanzas']`, `['Trabajos Extras']` o ambos, según las reglas anteriores. |
+
+Los campos `misfinanzas_saved_scroll_y` y `misfinanzas_saved_scroll_ancla` viven en `sessionStorage` del navegador; no forman parte de la base de datos.

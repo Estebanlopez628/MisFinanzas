@@ -299,6 +299,11 @@
     });
   }
 
+  // SRS v4.4, sección 5.2: los módulos con peticiones DELETE reutilizan estos
+  // modales propios en lugar de inventar otro diálogo.
+  window.pedirConfirmacion = pedirConfirmacion;
+  window.mostrarAvisoApp = mostrarAvisoApp;
+
   if (modalConfirmacion) {
     var cancelar = modalConfirmacion.querySelector("[data-confirm-cancelar]");
     var aceptar = modalConfirmacion.querySelector("[data-confirm-aceptar]");
@@ -534,5 +539,87 @@
         // La aplicación sigue funcionando aunque el navegador no permita el SW.
       });
     });
+  }
+
+  // SRS v4.4, sección 6: conservar la posición de desplazamiento cuando un
+  // formulario recarga la página. Nunca se fuerza el desplazamiento al inicio:
+  // se guarda `window.scrollY`, se restaura con `behavior: "instant"` y, si el módulo
+  // expone un bloque de pago cercano, se ancla con `block: "nearest"`.
+  var CLAVE_SCROLL = "misfinanzas_saved_scroll_y";
+  var CLAVE_ANCLA = "misfinanzas_saved_scroll_ancla";
+
+  // Si el navegador restaura por su cuenta, lo hace después de este script y
+  // nos devuelve al inicio. La posición la decide esta aplicación.
+  if ("scrollRestoration" in window.history) {
+    window.history.scrollRestoration = "manual";
+  }
+
+  /**
+   * Devuelve el identificador del bloque de pago más cercano al viewport.
+   *
+   * @returns {string} Id del ancla, o cadena vacía si no hay ninguna.
+   */
+  function anclaCercana() {
+    var bloques = document.querySelectorAll(
+      "[data-quincena], #bloque-quincena-1, #bloque-quincena-2, #bloque-pago-mensual"
+    );
+    var mejor = null;
+    var menorDistancia = Infinity;
+    bloques.forEach(function (bloque) {
+      var distancia = Math.abs(bloque.getBoundingClientRect().top);
+      if (distancia < menorDistancia) {
+        menorDistancia = distancia;
+        mejor = bloque;
+      }
+    });
+    if (!mejor) {
+      return "";
+    }
+    if (mejor.id) {
+      return mejor.id;
+    }
+    var numero = mejor.getAttribute("data-quincena");
+    if (numero === "0") {
+      return "bloque-pago-mensual";
+    }
+    if (numero === "1") {
+      return "bloque-quincena-1";
+    }
+    if (numero === "2") {
+      return "bloque-quincena-2";
+    }
+    return "";
+  }
+
+  /**
+   * Guarda la posición actual antes de que el servidor responda.
+   */
+  function guardarScroll() {
+    try {
+      sessionStorage.setItem(CLAVE_SCROLL, String(window.scrollY || 0));
+      sessionStorage.setItem(CLAVE_ANCLA, anclaCercana());
+    } catch (error) {
+      // Sin sessionStorage el formulario sigue funcionando desde el inicio.
+    }
+  }
+
+  document.addEventListener("submit", guardarScroll, true);
+
+  try {
+    var scrollGuardado = sessionStorage.getItem(CLAVE_SCROLL);
+    var anclaGuardada = sessionStorage.getItem(CLAVE_ANCLA);
+    sessionStorage.removeItem(CLAVE_SCROLL);
+    sessionStorage.removeItem(CLAVE_ANCLA);
+    if (scrollGuardado !== null) {
+      window.scrollTo({ top: Number(scrollGuardado) || 0, behavior: "instant" });
+      if (anclaGuardada) {
+        var bloque = document.getElementById(anclaGuardada);
+        if (bloque && bloque.scrollIntoView) {
+          bloque.scrollIntoView({ behavior: "instant", block: "nearest" });
+        }
+      }
+    }
+  } catch (error) {
+    // Sin sessionStorage no hay posición que restaurar.
   }
 })();

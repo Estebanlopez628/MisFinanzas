@@ -14,16 +14,19 @@ entradas, invoca el servicio y presenta resultados.
 
 from __future__ import annotations
 
+import time
+from threading import Lock
 from typing import Annotated
 from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, Form, Request, status
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
 from app import esquemas
 from app.core.base_datos import obtener_bd
 from app.dependencias import UsuarioSesion, obtener_usuario_actual
+from app.modelos import Deuda
 from app.routers.vistas import contexto_base, plantillas
 from app.servicios import auditoria, deudas
 
@@ -37,6 +40,70 @@ ETIQUETAS_ORIGEN: dict[str, str] = {
     "finanzas": "Gastos Fijos - Finanzas",
     "trabajos": "Gastos Fijos - Trabajos Extras",
 }
+
+# SRS v4.4, sección 7: idempotencia del alta. Un doble clic (o una petición
+# reintentada) con el mismo usuario y los mismos valores en menos de diez
+# segundos devuelve la deuda ya creada en vez de duplicarla. Es complementaria
+# al bloqueo síncrono del botón en `deudas.js`.
+VENTANA_IDEMPOTENCIA = 10.0
+_ULTIMOS_REGISTROS: dict[tuple[str, tuple[str, ...]], tuple[float, str]] = {}
+_BLOQUEO_IDEMPOTENCIA = Lock()
+
+
+def _clave_idempotencia(id_usuario: str, valores: tuple[str, ...]) -> tuple[str, tuple[str, ...]]:
+    """Construye la clave del registro reciente.
+
+    Args:
+        id_usuario: Dueño de la deuda.
+        valores: Campos normalizados del formulario.
+
+    Returns:
+        Clave inmutable para la caché de idempotencia.
+    """
+    return id_usuario, valores
+
+
+def _deuda_reciente(id_usuario: str, valores: tuple[str, ...]) -> str | None:
+    """Devuelve el identificador de una deuda creada hace menos de diez segundos.
+
+    Args:
+        id_usuario: Dueño de la deuda.
+        valores: Campos normalizados del formulario.
+
+    Returns:
+        Identificador de la deuda, o `None` si no hay un registro reciente.
+    """
+    clave = _clave_idempotencia(id_usuario, valores)
+    ahora = time.monotonic()
+    with _BLOQUEO_IDEMPOTENCIA:
+        registro = _ULTIMOS_REGISTROS.get(clave)
+        if registro and ahora - registro[0] <= VENTANA_IDEMPOTENCIA:
+            return registro[1]
+        if registro:
+            _ULTIMOS_REGISTROS.pop(clave, None)
+    return None
+
+
+def _recordar_deuda(id_usuario: str, valores: tuple[str, ...], id_deuda: str) -> None:
+    """Guarda el resultado del alta para detectar reintentos.
+
+    Args:
+        id_usuario: Dueño de la deuda.
+        valores: Campos normalizados del formulario.
+        id_deuda: Deuda recién creada.
+    """
+    clave = _clave_idempotencia(id_usuario, valores)
+    with _BLOQUEO_IDEMPOTENCIA:
+        # Se descartan las entradas vencidas para que la caché no crezca sin límite.
+        ahora = time.monotonic()
+        vencidas = [
+            clave_antigua
+            for clave_antigua, (instante, _) in _ULTIMOS_REGISTROS.items()
+            if ahora - instante > VENTANA_IDEMPOTENCIA
+        ]
+        for clave_antigua in vencidas:
+            _ULTIMOS_REGISTROS.pop(clave_antigua, None)
+        _ULTIMOS_REGISTROS[clave] = (ahora, id_deuda)
 
 
 def _contexto(
@@ -73,6 +140,8 @@ def _contexto(
             "titulo_pagina": "Registro y Detalles de deudas",
             "deudas": lista,
             "resumen": deudas.resumen_deudas(bd, usuario.id_usuario),
+            # SRS v4.4, sección 5.1: columna «Vinculación» de la tabla.
+            "vinculaciones": deudas.vinculaciones_de_deudas(bd, usuario.id_usuario),
             "periodicidades": deudas.PERIODICIDADES,
             "error": error,
             "guardado": guardado,
@@ -118,6 +187,68 @@ def ver_deudas(
     )
 
 
+@router.get("/api/deudas", name="api_deudas")
+def api_deudas(
+    usuario: UsuarioSesion = Depends(obtener_usuario_actual),
+    bd: Session = Depends(obtener_bd),
+) -> dict[str, object]:
+    """Devuelve las deudas con su estado de vinculación (SRS v4.4, sección 5.1).
+
+    Args:
+        usuario: Usuario autenticado.
+        bd: Sesión de base de datos.
+
+    Returns:
+        Diccionario con la lista ``deudas`` y sus módulos vinculados.
+    """
+    vinculaciones = deudas.vinculaciones_de_deudas(bd, usuario.id_usuario)
+    filas: list[dict[str, object]] = []
+    for deuda in deudas.listar_deudas(bd, usuario.id_usuario):
+        vinculacion = vinculaciones.get(
+            deuda.id_deuda, {"esta_vinculada": False, "modulos_vinculados": []}
+        )
+        filas.append(
+            {
+                "id_deuda": deuda.id_deuda,
+                "acreedor": deuda.acreedor,
+                "descripcion": deuda.descripcion or "",
+                "saldo_total": str(deuda.saldo_total),
+                "cuota_mensual": str(deuda.cuota_mensual),
+                "cuotas_pendientes": deuda.cuotas_pendientes,
+                "periodicidad": deuda.periodicidad,
+                "estado": deuda.estado,
+                "esta_vinculada": vinculacion["esta_vinculada"],
+                "modulos_vinculados": vinculacion["modulos_vinculados"],
+            }
+        )
+    return {"deudas": filas}
+
+
+@router.delete("/api/deudas/{id_deuda}", name="api_eliminar_deuda")
+def api_eliminar_deuda(
+    id_deuda: str,
+    usuario: UsuarioSesion = Depends(obtener_usuario_actual),
+    bd: Session = Depends(obtener_bd),
+) -> JSONResponse:
+    """Elimina una deuda propia desde el modal de edición (SRS v4.4, sección 5.2).
+
+    Args:
+        id_deuda: Deuda a eliminar.
+        usuario: Usuario autenticado.
+        bd: Sesión de base de datos.
+
+    Returns:
+        JSON con ``ok`` o un 404 si la deuda no pertenece al usuario.
+    """
+    if not deudas.eliminar_deuda(bd, usuario.id_usuario, id_deuda):
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content={"ok": False, "detail": "La deuda no existe."},
+        )
+    auditoria.registrar(bd, usuario.id_usuario, "DEUDA_ELIMINADA", "deudas", id_deuda)
+    return JSONResponse(content={"ok": True, "id_deuda": id_deuda})
+
+
 @router.post("/deudas", name="crear_deuda", response_model=None)
 def crear_deuda(
     request: Request,
@@ -159,6 +290,26 @@ def crear_deuda(
             cuotas_pendientes=cuotas_pendientes,
             periodicidad=periodicidad,
         )
+        # SRS v4.4, sección 7: un reenvío idéntico en menos de diez segundos no
+        # crea otra deuda. Se devuelve la misma que ya se había registrado.
+        valores_idempotencia = (
+            datos.acreedor.strip().lower(),
+            (datos.descripcion or "").strip().lower(),
+            str(datos.saldo_total),
+            str(datos.cuota),
+            str(datos.cuotas_pendientes),
+            datos.periodicidad,
+        )
+        anterior = _deuda_reciente(usuario.id_usuario, valores_idempotencia)
+        if anterior:
+            deuda = bd.get(Deuda, anterior)
+            if deuda is not None:
+                destino_anterior = (
+                    f"/deudas?guardado=1&volver={quote(volver)}" if volver else "/deudas?guardado=1"
+                )
+                return RedirectResponse(
+                    url=destino_anterior, status_code=status.HTTP_303_SEE_OTHER
+                )
         deuda = deudas.crear_deuda(
             bd,
             usuario.id_usuario,
@@ -169,6 +320,7 @@ def crear_deuda(
             datos.periodicidad,
             datos.descripcion or None,
         )
+        _recordar_deuda(usuario.id_usuario, valores_idempotencia, deuda.id_deuda)
         auditoria.registrar(bd, usuario.id_usuario, "DEUDA_CREADA", "deudas", deuda.acreedor)
     except (ValueError, ArithmeticError) as error:
         return plantillas.TemplateResponse(

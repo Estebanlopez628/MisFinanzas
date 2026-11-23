@@ -46,7 +46,7 @@
     <div class="alerta alerta--error" role="alert">{{ error }}</div>
   {% endif %}
 
-  <div class="rejilla-tarjetas">
+  <div class="rejilla-tarjetas rejilla-tarjetas--deudas">
     <article class="tarjeta tarjeta--rojo">
       <span class="tarjeta__icono" aria-hidden="true">💳</span>
       <h3 class="tarjeta__titulo">{{ resumen.saldo_total | cop }}</h3>
@@ -56,11 +56,6 @@
       <span class="tarjeta__icono" aria-hidden="true">📆</span>
       <h3 class="tarjeta__titulo">{{ resumen.cuota_mensual | cop }}</h3>
       <p class="tarjeta__descripcion">Cuota mensual comprometida.</p>
-    </article>
-    <article class="tarjeta tarjeta--azul">
-      <span class="tarjeta__icono" aria-hidden="true">🧾</span>
-      <h3 class="tarjeta__titulo">{{ resumen.cuotas_pendientes }} cuota(s)</h3>
-      <p class="tarjeta__descripcion">Pagos que faltan en las deudas activas.</p>
     </article>
     <article class="tarjeta tarjeta--verde">
       <span class="tarjeta__icono" aria-hidden="true">✅</span>
@@ -164,6 +159,7 @@
                 <th scope="col">Cuota</th>
                 <th scope="col" class="deudas__cuotas">No. de<br />cuotas<br />pendientes</th>
                 <th scope="col">Periodicidad</th>
+                <th scope="col">Vinculación</th>
                 <th scope="col">Estado</th>
                 <th scope="col" class="deudas__acciones"><span class="sr-only">Acciones</span></th>
               </tr>
@@ -183,6 +179,19 @@
                   </td>
                   <td class="tabla__numero deudas__cuotas">{{ deuda.cuotas_pendientes }}</td>
                   <td>{{ deuda.periodicidad | capitalize }}</td>
+                  <td>
+                    {# SRS v4.4, sección 5.1: verde cuando un gasto o deducción
+                       paga la deuda; ámbar cuando aún no está vinculada. #}
+                    {% set vinculo = vinculaciones.get(deuda.id_deuda) %}
+                    {% if vinculo and vinculo.esta_vinculada %}
+                      <span class="insignia insignia--vinculada"
+                            title="Se paga desde {{ vinculo.modulos_vinculados | join(', ') }}">
+                        Vinculada · {{ vinculo.modulos_vinculados | join(' + ') }}
+                      </span>
+                    {% else %}
+                      <span class="insignia insignia--sin-vincular">Sin vincular</span>
+                    {% endif %}
+                  </td>
                   <td>{{ deuda.estado | capitalize }}</td>
                   <td class="deudas__acciones">
                     <div class="deudas__acciones-contenido">
@@ -223,6 +232,11 @@
                         </label>
                         <div class="acciones-formulario acciones-formulario--edicion">
                           <button class="boton boton--primario boton--pequeno" type="submit">Actualizar</button>
+                          {# SRS v4.4, sección 5.2: borrado desde el mismo modal,
+                             confirmado con el modal propio de la app. #}
+                          <button class="boton boton--peligro boton--pequeno" type="button"
+                                  data-eliminar-deuda="{{ deuda.id_deuda }}"
+                                  title="Eliminar deuda">Eliminar</button>
                         </div>
                       </form>
                     </details>

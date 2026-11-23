@@ -195,5 +195,11 @@ def test_visibilidad_no_duplica_la_cuota_en_los_totales(bd) -> None:
     )
 
     resumen = quincenas.resumen_quincenas(bd, id_usuario, perfil, hoy.year, hoy.month)
-    assert all(fila.gastos == Decimal("0.00") for fila in resumen)
-    assert sum(len(fila.gastos_vinculados) for fila in resumen) == 1
+    # SRS v4.4: la fila sigue visible y su cuota se descuenta del saldo del bloque.
+    assert any(fila.gastos >= Decimal("100000.00") for fila in resumen)
+    # SRS v4.4: el vinculado ya vive en `gastos_detalle` y no se pinta dos veces.
+    assert any(
+        gasto.id_deuda == deuda.id_deuda
+        for fila in resumen
+        for gasto in fila.gastos_detalle
+    )

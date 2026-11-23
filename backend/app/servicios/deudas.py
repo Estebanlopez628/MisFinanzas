@@ -36,7 +36,7 @@ from sqlalchemy.orm import Session
 
 from app.core.numeros import redondear_dinero
 from app.core.texto import parsear_monto
-from app.modelos import DeduccionFija, Deuda, PagoDeuda
+from app.modelos import DeduccionFija, Deuda, Gasto, PagoDeuda
 
 CERO = Decimal("0")
 ESTADO_ACTIVA = "ACTIVA"
@@ -493,6 +493,71 @@ def listar_deudas(bd: Session, id_usuario: str) -> list[Deuda]:
         .order_by(Deuda.estado, Deuda.acreedor)
     )
     return list(bd.scalars(consulta))
+
+
+MODULO_FINANZAS = "Finanzas"
+MODULO_TRABAJOS = "Trabajos Extras"
+
+
+def vinculaciones_de_deudas(bd: Session, id_usuario: str) -> dict[str, dict[str, object]]:
+    """Indica qué deuda paga cada gasto o deducción del usuario (SRS v4.4, 5.1).
+
+    Un gasto fijo con `id_trabajo` pertenece a Trabajos Extras; los demás gastos
+    y todas las deducciones fijas pertenecen a Finanzas. Una deuda puede estar
+    vinculada a varios módulos a la vez, por eso se devuelve la lista ordenada.
+
+    Args:
+        bd: Sesión de base de datos.
+        id_usuario: Dueño de las deudas y de los vínculos.
+
+    Returns:
+        Diccionario por `id_deuda` con `esta_vinculada` y `modulos_vinculados`.
+    """
+    modulos: dict[str, set[str]] = {}
+
+    gastos = bd.scalars(
+        select(Gasto).where(Gasto.id_usuario == id_usuario, Gasto.id_deuda.is_not(None))
+    )
+    for gasto in gastos:
+        modulo = MODULO_TRABAJOS if gasto.id_trabajo else MODULO_FINANZAS
+        modulos.setdefault(str(gasto.id_deuda), set()).add(modulo)
+
+    deducciones = bd.scalars(
+        select(DeduccionFija).where(
+            DeduccionFija.id_usuario == id_usuario, DeduccionFija.id_deuda.is_not(None)
+        )
+    )
+    for deduccion in deducciones:
+        modulos.setdefault(str(deduccion.id_deuda), set()).add(MODULO_FINANZAS)
+
+    return {
+        id_deuda: {
+            "esta_vinculada": True,
+            "modulos_vinculados": sorted(
+                nombres,
+                key=lambda nombre: 0 if nombre == MODULO_FINANZAS else 1,
+            ),
+        }
+        for id_deuda, nombres in modulos.items()
+    }
+
+
+def vinculacion_de_deuda(
+    bd: Session, id_usuario: str, id_deuda: str
+) -> dict[str, object]:
+    """Devuelve la vinculación de una sola deuda (SRS v4.4, sección 5.1).
+
+    Args:
+        bd: Sesión de base de datos.
+        id_usuario: Dueño de la deuda.
+        id_deuda: Deuda consultada.
+
+    Returns:
+        Diccionario con `esta_vinculada` y `modulos_vinculados`.
+    """
+    return vinculaciones_de_deudas(bd, id_usuario).get(
+        id_deuda, {"esta_vinculada": False, "modulos_vinculados": []}
+    )
 
 
 def listar_vinculables(bd: Session, id_usuario: str) -> list[Deuda]:

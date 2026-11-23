@@ -848,6 +848,28 @@ def pagos_del_mes(
     return bloques
 
 
+def libre_neto_mes(bd: Session, id_usuario: str, anio: int, mes: int) -> Decimal:
+    """Saldo libre neto de Trabajos Extras en un mes (SRS v4.4, sección 1.2).
+
+    Es la diferencia entre todos los ingresos del mes y todos sus gastos fijos,
+    incluidos los créditos vinculados (`id_deuda`). Es el **único** dato que se
+    traslada a Gastos y Presupuestos para consolidar el total libre.
+
+    Args:
+        bd: Sesión de base de datos.
+        id_usuario: Dueño de los trabajos.
+        anio: Año del mes.
+        mes: Mes (1–12).
+
+    Returns:
+        Saldo neto redondeado a centavos; puede ser negativo.
+    """
+    bloques = pagos_del_mes(bd, id_usuario, anio, mes)
+    return redondear_dinero(
+        sum((bloque["saldo_bolsillo"] for bloque in bloques), start=CERO)
+    )
+
+
 def extras_cobrados_mes(bd: Session, id_usuario: str, anio: int, mes: int) -> Decimal:
     """Suma el disponible de trabajos extras en un mes.
 

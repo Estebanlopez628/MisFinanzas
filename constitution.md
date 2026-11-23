@@ -65,3 +65,11 @@ Principios innegociables. Toda especificación, plan y tarea debe cumplirlos de 
 14. **Documentación Viva Completa:**
    - Además de `AGENTS.md` y `MEMORY.md`, son obligatorios esta misma `constitution.md`, `diccionario_datos.md`, `Guia.md` (fichas por archivo + inventario regenerado con `--verificar`), `USER_GUIDE.md` (manual del usuario) y la SRS del repositorio, con la versión activa reflejada en todos ellos.
    - Ningún bloque se considera terminado si `compileall`, `pytest`, `node --check` y `generar_guia.py --verificar` no están en verde.
+
+15. **Separación contable y control de deudas (SRS v4.4):**
+    - Las donas de Finanzas y Trabajos Extras son independientes: de extras solo se traslada el saldo neto; la dona de Gastos y Presupuestos usa únicamente gastos y deducciones de ese módulo.
+    - El Consejero consume el libre consolidado; la cuota vinculada se cuenta una sola vez y nunca como tajada suelta.
+    - «Sueldo-percibido» sustituye a «Saldo para el bolsillo» sin alterar su cálculo; el saldo libre de cada bloque descuenta todos sus gastos fijos, incluidos los vinculados.
+    - `GET /api/deudas` expone la vinculación; el borrado usa el modal propio y `DELETE /api/deudas/{id}`; el alta es idempotente y el botón se bloquea de forma síncrona.
+    - La posición de desplazamiento se preserva con `history.scrollRestoration = "manual"`; está prohibido devolver al inicio.
+    - No se modifican la gráfica del Consejero, el ícono PWA neón azul, WhatsApp nativo, Atajos Guardados, `showPicker()`, los modales propios ni la paleta de diez colores.

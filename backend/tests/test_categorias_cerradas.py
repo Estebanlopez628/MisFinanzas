@@ -196,13 +196,16 @@ def test_dona_no_duplica_un_gasto_vinculado_a_deuda(bd) -> None:
     assert gasto.id_deuda == deuda.id_deuda
     assert gasto.valor == Decimal("400000.00")
     assert gasto.categoria == "Créditos y Obligaciones"
-    # El gasto vinculado no aumenta los egresos de las categorías 1 a 7.
-    assert despues.gastos == antes.gastos
+    # SRS v4.4: el gasto vinculado sí se descuenta en Gastos y Presupuestos
+    # (sección 3) y su cuota se cuenta una sola vez en la dona (sección 1).
+    assert despues.gastos >= antes.gastos + Decimal("400000.00")
     obligaciones = next(fila for fila in despues.categorias if fila["es_obligacion"])
     assert obligaciones["valor"] == Decimal("400000.00")
     assert obligaciones["color"] == "#EF4444"
-    # La suma de las ocho categorías cuadra con los egresos totales.
-    assert sum((fila["valor"] for fila in despues.categorias), CERO) == despues.gastos + despues.deudas
+    # SRS v4.4: la cuota registrada vive dentro de las categorías; `deudas` es
+    # solo el compromiso informativo del semáforo.
+    assert despues.deudas == Decimal("400000.00")
+    assert sum((fila["valor"] for fila in despues.categorias), CERO) == despues.gastos
 
 
 def test_dona_y_consejero_respetan_el_colchon_de_trescientos_mil(bd) -> None:

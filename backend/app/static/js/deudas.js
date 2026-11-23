@@ -151,6 +151,76 @@
   var botonGuardar = document.querySelector("[data-guardar-deuda]");
   var alertaDeuda = document.querySelector("[data-alerta-deuda]");
   var formularioDeuda = botonGuardar && botonGuardar.closest("form");
+
+  // SRS v4.4, sección 7: bloqueo síncrono del envío (equivalente en JavaScript
+  // plano a `isSubmittingRef.current`). Un segundo clic antes de la navegación
+  // no puede provocar un segundo alta. El backend además es idempotente.
+  var envioEnCurso = false;
+  if (formularioDeuda && botonGuardar) {
+    formularioDeuda.addEventListener("submit", function (evento) {
+      if (envioEnCurso) {
+        evento.preventDefault();
+        return;
+      }
+      envioEnCurso = true;
+      var textoOriginal = botonGuardar.textContent;
+      try {
+        botonGuardar.disabled = true;
+        botonGuardar.textContent = "Guardando...";
+      } finally {
+        // El envío nativo continúa. Si el servidor devuelve la vista con un
+        // error, la página se recarga y el botón vuelve con su texto original;
+        // el temporizador cubre el caso de validación local cancelada.
+        window.setTimeout(function () {
+          envioEnCurso = false;
+          botonGuardar.disabled = false;
+          botonGuardar.textContent = textoOriginal;
+        }, 2000);
+      }
+    });
+  }
+
+  // SRS v4.4, sección 5.2: borrado desde el modal con el modal de confirmación
+  // propio y una petición DELETE. No se usa ningún diálogo nativo.
+  document.querySelectorAll("[data-eliminar-deuda]").forEach(function (boton) {
+    boton.addEventListener("click", function () {
+      var id = boton.getAttribute("data-eliminar-deuda");
+      if (!id || typeof window.pedirConfirmacion !== "function") {
+        return;
+      }
+      window
+        .pedirConfirmacion(
+          "¿Eliminar esta deuda y sus pagos? Esta acción no se puede deshacer.",
+          true
+        )
+        .then(function (ok) {
+          if (!ok) {
+            return;
+          }
+          boton.disabled = true;
+          var textoOriginal = boton.textContent;
+          boton.textContent = "Eliminando...";
+          fetch("/api/deudas/" + encodeURIComponent(id), {
+            method: "DELETE",
+            headers: { "X-Requested-With": "XMLHttpRequest" },
+          })
+            .then(function (respuesta) {
+              if (!respuesta.ok) {
+                throw new Error("No se pudo eliminar la deuda.");
+              }
+              window.location.href = "/deudas";
+            })
+            .catch(function () {
+              boton.disabled = false;
+              boton.textContent = textoOriginal;
+              if (typeof window.mostrarAvisoApp === "function") {
+                window.mostrarAvisoApp("No se pudo eliminar la deuda. Inténtalo de nuevo.");
+              }
+            });
+        });
+    });
+  });
+
   if (formularioDeuda && alertaDeuda) {
     var totalCampo = formularioDeuda.querySelector('[name="saldo_total"]');
     var cuotaCampo = formularioDeuda.querySelector('[name="cuota"]');

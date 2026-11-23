@@ -504,3 +504,62 @@ El contenedor padre de los dos velocímetros fuerza en línea `display: grid; gr
 ### 14.4 Cierre documental
 
 Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-74), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v3.9.5.
+
+---
+
+## 15. SRS v4.4 — Separación contable, deudas y preservación de scroll
+
+Versión 4.4 y **línea base vigente**. Separa contablemente las donas de Finanzas y Trabajos Extras, consolida el libre para el Consejero y ajusta la gestión de deudas, los íconos y el desplazamiento.
+
+### 15.1 Separación contable y libre consolidado
+
+- La dona de **Gastos y Presupuestos** se alimenta únicamente de gastos y deducciones fijas registradas en ese módulo. No se suman ingresos ni gastos de Trabajos Extras, ni cuotas sueltas de la tabla de deudas.
+- La dona de **Trabajos Extras** conserva sus ingresos, gastos fijos y créditos vinculados (`id_deuda`).
+- Fórmulas obligatorias, calculadas en Python:
+  - `Libre_Trabajos_Extras = Total Ingresos Trabajos Extras − Total Gastos Fijos Trabajos Extras (incluyendo créditos vinculados)`.
+  - `Libre_Gastos_Presupuestos = Sueldo_Percibido − Suma_Gastos_Fijos_Gastos_y_Presupuestos`.
+  - `Total_Libre_Consolidado = Libre_Gastos_Presupuestos + Libre_Trabajos_Extras`. Es la entrada del Consejero.
+  - Base de la dona de Gastos y Presupuestos = `Sueldo_Percibido + Libre_Trabajos_Extras`.
+- La cuota vinculada se cuenta una sola vez: dentro de la categoría del gasto o deducción registrada, nunca como tajada suelta adicional.
+
+### 15.2 Etiqueta y saldo libre de los bloques
+
+- La etiqueta «Saldo para el bolsillo» pasa a ser **«Sueldo-percibido»**, sin cambiar su cálculo.
+- En Resumen/Liquidación, para Quincena 1, Quincena 2 y pago mensual:
+  `Saldo libre restante = Ingreso proyectado del bloque − Deducciones de ley − Deducciones fijas del salario − Total Gastos Fijos del bloque (incluyendo créditos vinculados)`.
+- Esta regla no altera las donas.
+
+### 15.3 Vinculación de deudas
+
+- `GET /api/deudas` devuelve por deuda `esta_vinculada: boolean` y `modulos_vinculados: string[]`, con valores `[]`, `['Finanzas']`, `['Trabajos Extras']` o ambos.
+- La tabla incorpora la columna **«Vinculación»** con insignia verde cuando está vinculada y ámbar cuando no.
+- Se retira la tarjeta «X cuota(s) — Pagos que faltan en las deudas activas» y la cuadrícula pasa a tres tarjetas.
+
+### 15.4 Eliminación desde el modal
+
+- El modal de edición de deudas incorpora un botón rojo **«Eliminar»**.
+- Antes de `DELETE /api/deudas/{id}` se usa el modal de confirmación propio (`pedirConfirmacion`), sin diálogos nativos.
+- El borrado es exclusivo de deudas propias; un identificador ajeno o inexistente responde 404.
+
+### 15.5 Anti-duplicados
+
+- El botón «Guardar deuda» usa un bloqueo síncrono (`envioEnCurso`, equivalente en JavaScript plano a `isSubmittingRef.current`), muestra «Guardando...» y se libera en `finally`/temporizador.
+- Existe un único `onSubmit` para el alta.
+- El backend es idempotente por `user_id` y mismos valores en los últimos 10 segundos: un reenvío devuelve la deuda ya creada en vez de duplicarla.
+
+### 15.6 Íconos y scroll
+
+- `icono_OLBBYTE.png` se renderiza a **24 px** en la navegación y **28 px** en el encabezado interno de OLB_BYTE. El ícono PWA neón azul no cambia.
+- Se captura `savedScrollY`; está prohibido forzar el desplazamiento al inicio. La posición se restaura con `window.scrollTo({ top: savedScrollY, behavior: 'instant' })`.
+- `history.scrollRestoration = "manual"` evita que el navegador sobrescriba la posición restaurada.
+- Las anclas `bloque-quincena-1`, `bloque-quincena-2` y `bloque-pago-mensual` (además de `data-quincena`) se anclan con `scrollIntoView({ behavior: 'instant', block: 'nearest' })`.
+
+### 15.7 Usuario QA y verificación
+
+- Cuentas de QA locales: `prueba_qa@misfinanzas.local` / `QA_MisFinanzas_2026!` y `prueba_qa_admin@misfinanzas.local` / `QA_Admin_2026!`, creadas por `scripts/crear_usuario_qa.py`.
+- El recorrido `scripts/qa_v4_4.py` verifica 38 comprobaciones en Chromium a 360/390/768/1280 px.
+- No regresión: gráfica del Consejero, ícono PWA, WhatsApp nativo, Atajos Guardados, `showPicker()`, modales propios, paleta de diez colores, Ayuda/Comentarios, factura OLB_BYTE y vinculación SI/NO permanecen intactos.
+
+### 15.8 Cierre documental
+
+Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-75), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.4.

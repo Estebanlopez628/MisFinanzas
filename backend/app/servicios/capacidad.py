@@ -42,6 +42,7 @@ from app.servicios import deudas as servicio_deudas
 from app.servicios import gastos as servicio_gastos
 from app.servicios import quincenas as servicio_quincenas
 from app.servicios import trabajos as servicio_trabajos
+from app.servicios.gastos import valor_computable
 
 CERO = Decimal("0")
 CIEN = Decimal("100")
@@ -192,9 +193,14 @@ def agrupar_por_categoria(
         Diccionario con los ocho nombres canónicos y su total redondeado.
     """
     totales = {categoria.nombre: CERO for categoria in catalogo.CATEGORIAS}
+    creditos_registrados = CERO
     for gasto in gastos:
         nombre = catalogo.normalizar_categoria(gasto.categoria)
         if nombre == catalogo.CATEGORIA_CREDITOS:
+            # SRS v4.4: la cuota del gasto vinculado se cuenta aquí, una sola vez.
+            creditos_registrados = redondear_dinero(
+                creditos_registrados + servicio_gastos.valor_computable(gasto)
+            )
             continue
         totales[nombre] = redondear_dinero(
             totales[nombre] + servicio_gastos.valor_computable(gasto)
@@ -202,12 +208,16 @@ def agrupar_por_categoria(
     for fija in deducciones:
         nombre = catalogo.normalizar_categoria(fija.categoria)
         if nombre == catalogo.CATEGORIA_CREDITOS:
+            creditos_registrados = redondear_dinero(creditos_registrados + fija.valor)
             continue
         totales[nombre] = redondear_dinero(totales[nombre] + fija.valor)
     totales[catalogo.CATEGORIA_OTROS] = redondear_dinero(
         totales[catalogo.CATEGORIA_OTROS] + deducciones_ley
     )
-    totales[catalogo.CATEGORIA_CREDITOS] = redondear_dinero(cuota_obligaciones)
+    # SRS v4.4, sección 1: la dona se alimenta solo de gastos registrados en el
+    # módulo. La cuota suelta de la tabla de deudas NO se dibuja; el compromiso
+    # sigue reportándose en `deudas` para el semáforo.
+    totales[catalogo.CATEGORIA_CREDITOS] = redondear_dinero(creditos_registrados)
     return totales
 
 
@@ -697,49 +707,43 @@ def capacidad_endeudamiento(
     # Trabajos extras: entran por su valor de pago y salen con sus gastos fijos.
     # Su libre se muestra aparte del libre del salario.
     bloques = servicio_trabajos.pagos_del_mes(bd, id_usuario, anio, mes)
-    ingreso_extras = redondear_dinero(sum((bloque["ingreso"] for bloque in bloques), start=CERO))
-    gastos_extras = redondear_dinero(sum((bloque["gastos_total"] for bloque in bloques), start=CERO))
-    libre_extras = redondear_dinero(sum((bloque["disponible"] for bloque in bloques), start=CERO))
-    ingreso = redondear_dinero(ingreso_base + ingreso_extras)
+    # SRS v4.4, sección 1: las dos donas están aisladas. De Trabajos Extras
+    # solo se trae su saldo libre neto; sus gastos y créditos nunca entran en
+    # las categorías de Gastos y Presupuestos.
+    libre_extras = servicio_trabajos.libre_neto_mes(bd, id_usuario, anio, mes)
+    ingreso = redondear_dinero(ingreso_base + libre_extras)
 
-    # SRS v1.9: la cuota de las deudas activas (más las libranzas heredadas sin
-    # deuda registrada) es la categoría 8. Los gastos y deducciones con
-    # `id_deuda` NO se suman como egresos propios: su dinero ya está aquí y las
-    # quincenas ya no lo restan, así que se descuenta una sola vez del libre.
-    fijas = servicio_deducciones.sin_vinculo(bd, id_usuario)
+    # SRS v4.4: las deducciones del módulo cuentan aunque estén vinculadas a una
+    # deuda; su valor es la cuota y ya no se añade como tajada suelta.
+    fijas = servicio_deducciones.listar_vigentes(bd, id_usuario)
     creditos = servicio_deducciones.total_creditos_sin_vinculo(bd, id_usuario)
-    gastos_modelo = servicio_gastos.listar_gastos(
-        bd, id_usuario, anio, mes, excluir_vinculados=True
-    )
-    gastos_trabajos = [
-        gasto
-        for bloque in bloques
-        for periodo in bloque["periodos"]
-        for gasto in periodo["gastos"]
-    ]
+    # Todos los gastos fijos del módulo, incluidos los vinculados a deuda: su
+    # cuota se cuenta una sola vez aquí, dentro de su categoría.
+    gastos_modelo = servicio_gastos.listar_gastos(bd, id_usuario, anio, mes)
 
     deducciones_fijas_total = redondear_dinero(
-        sum((fila.deducciones_fijas for fila in resumen), start=CERO)
+        sum((fija.valor for fija in fijas), start=CERO)
     )
     deducciones_ley = redondear_dinero(sum((fila.deducciones for fila in resumen), start=CERO))
     gastos = redondear_dinero(
-        sum((fila.gastos for fila in resumen), start=CERO)
+        sum((valor_computable(gasto) for gasto in gastos_modelo), start=CERO)
         + deducciones_ley
-        + (deducciones_fijas_total - creditos)
-        + gastos_extras
+        + deducciones_fijas_total
     )
-    deudas = list(servicio_deudas.listar_deudas(bd, id_usuario))
+    # El semáforo sigue informando de la cuota comprometida, pero esa cuota ya
+    # no se suma como tajada suelta: las categorías cuadran con `gastos`.
     cuota_deudas = redondear_dinero(
         servicio_deudas.resumen_deudas(bd, id_usuario)["cuota_mensual"] + creditos
     )
-    libre = redondear_dinero(ingreso - gastos - cuota_deudas)
+    deudas = list(servicio_deudas.listar_deudas(bd, id_usuario))
+    libre = redondear_dinero(ingreso - gastos)
     libre_salario = redondear_dinero(libre - libre_extras)
     base, disponible = repartir_libre(libre)
 
     totales = agrupar_por_categoria(
-        gastos_modelo + gastos_trabajos,
+        gastos_modelo,
         [fija for fija in fijas if not catalogo.es_credito(fija.descripcion)],
-        cuota_deudas,
+        CERO,
         deducciones_ley,
     )
     categorias = resumen_categorias(totales, ingreso)
@@ -760,6 +764,8 @@ def capacidad_endeudamiento(
     return Capacidad(
         ingreso=ingreso,
         gastos=gastos,
+        # Informativo/semáforo: las cuotas NO se suman como tajada suelta en la
+        # dona (SRS v4.4), pero el campo sigue reportando el compromiso mensual.
         deudas=cuota_deudas,
         libre=libre,
         porcentaje_gastos=_porcentaje(gastos, ingreso),
@@ -767,7 +773,7 @@ def capacidad_endeudamiento(
         porcentaje_libre=_porcentaje(libre, ingreso),
         semaforo=estado,
         mensaje=_mensaje_semaforo(estado, porcentaje_deudas),
-        arcos=_repartir_arcos(gastos, cuota_deudas, libre, ingreso),
+        arcos=_repartir_arcos(gastos, CERO, libre, ingreso),
         por_terminar=deudas_por_terminar(bd, id_usuario),
         # La proyección mantiene constantes los gastos y aplica el calendario de
         # cada deuda: cuando una termina, su cuota deja de pesar en ese mes.

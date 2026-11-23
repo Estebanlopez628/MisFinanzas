@@ -121,16 +121,19 @@ def resumen_quincenas(
     Returns:
         Lista con una tarjeta para modalidad MENSUAL o dos para QUINCENAL.
     """
-    # SRS v1.9: los gastos y deducciones vinculados a una deuda ya se contabilizan
-    # en la categoría 8 de la dona. No se restan aquí para no descontar dos veces
-    # el mismo dinero del saldo libre (regla anti-duplicación).
-    del_mes = servicio_gastos.listar_gastos(bd, id_usuario, anio, mes, excluir_vinculados=True)
-    # SRS v2.0: los vinculados se consultan aparte para mostrarlos en la misma
-    # lista, sin meterlos en `del_mes` (que sí alimenta los totales).
-    vinculados = servicio_gastos.listar_gastos(
-        bd, id_usuario, anio, mes, solo_vinculados=True
-    )
-    fijas = servicio_deducciones.sin_vinculo(bd, id_usuario)
+    # SRS v4.4, sección 3: el «Saldo libre restante» descuenta el 100 % de los
+    # gastos fijos del bloque, incluidos los vinculados a una deuda. Antes se
+    # excluían para no duplicarlos con la categoría 8 de la dona; ahora la dona
+    # se alimenta solo de gastos del módulo (sección 1), así que aquí sí se
+    # descuentan una sola vez.
+    del_mes = servicio_gastos.listar_gastos(bd, id_usuario, anio, mes)
+    # Ya están dentro de `del_mes`: dejar la lista aparte vacía evita pintarlos
+    # dos veces en la plantilla.
+    vinculados: list = []
+    # SRS v4.4, sección 3: «Deducciones fijas del salario» incluye la libranza
+    # vinculada. `listar_vigentes` la conserva mientras la deuda esté activa y
+    # la retira en cuanto se paga (ADR-56).
+    fijas = servicio_deducciones.listar_vigentes(bd, id_usuario)
     total_fijas_mes = servicio_deducciones.total_por_quincena(fijas, 1) + (
         servicio_deducciones.total_por_quincena(fijas, 2)
     )

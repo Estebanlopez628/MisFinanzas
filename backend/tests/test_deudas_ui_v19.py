@@ -58,10 +58,12 @@ def test_la_tabla_tipo_excel_no_muestra_próximas_cuotas_ni_intereses(
         "Cuota",
         "No. de",
         "Periodicidad",
+        "Vinculación",
         "Estado",
     ):
         assert columna in html
-    assert html.count('scope="col"') == 7  # seis columnas + acciones
+    # SRS v4.4: séptima columna «Vinculación» + la de acciones.
+    assert html.count('scope="col"') == 8
     assert "Próximas cuotas" not in html
     assert "Esta deuda no tiene cuotas aplicadas." not in html
     assert "fila-detalle-deuda" not in html

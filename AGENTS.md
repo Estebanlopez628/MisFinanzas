@@ -61,7 +61,9 @@ Plataforma web/móvil híbrida (PWA) con backend y frontend **100% Python**, arq
     ├── scripts/generar_guia.py        # Inventario de Guia.md + --verificar
     ├── scripts/migrar_a_neon.py        # Copia SQLite → PostgreSQL (idempotente)
     ├── scripts/reparar_pagos_trabajos.py # Restaura y deduplica pagos de Trabajos Extras (ADR-60)
-    ├── tests/                          # Suite completa (678 pruebas)
+    ├── scripts/crear_usuario_qa.py      # Aprovisiona las cuentas QA de la SRS v4.4
+    ├── scripts/qa_v4_4.py               # Recorrido de QA en Chromium (38 comprobaciones)
+    ├── tests/                          # Suite completa (785 pruebas)
     └── app/
         ├── main.py                     # Punto de entrada FastAPI (fábrica de app)
         ├── dependencias.py             # Sesión, `SesionRequerida` y RBAC por rol
@@ -186,6 +188,9 @@ Plataforma web/móvil híbrida (PWA) con backend y frontend **100% Python**, arq
 21. **Mensajes limpios (SRS v3.9.3):** prohibido mostrar `tasa_implicita: Value error,` o nombres de campo de Pydantic; `validar_formulario` y `limpiarMensajeError()` los eliminan.
 22. **Ícono OLB_BYTE (SRS v3.9.5):** el menú usa `static/img/icono_OLBBYTE.png` en `<img>` de 20×20 con `object-fit: contain`, igual que los íconos vecinos; no es un SVG ni una llave inglesa; el ícono PWA no cambia.
 23. **Velocímetros (SRS v3.9.5):** en escritorio el contenedor fuerza `display: grid; grid-template-columns: repeat(2, minmax(0, 1fr))`, ancho 100 %, máximo 540 px y margen central; cada tarjeta con `min-width: 0` y SVG 120×68 con `flex-shrink: 0`. No se toca móvil ni el fondo.
+24. **Donas separadas (SRS v4.4):** la dona de Gastos y Presupuestos solo usa gastos y deducciones de ese módulo; la de Trabajos Extras mantiene sus ingresos, gastos y créditos vinculados. De extras solo se traslada `libre_neto_mes()`. El Consejero consume el libre consolidado. La cuota vinculada se cuenta una sola vez, nunca como tajada suelta.
+25. **Deudas (SRS v4.4):** `GET /api/deudas` expone `esta_vinculada` y `modulos_vinculados`; la columna «Vinculación» usa verde/ámbar; el modal incluye «Eliminar» con `DELETE /api/deudas/{id}` y el modal propio. Alta idempotente (usuario + mismos valores en 10 s) y guardia síncrona del botón. Se retira la tarjeta de cuotas acumuladas.
+26. **Scroll e íconos (SRS v4.4):** `history.scrollRestoration = "manual"`; restaurar con `scrollTo({ top: savedScrollY, behavior: "instant" })` y anclar con `scrollIntoView({ behavior: "instant", block: "nearest" })`. Ícono OLB_BYTE a 24 px en navegación y 28 px en el encabezado interno; ícono PWA neón azul intacto.
 
 ---
 
@@ -475,3 +480,6 @@ La configuración vive en `.vscode/launch.json`. También existe **Pruebas (pyte
 - [x] **SRS v3.9.5 — Ajuste 1 (ícono OLB_BYTE):** copiado `assets/icono_OLBBYTE.png` a `static/img/`, renderizado como `<img width=20 height=20>` con `object-fit: contain` y `flex-shrink: 0`, homologado a los íconos vecinos; ícono PWA neón azul intacto.
 - [x] **SRS v3.9.5 — Ajuste 2 (velocímetros):** contenedor con estilos en línea `display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; width: 100%; max-width: 540px; margin: 0 auto 16px`, tarjetas con `min-width: 0` y SVG 120×68 con `flex-shrink: 0`; móvil y color de fondo sin cambios.
 - [x] **SRS v3.9.5 — Cierre documental:** Guías, Diccionario, Constitución, `MEMORY.md` (ADR-74), `AGENTS.md` y SRS §14 sincronizados como línea base vigente.
+- [x] **SRS v4.4 — Bloque 1 (separación contable):** donas aisladas, `libre_neto_mes()`, libre consolidado para el Consejero, etiqueta «Sueldo-percibido» e íconos 24/28 px. Pruebas históricas de anti-duplicación actualizadas a la nueva semántica (decisión del propietario: seguir la SRS al pie de la letra).
+- [x] **SRS v4.4 — Bloque 2 (deudas y scroll):** `GET/DELETE /api/deudas`, columna «Vinculación» con badges, botón rojo «Eliminar», tarjeta de cuotas retirada, idempotencia backend y guardia síncrona del alta, `history.scrollRestoration = "manual"` y anclas por bloque.
+- [x] **SRS v4.4 — Cierre documental y QA:** Guías, Diccionario, Constitución, `MEMORY.md` (ADR-75), `AGENTS.md` y SRS §15 sincronizados. Usuarios QA `prueba_qa@misfinanzas.local` / `QA_MisFinanzas_2026!` y `prueba_qa_admin@misfinanzas.local` / `QA_Admin_2026!`. `sw.js` en `olb-finanzas-v100`. Verificación: **785 pruebas** en verde, `compileall`, `node --check`, `generar_guia.py --verificar` y `/salud` correctos; recorrido Chromium **38/38**.

@@ -75,9 +75,10 @@ def test_los_porcentajes_de_la_dona_suman_cien(bd) -> None:
 
     total = sum((arco["porcentaje"] for arco in resultado.arcos), start=Decimal("0"))
     assert total == Decimal("100.0")
+    # SRS v4.4: la cuota no se dibuja como tajada suelta; vive en la categoría
+    # del gasto fijo vinculado registrado en el módulo.
     assert [arco["etiqueta"] for arco in resultado.arcos] == [
         "Gastos fijos",
-        "Cuota de deudas",
         "Base mínima de liquidez",
         "Disponible para abonar",
     ]
@@ -105,7 +106,6 @@ def test_las_cifras_de_la_dona_usan_verde_y_rojo(bd) -> None:
 
     clases = {arco["etiqueta"]: arco["clase"] for arco in resultado.arcos}
     assert clases["Gastos fijos"] == "valor-negativo"
-    assert clases["Cuota de deudas"] == "valor-negativo"
     assert clases["Base mínima de liquidez"] == "valor-positivo"
     assert clases["Disponible para abonar"] == "valor-positivo"
 
@@ -121,7 +121,9 @@ def test_una_deuda_alta_pone_el_semaforo_en_rojo(bd) -> None:
 
     assert resultado.semaforo == capacidad.ESTADO_ROJO
     assert resultado.porcentaje_deudas > capacidad.UMBRAL_AMBAR
-    assert resultado.libre < 0
+    # SRS v4.4: el compromiso se reporta, pero una deuda sin gasto fijo
+    # registrado en el módulo no se descuenta del libre de la dona.
+    assert resultado.deudas == Decimal("2800000.00")
 
 
 def test_una_deuda_media_pone_el_semaforo_en_ambar(bd) -> None:
@@ -333,7 +335,8 @@ def test_credito_como_deduccion_cuenta_como_deuda(bd) -> None:
     despues = capacidad.capacidad_endeudamiento(bd, id_usuario, perfil, 2026, 11)
 
     assert despues.deudas - antes.deudas == Decimal("150000.00")
-    assert despues.gastos == antes.gastos
+    # SRS v4.4: la deducción fija del módulo sí cuenta en sus gastos.
+    assert despues.gastos > antes.gastos
 
 
 def test_es_credito_ignora_tildes_y_mayusculas() -> None:

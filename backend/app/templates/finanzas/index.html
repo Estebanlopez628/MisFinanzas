@@ -50,7 +50,16 @@ contenido %}
       data-quincena="{{ quincena.numero }}"
       {% if loop.first %}id="seccion-gastos-fijos-finanzas"{% endif %}
     >
-      <header class="quincena__cabecera">
+      <header class="quincena__cabecera"
+        {# SRS v4.4, sección 6: anclas estables por bloque de pago. #}
+        {% if quincena.numero == 0 %}
+          id="bloque-pago-mensual"
+        {% elif quincena.numero == 1 %}
+          id="bloque-quincena-1"
+        {% else %}
+          id="bloque-quincena-2"
+        {% endif %}
+      >
         <h3 class="quincena__titulo">{{ quincena.etiqueta }}</h3>
         {% if quincena.numero %}
         <span class="badge badge--publico"
@@ -651,7 +660,7 @@ contenido %}
 
       <div class="resultado-principal">
         <span class="resultado-principal__etiqueta"
-          >Saldo para el bolsillo</span
+          >Sueldo-percibido</span
         >
         <strong class="resultado-principal__valor" data-campo="saldo_bolsillo">
           {%- if resultado %}{{ resultado.saldo_bolsillo | cop }}{% else %}—{%

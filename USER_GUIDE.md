@@ -88,4 +88,14 @@ Cuando una acción pide confirmación —por ejemplo, limpiar los ✔ de una qui
 
 La tarjeta de OLB_BYTE en el inicio del administrador muestra el ícono oficial `icono_OLBBYTE.png`, del mismo tamaño que los íconos de los demás módulos. La gráfica del Consejero comparte el mismo fondo y borde que las gráficas de OLB_BYTE; en escritorio los dos velocímetros quedan compactos y uno al lado del otro.
 
+### Cambios de la versión 4.4
+
+Ahora «Mis Finanzas» y «Trabajos Extras» llevan cuentas separadas. La gráfica de Gastos y Presupuesto solo reparte tus gastos y deducciones; la de Trabajos Extras muestra lo que entra y lo que gastas en esos trabajos. El Consejero usa el dinero libre de ambas partes, así que sus sugerencias reflejan tu situación completa sin contar dos veces la misma cuota.
+
+El resultado de tu liquidación se llama ahora **«Sueldo-percibido»** (el cálculo es el mismo de siempre). En cada quincena y en el pago mensual, el «Saldo libre restante» ya descuenta también la cuota de un crédito vinculado, para que veas un número realista.
+
+En «Registro y Detalles de deudas» hay una columna nueva, **«Vinculación»**: en verde aparecen las deudas que ya paga un gasto o una deducción, y en ámbar las que aún no. Se quitó la tarjeta que contaba las cuotas pendientes. Dentro del lápiz de edición encontrarás un botón rojo **«Eliminar»**; antes de borrar te preguntamos en una ventana oscura de la app. El botón «Guardar deuda» se bloquea mientras se registra para evitar duplicados.
+
+Al guardar cambios en formularios largos, la página ya no vuelve arriba: conserva el punto donde estabas y vuelve al bloque de quincena correspondiente.
+
 © 2026 MisFinanzas

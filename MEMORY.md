@@ -2279,6 +2279,22 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 - Verificación en Chromium contra la app real: 360/390 px → `innerWidth` = viewport, `scrollX` = 0 tras deslizar, `scrollLeft` de la caja 205 px, modal abierto centrado (16–374 px, alto 255 px) en el `body` y restaurado al cerrar. 768/1280 px sin cambios.
 - `sw.js` pasa a `olb-finanzas-v79`; **678 pruebas** en verde y `generar_guia.py --verificar` sin problemas.
 
+### 2026-11-22 — SRS v4.4: separación contable, deudas y scroll (ADR-75)
+
+**Decisión (ADR-75).** Las donas de Finanzas y Trabajos Extras son contablemente independientes. De Trabajos Extras solo se trae su saldo neto (ingresos menos todos sus gastos fijos, incluidos los créditos vinculados); la dona de Gastos y Presupuestos usa únicamente gastos y deducciones registrados en ese módulo. El Consejero consume el libre consolidado. La cuota vinculada se cuenta una sola vez, dentro de la categoría del gasto/deducción registrada, y nunca como tajada suelta adicional.
+
+**Consecuencias aplicadas.**
+- `trabajos.libre_neto_mes()` es la única fuente del saldo neto de extras; `capacidad.capacidad_endeudamiento()` y `ahorro.diagnostico()` lo consumen. `deudas` queda como compromiso informativo del semáforo y ya no se resta del libre.
+- `quincenas.resumen_quincenas()` usa `listar_vigentes()`, de modo que la libranza vinculada sí descuenta del «Saldo libre restante» mientras la deuda esté activa y deja de hacerlo al pagarse.
+- `agrupar_por_categoria()` alimenta la categoría 8 solo con créditos registrados en el módulo; la suma de categorías cuadra con `gastos`.
+- Etiqueta «Sueldo-percibido» en el resultado principal, sin tocar su cálculo.
+- `GET /api/deudas` y `DELETE /api/deudas/{id}`; columna «Vinculación» con insignia verde/ámbar; botón rojo «Eliminar» en el modal confirmado con `pedirConfirmacion`; se retira la tarjeta de cuotas acumuladas.
+- Anti-duplicados: guardia síncrona `envioEnCurso` (equivalente a `isSubmittingRef.current` en JavaScript plano), texto «Guardando...», liberación en temporizador y un solo `onSubmit`. El backend añade idempotencia por usuario + mismos valores en 10 segundos.
+- Ícono OLB_BYTE a 24 px en navegación y 28 px en el encabezado interno; el ícono PWA neón azul no cambia.
+- Scroll: `history.scrollRestoration = "manual"` era indispensable. Sin él, la restauración nativa del navegador ocurría después del script y devolvía la página al inicio (comprobado en Chromium: `scrollY = 0`). Con él, se restaura `savedScrollY` con `behavior: "instant"` y se ancla al bloque con `block: "nearest"`.
+
+**Verificación.** `sw.js` en `olb-finanzas-v100`; **785 pruebas** en verde, `compileall`, `node --check` y `generar_guia.py --verificar` correctos; `/salud` → 200. Recorrido `scripts/qa_v4_4.py`: **38/38 comprobaciones** en Chromium a 360/390/768/1280 px, sin desbordamiento ni errores de consola. Usuarios QA: `prueba_qa@misfinanzas.local` / `QA_MisFinanzas_2026!` y `prueba_qa_admin@misfinanzas.local` / `QA_Admin_2026!`.
+
 
 
 

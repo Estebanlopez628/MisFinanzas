@@ -819,23 +819,24 @@ def diagnostico(
     Returns:
         Diccionario con `saldo_libre` (Decimal), `extras_mes` (Decimal),
         `disponible` (Decimal), `alerta` (bool), `umbral` (Decimal) y
-        `metas_mes` (Decimal). `saldo_libre` es el sueldo libre después de la
-        cuota mensual de deudas (`cuota_deudas`); `extras_mes` es el neto cobrado de
-        trabajos extras del mes (SRS v1.7). `disponible` es `saldo_libre` más ese neto
-        y coincide con el «Total libre» de la dona de capacidad (SRS v1.9).
+        `metas_mes` (Decimal). `saldo_libre` es el libre propio de Gastos y
+        Presupuestos (la cuota vinculada ya se descontó en las quincenas);
+        `extras_mes` es el saldo **neto** de Trabajos Extras (SRS v4.4).
+        `disponible` es el «Total libre consolidado» que consume el Consejero.
         `alerta` indica que el disponible quedó por debajo de $300.000.
         `metas_mes` es informativo: ya está restado en el saldo porque cada meta
         vive como gasto fijo (SRS v1.6).
     """
-    # SRS v1.9: la cuota de TODAS las deudas activas se cuenta en la categoría 8.
-    # Los gastos y deducciones vinculados ya no restan en las quincenas (regla
-    # anti-duplicación), así que aquí se descuenta la cuota completa una sola vez.
+    # SRS v4.4, sección 1: la cuota vinculada ya se descontó en las quincenas y
+    # vive en la categoría 8 de la dona, así que NO se resta aquí otra vez.
     cuota_deudas = redondear_dinero(
         servicio_deudas.resumen_deudas(bd, id_usuario)["cuota_mensual"]
         + servicio_fijas.total_creditos_sin_vinculo(bd, id_usuario)
     )
-    saldo = redondear_dinero(saldo_libre_total(bd, id_usuario, perfil, anio, mes) - cuota_deudas)
-    extras = servicio_trabajos.extras_cobrados_mes(bd, id_usuario, anio, mes)
+    saldo = redondear_dinero(saldo_libre_total(bd, id_usuario, perfil, anio, mes))
+    # Del módulo de Trabajos Extras se trae solo su saldo libre neto (ingresos
+    # menos todos sus gastos fijos, incluidos los créditos vinculados).
+    extras = servicio_trabajos.libre_neto_mes(bd, id_usuario, anio, mes)
     disponible = redondear_dinero(saldo + extras)
     inicio = date(anio, mes, 1)
     fin = date(anio + (mes // 12), (mes % 12) + 1, 1)

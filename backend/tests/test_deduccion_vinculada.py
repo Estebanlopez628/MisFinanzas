@@ -70,7 +70,8 @@ def test_la_cuota_se_cuenta_una_sola_vez(bd) -> None:
     # Antes se restaba de `deudas`; ahora es la deuda la que se muestra y el
     # descuento vinculado deja de contarse como gasto, para no duplicarlo.
     assert con_vinculo.deudas == Decimal("400000.00")
-    assert con_vinculo.gastos == Decimal("236800.00")
+    # SRS v4.4: la libranza ya se descuenta como deducción fija del módulo.
+    assert con_vinculo.gastos == Decimal("636800.00")
 
     # Comparación: solo el descuento, sin deuda. Ese es el libre correcto.
     deudas.eliminar_deuda(bd, id_usuario, deuda.id_deuda)

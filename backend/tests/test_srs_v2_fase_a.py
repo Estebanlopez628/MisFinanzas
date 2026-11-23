@@ -218,7 +218,8 @@ def test_no_duplicar_cuota_en_dona_ni_consejero(bd) -> None:
     )
 
     resumen = quincenas.resumen_quincenas(bd, id_usuario, perfil, 2026, 11)
-    assert all(fila.gastos == Decimal("0.00") for fila in resumen)
+    # SRS v4.4, sección 3: la cuota vinculada sí resta del saldo libre del bloque.
+    assert any(fila.gastos >= Decimal("100000.00") for fila in resumen)
 
     calculo = capacidad.capacidad_endeudamiento(bd, id_usuario, perfil, 2026, 11)
     assert calculo.deudas >= Decimal("100000.00")
