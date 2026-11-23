@@ -70,19 +70,19 @@ def test_la_vista_renderiza_la_grafica_unificada(bd, cliente_admin) -> None:
     respuesta = cliente_admin.get("/presupuesto")
     assert respuesta.status_code == 200
     assert "data-cierre-consejero" in respuesta.text
-    assert "gradOptimizado" in respuesta.text
-    assert "¡Libre de deuda!" in respuesta.text
+    assert "mfUnder" in respuesta.text  # v4.19: gráfica a 6 meses
+    assert "Proyección de saldo (6 meses)" in respuesta.text
     assert "data-cierre-detalle" in respuesta.text
 
 
 def test_plantilla_y_js_de_la_grafica() -> None:
-    """El bloque SVG, el hito y el tooltip están cableados."""
+    """El bloque SVG y la línea de detalle están cableados (v4.19)."""
     html = (RUTA_APP / "templates/presupuesto/index.html").read_text(encoding="utf-8")
     for texto in (
         "data-cierre-consejero",
         "Comparativa de cierre de deuda",
-        "gradOptimizado",
-        "¡Libre de deuda!",
+        "mfUnder",
+        "Proyección de saldo (6 meses)",
         "data-cierre-detalle",
         "Base (Normal)",
         "Optimizado (Con tu excedente)",

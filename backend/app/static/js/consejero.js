@@ -42,10 +42,12 @@
   });
 
   // SRS v4.18: un único mes activo resaltado en el selector.
-  var inicial = bloque.querySelector(".cierre-deuda__mes--libre")
-    || bloque.querySelector(".cierre-deuda__mes");
-  if (inicial) {
-    inicial.classList.add("cierre-deuda__mes--activo");
+  if (!bloque.querySelector(".cierre-deuda__mes--activo")) {
+    var inicial = bloque.querySelector(".cierre-deuda__mes--libre")
+      || bloque.querySelector(".cierre-deuda__mes");
+    if (inicial) {
+      inicial.classList.add("cierre-deuda__mes--activo");
+    }
   }
 
   // SRS v4.17: marcas de graduación del dial. Solo dibuja una vez por SVG.

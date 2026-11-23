@@ -110,3 +110,9 @@ Principios innegociables. Toda especificación, plan y tarea debe cumplirlos de 
     - Los resúmenes de corte y de Trabajos Extras son compactos; el resultado del periodo conserva su estructura.
     - El Consejero distingue el plazo de la deuda recomendada del cierre global, usa «pago mínimo» y solo nombra deudas incluidas en su plan.
     - Los velocímetros se apilan en móvil sin cambiar el diseño web; la gráfica de proyección es legible y tiene un único estado activo.
+
+22. **Amortización paralela y claridad tabular (SRS v4.19):**
+    - Las deudas se amortizan en paralelo; el plazo base es el mayor del portafolio y la cuota liberada por una deuda cerrada se reinvierte al mes siguiente.
+    - La proyección visual se limita a seis meses con extremos de alto contraste y una sola línea de detalle.
+    - La dona se centra en escritorio, el banner móvil comparte radio con los velocímetros y los textos corridos van justificados.
+    - Las tablas financieras móviles alinean cada dato con su cabecera mediante anchos fijos y padding compartido.

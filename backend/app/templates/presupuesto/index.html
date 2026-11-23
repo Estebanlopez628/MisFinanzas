@@ -251,64 +251,75 @@
             </article>
           </div>
 
-          <h4 class="cierre-deuda__subtitulo">Proyección de saldo (12 meses)</h4>
-          {% set denominador = consejo.maximo if consejo.maximo > 0 else 1 %}
-          {% set puntos_opt = namespace(valores=[]) %}
-          {% set puntos_base = namespace(valores=[]) %}
-          {% for punto in consejo.cierre.puntos %}
-            {% set x = (15 + punto.index * 30) | round(1) %}
-            {% set y_opt = (120 - (punto.optimizado / denominador * 100)) | round(1) %}
-            {% set y_base = (120 - (punto.base / denominador * 100)) | round(1) %}
-            {% set puntos_opt.valores = puntos_opt.valores + [(x | string) ~ ',' ~ (y_opt | string)] %}
-            {% set puntos_base.valores = puntos_base.valores + [(x | string) ~ ',' ~ (y_base | string)] %}
+          {# SRS v4.19: proyección de saldo a 6 meses con amortización paralela. #}
+          <h4 class="cierre-deuda__subtitulo cierre-deuda__subtitulo--seis">Proyección de saldo (6 meses)</h4>
+          {% set puntos6 = consejo.cierre.puntos[:6] %}
+          {% set p6_primero = puntos6[0] %}
+          {% set p6_ultimo = puntos6[-1] %}
+          {% set escala = (puntos6 | map(attribute='base') | list + puntos6 | map(attribute='optimizado') | list) | max %}
+          {% if escala <= 0 %}{% set escala = 1 %}{% endif %}
+          <div class="cierre-deuda__extremos">
+            <span class="cierre-deuda__extremo cierre-deuda__extremo--inicial">
+              Inicial: {{ p6_primero.mes }} {{ p6_primero.anio }}
+              <strong>{{ p6_primero.base | cop }}</strong>
+            </span>
+            <span class="cierre-deuda__extremo cierre-deuda__extremo--final">
+              Mes 6: {{ p6_ultimo.mes }} {{ p6_ultimo.anio }}
+              <strong>{{ p6_ultimo.optimizado | cop }}</strong>
+            </span>
+          </div>
+          {% set ruta_base = namespace(p=[]) %}
+          {% set ruta_opt = namespace(p=[]) %}
+          {% for punto in puntos6 %}
+            {% set x = (20 + loop.index0 * 64) | round(1) %}
+            {% set yb = (138 - (punto.base / escala * 118)) | round(1) %}
+            {% set yo = (138 - (punto.optimizado / escala * 118)) | round(1) %}
+            {% set ruta_base.p = ruta_base.p + [(x | string) ~ ',' ~ (yb | string)] %}
+            {% set ruta_opt.p = ruta_opt.p + [(x | string) ~ ',' ~ (yo | string)] %}
           {% endfor %}
-          {% set linea_opt = puntos_opt.valores | join(' ') %}
-          {% set area_opt = '15,120 ' ~ linea_opt ~ ' 345,120' %}
+          {% set linea_base = ruta_base.p | join(' ') %}
+          {% set linea_opt = ruta_opt.p | join(' ') %}
+          {% set area_diff = ruta_base.p | join(' ') ~ ' ' ~ (ruta_opt.p | reverse | join(' ')) %}
           <div class="cierre-deuda__grafica">
             <svg viewBox="0 0 360 150" role="img"
-                 aria-label="Proyección de saldo a doce meses: base frente a optimizado">
+                 aria-label="Proyección de saldo a seis meses: base frente a optimizado">
               <defs>
-                <linearGradient id="gradOptimizado" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-color="#10B981" stop-opacity="0.45" />
-                  <stop offset="100%" stop-color="#10B981" stop-opacity="0.02" />
+                <linearGradient id="mfDiff" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stop-color="#10b981" stop-opacity="0.25" />
+                  <stop offset="100%" stop-color="#0ea5e9" stop-opacity="0.35" />
+                </linearGradient>
+                <linearGradient id="mfUnder" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#10b981" stop-opacity="0.22" />
+                  <stop offset="100%" stop-color="#0f172a" stop-opacity="0" />
                 </linearGradient>
               </defs>
-              <line x1="15" y1="120" x2="345" y2="120" stroke="#334155" stroke-width="1" />
-              <text x="15" y="142" class="cierre-deuda__eje">Inicial: {{ consejo.cierre.saldo_actual | cop }}</text>
-              <text x="345" y="142" text-anchor="end" class="cierre-deuda__eje">Mes 12: {{ consejo.cierre.puntos[-1].optimizado | cop }}</text>
-              <polygon points="{{ area_opt }}" fill="url(#gradOptimizado)" />
-              <polyline points="{{ puntos_base.valores | join(' ') }}" fill="none"
-                        stroke="#38bdf8" stroke-width="2.5" stroke-dasharray="6,4" />
-              <polyline points="{{ linea_opt }}" fill="none"
-                        stroke="#10b981" stroke-width="3.5" stroke-linecap="round" />
-              {% if consejo.cierre.mes_libre_index is not none %}
-                {% set x_libre = 15 + consejo.cierre.mes_libre_index * 30 %}
-                <g class="cierre-deuda__hito">
-                  <circle cx="{{ x_libre }}" cy="20" r="4" fill="#10B981" />
-                  <text x="{{ x_libre }}" y="12" text-anchor="middle">¡Libre de deuda!</text>
-                </g>
-              {% endif %}
+              <line x1="20" y1="138" x2="340" y2="138" stroke="#334155" stroke-width="1" />
+              <polygon points="{{ linea_opt }} 340,138 20,138" fill="url(#mfUnder)" />
+              <polygon points="{{ area_diff }}" fill="url(#mfDiff)" />
+              <polyline points="{{ linea_base }}" fill="none" stroke="#38bdf8" stroke-width="3.5"
+                        stroke-dasharray="7 7" stroke-linecap="round" />
+              <polyline points="{{ linea_opt }}" fill="none" stroke="#10b981" stroke-width="3.5"
+                        stroke-linecap="round" />
             </svg>
-            <div class="cierre-deuda__meses">
-              {% for punto in consejo.cierre.puntos %}
-                <button type="button" class="cierre-deuda__mes{% if punto.index == consejo.cierre.mes_libre_index %} cierre-deuda__mes--libre{% endif %}"
-                        data-mes="{{ punto.mes }} {{ punto.anio }}"
-                        data-base="{{ punto.base | cop }}"
-                        data-optimo="{{ punto.optimizado | cop }}"
-                         data-reduccion="{{ (punto.base - punto.optimizado) | cop }}">
-                  <span>{{ punto.mes[:3] | capitalize }} {{ punto.anio }}</span>
-                </button>
-              {% endfor %}
-            </div>
-            <p class="cierre-deuda__detalle" data-cierre-detalle>
-              {% set primero = consejo.cierre.puntos[0] %}
-              {{ primero.mes }} {{ primero.anio }} · Saldo Base:
-              {{ primero.base | cop }} · Saldo Optimizado:
-              {{ primero.optimizado | cop }} · Reducción extra acumulada:
-              {{ (primero.base - primero.optimizado) | cop }}
-            </p>
+            <span class="cierre-deuda__ahorro">+ Ahorro acumulado</span>
           </div>
-
+          <div class="cierre-deuda__meses">
+            {% for punto in puntos6 %}
+              <button type="button" class="cierre-deuda__mes{% if loop.index0 == 2 %} cierre-deuda__mes--activo{% endif %}"
+                      data-mes="{{ punto.mes }} {{ punto.anio }}"
+                      data-base="{{ punto.base | cop }}"
+                      data-optimo="{{ punto.optimizado | cop }}"
+                      data-reduccion="{{ (punto.base - punto.optimizado) | cop }}">
+                <span>{{ punto.mes }} {{ punto.anio }}</span>
+              </button>
+            {% endfor %}
+          </div>
+          <p class="cierre-deuda__detalle" data-cierre-detalle>
+            {{ p6_primero.mes }} {{ p6_primero.anio }} · Saldo Base:
+            {{ p6_primero.base | cop }} · Saldo Optimizado:
+            {{ p6_primero.optimizado | cop }} · Reducción extra acumulada:
+            {{ (p6_primero.base - p6_primero.optimizado) | cop }}
+          </p>
           <ul class="comparativa__leyenda">
             <li><span class="dona__muestra comparativa__muestra--base"></span> Base (Normal)</li>
             <li><span class="dona__muestra comparativa__muestra--optimizado"></span> Optimizado (Con tu excedente)</li>

@@ -224,8 +224,12 @@ def _simular(
     liberada = CERO
     serie: list[Decimal] = []
     liquidacion: int | None = None
+    # SRS v4.19: las deudas se pagan en paralelo. La cuota de una deuda que se
+    # cierra se suma al excedente desde el mes siguiente (cascada).
+    extra_activa = redondear_dinero(excedente) if aplicar_excedente else CERO
 
     for avance in range(MESES):
+        liberada_este_mes = CERO
         for estado in copia:
             if estado.saldo <= CERO:
                 continue
@@ -234,6 +238,9 @@ def _simular(
             if estado.saldo <= CERO and estado.deuda.id_deuda not in cerradas:
                 cerradas.add(estado.deuda.id_deuda)
                 liberada = redondear_dinero(liberada + estado.cuota)
+                liberada_este_mes = redondear_dinero(
+                    liberada_este_mes + estado.cuota
+                )
                 detalle.append(
                     {
                         "id_deuda": estado.deuda.id_deuda,
@@ -244,8 +251,8 @@ def _simular(
                     }
                 )
 
-        if aplicar_excedente and excedente > CERO:
-            resto = excedente
+        if extra_activa > CERO:
+            resto = extra_activa
             for estado in orden:
                 if resto <= CERO:
                     break
@@ -257,6 +264,9 @@ def _simular(
                 if estado.saldo <= CERO and estado.deuda.id_deuda not in cerradas:
                     cerradas.add(estado.deuda.id_deuda)
                     liberada = redondear_dinero(liberada + estado.cuota)
+                    liberada_este_mes = redondear_dinero(
+                        liberada_este_mes + estado.cuota
+                    )
                     detalle.append(
                         {
                             "id_deuda": estado.deuda.id_deuda,
@@ -267,6 +277,8 @@ def _simular(
                         }
                     )
 
+        # La cuota liberada este mes se suma al excedente del mes siguiente.
+        extra_activa = redondear_dinero(extra_activa + liberada_este_mes)
         total = redondear_dinero(sum((estado.saldo for estado in copia), start=CERO))
         serie.append(total)
         if liquidacion is None and total <= CERO:
@@ -372,9 +384,14 @@ def _datos_cierre(
     serie_base = [fila["base"] for fila in consejo.serie]
     serie_optima = [fila["optimizado"] for fila in consejo.serie]
 
-    meses_base = math.ceil(deuda_inicial / cuota) if cuota > CERO else 0
+    # SRS v4.19: se respeta el plazo en paralelo ya calculado por el Consejero.
+    meses_base = consejo.meses_base if consejo.meses_base is not None else (
+        math.ceil(deuda_inicial / cuota) if cuota > CERO else 0
+    )
     ritmo_optimo = cuota + extra
-    meses_optimo = math.ceil(deuda_inicial / ritmo_optimo) if ritmo_optimo > CERO else 0
+    meses_optimo = consejo.meses_optimizado if consejo.meses_optimizado is not None else (
+        math.ceil(deuda_inicial / ritmo_optimo) if ritmo_optimo > CERO else 0
+    )
     meses_ahorrados = max(0, meses_base - meses_optimo)
     ahorro_saldo = max(CERO, redondear_dinero(serie_base[-1] - serie_optima[-1]))
 
@@ -493,8 +510,17 @@ def _consejo_deuda(
     deuda_inicial = redondear_dinero(sum((e.saldo for e in estados), start=CERO))
     cuota_total = redondear_dinero(sum((e.cuota for e in estados), start=CERO))
     ritmo = redondear_dinero(cuota_total + excedente)
-    meses_minimo = math.ceil(deuda_inicial / cuota_total) if cuota_total > CERO else 0
-    meses_excedente = math.ceil(deuda_inicial / ritmo) if ritmo > CERO else 0
+    # SRS v4.19: plazo en paralelo = el mayor plazo individual, nunca la suma.
+    meses_minimo = (
+        _liquidacion_base
+        if _liquidacion_base is not None
+        else max((estado.cuotas for estado in estados), default=0)
+    )
+    meses_excedente = (
+        _liquidacion
+        if _liquidacion is not None
+        else (math.ceil(deuda_inicial / ritmo) if ritmo > CERO else 0)
+    )
     fecha_minimo = _fecha_cierre(referencia_efectiva, meses_minimo)
     fecha_excedente = _fecha_cierre(referencia_efectiva, meses_excedente)
     meses_antes = max(0, meses_minimo - meses_excedente)
@@ -536,8 +562,8 @@ def _consejo_deuda(
         detalle_texto = f" ({desglose})" if desglose else ""
         pasos.append(
             f"Al cerrar las deudas de tu plan liberarás "
-            f"{formatear_cop(liberada_plan)} de cuota mensual para tus metas"
-            f"{detalle_texto}."
+            f"{formatear_cop(liberada_plan)} de cuota mensual para tus próximas "
+            f"metas a pagar{detalle_texto}."
         )
     pasos.append(
         f"Con pago mínimo, cerrarías todas tus deudas activas en {fecha_minimo} "

@@ -138,4 +138,10 @@ Las filas de «Sueldo devengado» y «Gastos fijos» en las tarjetas de quincena
 
 El Consejero ahora distingue dos plazos: cuándo se cancela la deuda que te recomienda atacar y cuándo se cierran todas tus deudas. Usa siempre la expresión «pago mínimo» y los meses/cuotas que adelantas. La cuota que liberas solo suma las deudas que aparecen en tu plan; nunca menciona una deuda que no te propuso. En el celular los dos velocímetros van uno debajo del otro, y la gráfica de 12 meses es más alta, con etiquetas claras y un solo mes resaltado a la vez.
 
+### Cambios de la versión 4.19
+
+El Consejero calcula las deudas en paralelo: todas se pagan al mismo tiempo y una deuda de 36 meses no se suma a las de 8 y 10 meses para decir 54. Cuando se cierra una deuda corta, su cuota se suma al excedente desde el mes siguiente para terminar antes. Al liberar cuotas te dirá claramente que ese dinero queda para tus próximas metas a pagar.
+
+La gráfica de proyección ahora muestra solo **6 meses**, con el saldo inicial y el del mes 6 destacados arriba y una sola línea de detalle que se actualiza al tocar cada mes. En el celular el banner verde sobre los velocímetros tiene el mismo borde redondeado que las tarjetas, la dona se ve centrada en la computadora y la tabla de «Atajos guardados» alinea cada dato exactamente debajo de su encabezado. Los textos explicativos van justificados.
+
 © 2026 MisFinanzas

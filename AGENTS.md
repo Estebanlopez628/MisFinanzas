@@ -199,6 +199,7 @@ Plataforma web/móvil híbrida (PWA) con backend y frontend **100% Python**, arq
 31. **Tarjetas limpias y Consejero real (SRS v4.13):** las tarjetas muestran solo `sueldo_neto_corte` y gastos fijos; el Consejero usa cifras reales (sin intereses ficticios), plazos exactos, meses completos en español y desglose `Deuda + Saldo + Cuota`. El layout de la gráfica (curva al 100 %, sub-tarjetas, píldoras) es solo `>= 768px`; móvil intacto.
 32. **Velocímetros cockpit (SRS v4.17):** cambia solo el estilo (dial radial, 41 marcas, resplandor azul/esmeralda, aguja y texto centrado). No se cambian tamaños (120×68 móvil, 156×88 web) ni cifras. El CSS del componente vive fuera de media queries móviles.
 33. **Precisión v4.18:** filas de corte/Trabajos Extras a 6 px y divisoria a 8 px; el Consejero usa «pago mínimo», distingue el plazo de la deuda objetivo del cierre global y solo suma deudas del plan; velocímetros apilados en móvil y gráfica de 12 meses legible con un solo mes activo. Web no cambia.
+34. **Delta v4.19:** amortización en paralelo (MAX de plazos, nunca suma) con cascada de cuota liberada; gráfica de proyección a 6 meses; banner móvil con radio 14 px; dona centrada en escritorio; tabla de atajos `table-fixed` 38/34/28 con `min-width: 0`; texto corrido justificado. No rehacer v4.18.
 
 ---
 
@@ -503,3 +504,4 @@ La configuración vive en `.vscode/launch.json`. También existe **Pruebas (pyte
 - [x] **SRS v4.13 — Cierre documental y QA:** Guías, Diccionario, Constitución, `MEMORY.md` (ADR-79), `AGENTS.md` y SRS §19 sincronizados como línea base vigente. `sw.js` en `olb-finanzas-v104`. Gate QA `scripts/qa_v4_13.py` **21/21** antes del push.
 - [x] **SRS v4.17 — Velocímetros cockpit y cierre:** mismo estilo de dial en web y móvil conservando 120×68 / 156×88 y las cifras del Consejero. `sw.js` en `olb-finanzas-v105`. **831 pruebas** en verde; gate QA `scripts/qa_v4_17.py` **14/14** antes del push. Documentación y SRS §20 sincronizados (ADR-80).
 - [x] **SRS v4.18 — Cierre:** espaciado compacto, Consejero con plazos por deuda y deudas del plan, velocímetros apilados en móvil y gráfica legible. `sw.js` en `olb-finanzas-v106`. **836 pruebas** en verde; gate QA `scripts/qa_v4_18.py` **21/21** antes del push. Documentación y SRS §21 sincronizados (ADR-81).
+- [x] **SRS v4.19 — Delta y cierre:** amortización paralela, gráfica a 6 meses, banner/dona y tabla de atajos corregidos. `sw.js` en `olb-finanzas-v107`. **842 pruebas** en verde; gate QA `scripts/qa_v4_19.py` **19/19** antes del push. Documentación y SRS §22 sincronizados (ADR-82).

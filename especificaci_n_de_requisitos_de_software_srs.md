@@ -755,3 +755,31 @@ En móvil (`< 768px`) los velocímetros se apilan en una columna (primero pago m
 - Usuarios QA: `prueba_qa@misfinanzas.local` / `QA_MisFinanzas_2026!` y `prueba_qa_admin@misfinanzas.local` / `QA_Admin_2026!`.
 - `scripts/qa_v4_18.py`: **21/21 comprobaciones** en Chromium, con estilos computados de espaciado, apilado móvil, tamaños web intactos y redacción del Consejero. Solo tras el gate se ejecutaron `git add`, `commit` y `push`.
 - Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-81), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.18.
+
+---
+
+## 22. SRS v4.19 — Delta post-v4.18
+
+Versión 4.19 y **línea base vigente**. Cinco ajustes nuevos; no se rehace nada de v4.17 ni v4.18.
+
+### 22.1 No regresión
+
+Intactos: tarjetas compactadas, terminología «pago mínimo», exclusión de deudas no propuestas, velocímetros apilados en móvil y cockpit web, siete factores 2026, «Resultado del periodo», donas, Deudas, Atajos Guardados (sin favoritos nuevos), selectores de fecha, modales propios, WhatsApp, OLB_BYTE y Ayuda.
+
+### 22.2 Amortización en paralelo y redacción
+
+Las deudas activas se amortizan simultáneamente: el plazo con pago mínimo es `MAX(plazo_i)`, nunca la suma (36 + 8 + 10 → 36 meses). En el escenario con excedente, la cuota de cada deuda que se cierra se suma al excedente desde el mes siguiente (cascada). El texto de liberación termina: «…de cuota mensual para tus próximas metas a pagar (Deuda A $X; Deuda B $Y).»
+
+### 22.3 Proyección de saldo a 6 meses
+
+La gráfica de 12 meses se sustituye por «Proyección de saldo (6 meses)»: primeros seis puntos de la simulación paralela, badges de alto contraste «Inicial: [Mes Año] $[Monto]» y «Mes 6: [Mes Año] $[Monto]», curva base discontinua `#38BDF8` (7 7) y optimizada continua `#10B981` (3,5 px), área diferencial con «+ Ahorro acumulado», seis píldoras (grid de 6 en escritorio, fila deslizable en móvil), una sola línea de detalle justificada y leyenda centrada.
+
+### 22.4 Banner móvil, dona y tabla de atajos
+
+En móvil, el banner verde sobre los velocímetros usa `border-radius: 14px` y texto justificado. En escritorio, la dona y sus leyendas se centran dentro de su tarjeta. «Atajos guardados» se renderiza como tabla real `table-fixed` con anchos 38 % / 34 % / 28 % y `padding: 10px 8px` compartido entre `th` y `td`. Todo el texto corrido va justificado, salvo celdas numéricas y etiquetas centradas.
+
+### 22.5 Gate QA y cierre documental
+
+- Usuarios QA: `prueba_qa@misfinanzas.local` / `QA_MisFinanzas_2026!` y `prueba_qa_admin@misfinanzas.local` / `QA_Admin_2026!`.
+- `scripts/qa_v4_19.py`: **19/19 comprobaciones** en Chromium (web y 375 px), incluidos plazo paralelo 36 meses, gráfica de 6 meses y ancho real del 38 % en la tabla de atajos. Solo tras el gate se ejecutaron `git add`, `commit` y `push`.
+- Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-82), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.19.

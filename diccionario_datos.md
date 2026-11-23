@@ -771,3 +771,11 @@ Las reglas CSS viven fuera de `@media (max-width: 767px)` para aplicar en ambos 
 - Terminología única: «pago mínimo». Quedan prohibidas «pagando solo lo mínimo» y «por más tiempo».
 
 **Gráfica de 12 meses:** `min-height: 220px` en móvil; etiquetas de ejes `#e2e8f0` a 14 px; curva optimizada `#10b981` continua y curva base `#38bdf8` discontinua; selector `nowrap` con un único botón activo y una sola línea `data-cierre-detalle`.
+
+## 22. SRS v4.19 — Amortización paralela y presentación (sin cambios de esquema)
+
+- `meses_minimo` es el **mayor plazo individual** del portafolio (o el mes de liquidación de la simulación base), nunca la suma de plazos. `meses_excedente` es el mes de liquidación de la simulación con cascada; la cuota de cada deuda cerrada se suma a `extra_activa` desde el mes siguiente.
+- `cuotas_liberadas_detalle` mantiene `{id_deuda, nombre, saldo, cuota, mes}`; el texto de liberación dice «para tus próximas metas a pagar (Deuda $X; Deuda $Y)».
+- La proyección visual usa `consejo.cierre.puntos[:6]`: badges `Inicial` y `Mes 6`, curva base `#38bdf8` con `stroke-dasharray="7 7"` y 3,5 px, curva optimizada `#10b981` continua de 3,5 px, área diferencial con «+ Ahorro acumulado», seis píldoras y una sola línea `data-cierre-detalle`.
+- Presentación: banner `.cierre-deuda__pill` con `border-radius: 14px` y texto justificado en móvil; `.capacidad__resumen` centrado en escritorio; texto corrido global `text-align: justify`.
+- «Atajos guardados» en móvil: `<table>` real `table-fixed` con `min-width: 0`, columnas 38 % / 34 % / 28 % y `padding: 10px 8px` idéntico en `th` y `td`.

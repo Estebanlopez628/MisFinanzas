@@ -2379,6 +2379,18 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v106`; **836 pruebas** en verde, `compileall`, `node --check` y `generar_guia.py --verificar` correctos. Gate QA `scripts/qa_v4_18.py`: **21/21 comprobaciones** en Chromium, con espaciado computado 6 px/8 px, apilado móvil y 156×88 intacto en web.
 
+### 2026-11-23 — SRS v4.19: paralelismo, gráfica a 6 meses y tablas (ADR-82)
+
+**Decisión (ADR-82).** Delta quirúrgico sobre v4.18. El motor deja de estimar el cierre como cociente agregado: las deudas se pagan en paralelo y la cuota liberada por una deuda cerrada se suma al excedente al mes siguiente. La gráfica pasa de 12 a 6 meses. Se corrigen tres detalles visuales y la alineación tabular de atajos.
+
+**Consecuencias aplicadas.**
+- `_simular()` mantiene `extra_activa` y `liberada_este_mes`; `meses_minimo` toma el mayor plazo individual (o el mes de liquidación de la simulación) y `meses_excedente` el de la simulación en cascada. `_datos_cierre()` respeta ambos valores del `Consejo`.
+- Texto de liberación: «para tus próximas metas a pagar (…)».
+- La plantilla slicea `puntos[:6]`, dibuja badges Inicial/Mes 6, área diferencial, seis píldoras y una sola línea de detalle. Se actualizaron las pruebas antiguas que esperaban 12 meses.
+- CSS: banner verde a 14 px y justificado en móvil; `.capacidad__resumen` centrado en escritorio; justificación global de párrafos; tabla de atajos con `min-width: 0` (el `min-width: 640px` de `.tabla` hacía que el 38 % midiera 243 px en vez de 118 px) y anchos 38/34/28 con padding 10px 8px.
+
+**Verificación.** `sw.js` en `olb-finanzas-v107`; **842 pruebas** en verde, `compileall`, `node --check` y `generar_guia.py --verificar` correctos. Gate QA `scripts/qa_v4_19.py`: **19/19 comprobaciones** en Chromium (1280 px y 375 px), con plazo paralelo 36 meses y ancho real del 38 % confirmado.
+
 
 
 
