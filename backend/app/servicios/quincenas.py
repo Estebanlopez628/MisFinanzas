@@ -29,8 +29,10 @@ from decimal import Decimal
 
 from sqlalchemy.orm import Session
 
+from app.core.config import obtener_parametros
 from app.core.numeros import redondear_dinero
 from app.modelos import DeduccionFija, Gasto, PerfilFinanciero
+from app.servicios import auxilio as servicio_auxilio
 from app.servicios import deducciones_fijas as servicio_deducciones
 from app.servicios import gastos as servicio_gastos
 from app.servicios import perfiles
@@ -49,8 +51,9 @@ class ResumenQuincena:
         etiqueta: Texto visible («Mes», «Quincena 1 · día 5»), con el día que
             el usuario configuró en su perfil.
         porcentaje: Porcentaje del sueldo que se paga en este bloque.
-        ingreso: Sueldo proyectado del bloque, ajustado por incapacidad y con
-            recargos cuando corresponde.
+        ingreso: Sueldo devengado del bloque: porcentaje del salario más recargos
+            y auxilio de transporte en el corte que las lleva (SRS v4.8).
+        devengado_neto: `ingreso − deducciones de ley`, antes de gastos fijos.
         gastos: Suma de gastos fijos asignados.
         deducciones: Salud y pensión que se descuentan en este bloque.
         saldo_libre: `ingreso − gastos − deducciones − deducciones fijas`.
@@ -71,6 +74,7 @@ class ResumenQuincena:
     gastos: Decimal
     deducciones: Decimal
     saldo_libre: Decimal
+    devengado_neto: Decimal = CERO
     gastos_detalle: list[Gasto] = field(default_factory=list)
     gastos_vinculados: list[Gasto] = field(default_factory=list)
     mes_completo: bool = False
@@ -104,6 +108,7 @@ def resumen_quincenas(
     mes: int,
     recargos: Decimal | int | str = CERO,
     descuento_incapacidad: Decimal | int | str = CERO,
+    auxilio_transporte: Decimal | int | str | None = None,
 ) -> list[ResumenQuincena]:
     """Calcula el resumen de pagos y saldos libres del mes.
 
@@ -117,6 +122,8 @@ def resumen_quincenas(
             liquidando (SRS v1.4, REQ-04). Se suma a la quincena de deducciones.
         descuento_incapacidad: Descuento por incapacidad del periodo (SRS v1.4,
             REQ-05). Se resta del sueldo base antes de repartirlo.
+        auxilio_transporte: Auxilio legal del mes. Si se omite, se deriva del
+            devengado con los parámetros vigentes (SRS v4.8).
 
     Returns:
         Lista con una tarjeta para modalidad MENSUAL o dos para QUINCENAL.
@@ -166,6 +173,15 @@ def resumen_quincenas(
     # tras la incapacidad y con horas extras (no sobre el sueldo básico fijo).
     base_cotizacion = redondear_dinero(max(sueldo_ajustado + recargos_periodo, CERO))
     deducciones_mes = calcular_deducciones_ley(base_cotizacion).total
+    # SRS v4.8: el auxilio se paga en el corte que lleva las deducciones de ley.
+    # Se calcula sobre el devengado mensual, nunca sobre una sola quincena.
+    auxilio = (
+        redondear_dinero(_a_decimal(auxilio_transporte))
+        if auxilio_transporte is not None
+        else servicio_auxilio.evaluar_auxilio_transporte(
+            sueldo_ajustado + recargos_periodo, obtener_parametros()
+        ).valor
+    )
 
     if perfil.modalidad_pago == perfiles.MODALIDAD_MENSUAL:
         total = redondear_dinero(sum((valor_computable(gasto) for gasto in del_mes), start=CERO))
@@ -174,11 +190,19 @@ def resumen_quincenas(
                 numero=0,
                 etiqueta=_etiqueta(0, perfil),
                 porcentaje=Decimal("100"),
-                ingreso=redondear_dinero(sueldo_ajustado + recargos_periodo),
+                ingreso=redondear_dinero(sueldo_ajustado + recargos_periodo + auxilio),
                 gastos=total,
                 deducciones=deducciones_mes,
                 saldo_libre=redondear_dinero(
-                    sueldo_ajustado + recargos_periodo - total - deducciones_mes - total_fijas_mes
+                    sueldo_ajustado
+                    + recargos_periodo
+                    + auxilio
+                    - total
+                    - deducciones_mes
+                    - total_fijas_mes
+                ),
+                devengado_neto=redondear_dinero(
+                    sueldo_ajustado + recargos_periodo + auxilio - deducciones_mes
                 ),
                 gastos_detalle=del_mes,
                 gastos_vinculados=vinculados,
@@ -202,9 +226,10 @@ def resumen_quincenas(
         (2, porcentaje_2, de_quincena_2, vinculados_2),
     ):
         ingreso = redondear_dinero(sueldo_ajustado * porcentaje / Decimal("100"))
-        # REQ-04: los recargos se liquidan en la quincena de deducciones del perfil.
+        # REQ-04 y SRS v4.8: recargos y auxilio se liquidan en la quincena de
+        # deducciones del perfil; la otra recibe solo su porcentaje del sueldo.
         if perfil.quincena_deducciones == numero:
-            ingreso = redondear_dinero(ingreso + recargos_periodo)
+            ingreso = redondear_dinero(ingreso + recargos_periodo + auxilio)
         total_gastos = redondear_dinero(
             sum((valor_computable(gasto) for gasto in detalle), start=CERO)
         )
@@ -224,6 +249,7 @@ def resumen_quincenas(
                 saldo_libre=redondear_dinero(
                     ingreso - total_gastos - deducciones - total_fijas
                 ),
+                devengado_neto=redondear_dinero(ingreso - deducciones),
                 gastos_detalle=detalle,
                 gastos_vinculados=vinculados_quincena,
                 mes_completo=any(gasto.quincena is None for gasto in detalle),

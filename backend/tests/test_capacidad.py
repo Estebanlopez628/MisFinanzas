@@ -56,7 +56,7 @@ def test_sin_deudas_el_arco_libre_domina_y_el_semaforo_es_verde(bd) -> None:
         bd, id_usuario, _perfil(bd, id_usuario), HOY.year, HOY.month
     )
 
-    assert resultado.ingreso == Decimal("2960000.00")
+    assert resultado.ingreso == Decimal("3209095.00")  # sueldo + auxilio 249.095
     # Solo la deducción de ley del 8 %: no hay gastos ni deudas.
     assert resultado.gastos == Decimal("236800.00")
     assert resultado.deudas == Decimal("0.00")
@@ -262,7 +262,7 @@ def test_el_extra_cobrado_suma_al_ingreso(bd) -> None:
     )
 
     assert trabajo.id_trabajo
-    assert resultado.ingreso == Decimal("3460000.00")
+    assert resultado.ingreso == Decimal("3709095.00")  # sueldo + extras + auxilio
 
 
 def test_presupuesto_muestra_el_panel_de_capacidad(cliente_admin) -> None:

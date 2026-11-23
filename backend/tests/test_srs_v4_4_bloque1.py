@@ -28,11 +28,12 @@ def _id_admin(bd) -> str:
 
 
 def test_etiqueta_sueldo_percibido(cliente_admin: TestClient) -> None:
-    """La etiqueta del resultado principal cambia sin tocar la fórmula."""
+    """SRS v4.8: la etiqueta limpia es «Total devengado» (sin guion)."""
     html = cliente_admin.get("/finanzas").text
-    assert "Sueldo-percibido" in html
+    assert "Total devengado" in html
+    assert "Sueldo-percibido" not in html
     assert "Saldo para el bolsillo" not in html
-    assert "data-campo=\"saldo_bolsillo\"" in html
+    assert "data-campo=\"total_devengado_consolidado\"" in html
 
 
 def test_saldo_libre_descuenta_creditos_vinculados(bd) -> None:

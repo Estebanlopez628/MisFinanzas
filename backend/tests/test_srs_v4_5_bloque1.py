@@ -81,7 +81,10 @@ def test_base_global_suma_ingresos_brutos_de_extras(bd) -> None:
         (bloque["ingreso"] for bloque in trabajos.pagos_del_mes(bd, id_usuario, HOY.year, HOY.month)),
         CERO,
     )
-    assert resultado.base_global == redondear(perfil.sueldo_basico + ingresos_extras)
+    # SRS v4.8: el sueldo percibido ya incorpora el auxilio legal.
+    assert resultado.base_global == redondear(
+        perfil.sueldo_basico + Decimal("249095") + ingresos_extras
+    )
     assert resultado.base_global > resultado.ingreso  # antes se usaba el neto
 
 

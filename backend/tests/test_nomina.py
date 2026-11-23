@@ -1,6 +1,6 @@
 """Pruebas del motor de nómina (Tarea 2).
 
-Cubren las reglas de ley colombianas parametrizadas: jornada de 210 horas,
+Cubren las reglas de ley colombianas parametrizadas: jornada de 220 horas (2026),
 deducciones del 4% + 4%, matriz de recargos con decimales y liquidación del
 periodo. Se usan valores exactos en `Decimal` para detectar errores de redondeo.
 """
@@ -25,21 +25,21 @@ from app.servicios.nomina import (
 PARAMETROS = ParametrosNomina()
 
 
-def test_hora_ordinaria_sobre_210_horas() -> None:
-    """2.100.000 COP entre 210 horas debe dar exactamente 10.000 COP por hora."""
-    assert calcular_valor_hora_ordinaria(Decimal("2100000")) == Decimal("10000.0000")
+def test_hora_ordinaria_sobre_220_horas() -> None:
+    """SRS v4.8: 2.100.000 COP entre 220 horas da 9.545,4545 COP por hora."""
+    assert calcular_valor_hora_ordinaria(Decimal("2100000")) == Decimal("9545.4545")
 
 
 def test_hora_ordinaria_con_conversion_desde_texto() -> None:
     """La función acepta cadenas y enteros, no solo Decimal."""
-    assert calcular_valor_hora_ordinaria("2100000") == Decimal("10000.0000")
-    assert calcular_valor_hora_ordinaria(2100000) == Decimal("10000.0000")
+    assert calcular_valor_hora_ordinaria("2100000") == Decimal("9545.4545")
+    assert calcular_valor_hora_ordinaria(2100000) == Decimal("9545.4545")
 
 
 def test_hora_ordinaria_con_decimales_de_precision() -> None:
     """El valor de la hora conserva 4 decimales cuando la división no es exacta."""
     resultado = calcular_valor_hora_ordinaria(Decimal("2100001"))
-    assert resultado == Decimal("10000.0048")
+    assert resultado == Decimal("9545.4591")
 
 
 def test_hora_ordinaria_rechaza_sueldo_negativo() -> None:
@@ -100,10 +100,21 @@ def test_calcular_recargo_con_decimales() -> None:
 
 
 def test_calcular_recargo_nocturno_dominical() -> None:
-    """1.5 horas nocturnas dominicales a 10.000 × 2.50 = 37.500 COP."""
+    """SRS v4.8: 1.5 h nocturnas dominicales a 10.000 × 2.65 = 39.750 COP."""
     recargo = calcular_recargo(
         "EXTRA_NOCTURNA_DOMINICAL_FESTIVA", Decimal("1.5"), Decimal("10000")
     )
+    assert recargo.factor == Decimal("2.65")
+    assert recargo.valor_total == Decimal("39750.00")
+
+
+def test_calcular_recargo_nocturno_dominical_nuevo() -> None:
+    """7.º concepto: 3 h de recargo nocturno dominical a 10.000 × 1.25."""
+    recargo = calcular_recargo(
+        "RECARGO_NOCTURNO_DOMINICAL_FESTIVO", Decimal("3"), Decimal("10000")
+    )
+    assert recargo.factor == Decimal("1.25")
+    assert recargo.etiqueta == "Recargo nocturno dominical/festivo"
     assert recargo.valor_total == Decimal("37500.00")
 
 
@@ -128,6 +139,7 @@ def test_matriz_completa_de_recargos() -> None:
         "EXTRA_NOCTURNA_DOMINICAL_FESTIVA": Decimal("1.5"),
         "RECARGO_NOCTURNO": Decimal("20"),
         "RECARGO_DOMINICAL_FESTIVO": Decimal("10"),
+        "RECARGO_NOCTURNO_DOMINICAL_FESTIVO": Decimal("3"),
     }
 
     resultado = calcular_recargos(horas, Decimal("10000"))
@@ -136,16 +148,17 @@ def test_matriz_completa_de_recargos() -> None:
     assert valores == {
         "EXTRA_DIURNA_NORMAL": Decimal("125000.00"),
         "EXTRA_NOCTURNA": Decimal("70000.00"),
-        "EXTRA_DIURNA_DOMINICAL_FESTIVA": Decimal("40000.00"),
-        "EXTRA_NOCTURNA_DOMINICAL_FESTIVA": Decimal("37500.00"),
+        "EXTRA_DIURNA_DOMINICAL_FESTIVA": Decimal("43000.00"),
+        "EXTRA_NOCTURNA_DOMINICAL_FESTIVA": Decimal("39750.00"),
         "RECARGO_NOCTURNO": Decimal("70000.00"),
-        "RECARGO_DOMINICAL_FESTIVO": Decimal("190000.00"),
+        "RECARGO_DOMINICAL_FESTIVO": Decimal("90000.00"),
+        "RECARGO_NOCTURNO_DOMINICAL_FESTIVO": Decimal("37500.00"),
     }
-    assert resultado.total_horas == Decimal("47.50")
-    assert resultado.total_valor == Decimal("532500.00")
+    assert resultado.total_horas == Decimal("50.50")
+    assert resultado.total_valor == Decimal("475250.00")
     # El orden del desglose debe ser el canónico, no el del diccionario recibido.
     assert [item.tipo_hora for item in resultado.detalle][0] == "EXTRA_DIURNA_NORMAL"
-    assert [item.tipo_hora for item in resultado.detalle][-1] == "RECARGO_DOMINICAL_FESTIVO"
+    assert [item.tipo_hora for item in resultado.detalle][-1] == "RECARGO_NOCTURNO_DOMINICAL_FESTIVO"
 
 
 def test_matriz_ignora_tipos_en_cero() -> None:
@@ -177,14 +190,14 @@ def test_liquidacion_completa_con_auxilio_e_incapacidad() -> None:
         deduccion_incapacidad=Decimal("50000"),
     )
 
-    assert liquidacion.valor_hora_ordinaria == Decimal("10000.0000")
-    assert liquidacion.total_recargos == Decimal("125000.00")
-    assert liquidacion.total_devengado == Decimal("2225000.00")
-    assert liquidacion.total_ingresos == Decimal("2425000.00")
-    # Base de cotización (SRS v1.4): 2.225.000 devengado − 50.000 incapacidad = 2.175.000.
-    assert liquidacion.deducciones_ley.total == Decimal("174000.00")
-    assert liquidacion.total_deducciones == Decimal("224000.00")
-    assert liquidacion.saldo_bolsillo == Decimal("2201000.00")
+    assert liquidacion.valor_hora_ordinaria == Decimal("9545.4545")
+    assert liquidacion.total_recargos == Decimal("119318.18")
+    assert liquidacion.total_devengado == Decimal("2219318.18")
+    assert liquidacion.total_ingresos == Decimal("2419318.18")
+    # Base de cotización (SRS v1.4): 2.219.318,18 devengado − 50.000 incapacidad.
+    assert liquidacion.deducciones_ley.total == Decimal("173545.46")
+    assert liquidacion.total_deducciones == Decimal("223545.46")
+    assert liquidacion.saldo_bolsillo == Decimal("2195772.72")
 
 
 def test_liquidacion_cumple_la_invariante_contable() -> None:

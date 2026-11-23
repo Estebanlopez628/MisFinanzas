@@ -106,7 +106,7 @@ Principios que explican el resto del código:
 ### Resumen del inventario
 
 - **115 archivos** documentados: 56 Python, 40 plantillas Jinja2 y 19 recursos estáticos.
-- **69 clases**, **631 funciones** y **43 métodos** de clase.
+- **69 clases**, **632 funciones** y **43 métodos** de clase.
 
 ### Detalle por archivo
 
@@ -128,13 +128,13 @@ Principios que explican el resto del código:
 #### `backend/app/core/`
 
 - **`__init__.py`** · 11 líneas — Núcleo de la aplicación: parámetros de negocio y utilidades transversales.
-- **`base_datos.py`** · 916 líneas — Conexión a la base de datos y sesión por petición.
+- **`base_datos.py`** · 948 líneas — Conexión a la base de datos y sesión por petición.
   - Clases: `Base`
-  - Funciones: `_cargar_archivo_entorno`, `_url_con_driver`, `obtener_bd`, `crear_esquema`, `_renombrar_referencia_a_categoria`, `_reconstruir_comercial_sin_stock`, `_migrar_columnas_trabajos`, `_migrar_columnas_chancucos`, `_migrar_columnas_metas`, `_migrar_dias_quincena_postgres`, `_migrar_columnas_perfil`, `_migrar_columnas_gastos`, `_migrar_chancucos`, `_migrar_columnas_deudas`, `_migrar_proyeccion_quincena`, `_migrar_saldos_incapacidad`, `_migrar_columnas_usuarios`, `_migrar_garantia_detalle`, `_migrar_deduccion_vinculada`, `_migrar_categorias_y_vinculos`, `_migrar_valor_atajo`, `_migrar_feedback_resolucion`, `aplicar_migraciones`, `inicializar_base_datos`
+  - Funciones: `_cargar_archivo_entorno`, `_url_con_driver`, `obtener_bd`, `crear_esquema`, `_renombrar_referencia_a_categoria`, `_reconstruir_comercial_sin_stock`, `_migrar_columnas_trabajos`, `_migrar_columnas_chancucos`, `_migrar_columnas_metas`, `_migrar_dias_quincena_postgres`, `_migrar_columnas_perfil`, `_migrar_columnas_gastos`, `_migrar_chancucos`, `_migrar_columnas_deudas`, `_migrar_proyeccion_quincena`, `_migrar_saldos_incapacidad`, `_migrar_columnas_usuarios`, `_migrar_garantia_detalle`, `_migrar_deduccion_vinculada`, `_migrar_categorias_y_vinculos`, `_migrar_valor_atajo`, `_migrar_feedback_resolucion`, `_migrar_tipos_hora_2026`, `aplicar_migraciones`, `inicializar_base_datos`
 - **`categorias.py`** · 240 líneas — Catálogo cerrado de categorías de egresos y colores de la dona.
   - Clases: `Categoria`
   - Funciones: `_clave`, `normalizar_categoria`, `es_categoria_valida`, `color_de_categoria`, `es_credito`, `paleta_es_unica`, `lista_categorias`
-- **`config.py`** · 325 líneas — Parámetros de negocio y configuración de la plataforma.
+- **`config.py`** · 331 líneas — Parámetros de negocio y configuración de la plataforma.
   - Clases: `ParametrosNomina`, `ConfiguracionApp`
   - Funciones: `_decimal_desde_entorno`, `_lista_desde_entorno`, `obtener_parametros`, `obtener_configuracion`
 - **`limitador.py`** · 130 líneas — Limitador de intentos para proteger el inicio de sesión.
@@ -165,7 +165,7 @@ Principios que explican el resto del código:
 - **`feedback.py`** · 271 líneas — API de reportes de soporte «Ayuda y comentarios» (SRS v2.0, Fase A).
   - Clases: `CambioEstado`
   - Funciones: `enviar_feedback`, `contar_feedback_pendiente`, `listar_feedback`, `actualizar_estado_feedback`, `actualizar_feedback_api`, `listar_feedback_propio`, `ver_comentarios`
-- **`finanzas.py`** · 1084 líneas — Módulo "Mis Finanzas": liquidación, guardado e historial.
+- **`finanzas.py`** · 1107 líneas — Módulo "Mis Finanzas": liquidación, guardado e historial.
   - Clases: `EntradaFinanzas`
   - Funciones: `_texto`, `_entero`, `_descuento_por_fechas`, `_leer_entradas`, `_liquidar`, `_deducciones_segun_quincena`, `_datos_formateados`, `_detalle_formateado`, `_detalle_incapacidad_json`, `_fijas_del_periodo`, `_total_fijas`, `_total_deducciones_ley`, `_saldos_quincenas`, `_contexto_calculadora`, `ver_finanzas`, `procesar_finanzas`, `calcular_finanzas_json`, `guardar_liquidacion`, `_filas_historial`, `_etiqueta_periodo`, `ver_historial`, `exportar_historial_csv`, `imprimir_periodo`, `eliminar_periodo`
 - **`gastos.py`** · 529 líneas — Rutas del presupuesto de gastos.
@@ -239,7 +239,7 @@ Principios que explican el resto del código:
   - Funciones: `obtener_perfil`, `perfil_configurado`, `_validar_porcentaje`, `parsear_dia_quincena`, `validar_dias_quincena`, `dias_quincena`, `etiquetas_quincena`, `validar_quincenas`, `calcular_quincenas_desde_neto`, `guardar_perfil`, `porcentajes_quincena`, `sueldo_del_periodo`
 - **`periodos.py`** · 191 líneas — Persistencia y consulta de periodos de nómina.
   - Funciones: `obtener_periodo`, `listar_periodos`, `horas_del_periodo`, `guardar_liquidacion`, `eliminar_periodo`
-- **`quincenas.py`** · 249 líneas — Resumen de quincenas para el panel izquierdo de "Mis Finanzas".
+- **`quincenas.py`** · 275 líneas — Resumen de quincenas para el panel izquierdo de "Mis Finanzas".
   - Clases: `ResumenQuincena`
   - Funciones: `_etiqueta`, `resumen_quincenas`, `_a_decimal`
 - **`recibo_imagen.py`** · 74 líneas — Recibo de abono de OLB_BYTE como imagen PNG para compartir por WhatsApp (RF-07).
@@ -488,7 +488,7 @@ HEX únicos (ocho categorías, base mínima `#10B981` y dinero libre `#84CC16`);
 ### `backend/app/core/config.py`
 
 Parámetros de negocio y entorno, sin valores mágicos en el resto del código.
-`ParametrosNomina` reúne horas mensuales (210), porcentajes de salud/pensión,
+`ParametrosNomina` reúne horas mensuales (220 en 2026), porcentajes de salud/pensión,
 factores de recargo, SMMLV, auxilio de transporte y porcentaje de incapacidad;
 `ConfiguracionApp` agrupa entorno, clave secreta, duración de sesión, publicidad y
 límites de login. `obtener_parametros`/`obtener_configuracion` cachean y aceptan
@@ -706,9 +706,10 @@ reciben `Session` solo cuando necesitan persistir.
 ### `backend/app/servicios/nomina.py`
 
 Motor salarial colombiano. `calcular_valor_hora_ordinaria` divide el básico entre
-210 h; `calcular_deducciones_ley` aplica 4 % + 4 % sobre el **devengado**
+220 h (2026); `calcular_deducciones_ley` aplica 4 % + 4 % sobre el **devengado**
 (básico + extras − incapacidad, ADR-19); `calcular_recargo`/`calcular_recargos`
-aplican la matriz de factores (1,25 / 1,75 / 2,00 / 2,50 / 0,35 / 1,90);
+aplican la matriz de siete factores (1,25 / 1,75 / 2,15 / 2,65 / 0,35 / 0,90 /
+1,25, ADR-77);
 `calcular_total_devengado` suma todo; `liquidar_periodo` devuelve
 `LiquidacionNomina` con deducciones, auxilio y neto. `_validar_no_negativo`
 centraliza el rechazo de entradas.
@@ -1526,19 +1527,30 @@ el saldo libre total, no contra un pago concreto.
 
 | Concepto | Fórmula |
 | --- | --- |
-| Hora ordinaria | `sueldo_básico / 210` |
+| Hora ordinaria | `sueldo_básico / 220` (2026; antes 210) |
 | Recargo | `valor_hora × horas × factor` |
 | Devengado | `básico + Σ recargos − descuento_incapacidad` |
 | Salud / Pensión | `4 % × devengado` cada una |
 | Auxilio de transporte | `$ 249.095` si `básico + recargos ≤ 2 SMMLV`, si no `0` (parametrizable con `AUXILIO_TRANSPORTE`) |
 | Incapacidad días 1–2 | `100 %` del valor día |
 | Incapacidad día 3+ | `66,67 %` (descuento `33,33 %`) |
-| Quincena | `sueldo × porcentaje` + recargos − deducciones imputadas − fijas − gastos |
+| Quincena | `sueldo × porcentaje` + auxilio y recargos en el corte de deducciones − deducciones imputadas − fijas − gastos |
+| Total devengado | Suma del `devengado_neto` de todos los cortes del mes |
 | Coherencia de deuda | `cuota × cuotas = total adeudado` (tolerancia `$1 × cuotas`) |
 | Cuota final | `saldo_pendiente` (absorbe el redondeo y deja cero) |
 
-Constantes parametrizables en `core/config.py`: 210 h, 4 % + 4 %, factores
-1,25/1,75/2,00/2,50/0,35/1,90, SMMLV y tope de 2 SMMLV (COP 3.501.810).
+Constantes parametrizables en `core/config.py`: 220 h (2026), 4 % + 4 % y los
+**siete factores oficiales**: extra diurna 1,25; extra nocturna 1,75; extra
+diurna dom/fest 2,15; extra nocturna dom/fest 2,65; recargo nocturno 0,35;
+recargo ordinario dom/fest 0,90; recargo nocturno dom/fest 1,25. También SMMLV y
+tope de 2 SMMLV (COP 3.501.810). Se admiten horas decimales (ej. 10,4) y el
+concepto heredado «Recargo Dominical o Festivo Diurno/Nocturno» se migra al
+canónico con factor 0,90.
+
+Etiquetas de la interfaz: **Sueldo devengado** en cada corte y **Total devengado**
+en el resultado del periodo, sin guiones. Caso base documentado: $3.484.000 al
+40 %/60 % con auxilio de $249.095 rinde $1.393.600 en Q1 y **$2.060.775** netos
+en Q2; total consolidado $3.454.375.
 
 ---
 
@@ -1671,16 +1683,19 @@ Si quieres usar el logo como imagen en lugar del texto «OB / OLB BYTE», reempl
 ## 11. Lista de verificación antes de cerrar un bloque
 
 1. `python -m compileall -q app scripts` sin errores.
-2. `pytest -q` en verde (hoy: **801**; v4.5 añadió 16 y v4.4 cerró con 785).
+2. `pytest -q` en verde (hoy: **813**; v4.8 añadió 12 y v4.5 cerró con 801).
 3. `node --check` de todos los JS que se hayan tocado, sin errores.
-4. Migraciones nuevas probadas **dos veces** sobre copia de `finanzas.db` y aplicadas en Neon (v4.5 no añade columnas ni tablas).
-5. `sw.js` con la caché subida si cambió CSS o JS (hoy: `olb-finanzas-v101`).
+4. Migraciones nuevas probadas **dos veces** sobre copia de `finanzas.db` y aplicadas en Neon.
+   Toda migración usa parámetros nombrados con `text()`: el estilo `?` de SQLite falla en PostgreSQL.
+5. `sw.js` con la caché subida si cambió CSS o JS (hoy: `olb-finanzas-v102`).
 6. `python scripts\generar_guia.py` y luego `--verificar` sin problemas (115 fichas).
-7. `MEMORY.md` con la bitácora y el ADR si cambió una regla (hoy: ADR-76 para v4.5).
+7. `MEMORY.md` con la bitácora y el ADR si cambió una regla (hoy: ADR-77 para v4.8).
 8. `AGENTS.md` §9 con el estado verificado y el conteo de pruebas.
-9. `constitution.md`, `diccionario_datos.md`, `USER_GUIDE.md` y la SRS con la versión activa (hoy: **v4.5**, sección 16).
-10. Para v4.5, además: `.venv\Scripts\python -m scripts.crear_usuario_qa.py` y
-    `.venv\Scripts\python -m scripts.qa_v4_5.py` con el servidor levantado (34 comprobaciones).
+9. `constitution.md`, `diccionario_datos.md`, `USER_GUIDE.md` y la SRS con la versión activa (hoy: **v4.8**, sección 17).
+10. Para v4.8, además: `.venv\Scripts\python -m scripts.crear_usuario_qa.py` y
+    `.venv\Scripts\python -m scripts.qa_v4_8.py` con el servidor levantado (19 comprobaciones).
 11. La regla de escritorio de los velocímetros debe estar en un `@media (min-width: 768px)`
     de nivel superior: aguas arriba hay un `@media (max-width: 767px)` abierto que anida
     cualquier bloque nuevo y lo deja inactivo en pantallas grandes.
+12. La tabla de siete factores y el divisor 220 viven solo en `core/config.py`; no se
+    hardcodean en plantillas ni en JavaScript.

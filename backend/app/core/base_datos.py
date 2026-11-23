@@ -18,7 +18,7 @@ import os
 from collections.abc import Iterator
 from pathlib import Path
 
-from sqlalchemy import create_engine, event
+from sqlalchemy import create_engine, event, text
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
 from app.core import categorias as catalogo
@@ -880,6 +880,37 @@ def _migrar_feedback_resolucion() -> None:
             )
 
 
+def _migrar_tipos_hora_2026() -> None:
+    """Mapea el concepto histórico de recargo dominical al catálogo de 2026.
+
+    SRS v4.8: los registros guardados bajo
+    ``Recargo Dominical o Festivo Diurno/Nocturno`` (y sus variantes) pasan a la
+    clave canónica ``RECARGO_DOMINICAL_FESTIVO``, que ahora significa solo
+    jornada diurna. El ``factor_aplicado`` histórico se actualiza al vigente
+    (0.90); el ``valor_total`` se conserva porque es un dato ya liquidado.
+    Es idempotente: una segunda pasada no encuentra filas que cambiar.
+    """
+    claves_anteriores = (
+        "Recargo Dominical o Festivo Diurno/Nocturno",
+        "RECARGODOMINICALOFESTIVODIURNO/NOCTURNO",
+        "RECARGO_DOMINICAL_FESTIVO_DIURNO_NOCTURNO",
+    )
+    with motor.begin() as conexion:
+        for anterior in claves_anteriores:
+            conexion.execute(
+                text(
+                    "UPDATE registros_horas_extra "
+                    "SET tipo_hora = :nuevo, factor_aplicado = :factor "
+                    "WHERE tipo_hora = :anterior"
+                ),
+                {
+                    "nuevo": "RECARGO_DOMINICAL_FESTIVO",
+                    "factor": 0.9,
+                    "anterior": anterior,
+                },
+            )
+
+
 def aplicar_migraciones() -> None:
     """Ejecuta todas las migraciones idempotentes del esquema.
 
@@ -900,6 +931,7 @@ def aplicar_migraciones() -> None:
     _migrar_deduccion_vinculada()
     _migrar_categorias_y_vinculos()
     _migrar_feedback_resolucion()
+    _migrar_tipos_hora_2026()
 
 
 def inicializar_base_datos() -> None:

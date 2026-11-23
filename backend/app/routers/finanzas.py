@@ -547,6 +547,7 @@ def _saldos_quincenas(
         entrada.mes,
         recargos=liquidacion.total_recargos,
         descuento_incapacidad=entrada.deduccion_incapacidad,
+        auxilio_transporte=liquidacion.auxilio_transporte,
     )
     return [
         {
@@ -596,6 +597,16 @@ def _contexto_calculadora(
     periodo_guardado = periodos.obtener_periodo(
         bd, usuario.id_usuario, entrada.anio, entrada.mes, entrada.quincena
     )
+    resumen_pagos = quincenas.resumen_quincenas(
+        bd,
+        usuario.id_usuario,
+        perfil,
+        entrada.anio,
+        entrada.mes,
+        recargos=resultado.total_recargos if resultado else CERO,
+        descuento_incapacidad=entrada.deduccion_incapacidad,
+        auxilio_transporte=resultado.auxilio_transporte if resultado else None,
+    )
     contexto = contexto_base(usuario)
     contexto.update(
         {
@@ -635,15 +646,11 @@ def _contexto_calculadora(
             "error_gasto": error_gasto or None,
             "guardado_chancuco": guardado_chancuco,
             "error_chancuco": error_chancuco or None,
-            # Panel izquierdo: ingresos, gastos y deducciones por quincena.
-            "resumen_quincenas": quincenas.resumen_quincenas(
-                bd,
-                usuario.id_usuario,
-                perfil,
-                entrada.anio,
-                entrada.mes,
-                recargos=resultado.total_recargos if resultado else CERO,
-                descuento_incapacidad=entrada.deduccion_incapacidad,
+            # Panel izquierdo: sueldo devengado, gastos y deducciones por corte.
+            "resumen_quincenas": resumen_pagos,
+            # SRS v4.8: total neto consolidado del periodo (suma de los cortes).
+            "total_devengado_consolidado": redondear_dinero(
+                sum((fila.devengado_neto for fila in resumen_pagos), start=CERO)
             ),
             # SRS v1.4, REQ-08: deducciones fijas del salario listadas en la liquidación.
             # SRS v1.5: se muestran una por una dentro de la caja de deducciones y
@@ -799,10 +806,26 @@ async def calcular_finanzas_json(
         else ""
     )
     fijas_periodo = _fijas_del_periodo(bd, usuario.id_usuario, entrada.quincena)
+    resumen_actual = quincenas.resumen_quincenas(
+        bd,
+        usuario.id_usuario,
+        entrada.perfil,
+        entrada.anio,
+        entrada.mes,
+        recargos=liquidacion.total_recargos,
+        descuento_incapacidad=entrada.deduccion_incapacidad,
+        auxilio_transporte=liquidacion.auxilio_transporte,
+    )
+    total_neto = redondear_dinero(
+        sum((fila.devengado_neto for fila in resumen_actual), start=CERO)
+    )
     return JSONResponse(
         {
             "ok": True,
-            "datos": _datos_formateados(liquidacion),
+            "datos": {
+                **_datos_formateados(liquidacion),
+                "total_devengado_consolidado": formatear_cop(total_neto),
+            },
             "detalle": _detalle_formateado(liquidacion),
             "mensaje_auxilio": mensaje,
             "aplica_auxilio": bool(

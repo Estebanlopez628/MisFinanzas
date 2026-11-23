@@ -140,7 +140,7 @@ def test_incapacidad_reduce_el_sueldo_antes_del_reparto(bd) -> None:
     )
 
     assert q1.ingreso == Decimal("993600.00")
-    assert q2.ingreso == Decimal("1490400.00")
+    assert q2.ingreso == Decimal("1739495.00")  # 60 % + auxilio de 249.095
 
 
 def test_recargos_se_suman_a_la_quincena_de_deducciones(bd) -> None:
@@ -154,7 +154,7 @@ def test_recargos_se_suman_a_la_quincena_de_deducciones(bd) -> None:
     )
 
     assert q1.ingreso == Decimal("1200000.00")
-    assert q2.ingreso == Decimal("1800000.00") + Decimal("150000.00")
+    assert q2.ingreso == Decimal("1800000.00") + Decimal("150000.00") + Decimal("249095.00")
 
 
 # ---------------------------------------------------------------------------

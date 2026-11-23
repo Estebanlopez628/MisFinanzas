@@ -49,8 +49,9 @@ def test_resumen_imputa_deducciones_a_la_quincena_del_perfil(bd) -> None:
     assert len(resumen) == 2
     primera, segunda = resumen
 
-    # Sueldo 2.960.000 al 50 % = 1.480.000 por quincena.
-    assert primera.ingreso == Decimal("1480000.00")
+    # SRS v4.8: 1.480.000 por quincena; el auxilio de 249.095 va al corte de
+    # deducciones (aquí, la quincena 1).
+    assert primera.ingreso == Decimal("1729095.00")
     assert segunda.ingreso == Decimal("1480000.00")
 
     # Deducciones de ley (8 % de 2.960.000 = 236.800) en la quincena 1.
@@ -61,7 +62,7 @@ def test_resumen_imputa_deducciones_a_la_quincena_del_perfil(bd) -> None:
     # La primera quincena absorbe el gasto sin quincena asignada.
     assert primera.gastos == Decimal("150000.00")
     assert segunda.gastos == Decimal("200000.00")
-    assert primera.saldo_libre == Decimal("1093200.00")
+    assert primera.saldo_libre == Decimal("1342295.00")
     assert segunda.saldo_libre == Decimal("1280000.00")
     assert primera.mes_completo is True
     assert segunda.mes_completo is False
@@ -82,10 +83,10 @@ def test_resumen_mensual_devuelve_una_sola_tarjeta(bd) -> None:
     tarjeta = resumen[0]
     assert tarjeta.numero == 0
     assert tarjeta.etiqueta == "Mes completo"
-    assert tarjeta.ingreso == Decimal("2960000.00")
+    assert tarjeta.ingreso == Decimal("3209095.00")
     assert tarjeta.gastos == Decimal("800000.00")
     assert tarjeta.deducciones == Decimal("236800.00")
-    assert tarjeta.saldo_libre == Decimal("1923200.00")
+    assert tarjeta.saldo_libre == Decimal("2172295.00")
 
 
 def test_gasto_por_quincena_filtra_totales(bd) -> None:

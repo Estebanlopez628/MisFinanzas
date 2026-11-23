@@ -80,7 +80,7 @@ contenido %}
 
       <ul class="lista-parametros lista-parametros--compacta">
         <li>
-          <span>Ingreso proyectado</span>
+          <span>Sueldo devengado</span>
           <strong data-ingreso-quincena="{{ quincena.numero }}">{{ quincena.ingreso | cop }}</strong>
         </li>
         <li>
@@ -660,10 +660,10 @@ contenido %}
 
       <div class="resultado-principal">
         <span class="resultado-principal__etiqueta"
-          >Sueldo-percibido</span
+          >Total devengado</span
         >
-        <strong class="resultado-principal__valor" data-campo="saldo_bolsillo">
-          {%- if resultado %}{{ resultado.saldo_bolsillo | cop }}{% else %}—{%
+        <strong class="resultado-principal__valor" data-campo="total_devengado_consolidado">
+          {%- if resultado %}{{ total_devengado_consolidado | cop }}{% else %}—{%
           endif -%}
         </strong>
         <span class="resultado-principal__nota">

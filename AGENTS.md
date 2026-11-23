@@ -194,20 +194,22 @@ Plataforma web/móvil híbrida (PWA) con backend y frontend **100% Python**, arq
 26. **Scroll e íconos (SRS v4.4):** `history.scrollRestoration = "manual"`; restaurar con `scrollTo({ top: savedScrollY, behavior: "instant" })` y anclar con `scrollIntoView({ behavior: "instant", block: "nearest" })`. Ícono OLB_BYTE a 24 px en navegación y 28 px en el encabezado interno; ícono PWA neón azul intacto.
 27. **Dona global (SRS v4.5):** base = sueldo + ingresos brutos de extras; categorías homólogas sumadas en una sola tajada; una sola tajada «Total libre» con sub-desglose apilado por origen en la leyenda (`.dona__desglose`). La dona individual de Trabajos Extras y el cálculo del Consejero no se tocan.
 28. **Deudas y velocímetros (SRS v4.5):** descripción editable en el modal y en `PUT/PATCH /api/deudas/{id}`, con validación en vivo, «Eliminar» propio y bloqueo síncrono de «Actualizar». Escritorio: 640 px y SVG 156×88; móvil: 540 px y SVG 120×68. El bloque de escritorio debe vivir en un `@media (min-width: 768px)` de nivel superior (hay un `@media (max-width: 767px)` abierto aguas arriba).
+29. **Nómina 2026 (SRS v4.8):** divisor de 220 horas y siete factores (1.25, 1.75, 2.15, 2.65, 0.35, 0.90, 1.25); se admiten horas decimales. El auxilio se paga en el corte de deducciones y las etiquetas son «Sueldo devengado» y «Total devengado», sin guiones. Cualquier migración debe usar parámetros nombrados con `text()` para funcionar en SQLite y PostgreSQL.
 
 ---
 
 ## 6. Reglas del Motor Financiero (Colombia)
 
-- **Base mensual legal:** 210 horas laborales (jornada de 42h semanales).
+- **Base mensual legal:** **220 horas** para 2026 (Ley 2101), sobreescribible con `HORAS_MENSUALES` (ADR-77). Antes era 210.
 - **Deducciones de ley (sólo lectura):** 4% Salud + 4% Pensión sobre el **salario devengado** del periodo: sueldo básico + horas extras y recargos − descuento por incapacidad (SRS v1.4, ADR-19). Esta regla reemplaza la anterior, que usaba solo el sueldo básico.
 - **Factores de recargos:**
   - Extra Diurna Normal: `1.25`
   - Extra Nocturna: `1.75`
-  - Extra Diurna Dominical/Festiva: `2.00`
-  - Extra Nocturna Dominical/Festiva: `2.50`
-  - Recargo Nocturno: `0.35`
-  - Recargo Dominical/Festivo: `1.90`
+  - Extra Diurna Dominical/Festiva: `2.15` (antes 2.00)
+  - Extra Nocturna Dominical/Festiva: `2.65` (antes 2.50)
+  - Recargo Nocturno Ordinario: `0.35`
+  - Recargo Ordinario Dominical/Festivo: `0.90` (antes 1.90, no duplica la hora base)
+  - Recargo Nocturno Dominical/Festivo: `1.25` (7.º concepto, nuevo en 2026)
 - **Auxilio de Transporte:** valor vigente **COP 249.095** (parametrizable con `AUXILIO_TRANSPORTE`); se anula ($0) si `Sueldo Básico + Recargos` > 2 SMMLV (**COP 3.501.810**, parametrizable con `SMMLV`). Actualizado el 2026-11-22 (antes $200.000).
 - **Incapacidades (origen común):** días 1–2 al 100% (empleador); días 3+ al 66.67% (descuento del 33.33% a cargo de EPS). Los días son **calendario** (`fin − inicio + 1`) y no se digitan; la regla 100 %/66,67 % se aplica una sola vez sobre la incapacidad completa. Si el rango cruza de mes, cada mes descuenta **solo su tramo** (`registro_incapacidades.tramos_del_mes`); **no hay rollover** (ADR-20). La incapacidad entra en la caja única de deducciones de ley.
 - **Deudas (SRS v1.9, ADR-53 + ADR-58):** seis datos (acreedor, descripción, total adeudado, cuota, cuotas pendientes y periodicidad quincenal/mensual). Se acepta `cuota × cuotas >= total`: el excedente es interés implícito que se calcula en privado (`tasa_implicita_simulada`, `amortizacion_simulada`) y **nunca se guarda ni se muestra**. Solo se rechaza `cuota × cuotas < total` con el mensaje fijo de la sección 2.2. Los pagos reales siguen abonando capital con `interes = 0`; al abrir el módulo se aplican las cuotas vencidas en `pagos_deuda` (idempotente por `UNIQUE(id_deuda, numero_cuota)`). No existe abono manual.
@@ -489,3 +491,5 @@ La configuración vive en `.vscode/launch.json`. También existe **Pruebas (pyte
 - [x] **SRS v4.5 — Bloques 1 a 3:** dona global agrupada con desglose apilado por origen, descripción editable en deudas con `PUT/PATCH /api/deudas/{id}` y velocímetros de 156×88 en escritorio (móvil intacto). Se corrigió un `@media (max-width: 767px)` abierto que anidaba la regla de escritorio.
 - [x] **SRS v4.5 — Cierre documental y QA:** Guías, Diccionario, Constitución, `MEMORY.md` (ADR-76), `AGENTS.md` y SRS §16 sincronizados como línea base vigente. `sw.js` en `olb-finanzas-v101`. Verificación: **801 pruebas** en verde, `compileall`, `node --check` y `generar_guia.py --verificar` correctos; gate QA `scripts/qa_v4_5.py` **34/34** ejecutado antes del push.
 - [x] **Auxilio de transporte $249.095 (2026-11-22):** predeterminado corregido en `ParametrosNomina`, pruebas y documentación actualizadas, **801 pruebas** en verde. Pendiente: revisar `AUXILIO_TRANSPORTE` en Render si estaba definido en `200000`.
+- [x] **SRS v4.8 — Bloques 1 y 2:** siete factores 2026, divisor 220, migración del concepto histórico, auxilio integrado en el corte de deducciones y etiquetas «Sueldo devengado» / «Total devengado».
+- [x] **SRS v4.8 — Cierre documental y QA:** Guías, Diccionario, Constitución, `MEMORY.md` (ADR-77), `AGENTS.md` y SRS §17 sincronizados como línea base vigente. `sw.js` en `olb-finanzas-v102`. Verificación: **813 pruebas** en verde y gate QA `scripts/qa_v4_8.py` **19/19** antes del push. Migración ejecutada también contra Neon con parámetros nombrados.

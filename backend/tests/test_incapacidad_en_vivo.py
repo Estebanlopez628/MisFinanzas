@@ -113,10 +113,11 @@ def test_horas_extras_suben_salud_y_pension_en_vivo(cliente_admin: TestClient) -
     base = _calcular(cliente_admin)
     con_extras = _calcular(cliente_admin, horas_EXTRA_NOCTURNA="10")
 
-    # 4 % de 3.000.000 = 120.000; con 250.000 de recargo, 4 % de 3.250.000 = 130.000.
+    # SRS v4.8: 4 % de 3.000.000 = 120.000; con 238.636,36 de recargo (220 h),
+    # 4 % de 3.238.636,36 = 129.545,45.
     assert base["datos"]["deduccion_salud"] == "$120.000"
-    assert con_extras["datos"]["deduccion_salud"] == "$130.000"
-    assert con_extras["datos"]["deduccion_pension"] == "$130.000"
+    assert con_extras["datos"]["deduccion_salud"] == "$129.545"
+    assert con_extras["datos"]["deduccion_pension"] == "$129.545"
 
 
 def test_incapacidad_baja_salud_y_pension_en_vivo(cliente_admin: TestClient) -> None:

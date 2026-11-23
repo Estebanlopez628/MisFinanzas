@@ -106,4 +106,12 @@ En **Registro y Detalles de deudas** ya puedes corregir el nombre o la descripci
 
 En la computadora, los dos velocímetros de la comparativa de cierre del Consejero son un poco más grandes y siguen uno al lado del otro. En el celular mantienen su tamaño de siempre.
 
+### Cambios de la versión 4.8
+
+Colombia actualizó la liquidación de horas extras y recargos para 2026. Ahora hay **siete conceptos** y la hora ordinaria se calcula dividiendo el salario entre **220 horas** al mes. Los factores son: hora extra diurna ×1,25; extra nocturna ×1,75; extra diurna dominical/festiva ×2,15; extra nocturna dominical/festiva ×2,65; recargo nocturno ordinario ×0,35; recargo ordinario dominical/festivo ×0,90; y el nuevo **recargo nocturno dominical/festivo ×1,25**. Puedes escribir horas con decimales, por ejemplo 10,4.
+
+Las quincenas muestran ahora el dinero real que recibes. La primera lleva su porcentaje del salario; la segunda reúne el porcentaje restante, el **auxilio de transporte** y las horas extras y recargos, y de ahí se descuentan salud y pensión. En el ejemplo de $3.484.000 con 40 % y 60 %, la primera quincena es $1.393.600 y la segunda deja **$2.060.775** netos antes de gastos fijos. El total del periodo es **$3.454.375**.
+
+Por eso las etiquetas cambiaron: en cada tarjeta de pago verás **«Sueldo devengado»** y en el resultado del periodo **«Total devengado»**, ambas sin guiones.
+
 © 2026 MisFinanzas

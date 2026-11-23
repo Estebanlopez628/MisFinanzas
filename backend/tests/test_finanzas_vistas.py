@@ -33,7 +33,7 @@ def test_formulario_incluye_todos_los_campos(cliente_usuario: TestClient) -> Non
     for campo in SEIS_CAMPOS_HORAS:
         assert f'name="{campo}"' in respuesta.text, campo
     assert 'data-calculadora' in respuesta.text
-    assert 'data-campo="saldo_bolsillo"' in respuesta.text
+    assert 'data-campo="total_devengado_consolidado"' in respuesta.text
     assert "js/finanzas.js" in respuesta.text
 
 
@@ -48,16 +48,16 @@ def test_post_clasico_sin_horas(cliente_usuario: TestClient) -> None:
 
 
 def test_post_clasico_con_horas_extras(cliente_usuario: TestClient) -> None:
-    """10 horas nocturnas: recargo 250.000; salud y pensión sobre 3.250.000 (SRS v1.4)."""
+    """SRS v4.8: 10 horas nocturnas sobre 220 h dan 238.636,36 de recargo."""
     respuesta = cliente_usuario.post(
         RUTA,
         data={"sueldo_basico": "3000000", "horas_EXTRA_NOCTURNA": "10"},
     )
 
     assert respuesta.status_code == 200
-    assert "3.239.095" in respuesta.text
+    assert "3.228.640" in respuesta.text
     assert "Hora extra nocturna" in respuesta.text
-    assert "250.000" in respuesta.text
+    assert "238.636" in respuesta.text
 
 
 def test_post_clasico_anula_auxilio_sobre_el_tope(cliente_usuario: TestClient) -> None:
@@ -124,7 +124,7 @@ def test_json_incluye_el_desglose_de_recargos(cliente_usuario: TestClient) -> No
     assert fila["etiqueta"] == "Hora extra diurna dominical/festiva"
     assert fila["horas"] == "4,00"
     assert "factor" not in fila
-    assert fila["valor"] == "$114.286"
+    assert fila["valor"] == "$117.273"
 
 
 def test_json_anula_el_auxilio_y_explica_el_motivo(cliente_usuario: TestClient) -> None:

@@ -23,13 +23,17 @@ from functools import lru_cache
 # Las claves coinciden con los valores del enum `tipo_hora` del diccionario de
 # datos, lo que permite persistir el registro sin traducciones adicionales.
 # ---------------------------------------------------------------------------
+# SRS v4.8: tabla oficial vigente en Colombia para 2026 (7 conceptos).
+# El recargo dominical/festivo diurno deja de duplicar la hora base (antes 1.90)
+# y se separa del nocturno dominical/festivo, que es un concepto nuevo.
 FACTORES_RECARGO: dict[str, Decimal] = {
     "EXTRA_DIURNA_NORMAL": Decimal("1.25"),
     "EXTRA_NOCTURNA": Decimal("1.75"),
-    "EXTRA_DIURNA_DOMINICAL_FESTIVA": Decimal("2.00"),
-    "EXTRA_NOCTURNA_DOMINICAL_FESTIVA": Decimal("2.50"),
+    "EXTRA_DIURNA_DOMINICAL_FESTIVA": Decimal("2.15"),
+    "EXTRA_NOCTURNA_DOMINICAL_FESTIVA": Decimal("2.65"),
     "RECARGO_NOCTURNO": Decimal("0.35"),
-    "RECARGO_DOMINICAL_FESTIVO": Decimal("1.90"),
+    "RECARGO_DOMINICAL_FESTIVO": Decimal("0.90"),
+    "RECARGO_NOCTURNO_DOMINICAL_FESTIVO": Decimal("1.25"),
 }
 
 # Etiquetas legibles para la interfaz. Se mantienen separadas de los factores
@@ -39,8 +43,9 @@ ETIQUETAS_TIPO_HORA: dict[str, str] = {
     "EXTRA_NOCTURNA": "Hora extra nocturna",
     "EXTRA_DIURNA_DOMINICAL_FESTIVA": "Hora extra diurna dominical/festiva",
     "EXTRA_NOCTURNA_DOMINICAL_FESTIVA": "Hora extra nocturna dominical/festiva",
-    "RECARGO_NOCTURNO": "Recargo nocturno",
-    "RECARGO_DOMINICAL_FESTIVO": "Recargo dominical/festivo",
+    "RECARGO_NOCTURNO": "Recargo nocturno ordinario",
+    "RECARGO_DOMINICAL_FESTIVO": "Recargo ordinario dominical/festivo",
+    "RECARGO_NOCTURNO_DOMINICAL_FESTIVO": "Recargo nocturno dominical/festivo",
 }
 
 
@@ -71,7 +76,8 @@ class ParametrosNomina:
     una liquidación; cualquier cambio debe hacerse por configuración.
 
     Attributes:
-        horas_mensuales: Base legal mensual de 210 horas (jornada de 42 h/semana).
+        horas_mensuales: Base legal mensual de 220 horas para 2026 (Ley 2101),
+            sobreescribible con `HORAS_MENSUALES`.
         porcentaje_salud: Aporte obligatorio de salud del empleado (4%).
         porcentaje_pension: Aporte obligatorio de pensión del empleado (4%).
         smmlv: Salario Mínimo Legal Mensual Vigente usado para el tope del auxilio.
@@ -80,7 +86,7 @@ class ParametrosNomina:
         porcentaje_pago_desde_dia_tres: Porcentaje reconocido por la EPS del día 3 en adelante.
     """
 
-    horas_mensuales: Decimal = Decimal("210")
+    horas_mensuales: Decimal = Decimal("220")
     porcentaje_salud: Decimal = Decimal("0.04")
     porcentaje_pension: Decimal = Decimal("0.04")
     smmlv: Decimal = Decimal("1750905.00")

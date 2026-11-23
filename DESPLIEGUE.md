@@ -34,7 +34,7 @@ No se necesita Node.js, npm ni ningún empaquetador JavaScript.
 | `LIMITE_INTENTOS_LOGIN` | `5` | No | Fallos por IP + correo antes del `429`. |
 | `SMMLV` | `1750905` | No | Salario mínimo usado para el tope de 2 SMMLV. |
 | `AUXILIO_TRANSPORTE` | `249095` | No | Valor del auxilio vigente (actualizado 2026-11-22). Si Render tiene definida esta variable con el valor anterior, hay que cambiarla allí: la variable de entorno gana sobre el predeterminado. |
-| `HORAS_MENSUALES` | `210` | No | Base de la hora ordinaria. |
+| `HORAS_MENSUALES` | `220` | No | Base de la hora ordinaria desde 2026 (Ley 2101). Si Render tiene `210`, definirlo en `220`. |
 | `PORCENTAJE_SALUD` | `0.04` | No | Aporte de salud del empleado. |
 | `PORCENTAJE_PENSION` | `0.04` | No | Aporte de pensión del empleado. |
 | `PORCENTAJE_PAGO_INCAPACIDAD` | `66.67` | No | Porcentaje reconocido por la EPS desde el día 3. |

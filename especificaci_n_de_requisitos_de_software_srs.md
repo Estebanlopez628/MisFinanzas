@@ -597,3 +597,43 @@ Se conservan sin cambio la dona individual de Trabajos Extras, el «Saldo libre 
 - Usuarios QA: `prueba_qa@misfinanzas.local` / `QA_MisFinanzas_2026!` y `prueba_qa_admin@misfinanzas.local` / `QA_Admin_2026!`.
 - `scripts/qa_v4_5.py`: **34/34 comprobaciones** en Chromium a 360/390/768/1280 px. Solo después del gate se ejecutaron `git add`, `commit` y `push`.
 - Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-76), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.5.
+
+---
+
+## 17. SRS v4.8 — Liquidación oficial 2026 y quincenas reales
+
+Versión 4.8 y **línea base vigente**. Dos ajustes ejecutables sobre la línea base anterior.
+
+### 17.1 Regla suprema de no regresión
+
+No se tocan la dona global con desglose apilado, la dona individual de Trabajos Extras, el Consejero, los velocímetros web 156×88, Deudas ni su edición de descripción, Atajos Guardados, selectores de fecha, modales propios, WhatsApp, OLB_BYTE ni Ayuda. Se conserva la admisión de horas enteras y decimales (por ejemplo, 10,4).
+
+### 17.2 Tabla oficial de siete conceptos (2026)
+
+`Hora Ordinaria = Salario Mensual Base / 220` (divisor 2026, sobreescribible con `HORAS_MENSUALES`).
+
+| # | Concepto | Fórmula |
+| --- | --- | --- |
+| 1 | Hora Extra Diurna Normal | Hora Ordinaria × 1.25 |
+| 2 | Hora Extra Nocturna | Hora Ordinaria × 1.75 |
+| 3 | Hora Extra Diurna Dominical o Festiva | Hora Ordinaria × 2.15 |
+| 4 | Hora Extra Nocturna Dominical o Festiva | Hora Ordinaria × 2.65 |
+| 5 | Recargo Nocturno Ordinario | Hora Ordinaria × 0.35 |
+| 6 | Recargo Ordinario Dominical o Festivo | Hora Ordinaria × 0.90 |
+| 7 | Recargo Nocturno Dominical o Festivo | Hora Ordinaria × 1.25 |
+
+Los registros históricos bajo `Recargo Dominical o Festivo Diurno/Nocturno` se mapean a la clave canónica `RECARGO_DOMINICAL_FESTIVO` con factor 0.90, sin reescribir el `valor_total` ya liquidado. La migración es idempotente y válida en SQLite y PostgreSQL.
+
+### 17.3 Liquidación real de cortes y etiquetas
+
+- Quincena 1: `Sueldo devengado = Salario base × %Q1`; solo se restan sus gastos fijos y créditos vinculados.
+- Quincena 2 (o pago mensual): `Sueldo devengado = Salario base × %Q2 + Auxilio de Transporte vigente + Horas extras y recargos`; de ahí se descuentan las deducciones de ley del corte.
+- `Saldo libre restante = Sueldo devengado − Deducciones de ley − Deducciones fijas − Gastos fijos del corte`.
+- Caso base verificado: sueldo $3.484.000 (40 %/60 %), auxilio $249.095 → Q1 $1.393.600; Q2 $2.339.495 − $278.720 = **$2.060.775** netos; total consolidado **$3.454.375**.
+- Etiquetas: «Ingreso proyectado» → **«Sueldo devengado»**; «Sueldo-percibido» → **«Total devengado»**, ambas sin guiones.
+
+### 17.4 Gate QA y cierre documental
+
+- Usuarios QA: `prueba_qa@misfinanzas.local` / `QA_MisFinanzas_2026!` y `prueba_qa_admin@misfinanzas.local` / `QA_Admin_2026!`.
+- `scripts/qa_v4_8.py`: **19/19 comprobaciones** en Chromium, incluidos los siete conceptos, 10,4 h del nuevo recargo, el caso base de quincenas y la no regresión. Solo tras el gate se ejecutaron `git add`, `commit` y `push`.
+- Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-77), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.8.

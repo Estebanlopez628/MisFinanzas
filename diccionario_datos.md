@@ -689,3 +689,29 @@ Cada arco expone `desglose: [{origen, valor, porcentaje}]`. El sub-desglose se e
 **Campo editable:** `deudas.descripcion` (VARCHAR 150, §8) pasa a ser modificable desde el modal y desde `PUT /api/deudas/{id}` / `PATCH /api/deudas/{id}`; el endpoint devuelve el objeto actualizado. Los campos omitidos conservan su valor actual.
 
 **Velocímetros:** parámetros de presentación sin persistencia. Escritorio (`>= 768px`): `max-width: 640px`, `gap: 20px`, SVG `156×88`. Móvil: `max-width: 540px`, SVG `120×68`.
+
+## 17. SRS v4.8 — Nómina 2026 (sin cambios de esquema)
+
+**Divisor de hora ordinaria:** `HORAS_MENSUALES = 220` (antes 210). `Hora Ordinaria = sueldo_basico / 220`, conservando 4 decimales. Se admiten `cantidad_horas` decimales en `registros_horas_extra.cantidad_horas` (`NUMERIC(6,2)`).
+
+**Catálogo de siete conceptos** (`core/config.py :: FACTORES_RECARGO`):
+
+| Clave | Concepto | Factor |
+| --- | --- | --- |
+| `EXTRA_DIURNA_NORMAL` | Hora extra diurna normal | 1.25 |
+| `EXTRA_NOCTURNA` | Hora extra nocturna | 1.75 |
+| `EXTRA_DIURNA_DOMINICAL_FESTIVA` | Hora extra diurna dominical/festiva | 2.15 |
+| `EXTRA_NOCTURNA_DOMINICAL_FESTIVA` | Hora extra nocturna dominical/festiva | 2.65 |
+| `RECARGO_NOCTURNO` | Recargo nocturno ordinario | 0.35 |
+| `RECARGO_DOMINICAL_FESTIVO` | Recargo ordinario dominical/festivo | 0.90 |
+| `RECARGO_NOCTURNO_DOMINICAL_FESTIVO` | Recargo nocturno dominical/festivo | 1.25 |
+
+`registros_horas_extra.tipo_hora` guarda la clave canónica. La migración `_migrar_tipos_hora_2026()` reescribe `Recargo Dominical o Festivo Diurno/Nocturno` → `RECARGO_DOMINICAL_FESTIVO` y su `factor_aplicado` a 0.90, sin tocar `valor_total`.
+
+**Fórmulas por corte** (`ResumenQuincena`):
+- `ingreso (Sueldo devengado)`: Q1 = `sueldo × %Q1`; Q2 (o pago mensual) = `sueldo × %Q2 + auxilio_transporte + recargos`, en el corte configurado en `perfil.quincena_deducciones`.
+- `devengado_neto`: `ingreso − deducciones de ley del corte`.
+- `saldo_libre`: `ingreso − deducciones de ley − deducciones fijas − gastos fijos del corte`.
+- `total_devengado_consolidado`: suma de `devengado_neto` de todos los cortes del mes.
+
+**Nomenclatura:** «Ingreso proyectado» → `Sueldo devengado`; «Sueldo-percibido» → `Total devengado`. El campo JSON reactivo `total_devengado_consolidado` expone el valor formateado; `saldo_bolsillo` se mantiene por compatibilidad.

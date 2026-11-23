@@ -63,18 +63,19 @@ def main() -> None:
         cuenta, accion = _asegurar_cuenta(
             bd, CORREO_QA, CONTRASENA_QA, ALIAS_QA, usuarios.ROL_USUARIO
         )
-        if not perfiles.perfil_configurado(bd, cuenta.id_usuario):
-            perfiles.guardar_perfil(
-                bd,
-                cuenta.id_usuario,
-                Decimal("3484000"),
-                "QUINCENAL",
-                porcentaje_quincena_1="50",
-                porcentaje_quincena_2="50",
-                quincena_deducciones=1,
-                dia_quincena_1=15,
-                dia_quincena_2=30,
-            )
+        # SRS v4.8: el perfil QA replica el caso base (40 % Q1 / 60 % Q2,
+        # deducciones en Q2) para comprobar el neto real de 2.060.775 COP.
+        perfiles.guardar_perfil(
+            bd,
+            cuenta.id_usuario,
+            Decimal("3484000"),
+            "QUINCENAL",
+            porcentaje_quincena_1="40",
+            porcentaje_quincena_2="60",
+            quincena_deducciones=2,
+            dia_quincena_1=15,
+            dia_quincena_2=30,
+        )
         if not deudas.listar_deudas(bd, cuenta.id_usuario):
             deuda = deudas.crear_deuda(
                 bd, cuenta.id_usuario, "Banco QA", "1.200.000", "300.000", 4,

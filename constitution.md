@@ -81,3 +81,10 @@ Principios innegociables. Toda especificación, plan y tarea debe cumplirlos de 
     - La descripción de una deuda es editable desde el modal y desde `PUT/PATCH /api/deudas/{id}`, preservando validaciones, borrado confirmado y bloqueo anti-doble clic.
     - En escritorio (`>= 768px`) los velocímetros miden 156×88 px en dos columnas de hasta 640 px; el móvil conserva 120×68 px.
     - Ningún bloque se publica sin el gate QA con usuario de prueba y la documentación sincronizada.
+
+17. **Cumplimiento laboral colombiano 2026 (SRS v4.8):**
+    - La hora ordinaria se calcula sobre 220 horas mensuales, con `HORAS_MENSUALES` como sobreescritura configurada.
+    - La matriz oficial tiene siete conceptos con factores 1.25, 1.75, 2.15, 2.65, 0.35, 0.90 y 1.25; se admiten horas decimales y se migran limpiamente los conceptos históricos.
+    - El auxilio de transporte se liquidó realmente en el corte que lleva las deducciones de ley, y el saldo neto de cada quincena refleja el valor consignado.
+    - La nomenclatura visual es «Sueldo devengado» y «Total devengado», sin guiones.
+    - El motor de nómina, la tabla de factores, la migración y las etiquetas se verifican con el usuario de prueba antes de cualquier publicación.

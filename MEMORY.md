@@ -2316,6 +2316,19 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 - Documentación actualizada: `DESPLIEGUE.md` (predeterminado y aviso de que la variable de Render gana sobre el código), `Guia.md`, `AGENTS.md` §6, SRS RF-07. **801 pruebas** en verde.
 - **Pendiente de despliegue:** si Render tiene `AUXILIO_TRANSPORTE=200000`, definirlo en `249095`; de lo contrario seguirá aplicando el valor anterior aunque el código esté corregido.
 
+### 2026-11-22 — SRS v4.8: liquidación oficial 2026 y quincenas reales (ADR-77)
+
+**Decisión (ADR-77).** Se adopta la tabla colombiana vigente de siete conceptos: 1.25, 1.75, 2.15, 2.65, 0.35, 0.90 y 1.25 (nuevo recargo nocturno dominical/festivo). El divisor de la hora ordinaria pasa de 210 a **220** (Ley 2101), manteniendo `HORAS_MENSUALES` como sobreescritura. La SRS prevalece sobre la regla histórica de 210 horas de la skill; queda documentado aquí.
+
+**Consecuencias aplicadas.**
+- `FACTORES_RECARGO` y `ETIQUETAS_TIPO_HORA` se actualizan en `core/config.py`; el séptimo concepto aparece automáticamente en el formulario y en la API porque ambos se derivan de la matriz.
+- `_migrar_tipos_hora_2026()` en `core/base_datos.py` mapea `Recargo Dominical o Festivo Diurno/Nocturno` a `RECARGO_DOMINICAL_FESTIVO` y ajusta el factor a 0.90. Usa parámetros nombrados con `text()` porque `exec_driver_sql` con `?` falla en PostgreSQL. Es idempotente; el `valor_total` histórico no se reescribe.
+- `ResumenQuincena.devengado_neto` y el parámetro `auxilio_transporte` permiten integrar el auxilio en el corte de deducciones. El total neto consolidado se publica como `total_devengado_consolidado` en la vista y en el JSON reactivo.
+- Etiquetas limpias: «Sueldo devengado» y «Total devengado» (sin guiones).
+- Caso base verificado: $1.393.600 + $2.060.775 = $3.454.375.
+
+**Verificación.** `sw.js` en `olb-finanzas-v102`; **813 pruebas** en verde, `compileall`, `node --check` y `generar_guia.py --verificar` correctos. Gate QA `scripts/qa_v4_8.py`: **19/19 comprobaciones** en Chromium a 360/390/768/1280 px. Las pruebas históricas se ajustaron a los nuevos factores y al divisor 220 sin relajar ninguna aserción.
+
 
 
 

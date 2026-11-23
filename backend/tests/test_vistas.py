@@ -110,11 +110,11 @@ def test_visitante_puede_ver_el_login(cliente: TestClient) -> None:
 
 
 def test_vista_mis_finanzas_expone_parametros_legales(cliente_usuario: TestClient) -> None:
-    """La vista de finanzas debe mostrar la base de 210 horas y el tope de 2 SMMLV."""
+    """La vista de finanzas debe mostrar la base de 220 horas y el tope de 2 SMMLV."""
     respuesta = cliente_usuario.get("/finanzas")
 
     assert respuesta.status_code == 200
-    assert "210" in respuesta.text
+    assert "220" in respuesta.text
     assert "3.501.810" in respuesta.text
     assert 'data-calculadora' in respuesta.text
 
