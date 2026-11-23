@@ -100,3 +100,8 @@ Principios innegociables. Toda especificación, plan y tarea debe cumplirlos de 
     - El Consejero y sus gráficas nunca inventan intereses ni totales inflados: comunican reducción real de capital, plazos exactos y fechas con meses completos en español.
     - Cada deuda se identifica con nombre, saldo y cuota; la cuota liberada se desglosa por deuda.
     - El ajuste de layout del panel de gráficas es exclusivo de escritorio; la vista móvil se conserva.
+
+20. **Estética de los velocímetros sin alterar su dimensión (SRS v4.17):**
+    - El dial radial tipo cockpit, sus micro-marcas, el resplandor neón y la aguja con pivote son mejoras visuales; los tamaños vigentes y las cifras del Consejero son inmutables.
+    - La variante azul corresponde a «Pago mínimo» y la esmeralda a «Con excedente», con texto centrado y la píldora de meses ganados solo en esta última.
+    - Las reglas CSS del componente se declaran fuera de media queries móviles para que el estilo aplique en web y móvil sin cambiar su distribución.

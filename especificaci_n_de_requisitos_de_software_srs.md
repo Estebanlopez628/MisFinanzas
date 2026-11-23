@@ -700,3 +700,26 @@ En `>= 768px`: la curva de 12 meses ocupa el 100 % del ancho con etiquetas de sa
 - Usuarios QA: `prueba_qa@misfinanzas.local` / `QA_MisFinanzas_2026!` y `prueba_qa_admin@misfinanzas.local` / `QA_Admin_2026!`.
 - `scripts/qa_v4_13.py`: **21/21 comprobaciones** en Chromium, incluidas tarjetas limpias, Consejero sin cifras ficticias, meses completos y comparación de layout escritorio/móvil. Solo tras el gate se ejecutaron `git add`, `commit` y `push`.
 - Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-79), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.13.
+
+---
+
+## 20. SRS v4.17 — Velocímetros tipo cockpit (solo estilo visual)
+
+Versión 4.17 y **línea base vigente**. Único cambio: la personalización visual de los dos velocímetros del Consejero.
+
+### 20.1 Conservación estricta
+
+Se mantienen las dimensiones vigentes —120×68 px en móvil y 156×88 px en escritorio, dentro del contenedor de dos columnas— y no se modifica ningún otro módulo de la línea base v4.13. Las cifras y textos siguen siendo los calculados por `Consejo.cierre`.
+
+### 20.2 Diseño aprobado
+
+- Dial radial tipo cockpit con anillo exterior de precisión, 41 micro-marcas de graduación, pista base oscura, arco activo con resplandor y aguja con pivote iluminado.
+- Variante azul para «Pago mínimo» (`mfArcBlue` / `mfGlowBlue`) y esmeralda para «Con excedente» (`mfArcGreen` / `mfGlowGreen`).
+- Jerarquía de texto centrada debajo del dial: título, fecha completa en español, duración «En N meses» y línea inferior con saldo real y condición (`Sin abono extra` / `Abonando +$X/mes`). La variante verde añade la píldora oscura «-N meses antes» cuando hay meses ganados.
+- Las reglas CSS del componente se declaran fuera de cualquier media query para que apliquen en web y móvil; solo cambia el estilo, nunca el tamaño.
+
+### 20.3 Gate QA y cierre documental
+
+- Usuarios QA: `prueba_qa@misfinanzas.local` / `QA_MisFinanzas_2026!` y `prueba_qa_admin@misfinanzas.local` / `QA_Admin_2026!`.
+- `scripts/qa_v4_17.py`: **14/14 comprobaciones** en Chromium, incluidos tamaños computados 156×88 y 120×68, 41 marcas, resplandor azul/esmeralda y texto centrado. Solo tras el gate se ejecutaron `git add`, `commit` y `push`.
+- Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-80), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.17.

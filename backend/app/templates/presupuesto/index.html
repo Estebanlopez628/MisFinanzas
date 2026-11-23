@@ -162,39 +162,92 @@
 
           <div class="cierre-deuda__velocimetros"
                style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; width: 100%; max-width: 540px; margin: 0 auto 16px auto;">
-            <article class="cierre-deuda__velocimetro cierre-deuda__velocimetro--base"
+            {# SRS v4.17: mismo tamaño vigente, nuevo dial tipo cockpit. #}
+            <article class="cierre-deuda__velocimetro mf-gauge-card"
+                     data-variant="minimo"
                      style="min-width: 0; display: flex; flex-direction: column; align-items: center;">
-              <svg viewBox="0 0 120 70" width="120" height="68"
+              <svg class="mf-cockpit-dial" viewBox="0 0 240 138" width="120" height="68"
                    style="width: 120px; height: 68px; flex-shrink: 0;"
                    aria-hidden="true" focusable="false">
-                <path d="M 12 60 A 48 48 0 0 1 108 60" fill="none" stroke="#1E293B" stroke-width="12" stroke-linecap="round" />
-                <path d="M 12 60 A 48 48 0 0 1 68 13" fill="none" stroke="#3B82F6" stroke-width="12" stroke-linecap="round" />
-                <line x1="60" y1="60" x2="45" y2="24" stroke="#60A5FA" stroke-width="3" stroke-linecap="round" />
-                <circle cx="60" cy="60" r="4" fill="#3B82F6" />
+                <defs>
+                  <linearGradient id="mfArcBlue" x1="0%" y1="100%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#1D4ED8" />
+                    <stop offset="60%" stop-color="#38BDF8" />
+                    <stop offset="100%" stop-color="#7DD3FC" />
+                  </linearGradient>
+                  <filter id="mfGlowBlue" x="-25%" y="-25%" width="150%" height="150%">
+                    <feGaussianBlur stdDeviation="3.5" result="blur" />
+                    <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+                  </filter>
+                </defs>
+                <path d="M 24 114 A 96 96 0 1 1 216 114" fill="none"
+                      stroke="rgba(148, 163, 184, 0.22)" stroke-width="1.5" />
+                <g class="mf-dial-ticks" data-ticks="41"></g>
+                <path d="M 36 112 A 84 84 0 1 1 204 112" fill="none"
+                      stroke="rgba(30, 41, 59, 0.85)" stroke-width="10" stroke-linecap="round" />
+                <path class="mf-dial-progress" d="M 36 112 A 84 84 0 1 1 204 112"
+                      fill="none" stroke-width="6" stroke-linecap="round" />
+                <text x="44" y="127" class="mf-dial-bound">0</text>
+                <text x="182" y="127" class="mf-dial-bound">2030</text>
+                <g class="mf-dial-needle" transform="rotate(28 120 112)">
+                  <polygon points="117.5,112 122.5,112 120.8,34 119.2,34" class="mf-needle-blade" />
+                  <circle cx="120" cy="112" r="8" class="mf-needle-hub-outer" />
+                  <circle cx="120" cy="112" r="3.5" class="mf-needle-hub-inner" />
+                </g>
               </svg>
-              <span>Pago mínimo</span>
-              <span class="cierre-deuda__insignia">{{ consejo.cierre.meses_minimo }} meses</span>
-              <strong>{{ consejo.cierre.fecha_cierre_base }}</strong>
-              <small>En {{ consejo.cierre.meses_minimo }} meses</small>
-              <small>Saldo actual: {{ consejo.cierre.saldo_actual | cop }} · Sin abono extra</small>
+              <div class="mf-gauge-meta">
+                <div class="mf-gauge-title">Pago mínimo</div>
+                <div class="mf-gauge-date">{{ consejo.cierre.fecha_cierre_base }}</div>
+                <div class="mf-gauge-months-row">
+                  <span class="mf-gauge-months">En {{ consejo.cierre.meses_minimo }} meses</span>
+                </div>
+                <div class="mf-gauge-sub">{{ consejo.cierre.saldo_actual | cop }} saldo · Sin abono extra</div>
+              </div>
             </article>
-            <article class="cierre-deuda__velocimetro cierre-deuda__velocimetro--optimo"
+            <article class="cierre-deuda__velocimetro cierre-deuda__velocimetro--optimo mf-gauge-card"
+                     data-variant="excedente"
                      style="min-width: 0; display: flex; flex-direction: column; align-items: center;">
-              <svg viewBox="0 0 120 70" width="120" height="68"
+              <svg class="mf-cockpit-dial" viewBox="0 0 240 138" width="120" height="68"
                    style="width: 120px; height: 68px; flex-shrink: 0;"
                    aria-hidden="true" focusable="false">
-                <path d="M 12 60 A 48 48 0 0 1 108 60" fill="none" stroke="#1E293B" stroke-width="12" stroke-linecap="round" />
-                <path d="M 12 60 A 48 48 0 0 1 102 38" fill="none" stroke="#10B981" stroke-width="12" stroke-linecap="round" />
-                <line x1="60" y1="60" x2="88" y2="30" stroke="#34D399" stroke-width="3" stroke-linecap="round" />
-                <circle cx="60" cy="60" r="4" fill="#10B981" />
+                <defs>
+                  <linearGradient id="mfArcGreen" x1="0%" y1="100%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#059669" />
+                    <stop offset="65%" stop-color="#10B981" />
+                    <stop offset="100%" stop-color="#6EE7B7" />
+                  </linearGradient>
+                  <filter id="mfGlowGreen" x="-25%" y="-25%" width="150%" height="150%">
+                    <feGaussianBlur stdDeviation="3.8" result="blur" />
+                    <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+                  </filter>
+                </defs>
+                <path d="M 24 114 A 96 96 0 1 1 216 114" fill="none"
+                      stroke="rgba(148, 163, 184, 0.22)" stroke-width="1.5" />
+                <g class="mf-dial-ticks" data-ticks="41"></g>
+                <path d="M 36 112 A 84 84 0 1 1 204 112" fill="none"
+                      stroke="rgba(30, 41, 59, 0.85)" stroke-width="10" stroke-linecap="round" />
+                <path class="mf-dial-progress" d="M 36 112 A 84 84 0 1 1 204 112"
+                      fill="none" stroke-width="6" stroke-linecap="round" />
+                <text x="44" y="127" class="mf-dial-bound">0</text>
+                <text x="182" y="127" class="mf-dial-bound">2030</text>
+                <g class="mf-dial-needle" transform="rotate(28 120 112)">
+                  <polygon points="117.5,112 122.5,112 120.8,34 119.2,34" class="mf-needle-blade" />
+                  <circle cx="120" cy="112" r="8" class="mf-needle-hub-outer" />
+                  <circle cx="120" cy="112" r="3.5" class="mf-needle-hub-inner" />
+                </g>
               </svg>
-              <span>Con excedente</span>
-              <span class="cierre-deuda__insignia">−{{ consejo.cierre.meses_ahorrados }} meses</span>
-              <strong>{{ consejo.cierre.fecha_cierre_opt }}</strong>
-              <small>En {{ consejo.cierre.meses_con_excedente }} meses ·
-                {{ consejo.cierre.meses_ahorrados }} meses antes</small>
-              <small>Saldo actual: {{ consejo.cierre.saldo_actual | cop }} ·
-                Abonando +{{ consejo.cierre.excedente_mensual | cop }}/mes</small>
+              <div class="mf-gauge-meta">
+                <div class="mf-gauge-title">Con excedente</div>
+                <div class="mf-gauge-date">{{ consejo.cierre.fecha_cierre_opt }}</div>
+                <div class="mf-gauge-months-row">
+                  <span class="mf-gauge-months">En {{ consejo.cierre.meses_con_excedente }} meses</span>
+                  {% if consejo.cierre.meses_ahorrados > 0 %}
+                    <span class="mf-gauge-badge">-{{ consejo.cierre.meses_ahorrados }} meses antes</span>
+                  {% endif %}
+                </div>
+                <div class="mf-gauge-sub">{{ consejo.cierre.saldo_actual | cop }} saldo ·
+                  Abonando +{{ consejo.cierre.excedente_mensual | cop }}/mes</div>
+              </div>
             </article>
           </div>
 

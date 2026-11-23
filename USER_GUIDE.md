@@ -128,4 +128,8 @@ Las tarjetas de Quincena 1, Quincena 2 y Pago Mensual son más simples: muestran
 
 El Consejero ya no habla de intereses inventados ni de totales inflados. Compara el saldo real de tus deudas y te dice en cuántos meses quedarías libre pagando solo el mínimo frente a usando tu excedente, con fechas completas como «Marzo 2030». Cada deuda aparece con su nombre, su saldo y su cuota mensual, y la cuota que liberas se desglosa deuda por deuda. Bajo la gráfica puedes tocar cualquier mes para ver el saldo base, el optimizado y cuánto capital extra llevas reducido. En la computadora la curva usa todo el ancho y los meses son píldoras oscuras; en el celular la gráfica se ve como antes.
 
+### Cambios de la versión 4.17
+
+Los dos velocímetros del Consejero ahora parecen diales de precisión: tienen un anillo con marcas finas, un arco luminoso y una aguja con centro iluminado. El de **Pago mínimo** brilla en azul y el de **Con excedente** en verde esmeralda, con una píldora que indica cuántos meses antes terminas. Debajo de cada dial verás, centrados, el título, la fecha completa, la duración en meses y el saldo real con la condición del escenario. Su tamaño no cambió: en la computadora y en el celular miden lo mismo que antes, y las cifras siguen siendo las que calcula el Consejero.
+
 © 2026 MisFinanzas

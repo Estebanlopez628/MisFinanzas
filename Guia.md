@@ -257,7 +257,7 @@ Principios que explican el resto del código:
 
 #### `backend/app/static/css/`
 
-- **`estilos.css`** · 5489 líneas — Fondo y superficies
+- **`estilos.css`** · 5582 líneas — Fondo y superficies
 - **`factura-olb.css`** · 711 líneas — Sello de Anulada si aplica
 
 #### `backend/app/static/js/`
@@ -269,7 +269,7 @@ Principios que explican el resto del código:
 - **`categorias.js`** · 526 líneas — Selector cerrado de categorías, vinculación con deudas y conservación de
   - Funciones: `idsDeudasActuales`, `datosFormulario`, `restaurarDatos`, `cerrar`, `abrir`, `alternar`, `sincronizar`, `sincronizar`, `vinculado`, `sincronizarValor`
 - **`comentarios.js`** · 46 líneas — Cambio de estado en el panel administrativo de reportes (SRS v2.0, 5.5).
-- **`consejero.js`** · 46 líneas — Tooltip táctil de la gráfica «Comparativa de cierre de deuda» (SRS v3.7).
+- **`consejero.js`** · 73 líneas — Tooltip táctil de la gráfica «Comparativa de cierre de deuda» (SRS v3.7).
   - Funciones: `mostrar`
 - **`deudas.js`** · 355 líneas — Interacción de filas con modal centrado (SRS v1.9, secciones 2.3 y 3.3).
   - Funciones: `esMovil`, `sacarDeLaTabla`, `devolverALaTabla`, `vigilarPortabilidad`, `cerrarOtras`, `conectarFilas`, `pendienteDeDeuda`, `numeroDeuda`, `validarPlan`, `numero`, `validarEdicion`
@@ -370,7 +370,7 @@ Principios que explican el resto del código:
 
 #### `backend/app/templates/presupuesto/`
 
-- **`index.html`** · 720 líneas — Plantilla: Gastos y Presupuesto
+- **`index.html`** · 773 líneas — Plantilla: Gastos y Presupuesto
 
 #### `backend/app/templates/privado/`
 
@@ -1551,6 +1551,12 @@ y desglose por deuda con nombre, saldo y cuota; nunca intereses ficticios.
 Las fechas llevan meses completos en español. La curva al 100 %, las
 sub-tarjetas de velocímetros y las píldoras oscuras de meses son exclusivas de
 `@media (min-width: 768px)`; el móvil conserva su distribución.
+
+En v4.17 los velocímetros llevan un dial radial tipo cockpit con 41 micro-marcas,
+resplandor azul (`Pago mínimo`) o esmeralda (`Con excedente`) y aguja con pivote.
+El texto se centra debajo en cuatro líneas: título, fecha completa, duración y
+saldo real con la condición del escenario. Los tamaños no cambiaron (120×68 en
+móvil, 156×88 en escritorio) y las reglas CSS se declaran fuera de media queries.
 | Coherencia de deuda | `cuota × cuotas = total adeudado` (tolerancia `$1 × cuotas`) |
 | Cuota final | `saldo_pendiente` (absorbe el redondeo y deja cero) |
 
@@ -1698,17 +1704,17 @@ Si quieres usar el logo como imagen en lugar del texto «OB / OLB BYTE», reempl
 ## 11. Lista de verificación antes de cerrar un bloque
 
 1. `python -m compileall -q app scripts` sin errores.
-2. `pytest -q` en verde (hoy: **826**; v4.13 añadió 7 y v4.10 cerró con 819).
+2. `pytest -q` en verde (hoy: **831**; v4.17 añadió 5 y v4.13 cerró con 826).
 3. `node --check` de todos los JS que se hayan tocado, sin errores.
 4. Migraciones nuevas probadas **dos veces** sobre copia de `finanzas.db` y aplicadas en Neon.
    Toda migración usa parámetros nombrados con `text()`: el estilo `?` de SQLite falla en PostgreSQL.
-5. `sw.js` con la caché subida si cambió CSS o JS (hoy: `olb-finanzas-v104`).
+5. `sw.js` con la caché subida si cambió CSS o JS (hoy: `olb-finanzas-v105`).
 6. `python scripts\generar_guia.py` y luego `--verificar` sin problemas (115 fichas).
-7. `MEMORY.md` con la bitácora y el ADR si cambió una regla (hoy: ADR-79 para v4.13).
+7. `MEMORY.md` con la bitácora y el ADR si cambió una regla (hoy: ADR-80 para v4.17).
 8. `AGENTS.md` §9 con el estado verificado y el conteo de pruebas.
-9. `constitution.md`, `diccionario_datos.md`, `USER_GUIDE.md` y la SRS con la versión activa (hoy: **v4.13**, sección 19).
-10. Para v4.13, además: `.venv\Scripts\python -m scripts.crear_usuario_qa.py` y
-    `.venv\Scripts\python -m scripts.qa_v4_13.py` con el servidor levantado (21 comprobaciones).
+9. `constitution.md`, `diccionario_datos.md`, `USER_GUIDE.md` y la SRS con la versión activa (hoy: **v4.17**, sección 20).
+10. Para v4.17, además: `.venv\Scripts\python -m scripts.crear_usuario_qa.py` y
+    `.venv\Scripts\python -m scripts.qa_v4_17.py` con el servidor levantado (14 comprobaciones).
 11. La regla de escritorio de los velocímetros debe estar en un `@media (min-width: 768px)`
     de nivel superior: aguas arriba hay un `@media (max-width: 767px)` abierto que anida
     cualquier bloque nuevo y lo deja inactivo en pantallas grandes.

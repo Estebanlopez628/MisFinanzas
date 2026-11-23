@@ -745,3 +745,17 @@ Cada arco expone `desglose: [{origen, valor, porcentaje}]`. El sub-desglose se e
 | `cuotas_liberadas_detalle` | Lista `{nombre, saldo, cuota}` de las deudas que cierran. |
 
 `ahorro_mostrado` es un alias de `reduccion_capital_12m`; no existe ningún campo de intereses. Las fechas usan nombres completos de meses en español y el detalle del mes seleccionado se calcula en `punto.base − punto.optimizado`.
+
+## 20. SRS v4.17 — Componente visual del velocímetro (sin cambios de esquema)
+
+El dial es presentación: no añade campos a `Consejo.cierre`. Lee `saldo_actual`, `fecha_cierre_base`, `fecha_cierre_opt`, `meses_minimo`, `meses_con_excedente`, `meses_ahorrados` y `excedente_mensual`.
+
+| Elemento | Origen / regla |
+| --- | --- |
+| `mf-cockpit-dial` | SVG `viewBox="0 0 240 138"`, tamaño heredado 120×68 en móvil y 156×88 en escritorio. |
+| `mf-dial-ticks` | 41 líneas generadas en `consejero.js`, una sola vez por SVG. |
+| `mf-dial-progress` | Degradado `mfArcBlue` / `mfGlowBlue` en «Pago mínimo»; `mfArcGreen` / `mfGlowGreen` en «Con excedente». |
+| `mf-gauge-meta` | Texto centrado: título, fecha completa, «En N meses», línea de saldo y condición. |
+| `mf-gauge-badge` | Píldora «-N meses antes», solo en la variante excedente con `meses_ahorrados > 0`. |
+
+Las reglas CSS viven fuera de `@media (max-width: 767px)` para aplicar en ambos tamaños; no modifican las dimensiones del contenedor ni del SVG.

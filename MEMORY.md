@@ -2355,6 +2355,18 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v104`; **826 pruebas** en verde, `compileall`, `node --check` y `generar_guia.py --verificar` correctos. Gate QA `scripts/qa_v4_13.py`: **21/21 comprobaciones** en Chromium, incluida la comparación 156×88/120×68 y la ausencia de cifras ficticias.
 
+### 2026-11-22 — SRS v4.17: velocímetros tipo cockpit (ADR-80)
+
+**Decisión (ADR-80).** Cambio exclusivamente visual: los dos velocímetros del Consejero pasan a un dial radial tipo cockpit, conservando los tamaños vigentes (120×68 en móvil, 156×88 en escritorio) y todas las cifras calculadas por `Consejo.cierre`. No se toca ningún otro módulo.
+
+**Consecuencias aplicadas.**
+- La plantilla dibuja el anillo de precisión, las 41 micro-marcas (generadas por `consejero.js` una sola vez por SVG), la pista base, el arco con degradado y resplandor, y la aguja con pivote.
+- Variante azul para «Pago mínimo» (`mfArcBlue`/`mfGlowBlue`) y esmeralda para «Con excedente» (`mfArcGreen`/`mfGlowGreen`), con píldora «-N meses antes» solo en la variante verde.
+- La jerarquía de texto centrada debajo usa título, fecha completa, «En N meses» y la línea real de saldo/abono.
+- **Hallazgo:** el CSS nuevo quedó inicialmente dentro del `@media (max-width: 767px)` abierto que ya existía en la hoja, por lo que no aplicaba en escritorio. Se movió a nivel superior; el gate QA lo confirmó con estilos computados (`url("#mfArcBlue")`, `url("#mfGlowBlue")`).
+
+**Verificación.** `sw.js` en `olb-finanzas-v105`; **831 pruebas** en verde, `compileall`, `node --check` y `generar_guia.py --verificar` correctos. Gate QA `scripts/qa_v4_17.py`: **14/14 comprobaciones** en Chromium, con tamaños 156×88/120×68, 41 marcas y textos centrados.
+
 
 
 

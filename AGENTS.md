@@ -197,6 +197,7 @@ Plataforma web/móvil híbrida (PWA) con backend y frontend **100% Python**, arq
 29. **Nómina 2026 (SRS v4.8):** divisor de 220 horas y siete factores (1.25, 1.75, 2.15, 2.65, 0.35, 0.90, 1.25); se admiten horas decimales. El auxilio se paga en el corte de deducciones y las etiquetas son «Sueldo devengado» y «Total devengado», sin guiones. Cualquier migración debe usar parámetros nombrados con `text()` para funcionar en SQLite y PostgreSQL.
 30. **Sin doble descuento (SRS v4.10):** el sueldo devengado de cada tarjeta es neto de ley; prohibido volver a pintar «Deducciones de ley» dentro del corte. La dona global y el Consejero leen el total consolidado, nunca la suma de saldos parciales. «Resultado del periodo» usa «TOTAL DEVENGADO», nota en dos líneas con «Total de Gastos del mes» y desglose de nueve filas (cinco positivas, separador, cuatro negativas).
 31. **Tarjetas limpias y Consejero real (SRS v4.13):** las tarjetas muestran solo `sueldo_neto_corte` y gastos fijos; el Consejero usa cifras reales (sin intereses ficticios), plazos exactos, meses completos en español y desglose `Deuda + Saldo + Cuota`. El layout de la gráfica (curva al 100 %, sub-tarjetas, píldoras) es solo `>= 768px`; móvil intacto.
+32. **Velocímetros cockpit (SRS v4.17):** cambia solo el estilo (dial radial, 41 marcas, resplandor azul/esmeralda, aguja y texto centrado). No se cambian tamaños (120×68 móvil, 156×88 web) ni cifras. El CSS del componente vive fuera de media queries móviles.
 
 ---
 
@@ -499,3 +500,4 @@ La configuración vive en `.vscode/launch.json`. También existe **Pruebas (pyte
 - [x] **SRS v4.10 — Cierre documental y QA:** Guías, Diccionario, Constitución, `MEMORY.md` (ADR-78), `AGENTS.md` y SRS §18 sincronizados como línea base vigente. `sw.js` en `olb-finanzas-v103`. Gate QA `scripts/qa_v4_10.py` **14/14** antes del push.
 - [x] **SRS v4.13 — Bloques 1 a 3:** tarjetas de corte con neto real, Consejero sin intereses ficticios y con desglose por deuda, y layout de gráfica exclusivo de escritorio.
 - [x] **SRS v4.13 — Cierre documental y QA:** Guías, Diccionario, Constitución, `MEMORY.md` (ADR-79), `AGENTS.md` y SRS §19 sincronizados como línea base vigente. `sw.js` en `olb-finanzas-v104`. Gate QA `scripts/qa_v4_13.py` **21/21** antes del push.
+- [x] **SRS v4.17 — Velocímetros cockpit y cierre:** mismo estilo de dial en web y móvil conservando 120×68 / 156×88 y las cifras del Consejero. `sw.js` en `olb-finanzas-v105`. **831 pruebas** en verde; gate QA `scripts/qa_v4_17.py` **14/14** antes del push. Documentación y SRS §20 sincronizados (ADR-80).

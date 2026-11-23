@@ -42,4 +42,31 @@
       mostrar(boton);
     });
   });
+
+  // SRS v4.17: marcas de graduación del dial. Solo dibuja una vez por SVG.
+  bloque.querySelectorAll(".mf-cockpit-dial").forEach(function (svg) {
+    var grupo = svg.querySelector(".mf-dial-ticks");
+    if (!grupo || grupo.childElementCount > 0) {
+      return;
+    }
+    var cx = 120;
+    var cy = 112;
+    var rInner = 97;
+    var total = 41;
+    for (var i = 0; i < total; i++) {
+      var radio = i / (total - 1);
+      var angulo = -205 + radio * 230;
+      var rad = (angulo * Math.PI) / 180;
+      var principal = i % 5 === 0;
+      var rOuter = rInner + (principal ? 7 : 4);
+      var linea = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      linea.setAttribute("x1", (cx + rInner * Math.cos(rad)).toFixed(1));
+      linea.setAttribute("y1", (cy + rInner * Math.sin(rad)).toFixed(1));
+      linea.setAttribute("x2", (cx + rOuter * Math.cos(rad)).toFixed(1));
+      linea.setAttribute("y2", (cy + rOuter * Math.sin(rad)).toFixed(1));
+      linea.setAttribute("stroke", principal ? "rgba(226, 232, 240, 0.45)" : "rgba(148, 163, 184, 0.22)");
+      linea.setAttribute("stroke-width", principal ? "1.3" : "0.8");
+      grupo.appendChild(linea);
+    }
+  });
 })();

@@ -4439,6 +4439,7 @@ strong.valor-negativo.recibo__cifra--saldo {
   font-size: 0.65rem;
 }
 
+
 .cierre-deuda__subtitulo {
   margin: 0 0 8px;
   text-align: center;
@@ -4640,6 +4641,98 @@ strong.valor-negativo.recibo__cifra--saldo {
   .atajo-modal {
     display: block;
   }
+}
+
+/* SRS v4.17: dial radial tipo cockpit. Los tamaños siguen siendo los que
+   ya tenía el componente (inline 120x68 en móvil y 156x88 en escritorio).
+   Se declara fuera del mediaquery móvil para que aplique también en escritorio. */
+.mf-gauge-card {
+  text-align: center;
+  background: rgba(15, 23, 42, 0.55);
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 14px;
+}
+
+.mf-cockpit-dial {
+  display: block;
+  overflow: visible;
+}
+
+.mf-dial-bound {
+  fill: #64748b;
+  font-size: 9px;
+  font-weight: 600;
+}
+
+.mf-gauge-card[data-variant="minimo"] .mf-dial-progress {
+  stroke: url(#mfArcBlue);
+  filter: url(#mfGlowBlue);
+}
+.mf-gauge-card[data-variant="minimo"] .mf-needle-blade { fill: #38BDF8; }
+.mf-gauge-card[data-variant="minimo"] .mf-needle-hub-outer {
+  fill: #0F172A;
+  stroke: #38BDF8;
+  stroke-width: 2;
+}
+.mf-gauge-card[data-variant="minimo"] .mf-needle-hub-inner { fill: #BAE6FD; }
+
+.mf-gauge-card[data-variant="excedente"] .mf-dial-progress {
+  stroke: url(#mfArcGreen);
+  filter: url(#mfGlowGreen);
+}
+.mf-gauge-card[data-variant="excedente"] .mf-needle-blade { fill: #10B981; }
+.mf-gauge-card[data-variant="excedente"] .mf-needle-hub-outer {
+  fill: #0F172A;
+  stroke: #10B981;
+  stroke-width: 2;
+}
+.mf-gauge-card[data-variant="excedente"] .mf-needle-hub-inner { fill: #A7F3D0; }
+.mf-gauge-card[data-variant="excedente"] .mf-gauge-date,
+.mf-gauge-card[data-variant="excedente"] .mf-gauge-months { color: #10B981; }
+
+.mf-gauge-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: 100%;
+}
+.mf-gauge-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #f8fafc;
+}
+.mf-gauge-date {
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: #f8fafc;
+  line-height: 1.15;
+}
+.mf-gauge-months-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.mf-gauge-months {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #f8fafc;
+}
+.mf-gauge-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #34d399;
+  background: rgba(16, 185, 129, 0.14);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  border-radius: 999px;
+  padding: 1px 7px;
+}
+.mf-gauge-sub {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  margin-top: 2px;
 }
 
 /* ---- Atajos embebidos de Mis Finanzas: solo descripción y día (SRS v1.9) -- */

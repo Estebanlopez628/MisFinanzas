@@ -104,8 +104,8 @@ def test_plantilla_y_js_con_los_nuevos_textos() -> None:
 
     base = Path(DIRECCION)
     html = (base / "templates/presupuesto/index.html").read_text(encoding="utf-8")
-    assert "Saldo actual:" in html
-    assert "Sin abono extra" in html
+    assert " saldo · Sin abono extra" in html
+    assert " saldo ·" in html  # línea inferior del cockpit (v4.17)
     assert "Abonando +" in html
     assert "Reducción extra acumulada:" in html
     assert "data-reduccion" in html
