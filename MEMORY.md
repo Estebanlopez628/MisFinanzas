@@ -2443,6 +2443,17 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v111`; gates QA `scripts/qa_v4_23.py` **13/13** y `scripts/qa_v4_24.py` **14/14** en Chromium (1280 px y 375 px). Validación adicional en 360/375/390 px: ningún elemento se sale del recuadro, `scrollWidth <= clientWidth` en todos los textos, sin solapes entre badge/etiqueta, barras/textos y zona de ahorro, y `scrollWidth === innerWidth`. Suite completa en verde. Los datos QA se eliminan al terminar cada gate.
 
+### 2026-11-23 — SRS v4.25: icono correcto y texto sin paréntesis (ADR-87)
+
+**Decisión (ADR-87).** El propietario precisó que el icono de Mis Finanzas al entrar al módulo debe ser la bolsa de dinero del inicio (💰), no el PNG de la PWA que se había puesto. Además pidió quitar todos los paréntesis de los rótulos de la gráfica y alinear a la derecha solo el badge del porcentaje en móvil.
+
+**Consecuencias aplicadas.**
+- El `<h1>` de Mis Finanzas usa `<span class="modulo__icono">💰</span>`; la clase `.modulo__icono` pasa a tipografía (30 px) en vez de imagen. Se actualizaron la prueba y el gate que verificaban el PNG.
+- Se quitaron los paréntesis de los cuatro rótulos: porcentaje global del subtítulo, «Deuda de … · cuota: …», fecha `MM/AAAA` de la barra azul y «1 mes 1 cuota» / «N meses N cuotas».
+- En móvil `.impacto-deuda__etiqueta-grupo` usa `width: 100%` y `justify-content: space-between`, de modo que «Pago mínimo» queda a la izquierda y el badge a la derecha.
+
+**Verificación.** `sw.js` en `olb-finanzas-v112`; **880 pruebas** en verde. Gates: `qa_v4_22.py` **33/33**, `qa_v4_23.py` **13/13** y `qa_v4_24.py` **16/16** (incluye «sin paréntesis en la gráfica» y «badge alineado a la derecha»). `compileall`, `node --check` y `generar_guia.py --verificar` correctos.
+
 
 
 

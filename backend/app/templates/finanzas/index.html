@@ -6,10 +6,8 @@
 contenido %}
 <section class="heroe">
   <h1 class="heroe__titulo">
-    {# SRS v4.22: logo oficial de la app en el encabezado del módulo, homologado
-       al logo de OLB_BYTE (30 px) para dar identidad visual al ingreso. #}
-    <img class="modulo__icono" src="{{ url_for('estaticos', path='img/icono-192.png') }}"
-         alt="Mis Finanzas" width="30" height="30" /> Mis Finanzas
+    {# SRS v4.25: mismo icono de la tarjeta del inicio (bolsa de dinero). #}
+    <span class="modulo__icono" aria-hidden="true">💰</span> Mis Finanzas
   </h1>
   <p class="heroe__subtitulo">
     Quincenas, liquidación de nómina y gastos fijos en un solo lugar, {{

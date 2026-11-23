@@ -64,7 +64,7 @@ def verificar(page, etiqueta: str) -> None:
     fecha = page.locator(".impacto-deuda__fecha").first.inner_text()
     comprobar(
         f"{etiqueta}: fecha compacta MM/AAAA",
-        bool(re.fullmatch(r"\(\d{2}/\d{4}\)", fecha.strip())),
+        bool(re.fullmatch(r"\d{2}/\d{4}", fecha.strip())),
         fecha,
     )
     comprobar(

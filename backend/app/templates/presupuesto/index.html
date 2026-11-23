@@ -265,7 +265,7 @@
                 ¡Con tus abonos extra recortas el tiempo de pago de tus deudas de
                 <span class="impacto-deudas__subrayado">{{ consejo.cierre.resumen_barras.meses_base_texto }}</span>
                 a solo {{ consejo.cierre.resumen_barras.meses_objetivo_texto }}!
-                (-{{ consejo.cierre.resumen_barras.porcentaje_global }}% de tiempo)
+                -{{ consejo.cierre.resumen_barras.porcentaje_global }}% de tiempo
               </p>
             </div>
 
@@ -281,7 +281,7 @@
                   <div class="impacto-deuda__cabecera">
                     <p class="impacto-deuda__nombre">
                       <strong>{{ barra.nombre }}</strong>
-                      <span>(Deuda de {{ barra.saldo | cop }} · cuota: {{ barra.cuota | cop }})</span>
+                      <span>Deuda de {{ barra.saldo | cop }} · cuota: {{ barra.cuota | cop }}</span>
                     </p>
                     {% if barra.porcentaje_ahorro > 0 %}
                       <span class="impacto-deuda__badge impacto-deuda__badge--web">-{{ barra.porcentaje_ahorro }}%</span>
@@ -304,7 +304,7 @@
                           <span class="impacto-deuda__meses">
                             {{ barra.meses_base }} {% if barra.meses_base == 1 %}mes{% else %}meses{% endif %}
                           </span>
-                          <span class="impacto-deuda__fecha">({{ barra.fecha_cierre_base_corta }})</span>
+                          <span class="impacto-deuda__fecha">{{ barra.fecha_cierre_base_corta }}</span>
                         </div>
                         {% if ancho_base >= 95 and barra.meses_ahorrados > 0 %}
                           <span class="impacto-deuda__conector" aria-hidden="true">
@@ -331,7 +331,7 @@
                           </svg>
                         </div>
                         <span class="impacto-deuda__tiempo">
-                          {{ barra.meses_excedente }} {% if barra.meses_excedente == 1 %}mes (1 cuota){% else %}meses ({{ barra.meses_excedente }} cuotas){% endif %}
+                          {{ barra.meses_excedente }} {% if barra.meses_excedente == 1 %}mes 1 cuota{% else %}meses {{ barra.meses_excedente }} cuotas{% endif %}
                         </span>
                         {% if barra.meses_ahorrados > 0 %}
                           <div class="impacto-deuda__ahorro">

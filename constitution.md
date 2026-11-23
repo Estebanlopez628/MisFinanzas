@@ -137,3 +137,7 @@ Principios innegociables. Toda especificación, plan y tarea debe cumplirlos de 
     - La fecha de cierre se muestra en formato `MM/AAAA` y la barra es al menos tan ancha como su texto: ningún rótulo puede recortarse ni salirse del recuadro.
     - El fondo del componente iguala al de los velocímetros; en móvil el porcentaje acompaña a «Pago mínimo», la cuota no lleva `/mes`, el subtítulo replica el recuadro verde del banner y gráfica y velocímetros comparten el mismo ancho.
     - Las reglas móviles se declaran después de las bases para no ser sobrescritas.
+
+27. **Icono de Mis Finanzas y texto sin paréntesis (SRS v4.25):**
+    - El encabezado de Mis Finanzas muestra la bolsa de dinero (💰) que identifica al módulo en el inicio.
+    - Ningún rótulo de la gráfica comparativa usa paréntesis; en móvil el badge del porcentaje se alinea al extremo derecho de «Pago mínimo».

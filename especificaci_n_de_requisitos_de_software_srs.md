@@ -877,3 +877,25 @@ Intactos: contenido y cálculo del Consejero, velocímetros, banner verde, abono
 - Usuarios QA: `prueba_qa@misfinanzas.local` / `QA_MisFinanzas_2026!` y `prueba_qa_admin@misfinanzas.local` / `QA_Admin_2026!`.
 - `scripts/qa_v4_23.py`: **13/13 comprobaciones** y `scripts/qa_v4_24.py`: **14/14 comprobaciones** en Chromium (1280 px y 375 px). Validación adicional de desbordes, recortes y solapes en 360/375/390 px sobre las tres tarjetas, sin hallazgos.
 - Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-86), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.24.
+
+---
+
+## 27. SRS v4.25 — Icono correcto y texto sin paréntesis
+
+Versión 4.25 y **línea base vigente**. No se rehace v4.24 ni ningún módulo aprobado anteriormente.
+
+### 27.1 No regresión
+
+Intactos: cálculo y contenido del Consejero, velocímetros, banner verde, abonos, donas, atajos, modales, OLB_BYTE y WhatsApp.
+
+### 27.2 Cambios
+
+1. El encabezado de Mis Finanzas muestra la bolsa de dinero (💰) del inicio en vez del PNG de la PWA.
+2. Ningún rótulo visible de la gráfica comparativa usa paréntesis: porcentaje global, descripción de la deuda, fecha de cierre y tiempo con cuotas.
+3. En móvil el badge `-N%` se alinea al extremo derecho de la fila de «Pago mínimo» mediante `justify-content: space-between`.
+
+### 27.3 Gate QA y cierre documental
+
+- Usuarios QA: `prueba_qa@misfinanzas.local` / `QA_MisFinanzas_2026!` y `prueba_qa_admin@misfinanzas.local` / `QA_Admin_2026!`.
+- Gates: `scripts/qa_v4_22.py` **33/33**, `scripts/qa_v4_23.py` **13/13** y `scripts/qa_v4_24.py` **16/16** en Chromium (1280 px y 375 px). Suite completa: **880 pruebas** en verde.
+- Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-87), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.25.

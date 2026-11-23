@@ -221,10 +221,10 @@ def main() -> None:
         pagina.goto(f"{BASE}/finanzas")
         pagina.wait_for_load_state("networkidle")
         comprobar("logo en Mis Finanzas", pagina.locator(".modulo__icono").is_visible())
-        tamano = pagina.locator(".modulo__icono").evaluate(
-            "(e) => [e.getBoundingClientRect().width, e.getBoundingClientRect().height]"
+        comprobar(
+            "icono de bolsa de dinero",
+            "💰" in pagina.locator(".modulo__icono").inner_text(),
         )
-        comprobar("logo Mis Finanzas 30x30", tamano == [30, 30], str(tamano))
 
         # El tamaño del logo de OLB_BYTE (30 px) se verifica en las pruebas
         # unitarias de plantilla y CSS; aquí solo se comprueba el de Mis Finanzas.

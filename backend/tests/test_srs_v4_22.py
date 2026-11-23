@@ -94,12 +94,12 @@ def test_resumen_global_usa_max_base_y_primera_deuda(bd) -> None:
 
 
 def test_mis_finanzas_muestra_logo_en_el_encabezado(cliente_admin: TestClient) -> None:
-    """El módulo muestra el logo oficial a 30 px, igual que OLB_BYTE."""
+    """El módulo muestra la bolsa de dinero del inicio en su encabezado."""
     html = cliente_admin.get("/finanzas").text
 
     assert 'class="modulo__icono"' in html
-    assert "img/icono-192.png" in html
-    assert 'alt="Mis Finanzas" width="30" height="30"' in html
+    assert "💰" in html
+    assert '<img class="modulo__icono"' not in html
 
 
 def test_chancucos_no_ofrece_favorito(cliente_admin: TestClient, bd) -> None:

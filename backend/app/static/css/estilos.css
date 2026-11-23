@@ -5834,14 +5834,11 @@ dialog::backdrop {
   margin-inline: auto;
 }
 
-/* SRS v4.22: logo del encabezado de Mis Finanzas, homologado al de OLB_BYTE. */
+/* SRS v4.25: icono de Mis Finanzas, el mismo emoji del inicio (bolsa de dinero). */
 .modulo__icono {
-  width: 30px;
-  height: 30px;
-  max-width: 30px;
-  max-height: 30px;
   display: inline-block;
-  object-fit: contain;
+  font-size: 30px;
+  line-height: 1;
   flex-shrink: 0;
   vertical-align: middle;
 }
@@ -6154,6 +6151,13 @@ dialog::backdrop {
 
   .impacto-deuda__badge--movil {
     display: inline-flex;
+  }
+
+  /* SRS v4.25: la etiqueta queda a la izquierda y solo el badge se alinea
+     al extremo derecho de la fila. */
+  .impacto-deuda__etiqueta-grupo {
+    width: 100%;
+    justify-content: space-between;
   }
 }
 

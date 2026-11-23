@@ -134,8 +134,20 @@ def main() -> None:
             ).first.is_visible(),
         )
         comprobar(
+            "móvil: badge alineado a la derecha",
+            estilo(pagina, ".impacto-deuda__etiqueta-grupo", "justifyContent")
+            == "space-between",
+            estilo(pagina, ".impacto-deuda__etiqueta-grupo", "justifyContent"),
+        )
+        comprobar(
             "móvil: badge de cabecera oculto",
             not pagina.locator(".impacto-deuda__badge--web").first.is_visible(),
+        )
+        texto_grafica = pagina.locator(".impacto-deudas").inner_text()
+        comprobar(
+            "sin paréntesis en la gráfica",
+            "(" not in texto_grafica and ")" not in texto_grafica,
+            texto_grafica[:120],
         )
 
         propiedades = ("backgroundColor", "color", "fontSize", "borderRadius", "textAlign")

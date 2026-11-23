@@ -10,7 +10,7 @@ RUTA = Path(__file__).resolve().parent.parent / "app"
 def test_cuota_sin_sufijo_mes() -> None:
     """La descripción de la tarjeta no alarga el texto con «/mes»."""
     html = (RUTA / "templates/presupuesto/index.html").read_text(encoding="utf-8")
-    assert "cuota: {{ barra.cuota | cop }})" in html
+    assert "cuota: {{ barra.cuota | cop }}</span>" in html
     assert "{{ barra.cuota | cop }}/mes" not in html
 
 
