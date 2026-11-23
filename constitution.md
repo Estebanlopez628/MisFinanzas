@@ -121,3 +121,9 @@ Principios innegociables. Toda especificación, plan y tarea debe cumplirlos de 
     - Los plazos de cierre se calculan exclusivamente sobre las deudas recomendadas; una deuda larga no incluida en el plan no puede distorsionar el mensaje.
     - La redacción usa pluralización exacta y nombra cada deuda con saldo y cuota, sin términos ambiguos.
     - La proyección a 6 meses es exclusiva de escritorio; el banner móvil va centrado y el de liquidez es legible en ambos tamaños.
+
+24. **Abonos extraordinarios a deudas y centrado de la dona (SRS v4.21):**
+    - TodoGasto o deducción con categoría «Créditos y Obligaciones» y toda deuda registrada ofrecen «Abonar» en su modal de edición, en web y móvil, con un modal propio que pide el valor y ofrece «Registrar abono», «Registrar abono + cuota» y «Cancelar».
+    - El abono descuenta el saldo y recalcula las cuotas; nunca modifica la cuota pactada salvo que el resto sea menor, en cuyo caso se ajusta a ese resto. Los abonos se guardan en su propia tabla, separados de las cuotas automáticas.
+    - «Registrar abono + cuota» marca el gasto o deducción vinculado como pagado del corte; al pagar la deuda, su cuota vinculada deja de contarse en totales, dona y Consejero.
+    - Las leyendas, el título, la descripción y la dona del panel de capacidad van centrados en móvil y escritorio, y las cabeceras «Valor a pagar» y «Días de pago» conservan su salto de línea con centrado.

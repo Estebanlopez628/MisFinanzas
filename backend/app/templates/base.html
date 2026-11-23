@@ -138,6 +138,29 @@
     </div>
   </div>
 
+  {# SRS (abonos): modal propio para digitar el valor a abonar a una deuda. #}
+  <div class="app-modal" id="modal-abono" hidden role="dialog" aria-modal="true"
+       aria-labelledby="modal-abono-titulo">
+    <div class="app-modal__tarjeta">
+      <h2 class="app-modal__titulo" id="modal-abono-titulo">Registrar abono</h2>
+      <p class="app-modal__cuerpo" id="modal-abono-cuerpo">
+        Digita el valor que deseas abonar a tu deuda
+        <strong id="modal-abono-deuda"></strong>.
+      </p>
+      <label class="campo">
+        <span class="campo__etiqueta">Valor del abono (COP)</span>
+        <input class="campo__control" id="modal-abono-valor" type="text"
+               inputmode="decimal" placeholder="100.000" required data-moneda />
+      </label>
+      <p class="alerta alerta--error" id="modal-abono-error" role="alert" hidden></p>
+      <div class="app-modal__acciones app-modal__acciones--abono">
+        <button class="boton boton--primario boton--pequeno" type="button" data-abono-solo>Registrar abono</button>
+        <button class="boton boton--secundario boton--pequeno" type="button" data-abono-cuota>Registrar abono + cuota</button>
+        <button class="boton boton--peligro boton--pequeno" type="button" data-abono-cancelar>Cancelar</button>
+      </div>
+    </div>
+  </div>
+
   <script src="{{ url_for('estaticos', path='js/app.js') }}" defer></script>
   <script src="{{ url_for('estaticos', path='js/dona.js') }}" defer></script>
   <script src="{{ url_for('estaticos', path='js/moneda.js') }}" defer></script>

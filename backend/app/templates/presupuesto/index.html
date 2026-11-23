@@ -571,6 +571,14 @@
                             formmethod="post"
                             formaction="{{ url_for('eliminar_deduccion_fija', id_deduccion=deduccion.id_deduccion) }}"
                             data-confirmar="¿Eliminar esta deducción fija?" data-confirmar-peligro>Eliminar</button>
+                    {# SRS (abonos): las deducciones de créditos pagan una deuda. #}
+                    {% if deduccion.id_deuda %}
+                      <button class="boton boton--secundario boton--pequeno" type="button"
+                              data-abrir-abono data-id-deuda="{{ deduccion.id_deuda }}"
+                              data-deuda="{{ deduccion.deuda.acreedor if deduccion.deuda else 'tu deuda' }}">
+                        Abonar
+                      </button>
+                    {% endif %}
                   </div>
                 </form>
               </details>

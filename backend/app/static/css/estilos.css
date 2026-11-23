@@ -4829,6 +4829,20 @@ strong.valor-negativo.recibo__cifra--saldo {
   }
 }
 
+.app-modal__acciones--abono {
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* SRS (abonos + atajos): los valores de las columnas 2 y 3 se centran junto a
+   sus cabeceras, conservando el salto de línea y los anchos ya aprobados. */
+.tabla--atajos thead th:nth-child(3),
+.tabla--atajos thead th:nth-child(4),
+.tabla--atajos tbody tr[data-chancuco-fila] > td:nth-child(3),
+.tabla--atajos tbody tr[data-chancuco-fila] > td:nth-child(4) {
+  text-align: center !important;
+}
+
 /* SRS v4.19, sección 3: en móvil el banner verde sobre los velocímetros usa el
    mismo radio que las tarjetas y su texto va justificado. */
 @media (max-width: 767px) {
@@ -5797,6 +5811,28 @@ dialog::backdrop {
 .retorno-resaltado {
   box-shadow: 0 0 0 2px #3B82F6, 0 8px 24px rgba(59, 130, 246, 0.25);
   transition: box-shadow 200ms ease;
+}
+
+/* SRS (dona): centrar todo el contenido del panel de capacidad, en móvil y
+   escritorio, tanto en Gastos y Presupuestos como en Trabajos Extras. */
+.panel.capacidad,
+.panel.capacidad .panel__titulo,
+.panel.capacidad > .ayuda,
+.panel.capacidad .dona-contenedor,
+.panel.capacidad .dona__leyenda,
+.panel.capacidad .dona__leyenda li,
+.panel.capacidad .dona__desglose li,
+.panel.capacidad .capacidad__semaforo,
+.panel.capacidad .capacidad__subtitulo {
+  text-align: center;
+}
+
+.panel.capacidad .dona-contenedor {
+  justify-content: center !important;
+}
+
+.panel.capacidad .dona {
+  margin-inline: auto;
 }
 
 .campo__control--bloqueado {

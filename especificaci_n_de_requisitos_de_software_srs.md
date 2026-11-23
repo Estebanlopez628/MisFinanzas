@@ -806,3 +806,27 @@ Intactos: alineación de columnas de atajos, gráfica a 6 meses en escritorio, c
 - Usuarios QA: `prueba_qa@misfinanzas.local` / `QA_MisFinanzas_2026!` y `prueba_qa_admin@misfinanzas.local` / `QA_Admin_2026!`.
 - `scripts/qa_v4_20.py`: **17/17 comprobaciones** en Chromium (1280 px y 375 px), incluidos los dos `<br />`, la proyección oculta en móvil, la redacción exacta y la ausencia del plazo de la hipoteca no recomendada. Solo tras el gate se ejecutaron `git add`, `commit` y `push`.
 - Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-83), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.20.
+
+---
+
+## 24. SRS v4.21 — Abonos extraordinarios y centrado de la dona
+
+Versión 4.21 y **línea base vigente**. No se rehace v4.20 ni ningún módulo aprobado anteriormente.
+
+### 24.1 No regresión
+
+Intactos: el cierre del Consejero sobre deudas recomendadas, la redacción exacta de v4.20, la proyección a 6 meses, los velocímetros cockpit, la factura OLB_BYTE, el flujo SI/NO de vinculación y la anti-duplicación de cuotas vinculadas.
+
+### 24.2 Cambios
+
+1. **Puntos de entrada:** botón «Abonar» en el modal de edición de gastos fijos de Mis Finanzas y Trabajos Extras, de deducciones fijas con categoría «Créditos y Obligaciones», y de deudas registradas. No aparece en Atajos de Pago.
+2. **Modal propio:** «Digita el valor que deseas abonar a tu deuda», campo COP y tres acciones: «Registrar abono», «Registrar abono + cuota» y «Cancelar». Sin diálogos nativos, con bloqueo síncrono y cierre al tocar el fondo.
+3. **Contabilidad:** la tabla `abonos_deuda` guarda cada abono separado de `pagos_deuda`. El servicio `registrar_abono()` valida propiedad y `0 < valor <= saldo`, descuenta el saldo, recalcula `cuotas_pendientes = ceil(saldo / cuota)`, ajusta la cuota si el resto es menor y marca la deuda como `PAGADA` al llegar a cero. Con «abono + cuota» se registra además el `PagoDeuda` del corte, se ancla en la fecha de aplicación para no recobrar cuotas vencidas y se marca como pagado el gasto o deducción vinculado. Una deuda pagada deja de contar su cuota en totales, dona y Consejero.
+4. **HTTP:** `POST /api/deudas/{id_deuda}/abono` con `valor` y `aplica_cuota` opcional, respuesta JSON con el saldo y el plan actualizados y mensajes limpios en `detail`.
+5. **Alineación visual:** en «Atajos guardados» las cabeceras «VALOR A / PAGAR» y «DÍAS DE / PAGO» conservan el `<br />` y sus celdas quedan centradas, sin cambiar anchos ni padding. El panel de capacidad centra título, descripción, dona y leyendas en móvil y escritorio, en Gastos y Presupuestos y en Trabajos Extras.
+
+### 24.3 Gate QA y cierre documental
+
+- Usuarios QA: `prueba_qa@misfinanzas.local` / `QA_MisFinanzas_2026!` y `prueba_qa_admin@misfinanzas.local` / `QA_Admin_2026!`.
+- `scripts/qa_v4_21.py`: **34/34 comprobaciones** en Chromium (1280 px y 375 px), con los cuatro puntos de entrada, el modal y sus tres botones, el descuento real de saldo y cuotas, el centrado de donas y cabeceras, sin desbordamiento horizontal ni errores de consola. Los datos sembrados se eliminan al terminar. Solo tras el gate se ejecutaron `git add`, `commit` y `push`.
+- Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-84), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.21.

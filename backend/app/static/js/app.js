@@ -622,4 +622,125 @@
   } catch (error) {
     // Sin sessionStorage no hay posición que restaurar.
   }
+
+  // SRS (abonos): modal propio para registrar abonos a deudas vinculadas.
+  var modalAbono = document.getElementById("modal-abono");
+  var abonoValor = document.getElementById("modal-abono-valor");
+  var abonoError = document.getElementById("modal-abono-error");
+  var abonoDeuda = document.getElementById("modal-abono-deuda");
+  var idDeudaAbono = null;
+  var enviandoAbono = false;
+
+  function cerrarModalAbono() {
+    if (modalAbono) {
+      modalAbono.hidden = true;
+    }
+    idDeudaAbono = null;
+  }
+
+  function abrirModalAbono(boton) {
+    if (!modalAbono) {
+      return;
+    }
+    // El botón vive dentro del modal de edición; si se deja abierto, su fondo
+    // intercepta los clics del modal de abono. Se cierra antes de mostrarlo.
+    var detalles = boton.closest("details");
+    if (detalles) {
+      detalles.open = false;
+    }
+    idDeudaAbono = boton.getAttribute("data-id-deuda");
+    if (!idDeudaAbono) {
+      return;
+    }
+    if (abonoDeuda) {
+      abonoDeuda.textContent = boton.getAttribute("data-deuda") || "tu deuda";
+    }
+    if (abonoValor) {
+      abonoValor.value = "";
+      abonoValor.focus();
+    }
+    if (abonoError) {
+      abonoError.hidden = true;
+      abonoError.textContent = "";
+    }
+    modalAbono.hidden = false;
+  }
+
+  function registrarAbono(aplicaCuota, boton) {
+    if (!idDeudaAbono || enviandoAbono) {
+      return;
+    }
+    var valor = abonoValor ? abonoValor.value.trim() : "";
+    if (!valor) {
+      if (abonoError) {
+        abonoError.textContent = "Digita el valor que deseas abonar.";
+        abonoError.hidden = false;
+      }
+      if (abonoValor) {
+        abonoValor.focus();
+      }
+      return;
+    }
+    enviandoAbono = true;
+    var textoOriginal = boton.textContent;
+    boton.disabled = true;
+    boton.textContent = "Abonando...";
+    var datos = new FormData();
+    datos.append("valor", valor);
+    if (aplicaCuota) {
+      datos.append("aplica_cuota", "1");
+    }
+    fetch("/api/deudas/" + encodeURIComponent(idDeudaAbono) + "/abono", {
+      method: "POST",
+      body: datos,
+    })
+      .then(function (respuesta) {
+        return respuesta.json().then(function (cuerpo) {
+          return { ok: respuesta.ok && cuerpo.ok, detalle: cuerpo.detail };
+        });
+      })
+      .then(function (resultado) {
+        if (!resultado.ok) {
+          throw new Error(resultado.detalle || "No se pudo registrar el abono.");
+        }
+        window.location.reload();
+      })
+      .catch(function (error) {
+        if (abonoError) {
+          abonoError.textContent = limpiarMensajeError(error.message);
+          abonoError.hidden = false;
+        }
+        boton.disabled = false;
+        boton.textContent = textoOriginal;
+      })
+      .finally(function () {
+        enviandoAbono = false;
+      });
+  }
+
+  document.querySelectorAll("[data-abrir-abono]").forEach(function (boton) {
+    boton.addEventListener("click", function () {
+      abrirModalAbono(boton);
+    });
+  });
+
+  if (modalAbono) {
+    var cancelarAbono = modalAbono.querySelector("[data-abono-cancelar]");
+    if (cancelarAbono) {
+      cancelarAbono.addEventListener("click", cerrarModalAbono);
+    }
+    var abonoSolo = modalAbono.querySelector("[data-abono-solo]");
+    if (abonoSolo) {
+      abonoSolo.addEventListener("click", function () { registrarAbono(false, abonoSolo); });
+    }
+    var abonoConCuota = modalAbono.querySelector("[data-abono-cuota]");
+    if (abonoConCuota) {
+      abonoConCuota.addEventListener("click", function () { registrarAbono(true, abonoConCuota); });
+    }
+    modalAbono.addEventListener("click", function (evento) {
+      if (evento.target === modalAbono) {
+        cerrarModalAbono();
+      }
+    });
+  }
 })();

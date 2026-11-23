@@ -12,13 +12,13 @@ from __future__ import annotations
 from datetime import date
 from decimal import Decimal
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session, joinedload
 
 from app.core import categorias as catalogo
 from app.core.numeros import redondear_dinero
 from app.core.texto import parsear_monto
-from app.modelos import Gasto
+from app.modelos import Deuda, Gasto
 from app.servicios import deudas as servicio_deudas
 
 CERO = Decimal("0")
@@ -169,6 +169,12 @@ def listar_gastos(
         # SRS v1.7: los pagos de trabajos extras viven en `gastos` solo para
         # reutilizar la fila con check; no son gastos ni restan del sueldo.
         Gasto.id_trabajo.is_(None),
+        # SRS (abonos): al pagar la deuda, su cuota vinculada deja de contarse,
+        # igual que ocurre con las deducciones fijas vinculadas.
+        or_(
+            Gasto.id_deuda.is_(None),
+            Gasto.deuda.has(Deuda.estado == servicio_deudas.ESTADO_ACTIVA),
+        ),
     )
     if anio is not None and mes is not None:
         inicio = date(anio, mes, 1)

@@ -2403,6 +2403,20 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v108`; **847 pruebas** en verde, `compileall`, `node --check` y `generar_guia.py --verificar` correctos. Gate QA `scripts/qa_v4_20.py`: **17/17 comprobaciones** en Chromium, incluidos los dos saltos de línea, la proyección oculta en móvil y la ausencia del plazo de la hipoteca no recomendada.
 
+### 2026-11-23 — SRS v4.21: abonos a deudas y centrado de la dona (ADR-84)
+
+**Decisión (ADR-84).** A petición del propietario, los gastos fijos vinculados a crédito, las deducciones de «Créditos y Obligaciones» y las deudas registradas pueden recibir abonos extraordinarios desde su propio modal de edición, en web y móvil. Se agrega una tabla separada de `pagos_deuda` para no alterar el calendario de cuotas automáticas, y se centran las leyendas y los títulos de la dona junto con las cabeceras de atajos.
+
+**Consecuencias aplicadas.**
+- Nuevo modelo `AbonoDeuda` (§8.2 del diccionario) con `valor`, `fecha_aplicacion`, `aplica_cuota` y `numero_cuota`. `create_all` lo crea en SQLite y PostgreSQL, sin migración de columnas adicional.
+- `registrar_abono()` valida propiedad, estado activo y `0 < valor <= saldo`; descuenta el saldo, recalcula `cuotas_pendientes = ceil(saldo / cuota)` y ajusta la cuota al resto si es menor. Al llegar a cero marca la deuda `PAGADA`. Con `aplica_cuota=True` registra el `PagoDeuda` del corte anclado en la fecha de aplicación, evitando que al abrir el módulo se recobren cuotas vencidas (regresión detectada y corregida durante el QA).
+- `POST /api/deudas/{id_deuda}/abono` devuelve el saldo y el plan actualizados como JSON con mensajes limpios; la auditoría registra `DEUDA_ABONADA`.
+- Modal propio en `base.html` con el texto exacto y tres botones. `app.js` cierra el `<details>` de edición antes de abrirlo, porque si no su fondo intercepta los clics (segundo defecto detectado por el QA).
+- «Abono + cuota» marca el gasto o deducción vinculado como pagado del corte; una deuda pagada deja de contar su cuota en `listar_gastos()`, dona y Consejero.
+- CSS: cabeceras «VALOR A / PAGAR» y «DÍAS DE / PAGO» centradas junto a sus celdas; panel de capacidad con título, descripción, dona y leyendas centrados en móvil y escritorio.
+
+**Verificación.** `sw.js` en `olb-finanzas-v109`; **866 pruebas** en verde, `compileall`, `node --check` y `generar_guia.py --verificar` correctos (115 fichas). Gate QA `scripts/qa_v4_21.py`: **34/34 comprobaciones** en Chromium (1280 px y 375 px), con los cuatro puntos de entrada, el descuento real de saldo y cuotas, el centrado de donas y cabeceras y sin errores de consola ni desbordamiento horizontal.
+
 
 
 

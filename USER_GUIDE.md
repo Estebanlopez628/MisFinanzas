@@ -34,6 +34,16 @@ Si pulsas «Ve a registrar la deuda» antes de terminar, la aplicación guarda l
 
 Si tu gasto fijo no es una deuda, elige otra categoría como Vivienda, Servicios o Alimentación y digita su valor normalmente.
 
+### Abonar a una deuda cuando tienes dinero extra
+
+En el modal de edición de un gasto fijo, de una deducción de «Créditos y Obligaciones» o de la propia deuda registrada verás el botón **Abonar**. Al pulsarlo se abre una ventana donde escribes el valor que quieres abonar y eliges una de tres opciones:
+
+- **Registrar abono:** el valor se descuenta del saldo de la deuda y se recalculan las cuotas pendientes. La cuota mensual sigue igual y la cuota de este mes continúa descontándose como siempre.
+- **Registrar abono + cuota:** además del abono, se cuenta la cuota del corte como pagada, así que el gasto o deducción vinculado deja de descontarse en esa quincena.
+- **Cancelar:** cierra la ventana sin cambiar nada.
+
+El saldo de «Deudas registradas», la dona y el Consejero se actualizan solos porque todos leen el mismo saldo de la deuda. Si el abono lleva el saldo a cero, la deuda pasa a «PAGADA» y su cuota deja de contarse en los totales.
+
 ## 4. ¿Por qué el Consejero reserva $300.000 COP?
 
 MisFinanzas protege automáticamente una **Base mínima de liquidez de $300.000 COP** en tu bolsillo para cubrir imprevistos, transporte o emergencias del mes sin dejarte en ceros. Aunque tengas dinero libre después de pagar tus gastos fijos, el Consejero descuenta primero ese colchón y solo te sugiere abonos extra a tus deudas o metas con el excedente real que lo supere.

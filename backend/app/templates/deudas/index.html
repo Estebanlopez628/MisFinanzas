@@ -245,6 +245,10 @@
                           <button class="boton boton--peligro boton--pequeno" type="button"
                                   data-eliminar-deuda="{{ deuda.id_deuda }}"
                                   title="Eliminar deuda">Eliminar</button>
+                          {# SRS (abonos): abonar desde la propia deuda registrada. #}
+                          <button class="boton boton--secundario boton--pequeno" type="button"
+                                  data-abrir-abono data-id-deuda="{{ deuda.id_deuda }}"
+                                  data-deuda="{{ deuda.acreedor }}">Abonar</button>
                          {# SRS v4.5, sección 2.2: validación preventiva también al actualizar. #}
                          <div class="alerta alerta--error" data-alerta-edicion-deuda role="alert" hidden>
                            El número de cuotas por el valor de cuota no alcanza a cubrir el valor

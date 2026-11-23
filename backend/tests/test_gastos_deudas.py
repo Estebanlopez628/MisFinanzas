@@ -234,7 +234,8 @@ def test_vista_deudas_registra_y_muestra_amortizacion(
     assert "Próximas cuotas" not in html
     assert "No. Cuotas Pendientes" in html
     # SRS v1.8: sin intereses, sin abonos manuales y sin tasa capturada.
-    assert "Abonar" not in html
+    # El módulo de deudas ofrece ahora el botón «Abonar» en el modal de edición.
+    assert "data-abrir-abono" in html
     assert 'name="tasa_interes"' not in html
     assert 'name="fecha_limite"' not in html
 

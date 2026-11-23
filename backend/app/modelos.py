@@ -354,6 +354,38 @@ class PagoDeuda(Base):
     saldo_despues: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False)
 
 
+class AbonoDeuda(Base):
+    """Abono extraordinario registrado contra una deuda (§8.2).
+
+    Se guarda en su propia tabla para no confundirlo con las cuotas periódicas
+    de `pagos_deuda`. `aplica_cuota` distingue el abono suelto del abono que
+    además cancela la cuota del corte; en ese caso se guarda su `numero_cuota`.
+    """
+
+    __tablename__ = "abonos_deuda"
+    __table_args__ = (
+        CheckConstraint("valor > 0", name="ck_abono_deuda_valor"),
+        CheckConstraint(
+            "numero_cuota IS NULL OR numero_cuota >= 1", name="ck_abono_deuda_numero"
+        ),
+    )
+
+    id_abono: Mapped[str] = mapped_column(String(32), primary_key=True, default=nuevo_id)
+    id_deuda: Mapped[str] = mapped_column(
+        ForeignKey("deudas.id_deuda", ondelete="CASCADE"), nullable=False, index=True
+    )
+    id_usuario: Mapped[str] = mapped_column(
+        ForeignKey("usuarios.id_usuario", ondelete="CASCADE"), nullable=False, index=True
+    )
+    valor: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False)
+    fecha_aplicacion: Mapped[date] = mapped_column(Date, nullable=False)
+    aplica_cuota: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    numero_cuota: Mapped[int | None] = mapped_column(SmallInteger, nullable=True)
+    creado_en: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+
 class Chancuco(Base):
     """Atajo de pago rápido (§9).
 

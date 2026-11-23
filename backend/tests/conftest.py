@@ -46,6 +46,7 @@ from app.dependencias import NOMBRE_COOKIE
 from app.main import crear_aplicacion
 from app.modelos import (
     Abono,
+    AbonoDeuda,
     AbonoProyeccion,
     Auditoria,
     Chancuco,
@@ -98,6 +99,7 @@ MODELOS_TRANSACCIONALES = (
     Venta,
     Producto,
     Cliente,
+    AbonoDeuda,
     PagoDeuda,
     Deuda,
     Chancuco,

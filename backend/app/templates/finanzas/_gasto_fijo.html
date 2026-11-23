@@ -109,6 +109,14 @@
              «Actualizar» y, cuando aplica, «Eliminar» a su lado. #}
           <div class="acciones-formulario acciones-formulario--edicion">
             <button class="boton boton--primario boton--pequeno" type="submit">Actualizar</button>
+            {# SRS (abonos): solo los gastos que pagan una deuda pueden abonarla. #}
+            {% if gasto.id_deuda %}
+              <button class="boton boton--secundario boton--pequeno" type="button"
+                      data-abrir-abono data-id-deuda="{{ gasto.id_deuda }}"
+                      data-deuda="{{ deuda_vinculada.acreedor if deuda_vinculada else 'tu deuda' }}">
+                Abonar
+              </button>
+            {% endif %}
           </div>
         </form>
       </details>

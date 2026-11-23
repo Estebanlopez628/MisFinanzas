@@ -27,6 +27,7 @@ Las tablas están documentadas en `diccionario_datos.md` §8 y §8.1.
 from __future__ import annotations
 
 import calendar
+import math
 from dataclasses import dataclass
 from datetime import date, timedelta
 from decimal import Decimal
@@ -36,7 +37,7 @@ from sqlalchemy.orm import Session
 
 from app.core.numeros import redondear_dinero
 from app.core.texto import parsear_monto
-from app.modelos import DeduccionFija, Deuda, Gasto, PagoDeuda
+from app.modelos import AbonoDeuda, DeduccionFija, Deuda, Gasto, PagoDeuda
 
 CERO = Decimal("0")
 ESTADO_ACTIVA = "ACTIVA"
@@ -708,6 +709,133 @@ def aplicar_cuotas_vencidas(
     if aplicadas:
         bd.commit()
     return aplicadas
+
+
+def registrar_abono(
+    bd: Session,
+    id_usuario: str,
+    id_deuda: str,
+    valor: Decimal | int | float | str,
+    aplica_cuota: bool = False,
+    hoy: date | None = None,
+) -> dict[str, object]:
+    """Descuenta un abono extraordinario del saldo de una deuda propia.
+
+    SRS (abonos desde gastos fijos y deducciones de crédito): el abono se guarda
+    en `abonos_deuda`, separado de `pagos_deuda`, para no alterar el calendario
+    de cuotas vencidas. Con `aplica_cuota=True` además se aplica la cuota del
+    corte y se registra en `pagos_deuda` con su número consecutivo.
+
+    Args:
+        bd: Sesión de base de datos.
+        id_usuario: Dueño de la deuda.
+        id_deuda: Deuda a abonar.
+        valor: Monto del abono; debe ser positivo y no superar el saldo.
+        aplica_cuota: Si `True`, la cuota del corte también se descuenta.
+        hoy: Fecha de aplicación; por defecto, la actual.
+
+    Returns:
+        Diccionario con el abono, el saldo y el plan actualizados.
+
+    Raises:
+        ValueError: Si la deuda no existe, no es del usuario, no está activa o
+            el valor no es válido.
+    """
+    deuda = bd.get(Deuda, id_deuda)
+    if deuda is None or deuda.id_usuario != id_usuario:
+        raise ValueError("La deuda no existe o no pertenece al usuario.")
+    if deuda.estado != ESTADO_ACTIVA:
+        raise ValueError("La deuda ya está pagada.")
+
+    monto = redondear_dinero(parsear_monto(str(valor)))
+    if monto <= CERO:
+        raise ValueError("El valor del abono debe ser mayor a cero.")
+    saldo_inicial = redondear_dinero(deuda.saldo_total)
+    if monto > saldo_inicial:
+        raise ValueError("El abono no puede superar el saldo pendiente de la deuda.")
+
+    fecha = hoy or date.today()
+    cuota = redondear_dinero(deuda.cuota_mensual or CERO)
+    saldo = redondear_dinero(max(saldo_inicial - monto, CERO))
+
+    valor_cuota = CERO
+    numero_cuota: int | None = None
+    if aplica_cuota and saldo > CERO and cuota > CERO:
+        valor_cuota = redondear_dinero(min(cuota, saldo))
+        saldo = redondear_dinero(saldo - valor_cuota)
+        ultimos = list(
+            bd.scalars(
+                select(PagoDeuda)
+                .where(PagoDeuda.id_deuda == id_deuda)
+                .order_by(PagoDeuda.numero_cuota.desc())
+                .limit(1)
+            )
+        )
+        if ultimos:
+            numero_cuota = ultimos[0].numero_cuota + 1
+        else:
+            numero_cuota = 1
+        # El ancla del calendario es la fecha de aplicación: si se usara la de
+        # creación, abrir el módulo mañana volvería a cobrar los periodos ya
+        # cubiertos por este «abono + cuota».
+        fecha_cuota = fecha
+        bd.add(
+            PagoDeuda(
+                id_deuda=id_deuda,
+                numero_cuota=numero_cuota,
+                fecha_aplicacion=fecha_cuota,
+                valor_cuota=valor_cuota,
+                abono_capital=valor_cuota,
+                interes=CERO,
+                saldo_despues=saldo,
+            )
+        )
+        # «Abono + cuota»: la cuota de este corte ya está cubierta, así que el
+        # gasto fijo vinculado queda marcado como pagado en la quincena.
+        for gasto in bd.scalars(
+            select(Gasto).where(
+                Gasto.id_deuda == id_deuda, Gasto.id_usuario == id_usuario
+            )
+        ):
+            gasto.pagado = True
+            gasto.pagado_en = fecha
+            gasto.check_visible = True
+            gasto.monto_pagado = valor_cuota
+
+    abono = AbonoDeuda(
+        id_deuda=id_deuda,
+        id_usuario=id_usuario,
+        valor=monto,
+        fecha_aplicacion=fecha,
+        aplica_cuota=aplica_cuota,
+        numero_cuota=numero_cuota,
+    )
+    bd.add(abono)
+
+    deuda.saldo_total = saldo
+    if saldo <= CERO:
+        deuda.cuotas_pendientes = 0
+        deuda.estado = ESTADO_PAGADA
+    elif cuota > CERO and saldo < cuota:
+        deuda.cuota_mensual = saldo
+        deuda.cuotas_pendientes = 1
+    else:
+        deuda.cuotas_pendientes = max(math.ceil(saldo / cuota), 1) if cuota > CERO else 1
+    bd.commit()
+    bd.refresh(abono)
+    bd.refresh(deuda)
+
+    return {
+        "id_abono": abono.id_abono,
+        "valor_abono": monto,
+        "aplica_cuota": aplica_cuota,
+        "valor_cuota": valor_cuota,
+        "numero_cuota": numero_cuota,
+        "saldo_total": deuda.saldo_total,
+        "cuota_mensual": deuda.cuota_mensual,
+        "cuotas_pendientes": deuda.cuotas_pendientes,
+        "estado": deuda.estado,
+    }
 
 
 def proyeccion_deuda(deuda: Deuda, desde: date | None = None) -> list[CuotaProyectada]:

@@ -32,7 +32,8 @@ def test_las_acciones_de_deducciones_estan_a_la_derecha_y_el_modal_tiene_cierre(
     assert "data-cancelar-edicion" in html
     assert "edicion-gasto__cerrar" in html
     # El único «Cancelar» queda en el modal global de confirmación (SRS v3.9.1).
-    assert html.count(">Cancelar</button>") == 1
+    # El segundo «Cancelar» pertenece al modal de abonos (nueva funcionalidad).
+    assert html.count(">Cancelar</button>") == 2
     assert html.index(">Actualizar</button>") < html.index(">Eliminar</button>")
     assert 'aria-label="Eliminar Libranza"' in html
     assert "js/deudas.js" in html

@@ -259,6 +259,36 @@ duplica pagos.
 
 ---
 
+## 8.2 `abonos_deuda` — *Abonos extraordinarios* (SRS v4.21)
+
+Abonos digitados por el usuario desde el modal de edición de un gasto fijo, de
+una deducción de créditos o de la propia deuda. Viven en su propia tabla para no
+confundirse con las cuotas automáticas de `pagos_deuda` y no alterar su
+calendario. `aplica_cuota` distingue el abono suelto del que además cancela la
+cuota del corte; en ese caso se registra también su `numero_cuota` en
+`pagos_deuda`.
+
+| Campo | Tipo | Nulo | Obligatorio | Descripción / Regla |
+| --- | --- | --- | --- | --- |
+| `id_abono` | `UUID` (PK) | No | Sí | Identificador. |
+| `id_deuda` | `UUID` (FK → `deudas`) | No | Sí | Deuda abonada; `ON DELETE CASCADE`. |
+| `id_usuario` | `UUID` (FK → `usuarios`) | No | Sí | Dueño del abono. |
+| `valor` | `NUMERIC(14,2)` | No | Sí | Monto; `> 0` y `<= saldo_total` al registrarlo. |
+| `fecha_aplicacion` | `DATE` | No | Sí | Fecha del abono. |
+| `aplica_cuota` | `BOOLEAN` | No | Sí | `true` si además se aplica la cuota del corte. |
+| `numero_cuota` | `SMALLINT` | Sí | No | Consecutivo de la cuota cancelada; `>= 1`. |
+| `creado_en` | `TIMESTAMPTZ` | No | Sí | Fecha de registro del movimiento. |
+
+**Reglas del servicio `registrar_abono()`:** descuenta `valor` del saldo;
+`cuota_mensual` no baja, `cuotas_pendientes = ceil(saldo / cuota)`; si el resto
+es menor que la cuota, la cuota se ajusta al saldo y queda una cuota; al llegar
+a cero la deuda pasa a `PAGADA`. Con `aplica_cuota`, la cuota se descuenta
+además deja el gasto o deducción vinculado marcado como pagado del corte. El
+ancla del pago es la fecha de aplicación para no recobrar cuotas vencidas al
+abrir el módulo.
+
+---
+
 ## 9. `chancucos` — *Atajos de pago*
 
 Referencias de pago rápido. Desde SRS v1.8 **todos los usuarios autenticados**

@@ -342,6 +342,59 @@ def api_actualizar_deuda(
     )
 
 
+@router.post("/api/deudas/{id_deuda}/abono", name="api_abonar_deuda")
+def api_abonar_deuda(
+    id_deuda: str,
+    request: Request,
+    usuario: UsuarioSesion = Depends(obtener_usuario_actual),
+    bd: Session = Depends(obtener_bd),
+    valor: Annotated[str, Form()] = "",
+    aplica_cuota: Annotated[str | None, Form()] = None,
+) -> JSONResponse:
+    """Registra un abono extraordinario y devuelve el saldo actualizado.
+
+    Args:
+        id_deuda: Deuda a abonar.
+        request: Petición HTTP (contexto del router).
+        usuario: Usuario autenticado.
+        bd: Sesión de base de datos.
+        valor: Monto a abonar, con separadores de miles opcionales.
+        aplica_cuota: Si llega, el abono también aplica la cuota del corte.
+
+    Returns:
+        JSON con el resultado o un error limpio en `detail`.
+    """
+    del request
+    try:
+        resultado = deudas.registrar_abono(
+            bd,
+            usuario.id_usuario,
+            id_deuda,
+            valor,
+            aplica_cuota=aplica_cuota is not None,
+        )
+    except (ValueError, ArithmeticError) as error:
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={"ok": False, "detail": str(error)},
+        )
+    auditoria.registrar(bd, usuario.id_usuario, "DEUDA_ABONADA", "deudas", id_deuda)
+    return JSONResponse(
+        content={
+            "ok": True,
+            "id_abono": resultado["id_abono"],
+            "valor_abono": str(resultado["valor_abono"]),
+            "aplica_cuota": resultado["aplica_cuota"],
+            "valor_cuota": str(resultado["valor_cuota"]),
+            "numero_cuota": resultado["numero_cuota"],
+            "saldo_total": str(resultado["saldo_total"]),
+            "cuota_mensual": str(resultado["cuota_mensual"]),
+            "cuotas_pendientes": resultado["cuotas_pendientes"],
+            "estado": resultado["estado"],
+        }
+    )
+
+
 @router.post("/deudas", name="crear_deuda", response_model=None)
 def crear_deuda(
     request: Request,
