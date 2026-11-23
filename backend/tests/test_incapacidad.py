@@ -205,5 +205,5 @@ def test_integracion_con_la_liquidacion_del_periodo() -> None:
     # Ley 237.333,60 + incapacidad 33.330.
     assert liquidacion.total_deducciones == Decimal("270663.60")
     # 3.000.000 no supera el tope de 2 SMMLV: conserva el auxilio.
-    assert liquidacion.auxilio_transporte == Decimal("200000.00")
-    assert liquidacion.saldo_bolsillo == Decimal("2929336.40")
+    assert liquidacion.auxilio_transporte == Decimal("249095.00")
+    assert liquidacion.saldo_bolsillo == Decimal("2978431.40")

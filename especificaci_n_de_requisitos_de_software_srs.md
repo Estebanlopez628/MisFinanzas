@@ -142,7 +142,7 @@ La plataforma es un sistema web/móvil con arquitectura dual:
 
     * Si $\text{Total Devengado} > 2\text{ SMMLV}$ ($3.501.810\text{ COP}$ o valor parametrizado del año en curso), el sistema establece el Auxilio de Transporte en $\$0$ y despliega el mensaje descriptivo: *"Supera los 2 salarios mínimos: No aplica Auxilio de Transporte"*.
 
-    * Si $\text{Total Devengado} \le 2\text{ SMMLV}$, el sistema asigna el valor legal del auxilio de transporte y muestra la diferencia restante para alcanzar el tope.
+    * Si $\text{Total Devengado} \le 2\text{ SMMLV}$, el sistema asigna el valor legal del auxilio de transporte —actualmente **$249.095 COP**, parametrizable mediante `AUXILIO_TRANSPORTE`— y muestra la diferencia restante para alcanzar el tope.
 
 #### 4.3 Presupuesto Quincenal y Reactividad en Tiempo Real
 

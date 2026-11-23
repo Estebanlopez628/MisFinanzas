@@ -84,7 +84,7 @@ class ParametrosNomina:
     porcentaje_salud: Decimal = Decimal("0.04")
     porcentaje_pension: Decimal = Decimal("0.04")
     smmlv: Decimal = Decimal("1750905.00")
-    valor_auxilio_transporte: Decimal = Decimal("200000.00")
+    valor_auxilio_transporte: Decimal = Decimal("249095.00")
     dias_incapacidad_empleador: int = 2
     porcentaje_pago_desde_dia_tres: Decimal = Decimal("66.67")
 

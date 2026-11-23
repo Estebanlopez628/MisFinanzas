@@ -33,7 +33,7 @@ No se necesita Node.js, npm ni ningún empaquetador JavaScript.
 | `PUBLICIDAD_URL` | vacío | No | Enlace del anuncio (`rel="sponsored noopener"`). |
 | `LIMITE_INTENTOS_LOGIN` | `5` | No | Fallos por IP + correo antes del `429`. |
 | `SMMLV` | `1750905` | No | Salario mínimo usado para el tope de 2 SMMLV. |
-| `AUXILIO_TRANSPORTE` | `200000` | No | Valor del auxilio vigente. |
+| `AUXILIO_TRANSPORTE` | `249095` | No | Valor del auxilio vigente (actualizado 2026-11-22). Si Render tiene definida esta variable con el valor anterior, hay que cambiarla allí: la variable de entorno gana sobre el predeterminado. |
 | `HORAS_MENSUALES` | `210` | No | Base de la hora ordinaria. |
 | `PORCENTAJE_SALUD` | `0.04` | No | Aporte de salud del empleado. |
 | `PORCENTAJE_PENSION` | `0.04` | No | Aporte de pensión del empleado. |

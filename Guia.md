@@ -1530,7 +1530,7 @@ el saldo libre total, no contra un pago concreto.
 | Recargo | `valor_hora × horas × factor` |
 | Devengado | `básico + Σ recargos − descuento_incapacidad` |
 | Salud / Pensión | `4 % × devengado` cada una |
-| Auxilio de transporte | `$ 200.000` si `básico + recargos ≤ 2 SMMLV`, si no `0` |
+| Auxilio de transporte | `$ 249.095` si `básico + recargos ≤ 2 SMMLV`, si no `0` (parametrizable con `AUXILIO_TRANSPORTE`) |
 | Incapacidad días 1–2 | `100 %` del valor día |
 | Incapacidad día 3+ | `66,67 %` (descuento `33,33 %`) |
 | Quincena | `sueldo × porcentaje` + recargos − deducciones imputadas − fijas − gastos |

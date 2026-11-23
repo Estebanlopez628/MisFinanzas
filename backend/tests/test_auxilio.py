@@ -28,7 +28,7 @@ def test_conserva_auxilio_bajo_el_tope() -> None:
     evaluacion = evaluar_auxilio_transporte(Decimal("2100000"))
 
     assert evaluacion.aplica is True
-    assert evaluacion.valor == Decimal("200000.00")
+    assert evaluacion.valor == Decimal("249095.00")
     assert evaluacion.tope == TOPE
     assert evaluacion.diferencia_hasta_tope == Decimal("1401810.00")
     assert evaluacion.excedente == Decimal("0.00")
@@ -41,7 +41,7 @@ def test_tope_exacto_conserva_el_auxilio() -> None:
     evaluacion = evaluar_auxilio_transporte(TOPE)
 
     assert evaluacion.aplica is True
-    assert evaluacion.valor == Decimal("200000.00")
+    assert evaluacion.valor == Decimal("249095.00")
     assert evaluacion.diferencia_hasta_tope == Decimal("0.00")
     assert "exactamente en el tope" in evaluacion.mensaje
 
@@ -107,10 +107,10 @@ def test_liquidacion_con_auxilio_legal() -> None:
     """La liquidación automática incorpora el auxilio y su evaluación."""
     liquidacion = liquidar_periodo(Decimal("2100000"), aplicar_auxilio_legal=True)
 
-    assert liquidacion.auxilio_transporte == Decimal("200000.00")
-    assert liquidacion.total_ingresos == Decimal("2300000.00")
+    assert liquidacion.auxilio_transporte == Decimal("249095.00")
+    assert liquidacion.total_ingresos == Decimal("2349095.00")
     assert liquidacion.total_deducciones == Decimal("168000.00")
-    assert liquidacion.saldo_bolsillo == Decimal("2132000.00")
+    assert liquidacion.saldo_bolsillo == Decimal("2181095.00")
     assert liquidacion.evaluacion_auxilio is not None
     assert liquidacion.evaluacion_auxilio.aplica is True
 

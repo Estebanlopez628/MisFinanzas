@@ -2308,6 +2308,14 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v101`; **801 pruebas** en verde, `compileall`, `node --check` y `generar_guia.py --verificar` correctos. Recorrido `scripts/qa_v4_5.py`: **34/34 comprobaciones** en Chromium a 360/390/768/1280 px, incluida la comprobación computada de 156×88/640 px en escritorio y 120×68 en móvil. Gate QA ejecutado antes de `git add`/`commit`/`push`.
 
+### 2026-11-22 — Auxilio de transporte a $249.095
+
+- El propietario informó que el valor vigente del auxilio de transporte es **$249.095**, no $200.000. Se cambia el predeterminado en `ParametrosNomina.valor_auxilio_transporte` (`app/core/config.py`) y se mantiene la sobreescritura por `AUXILIO_TRANSPORTE`.
+- No se toca `SMMLV` (1.750.905) ni el tope derivado de 2 SMMLV (3.501.810): el pedido se limitó al valor del auxilio. Si el propietario confirma un SMMLV nuevo, se ajustará por variable de entorno.
+- Se actualizan las pruebas que dependían del valor legal: `test_auxilio.py` (valor, ingresos y saldo), `test_incapacidad.py` (auxilio y saldo de bolsillo) y `test_finanzas_vistas.py` (POST clásico y JSON reactivo). Los importes pasados explícitamente en pruebas se conservan.
+- Documentación actualizada: `DESPLIEGUE.md` (predeterminado y aviso de que la variable de Render gana sobre el código), `Guia.md`, `AGENTS.md` §6, SRS RF-07. **801 pruebas** en verde.
+- **Pendiente de despliegue:** si Render tiene `AUXILIO_TRANSPORTE=200000`, definirlo en `249095`; de lo contrario seguirá aplicando el valor anterior aunque el código esté corregido.
+
 
 
 

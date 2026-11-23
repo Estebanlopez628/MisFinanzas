@@ -38,11 +38,11 @@ def test_formulario_incluye_todos_los_campos(cliente_usuario: TestClient) -> Non
 
 
 def test_post_clasico_sin_horas(cliente_usuario: TestClient) -> None:
-    """Sueldo 3.000.000 sin recargos: saldo 2.960.000 y auxilio completo."""
+    """Sueldo 3.000.000 sin recargos: saldo 3.009.095 y auxilio completo."""
     respuesta = cliente_usuario.post(RUTA, data={"sueldo_basico": "3.000.000"})
 
     assert respuesta.status_code == 200
-    assert "2.960.000" in respuesta.text
+    assert "3.009.095" in respuesta.text
     assert "Aplica Auxilio de Transporte" in respuesta.text
     assert "Sin horas extras ni recargos registrados." in respuesta.text
 
@@ -55,7 +55,7 @@ def test_post_clasico_con_horas_extras(cliente_usuario: TestClient) -> None:
     )
 
     assert respuesta.status_code == 200
-    assert "3.190.000" in respuesta.text
+    assert "3.239.095" in respuesta.text
     assert "Hora extra nocturna" in respuesta.text
     assert "250.000" in respuesta.text
 
@@ -103,8 +103,8 @@ def test_json_devuelve_totales_formateados(cliente_usuario: TestClient) -> None:
     assert respuesta.status_code == 200
     cuerpo = respuesta.json()
     assert cuerpo["ok"] is True
-    assert cuerpo["datos"]["saldo_bolsillo"] == "$2.960.000"
-    assert cuerpo["datos"]["auxilio_transporte"] == "$200.000"
+    assert cuerpo["datos"]["saldo_bolsillo"] == "$3.009.095"
+    assert cuerpo["datos"]["auxilio_transporte"] == "$249.095"
     assert cuerpo["datos"]["deduccion_salud"] == "$120.000"
     assert cuerpo["aplica_auxilio"] is True
     assert cuerpo["detalle"] == []
