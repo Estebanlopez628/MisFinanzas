@@ -2367,6 +2367,18 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v105`; **831 pruebas** en verde, `compileall`, `node --check` y `generar_guia.py --verificar` correctos. Gate QA `scripts/qa_v4_17.py`: **14/14 comprobaciones** en Chromium, con tamaños 156×88/120×68, 41 marcas y textos centrados.
 
+### 2026-11-22 — SRS v4.18: espaciado, Consejero y gráfica (ADR-81)
+
+**Decisión (ADR-81).** Cuatro ajustes quirúrgicos sin tocar los velocímetros web ni ningún otro módulo aprobado: compactar filas de cortes y Trabajos Extras, precisar los plazos y deudas del Consejero, apilar los velocímetros en móvil y mejorar la legibilidad de la gráfica de 12 meses.
+
+**Consecuencias aplicadas.**
+- CSS con ámbito: `.panel--quincena .lista-parametros--compacta li` y `.bloque-gastos-quincena .lista-parametros li` a 6 px/0; `.bloque-gastos-quincena` a 8 px. «Resultado del periodo» no se alteró.
+- `detalle` de `_simular()` incorpora `id_deuda` y `mes`; el Consejero calcula el plazo de la deuda objetivo desde ese mes real y lo compara con su pago mínimo. Se unificó «pago mínimo» en textos y docstrings y se eliminó «por más tiempo».
+- La cuota liberada se limita al plan (objetivo + dos siguientes) mediante `plan_ids`; `Consejo.cuota_liberada` y `cuotas_liberadas_detalle` usan ese alcance. Se añadió `saldo_proyectado_excedente` para el velocímetro verde.
+- Móvil: velocímetros en una columna y gráfica con `min-height: 220px`; etiquetas claras a 14 px, curvas diferenciadas, selector `nowrap` con un mes activo y una sola línea de resumen (se retiró el tooltip duplicado).
+
+**Verificación.** `sw.js` en `olb-finanzas-v106`; **836 pruebas** en verde, `compileall`, `node --check` y `generar_guia.py --verificar` correctos. Gate QA `scripts/qa_v4_18.py`: **21/21 comprobaciones** en Chromium, con espaciado computado 6 px/8 px, apilado móvil y 156×88 intacto en web.
+
 
 
 

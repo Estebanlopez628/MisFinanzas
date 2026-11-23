@@ -72,7 +72,7 @@ def test_la_vista_renderiza_la_grafica_unificada(bd, cliente_admin) -> None:
     assert "data-cierre-consejero" in respuesta.text
     assert "gradOptimizado" in respuesta.text
     assert "¡Libre de deuda!" in respuesta.text
-    assert "data-cierre-tooltip" in respuesta.text
+    assert "data-cierre-detalle" in respuesta.text
 
 
 def test_plantilla_y_js_de_la_grafica() -> None:
@@ -83,13 +83,13 @@ def test_plantilla_y_js_de_la_grafica() -> None:
         "Comparativa de cierre de deuda",
         "gradOptimizado",
         "¡Libre de deuda!",
-        "data-cierre-tooltip",
+        "data-cierre-detalle",
         "Base (Normal)",
         "Optimizado (Con tu excedente)",
     ):
         assert texto in html
 
     js = (RUTA_APP / "static/js/consejero.js").read_text(encoding="utf-8")
-    assert "[data-cierre-tooltip]" in js
+    assert "[data-cierre-detalle]" in js
     assert "data-base" in js
     assert "data-optimo" in js

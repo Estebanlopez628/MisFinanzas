@@ -11,7 +11,6 @@
   if (!bloque) {
     return;
   }
-  var tooltip = bloque.querySelector("[data-cierre-tooltip]");
   var detalle = bloque.querySelector("[data-cierre-detalle]");
 
   /**
@@ -28,10 +27,9 @@
     if (detalle) {
       detalle.textContent = texto;
     }
-    if (tooltip) {
-      tooltip.textContent = texto;
-      tooltip.hidden = false;
-    }
+    bloque.querySelectorAll(".cierre-deuda__mes").forEach(function (item) {
+      item.classList.toggle("cierre-deuda__mes--activo", item === boton);
+    });
   }
 
   bloque.querySelectorAll(".cierre-deuda__mes").forEach(function (boton) {
@@ -42,6 +40,13 @@
       mostrar(boton);
     });
   });
+
+  // SRS v4.18: un único mes activo resaltado en el selector.
+  var inicial = bloque.querySelector(".cierre-deuda__mes--libre")
+    || bloque.querySelector(".cierre-deuda__mes");
+  if (inicial) {
+    inicial.classList.add("cierre-deuda__mes--activo");
+  }
 
   // SRS v4.17: marcas de graduación del dial. Solo dibuja una vez por SVG.
   bloque.querySelectorAll(".mf-cockpit-dial").forEach(function (svg) {

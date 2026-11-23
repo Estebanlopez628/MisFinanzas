@@ -111,9 +111,9 @@
             <p class="tarjeta__descripcion">
               {% if consejo.cierre %}
                 Libre en {{ consejo.cierre.fecha_cierre_opt }} (vs.
-                {{ consejo.cierre.meses_minimo }} meses pagando solo lo mínimo).
+                {{ consejo.cierre.meses_minimo }} meses con pago mínimo).
               {% else %}
-                Para quedar libre de deudas pagando solo lo mínimo.
+                Para quedar libre de deudas con pago mínimo.
               {% endif %}
             </p>
           </article>
@@ -245,8 +245,8 @@
                     <span class="mf-gauge-badge">-{{ consejo.cierre.meses_ahorrados }} meses antes</span>
                   {% endif %}
                 </div>
-                <div class="mf-gauge-sub">{{ consejo.cierre.saldo_actual | cop }} saldo ·
-                  Abonando +{{ consejo.cierre.excedente_mensual | cop }}/mes</div>
+                <div class="mf-gauge-sub">{{ consejo.cierre.saldo_proyectado_excedente | cop }}
+                  saldo proyectado · Abonando +{{ consejo.cierre.excedente_mensual | cop }}/mes</div>
               </div>
             </article>
           </div>
@@ -278,9 +278,9 @@
               <text x="345" y="142" text-anchor="end" class="cierre-deuda__eje">Mes 12: {{ consejo.cierre.puntos[-1].optimizado | cop }}</text>
               <polygon points="{{ area_opt }}" fill="url(#gradOptimizado)" />
               <polyline points="{{ puntos_base.valores | join(' ') }}" fill="none"
-                        stroke="#3B82F6" stroke-width="2.5" stroke-dasharray="5,5" />
+                        stroke="#38bdf8" stroke-width="2.5" stroke-dasharray="6,4" />
               <polyline points="{{ linea_opt }}" fill="none"
-                        stroke="#10B981" stroke-width="3" stroke-linecap="round" />
+                        stroke="#10b981" stroke-width="3.5" stroke-linecap="round" />
               {% if consejo.cierre.mes_libre_index is not none %}
                 {% set x_libre = 15 + consejo.cierre.mes_libre_index * 30 %}
                 <g class="cierre-deuda__hito">
@@ -296,8 +296,7 @@
                         data-base="{{ punto.base | cop }}"
                         data-optimo="{{ punto.optimizado | cop }}"
                          data-reduccion="{{ (punto.base - punto.optimizado) | cop }}">
-                  <span>{{ punto.mes }}</span>
-                  <small>{{ punto.anio }}</small>
+                  <span>{{ punto.mes[:3] | capitalize }} {{ punto.anio }}</span>
                 </button>
               {% endfor %}
             </div>
@@ -308,7 +307,6 @@
               {{ primero.optimizado | cop }} · Reducción extra acumulada:
               {{ (primero.base - primero.optimizado) | cop }}
             </p>
-            <div class="cierre-deuda__tooltip" data-cierre-tooltip hidden></div>
           </div>
 
           <ul class="comparativa__leyenda">

@@ -472,8 +472,9 @@ a.tarjeta:focus-visible {
 }
 
 .bloque-gastos-quincena {
-  margin-top: 14px;
-  padding-top: 14px;
+  /* SRS v4.18: 8 px entre la última fila del resumen y la divisoria. */
+  margin-top: 8px;
+  padding-top: 8px;
   border-top: 1px dashed var(--borde-suave);
 }
 
@@ -1124,6 +1125,15 @@ a.tarjeta:focus-visible {
 }
 
 .lista-parametros--compacta {
+  margin: 0;
+}
+
+/* SRS v4.18: filas compactas (6 px arriba y abajo, sin márgenes) solo en los
+   resúmenes de corte y de Trabajos Extras. «Resultado del periodo» conserva
+   su espaciado original. */
+.panel--quincena .lista-parametros--compacta li,
+.bloque-gastos-quincena .lista-parametros li {
+  padding: 6px 2px;
   margin: 0;
 }
 
@@ -4487,6 +4497,23 @@ strong.valor-negativo.recibo__cifra--saldo {
   font-weight: 700;
 }
 
+/* SRS v4.18: gráfica ampliada y legible en móvil. */
+.cierre-deuda__grafica {
+  min-height: 220px;
+  width: 100%;
+}
+
+.cierre-deuda__grafica svg {
+  height: 220px !important;
+}
+
+/* SRS v4.18: en móvil los velocímetros se apilan a ancho completo, primero
+   pago mínimo y después con excedente. El diseño de escritorio no se toca. */
+.cierre-deuda__velocimetros {
+  grid-template-columns: 1fr !important;
+  max-width: 100% !important;
+}
+
 /* SRS v4.13: detalle real del mes seleccionado y ejes de la curva. */
 .cierre-deuda__detalle {
   margin: 8px 0 0;
@@ -4733,6 +4760,24 @@ strong.valor-negativo.recibo__cifra--saldo {
   font-size: 0.78rem;
   color: #94a3b8;
   margin-top: 2px;
+}
+
+/* SRS v4.18: etiquetas de ejes con contraste y selector de meses en una sola
+   línea. Se declara fuera de media queries para aplicar en web y móvil. */
+.cierre-deuda__eje {
+  fill: #e2e8f0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.cierre-deuda__mes {
+  white-space: nowrap;
+}
+
+.cierre-deuda__mes--activo,
+.cierre-deuda__mes--libre {
+  background: #10b981 !important;
+  color: #052e16 !important;
 }
 
 /* ---- Atajos embebidos de Mis Finanzas: solo descripción y día (SRS v1.9) -- */

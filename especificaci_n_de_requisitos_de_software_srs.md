@@ -723,3 +723,35 @@ Se mantienen las dimensiones vigentes —120×68 px en móvil y 156×88 px en es
 - Usuarios QA: `prueba_qa@misfinanzas.local` / `QA_MisFinanzas_2026!` y `prueba_qa_admin@misfinanzas.local` / `QA_Admin_2026!`.
 - `scripts/qa_v4_17.py`: **14/14 comprobaciones** en Chromium, incluidos tamaños computados 156×88 y 120×68, 41 marcas, resplandor azul/esmeralda y texto centrado. Solo tras el gate se ejecutaron `git add`, `commit` y `push`.
 - Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-80), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.17.
+
+---
+
+## 21. SRS v4.18 — Espaciado, precisión del Consejero y gráfica legible
+
+Versión 4.18 y **línea base vigente**. Cuatro ajustes sobre v4.17.
+
+### 21.1 No regresión
+
+No se tocan los velocímetros web ni sus tamaños, los siete factores 2026, «Resultado del periodo» y su tabla de nueve filas, las donas, Deudas, Atajos Guardados, selectores de fecha, modales propios, WhatsApp, OLB_BYTE ni Ayuda.
+
+### 21.2 Espaciado compacto
+
+Las filas de Quincena 1, Quincena 2, Pago Mensual y Trabajos Extras usan 6 px arriba y abajo (`py-1.5`) y cero margen Vertical (`my-0`). La distancia entre la última fila y la divisoria inferior es de 8 px. «Resultado del periodo» conserva su espaciado original.
+
+### 21.3 Consejero: plazos y deudas
+
+- El plazo de la deuda recomendada es el de **esa deuda** frente a su pago mínimo; no se mezcla con el cierre global de todas las deudas.
+- Todo el módulo usa el término **«pago mínimo»**. Se eliminan «pagando solo lo mínimo» y «por más tiempo».
+- Las cuotas adelantadas se expresan en meses y cuotas antes que con pago mínimo, calculadas de la simulación real.
+- La cuota liberada y su desglose incluyen **solo** las deudas propuestas en el plan; nunca aparece una deuda no listada. Se aclara que el cierre global cubre todas las deudas activas.
+- El velocímetro verde muestra el **saldo proyectado** de su escenario, distinto del saldo inicial cuando hay abono extra.
+
+### 21.4 Velocímetros y gráfica
+
+En móvil (`< 768px`) los velocímetros se apilan en una columna (primero pago mínimo), sin cambios en su diseño ni tamaño en escritorio. La gráfica de 12 meses usa `min-height: 220px` en móvil, etiquetas `Inicial` y `Mes 12` en `#e2e8f0` a 14 px, curva verde sólida `#10b981` frente a curva azul discontinua `#38bdf8`, selector de meses en una sola línea con un único mes activo resaltado y una sola línea de resumen del mes seleccionado.
+
+### 21.5 Gate QA y cierre documental
+
+- Usuarios QA: `prueba_qa@misfinanzas.local` / `QA_MisFinanzas_2026!` y `prueba_qa_admin@misfinanzas.local` / `QA_Admin_2026!`.
+- `scripts/qa_v4_18.py`: **21/21 comprobaciones** en Chromium, con estilos computados de espaciado, apilado móvil, tamaños web intactos y redacción del Consejero. Solo tras el gate se ejecutaron `git add`, `commit` y `push`.
+- Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-81), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.18.

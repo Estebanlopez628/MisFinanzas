@@ -105,3 +105,8 @@ Principios innegociables. Toda especificación, plan y tarea debe cumplirlos de 
     - El dial radial tipo cockpit, sus micro-marcas, el resplandor neón y la aguja con pivote son mejoras visuales; los tamaños vigentes y las cifras del Consejero son inmutables.
     - La variante azul corresponde a «Pago mínimo» y la esmeralda a «Con excedente», con texto centrado y la píldora de meses ganados solo en esta última.
     - Las reglas CSS del componente se declaran fuera de media queries móviles para que el estilo aplique en web y móvil sin cambiar su distribución.
+
+21. **Precisión operativa y claridad visual (SRS v4.18):**
+    - Los resúmenes de corte y de Trabajos Extras son compactos; el resultado del periodo conserva su estructura.
+    - El Consejero distingue el plazo de la deuda recomendada del cierre global, usa «pago mínimo» y solo nombra deudas incluidas en su plan.
+    - Los velocímetros se apilan en móvil sin cambiar el diseño web; la gráfica de proyección es legible y tiene un único estado activo.

@@ -132,4 +132,10 @@ El Consejero ya no habla de intereses inventados ni de totales inflados. Compara
 
 Los dos velocímetros del Consejero ahora parecen diales de precisión: tienen un anillo con marcas finas, un arco luminoso y una aguja con centro iluminado. El de **Pago mínimo** brilla en azul y el de **Con excedente** en verde esmeralda, con una píldora que indica cuántos meses antes terminas. Debajo de cada dial verás, centrados, el título, la fecha completa, la duración en meses y el saldo real con la condición del escenario. Su tamaño no cambió: en la computadora y en el celular miden lo mismo que antes, y las cifras siguen siendo las que calcula el Consejero.
 
+### Cambios de la versión 4.18
+
+Las filas de «Sueldo devengado» y «Gastos fijos» en las tarjetas de quincena y de Trabajos Extras están más juntas, sin huecos grandes antes de la divisoria.
+
+El Consejero ahora distingue dos plazos: cuándo se cancela la deuda que te recomienda atacar y cuándo se cierran todas tus deudas. Usa siempre la expresión «pago mínimo» y los meses/cuotas que adelantas. La cuota que liberas solo suma las deudas que aparecen en tu plan; nunca menciona una deuda que no te propuso. En el celular los dos velocímetros van uno debajo del otro, y la gráfica de 12 meses es más alta, con etiquetas claras y un solo mes resaltado a la vez.
+
 © 2026 MisFinanzas

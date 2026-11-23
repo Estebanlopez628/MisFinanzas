@@ -759,3 +759,15 @@ El dial es presentación: no añade campos a `Consejo.cierre`. Lee `saldo_actual
 | `mf-gauge-badge` | Píldora «-N meses antes», solo en la variante excedente con `meses_ahorrados > 0`. |
 
 Las reglas CSS viven fuera de `@media (max-width: 767px)` para aplicar en ambos tamaños; no modifican las dimensiones del contenedor ni del SVG.
+
+## 21. SRS v4.18 — Precisión del Consejero y presentación (sin cambios de esquema)
+
+**Bloques de liquidación:** las filas `sueldo_devengado_neto_corte` y `gastos_fijos_corte` usan 6 px de padding vertical y 0 de margen; la separación hasta la divisoria inferior es de 8 px. El bloque «Resultado del periodo» conserva su espaciado.
+
+**Salidas del Consejero:**
+- `cuotas_liberadas_detalle` se filtra por `plan_ids` (objetivo + dos siguientes). `Consejo.cuota_liberada` es la suma de ese subconjunto, nunca de todas las deudas que cierran en la simulación.
+- `detalle` de `_simular()` incluye `id_deuda` y `mes`; el plazo de la deuda objetivo se lee de ahí y se compara con `objetivo.cuotas` (pago mínimo de esa deuda).
+- `saldo_proyectado_excedente` es el saldo de la serie optimizada en el mes previo al cierre (o al horizonte de 12 meses), distinto de `saldo_actual` cuando hay abono extra.
+- Terminología única: «pago mínimo». Quedan prohibidas «pagando solo lo mínimo» y «por más tiempo».
+
+**Gráfica de 12 meses:** `min-height: 220px` en móvil; etiquetas de ejes `#e2e8f0` a 14 px; curva optimizada `#10b981` continua y curva base `#38bdf8` discontinua; selector `nowrap` con un único botón activo y una sola línea `data-cierre-detalle`.
