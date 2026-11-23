@@ -56,6 +56,8 @@ Todos tus gastos fijos y deducciones se organizan en 8 categorías cerradas con 
 
 En «Gastos y Presupuestos» verás, **tanto en el celular como en la computadora**, una comparativa por cada deuda recomendada. Cada tarjeta muestra el nombre de la deuda, su saldo y su cuota, un badge verde con el porcentaje de tiempo que recortas, una barra azul con el plazo pagando solo el mínimo y una barra verde con el plazo aplicando tu excedente. La zona punteada con candado indica los meses que te ahorras. El encabezado resume de cuántos meses a cuántos baja tu plazo y el porcentaje global de ahorro. Todo se calcula con tus cifras reales, sin intereses inventados. En el celular el porcentaje de ahorro aparece alineado a la derecha de «Pago mínimo», la fecha de cierre se muestra compacta (por ejemplo `11/2027`) y el resumen verde va en el mismo recuadro que el de los velocímetros, para que nada se corte ni se superponga. Los textos van sin paréntesis para que se lean más claro.
 
+Al marcar un gasto fijo con el ✔, el cambio se ve al instante: el círculo se pone verde y el nombre se tacha para que sepas que ya lo pagaste. El guardado ocurre en segundo plano y no recarga la página; si algo falla, el check vuelve a su estado anterior y aparece un aviso discreto. Los créditos vinculados y las metas siguen registrando sus abonos como siempre.
+
 ## 6. Atajos de Pago y recibos
 
 Puedes guardar tus pagos o abonos frecuentes con su monto exacto ('Valor a pagar') para registrarlos con un solo toque y generar un comprobante visual limpio y fácil de leer.

@@ -14,7 +14,7 @@ from typing import Annotated
 from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, Form, Request, status
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
 from app import esquemas
@@ -444,6 +444,64 @@ def desmarcar_pagado_gasto(
             bd, usuario.id_usuario, "GASTO_DESMARCADO", "gastos", id_gasto
         )
     return _volver(origen)
+
+
+@router.post("/api/gastos/{id_gasto}/pagado", name="api_marcar_pagado_gasto")
+def api_marcar_pagado_gasto(
+    id_gasto: str,
+    usuario: UsuarioSesion = Depends(obtener_usuario_actual),
+    bd: Session = Depends(obtener_bd),
+) -> JSONResponse:
+    """Marca un gasto como pagado y devuelve el estado sin recargar la vista.
+
+    Args:
+        id_gasto: Gasto a marcar.
+        usuario: Usuario autenticado.
+        bd: Sesión de base de datos.
+
+    Returns:
+        JSON con `ok` y el estado pagado, o un error limpio en `detail`.
+    """
+    try:
+        gasto = pagos_metas.marcar_pagado(bd, usuario.id_usuario, id_gasto, date.today())
+    except ValueError as error:
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={"ok": False, "detail": str(error)},
+        )
+    if gasto is None:
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content={"ok": False, "detail": "El gasto no existe."},
+        )
+    auditoria.registrar(bd, usuario.id_usuario, "GASTO_PAGADO", "gastos", id_gasto)
+    return JSONResponse(content={"ok": True, "pagado": True, "id_gasto": id_gasto})
+
+
+@router.post("/api/gastos/{id_gasto}/no-pagado", name="api_desmarcar_pagado_gasto")
+def api_desmarcar_pagado_gasto(
+    id_gasto: str,
+    usuario: UsuarioSesion = Depends(obtener_usuario_actual),
+    bd: Session = Depends(obtener_bd),
+) -> JSONResponse:
+    """Desmarca un gasto y devuelve el estado sin recargar la vista.
+
+    Args:
+        id_gasto: Gasto a desmarcar.
+        usuario: Usuario autenticado.
+        bd: Sesión de base de datos.
+
+    Returns:
+        JSON con `ok` y el estado pagado, o un error limpio en `detail`.
+    """
+    gasto = pagos_metas.desmarcar_pagado(bd, usuario.id_usuario, id_gasto)
+    if gasto is None:
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content={"ok": False, "detail": "El gasto no existe."},
+        )
+    auditoria.registrar(bd, usuario.id_usuario, "GASTO_DESMARCADO", "gastos", id_gasto)
+    return JSONResponse(content={"ok": True, "pagado": False, "id_gasto": id_gasto})
 
 
 @router.post("/gastos/{id_gasto}/abono", name="registrar_abono_gasto")

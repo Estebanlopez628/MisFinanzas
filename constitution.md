@@ -141,3 +141,7 @@ Principios innegociables. Toda especificación, plan y tarea debe cumplirlos de 
 27. **Icono de Mis Finanzas y texto sin paréntesis (SRS v4.25):**
     - El encabezado de Mis Finanzas muestra la bolsa de dinero (💰) que identifica al módulo en el inicio.
     - Ningún rótulo de la gráfica comparativa usa paréntesis; en móvil el badge del porcentaje se alinea al extremo derecho de «Pago mínimo».
+
+28. **Grilla simétrica y checks sin parpadeo (SRS v4.26):**
+    - Los modales de Editar deuda y Editar deducción usan dos botones lado a lado y un tercero a ancho completo; la acción secundaria se mantiene accesible en la cabecera.
+    - El ✔ de un gasto fijo cambia al instante y se guarda en segundo plano; solo se revierte si falla el servidor, sin recargar la página ni mostrar alertas que desplacen el contenido. La lógica de créditos vinculados y metas no se modifica.

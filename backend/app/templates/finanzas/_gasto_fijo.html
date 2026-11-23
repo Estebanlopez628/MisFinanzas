@@ -167,7 +167,8 @@
         <form
           method="post"
           action="{{ url_for('desmarcar_pagado_gasto', id_gasto=gasto.id_gasto) }}"
-          data-proteccion
+          data-proteccion data-check-gasto data-id-gasto="{{ gasto.id_gasto }}"
+          data-accion="desmarcar"
         >
           <input type="hidden" name="origen" value="{{ origen }}" />
           {% if id_trabajo %}
@@ -188,7 +189,8 @@
         <form
           method="post"
           action="{{ url_for('marcar_pagado_gasto', id_gasto=gasto.id_gasto) }}"
-          data-proteccion
+          data-proteccion data-check-gasto data-id-gasto="{{ gasto.id_gasto }}"
+          data-accion="marcar"
         >
           <input type="hidden" name="origen" value="{{ origen }}" />
           {% if id_trabajo %}

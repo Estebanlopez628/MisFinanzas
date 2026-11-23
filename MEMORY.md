@@ -2454,6 +2454,18 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v112`; **880 pruebas** en verde. Gates: `qa_v4_22.py` **33/33**, `qa_v4_23.py` **13/13** y `qa_v4_24.py` **16/16** (incluye «sin paréntesis en la gráfica» y «badge alineado a la derecha»). `compileall`, `node --check` y `generar_guia.py --verificar` correctos.
 
+### 2026-11-23 — SRS v4.26: grilla de modales y checks optimistas (ADR-88)
+
+**Decisión (ADR-88).** La SRS entregada se autodenomina v4.19, pero la línea base pusheada es v4.25; se registra como **v4.26** para no reescribir historial. Alcance quirúrgico: solo la grilla de botones de los modales de deuda/deducción y la respondedura de los checks de gastos fijos. El propietario aclaró que los checks deben conservar la lógica ya programada de créditos vinculados y abonos de metas.
+
+**Consecuencias aplicadas.**
+- `.acciones-formulario--grilla` con `grid-template-columns: 1fr 1fr; gap: 12px` en ambos modales. Fila 1: Actualizar + Abonar (deuda) / Eliminar (deducción); fila 2: Cancelar con `grid-column: 1 / -1`. La acción secundaria restante se movió a la cabecera para no romper la grilla.
+- Endpoints `POST /api/gastos/{id}/pagado` y `/no-pagado`: llaman a los mismos `pagos_metas.marcar_pagado`/`desmarcar_pagado`, registran auditoría y devuelven JSON; no existe lógica de negocio nueva.
+- `app.js` intercepta el `submit` de los forms `data-check-gasto`: cambia clases y el tachado del nombre de inmediato, envía `fetch` silencioso, invierte `data-accion` y `action` para el siguiente clic, bloquea solo ese botón con `pointer-events: none`, y revierte con `mostrarAvisoApp()` si falla. Sin `location.reload`.
+- CSS: `.lista-gastos__item--pagado .lista-gastos__nombre` tacha el nombre para que el usuario sepa que ya pagó.
+
+**Verificación.** `sw.js` en `olb-finanzas-v113`; suite completa en verde. Gate QA `scripts/qa_v4_26.py`: **25/25 comprobaciones** en Chromium (1280 px y 375 px), con la grilla medida (201/201 px y 148,5/148,5 px; botón inferior del doble de ancho), check a **0,7 ms en web y 0,5 ms en móvil**, sin recarga, estado invertido y persistente tras `reload()`. Los datos QA se eliminan al terminar.
+
 
 
 

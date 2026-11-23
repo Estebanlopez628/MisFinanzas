@@ -1260,6 +1260,13 @@ a.tarjeta:focus-visible {
   border-color: rgba(16, 185, 129, 0.55);
 }
 
+/* SRS v4.26: el nombre del gasto pagado se tacha para que el usuario sepa de
+   un vistazo que ya canceló ese pago, sin esperar a recargar la vista. */
+.lista-gastos__item--pagado .lista-gastos__nombre {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
 /* Pago saltado con ×: se ve, pero atenuado y sin acciones de pago. */
 .lista-gastos__item--inhabilitado {
   opacity: 0.6;
@@ -6189,6 +6196,22 @@ dialog::backdrop {
     font-weight: 700;
     text-align: center;
   }
+}
+
+/* SRS v4.26: grilla simétrica (2 botones arriba + 1 a ancho completo) en los
+   modales de Editar deuda y Editar deducción fija. */
+.acciones-formulario--grilla {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.acciones-formulario--grilla > .boton {
+  width: 100%;
+}
+
+.acciones-formulario--grilla .boton--ancho-completo {
+  grid-column: 1 / -1;
 }
 
 .campo__control--bloqueado {

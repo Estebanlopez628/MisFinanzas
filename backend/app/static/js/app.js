@@ -744,3 +744,83 @@
     });
   }
 })();
+
+/* SRS v4.26: checks de gastos fijos con actualización optimista. El ✔ cambia
+   al instante; el guardado va en segundo plano y solo se revierte si falla. */
+(function () {
+  function aplicarEstado(formulario, pagado) {
+    var boton = formulario.querySelector('button[type="submit"]');
+    var fila = formulario.closest("li.lista-gastos__item");
+    if (!boton) return;
+    if (pagado) {
+      boton.classList.remove("boton-circular--check");
+      boton.classList.add("boton-circular--marcado");
+      boton.setAttribute("aria-label", "Desmarcar el pago");
+      boton.setAttribute("title", "Pagado · pulsa para desmarcar");
+    } else {
+      boton.classList.add("boton-circular--check");
+      boton.classList.remove("boton-circular--marcado");
+      boton.setAttribute("aria-label", "Marcar como pagado");
+      boton.setAttribute("title", "Marcar como pagado");
+    }
+    if (fila) {
+      if (pagado) {
+        fila.classList.add("lista-gastos__item--pagado");
+      } else {
+        fila.classList.remove("lista-gastos__item--pagado");
+      }
+    }
+  }
+
+  document.querySelectorAll("form[data-check-gasto]").forEach(function (formulario) {
+    formulario.addEventListener("submit", function (evento) {
+      evento.preventDefault();
+      var boton = formulario.querySelector('button[type="submit"]');
+      if (!boton || boton.dataset.enviando === "1") return;
+
+      var idGasto = formulario.getAttribute("data-id-gasto");
+      var accion = formulario.getAttribute("data-accion");
+      var marcando = accion === "marcar";
+      var accionAnterior = accion;
+      var actionAnterior = formulario.getAttribute("action");
+      var siguiente = marcando ? "desmarcar" : "marcar";
+
+      // Cambio visual inmediato (0 ms) y state local coherente para el próximo clic.
+      aplicarEstado(formulario, marcando);
+      formulario.setAttribute("data-accion", siguiente);
+      formulario.setAttribute(
+        "action",
+        "/gastos/" + encodeURIComponent(idGasto) + (marcando ? "/no-pagado" : "/pagado")
+      );
+
+      boton.dataset.enviando = "1";
+      boton.style.pointerEvents = "none";
+
+      var ruta = "/api/gastos/" + encodeURIComponent(idGasto) +
+        (marcando ? "/pagado" : "/no-pagado");
+      fetch(ruta, { method: "POST", headers: { "Accept": "application/json" } })
+        .then(function (respuesta) {
+          return respuesta.json().then(function (cuerpo) {
+            return { ok: respuesta.ok && cuerpo.ok, detalle: cuerpo.detail };
+          });
+        })
+        .then(function (resultado) {
+          if (!resultado.ok) {
+            throw new Error(resultado.detalle || "No se pudo actualizar el pago.");
+          }
+        })
+        .catch(function () {
+          aplicarEstado(formulario, !marcando);
+          formulario.setAttribute("data-accion", accionAnterior);
+          formulario.setAttribute("action", actionAnterior);
+          if (typeof window.mostrarAvisoApp === "function") {
+            window.mostrarAvisoApp("No se pudo actualizar el pago. Inténtalo de nuevo.");
+          }
+        })
+        .finally(function () {
+          boton.dataset.enviando = "0";
+          boton.style.pointerEvents = "";
+        });
+    });
+  });
+})();

@@ -899,3 +899,24 @@ Intactos: cálculo y contenido del Consejero, velocímetros, banner verde, abono
 - Usuarios QA: `prueba_qa@misfinanzas.local` / `QA_MisFinanzas_2026!` y `prueba_qa_admin@misfinanzas.local` / `QA_Admin_2026!`.
 - Gates: `scripts/qa_v4_22.py` **33/33**, `scripts/qa_v4_23.py` **13/13** y `scripts/qa_v4_24.py` **16/16** en Chromium (1280 px y 375 px). Suite completa: **880 pruebas** en verde.
 - Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-87), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.25.
+
+---
+
+## 28. SRS v4.26 — Grilla de modales y checks optimistas
+
+Versión 4.26 y **línea base vigente**. El documento recibido se autodenomina v4.19, pero la línea base pusheada es v4.25: se registra como v4.26 para no reescribir historial. No se rehace ningún módulo aprobado.
+
+### 28.1 No regresión
+
+Intactos: modal de Editar Gasto Fijo y Registrar Abono, tarjetas de corte, 7 factores 2026, Resultado del periodo, Consejero, velocímetros, donas, Atajos Guardados, selectores de fecha, WhatsApp, OLB_BYTE y Ayuda.
+
+### 28.2 Cambios
+
+1. **Grilla de botones:** en «Editar deuda» y «Editar deducción fija» el contenedor de acciones usa `display: grid; grid-template-columns: 1fr 1fr; gap: 12px`. Fila 1: `Actualizar` + `Abonar` (deuda) o `Eliminar` (deducción); fila 2: `Cancelar` con `grid-column: 1 / -1`. La acción secundaria restante va en la cabecera. Igual en web y móvil.
+2. **Checks optimistas:** al pulsar el ✔ de un gasto fijo, el estado visual cambia en 0 ms (clase pagada y nombre tachado). El guardado va en un `fetch` silencioso a `POST /api/gastos/{id}/pagado` o `/no-pagado`, que reutiliza `pagos_metas` sin alterar la lógica de créditos vinculados ni de abonos de metas. Si falla, se revierte y se muestra un aviso discreto. Solo se bloquea el botón pulsado. Sin recarga global ni alertas que muevan el layout.
+
+### 28.3 Gate QA y cierre documental
+
+- Usuarios QA: `prueba_qa@misfinanzas.local` / `QA_MisFinanzas_2026!` y `prueba_qa_admin@misfinanzas.local` / `QA_Admin_2026!`.
+- `scripts/qa_v4_26.py`: **25/25 comprobaciones** en Chromium (1280 px y 375 px), con la grilla medida en ambos modales, check a 0,7 ms (web) y 0,5 ms (móvil), sin recarga, estado invertido y persistente tras recargar.
+- Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-88), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.26.
