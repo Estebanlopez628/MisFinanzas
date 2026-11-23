@@ -2417,6 +2417,20 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v109`; **866 pruebas** en verde, `compileall`, `node --check` y `generar_guia.py --verificar` correctos (115 fichas). Gate QA `scripts/qa_v4_21.py`: **34/34 comprobaciones** en Chromium (1280 px y 375 px), con los cuatro puntos de entrada, el descuento real de saldo y cuotas, el centrado de donas y cabeceras y sin errores de consola ni desbordamiento horizontal.
 
+### 2026-11-23 — SRS v4.22: barras de impacto, modal, dona y logos (ADR-85)
+
+**Decisión (ADR-85).** El propietario pidió tres ajustes sobre la línea base v4.21 (abonos), más tres cambios puntuales posteriores. Se respeta la prohibición de introducir React: el JSX de la SRS es ilustrativo y `ComparativaDeudasBarras` se implementa en Jinja2 + CSS puro + SVG, con las cifras calculadas por Python. Para no reescribir el commit ya pusheado, esta delta se registra como **v4.22**.
+
+**Consecuencias aplicadas.**
+- `consejero._datos_cierre()` expone `barras_deuda` y `resumen_barras`: por deuda, saldo, cuota, `meses_base`, `meses_excedente`, `meses_ahorrados` y `porcentaje_ahorro`; en el resumen, el mayor plazo base, el plazo de la primera deuda recomendada y el porcentaje global. Fórmulas exactas de la SRS, sin intereses ficticios.
+- La plantilla sustituye íntegramente `.cierre-deuda__proyeccion` por «¡Tu Excedente Aplasta tus Deudas!», con tarjetas separadas 20 px en móvil y 24 px en escritorio, barras azul/verde proporcionales, badge `-N%`, zona punteada con candado abierto y conector. Visible en web y móvil (se elimina la ocultación de v4.20).
+- Modal de abono: `margin-top: 22px` y `padding-top: 8px` en `.app-modal__acciones--abono`.
+- Dona: regla `@media (min-width: 768px)` que apila dona y leyenda en columna centrada; móvil queda intacto.
+- «Configurar atajos de pago» pierde toda la UI de favoritos (alta, edición, estrella y columna); la tabla pasa de 6 a 5 columnas y se reindexan todas las reglas CSS y pruebas.
+- Logo OLB_BYTE de 24/28 px a 26/30 px (dashboard y encabezado del módulo); Mis Finanzas incorpora el logo oficial `icono-192.png` a 30 px con la clase `.modulo__icono`.
+
+**Verificación.** `sw.js` en `olb-finanzas-v110`; **872 pruebas** en verde, `compileall`, `node --check` y `generar_guia.py --verificar` correctos (115 fichas). Gate QA `scripts/qa_v4_22.py`: **33/33 comprobaciones** en Chromium (1280 px y 375 px), con título y subtítulo, tres tarjetas, badges, barras, zonas punteadas, espaciado 24/20 px, modal separado, leyendas en columna solo en web, sin favoritos y sin desbordamiento ni errores de consola. Durante el gate se detectó que el servidor seguía sirviendo código viejo (500 por `resumen_barras` ausente); se reinició y pasó. Los checks de gastos fijos se dejaron sin cambios a petición del propietario.
+
 
 
 

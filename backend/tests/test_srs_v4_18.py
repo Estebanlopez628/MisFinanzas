@@ -47,11 +47,11 @@ def test_movil_apilado_y_grafica_ampliada() -> None:
     assert "cierre-deuda__mes--activo" in css
 
     html = (RUTA / "templates/presupuesto/index.html").read_text(encoding="utf-8")
-    assert 'stroke="#38bdf8" stroke-width="3.5"' in html
-    assert 'stroke-dasharray="7 7"' in html
-    assert 'stroke="#10b981" stroke-width="3.5"' in html
+    assert "impacto-deuda__barra--base" in html
+    assert "impacto-deuda__barra--optimo" in html
+    assert "impacto-deuda__ahorro" in html
     assert "data-cierre-tooltip" not in html
-    assert html.count('class="cierre-deuda__mes') == 2  # contenedor + botones de la fila
+    assert "Proyección de saldo (6 meses)" not in html
 
 
 def test_plazo_de_la_deuda_recomendada(bd) -> None:

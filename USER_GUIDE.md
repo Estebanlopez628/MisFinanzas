@@ -52,6 +52,10 @@ MisFinanzas protege automáticamente una **Base mínima de liquidez de $300.000 
 
 Todos tus gastos fijos y deducciones se organizan en 8 categorías cerradas con colores definidos. La categoría 'Créditos y Obligaciones' se alimenta automáticamente con la suma de las cuotas de tus deudas registradas para darte una visión real de tus compromisos mensuales.
 
+## 5.1 Comparativa «¡Tu Excedente Aplasta tus Deudas!»
+
+En «Gastos y Presupuestos» verás, **tanto en el celular como en la computadora**, una comparativa por cada deuda recomendada. Cada tarjeta muestra el nombre de la deuda, su saldo y su cuota, un badge verde con el porcentaje de tiempo que recortas, una barra azul con el plazo pagando solo el mínimo y una barra verde con el plazo aplicando tu excedente. La zona punteada con candado indica los meses que te ahorras. El encabezado resume de cuántos meses a cuántos baja tu plazo y el porcentaje global de ahorro. Todo se calcula con tus cifras reales, sin intereses inventados.
+
 ## 6. Atajos de Pago y recibos
 
 Puedes guardar tus pagos o abonos frecuentes con su monto exacto ('Valor a pagar') para registrarlos con un solo toque y generar un comprobante visual limpio y fácil de leer.

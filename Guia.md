@@ -211,7 +211,7 @@ Principios que explican el resto del código:
 - **`comercial.py`** · 1587 líneas — Operación comercial de OLB_BYTE: ventas a crédito, cartera y deuda con proveedor.
   - Clases: `LineaVenta`, `PagoInicial`
   - Funciones: `ahora_tienda`, `normalizar_telefono`, `_dinero`, `_sumar_meses`, `_texto_garantia`, `_validar_linea`, `_cliente_para_venta`, `_siguiente_numero_orden`, `deuda_proveedor`, `_registrar_movimiento_proveedor`, `registrar_cliente`, `listar_clientes`, `buscar_clientes`, `registrar_venta`, `obtener_venta`, `_venta_activa`, `_recalcular_estado_pago`, `_validar_metodo`, `registrar_abono`, `_devuelto`, `_registrar_devolucion`, `anular_venta`, `registrar_devolucion`, `pendiente_devolver`, `obtener_abono`, `abonos_de_venta`, `buscar_cartera`, `registrar_abono_proveedor`, `listar_movimientos_proveedor`, `_texto_busqueda`, `filtrar_ventas`, `listar_ventas`, `cartera`, `resumen_cartera`, `estado_garantia`, `clasificar_saldo`, `_barra_divergente`, `balance_tres_bloques`, `barras_balance`, `segmentos_dona`, `etiqueta_producto`, `opciones_garantia`, `registrar_garantia`, `actualizar_estado_garantia`, `listar_garantias`, `garantia_vigente_al_reclamo`, `ranking_fallas`, `formatear_pesos`, `texto_compartir_factura`, `enlace_whatsapp_factura`, `enlace_whatsapp_recibo`, `enlace_whatsapp_cobro`, `_enlace_wa`
-- **`consejero.py`** · 769 líneas — Consejero financiero del excedente mensual (SRS v1.8).
+- **`consejero.py`** · 824 líneas — Consejero financiero del excedente mensual (SRS v1.8).
   - Clases: `Consejo`, `_EstadoDeuda`
   - Funciones: `_cuotas_mensuales`, `_estados`, `_ordenar`, `_simular`, `_altura`, `_serie_comparada`, `_fecha_cierre`, `_palabra_plazo`, `_datos_cierre`, `_consejo_deuda`, `_consejo_ahorro`, `consejo_financiero`
 - **`correo.py`** · 261 líneas — Envío de correos del sistema: APIs transaccionales HTTPS o SMTP (SRS v3.1).
@@ -257,7 +257,7 @@ Principios que explican el resto del código:
 
 #### `backend/app/static/css/`
 
-- **`estilos.css`** · 5850 líneas — Fondo y superficies
+- **`estilos.css`** · 6140 líneas — Fondo y superficies
 - **`factura-olb.css`** · 711 líneas — Sello de Anulada si aplica
 
 #### `backend/app/static/js/`
@@ -318,7 +318,7 @@ Principios que explican el resto del código:
 #### `backend/app/templates/chancucos/`
 
 - **`_dias.html`** · 15 líneas
-- **`index.html`** · 238 líneas — Plantilla: Configurar Atajos de Pago
+- **`index.html`** · 220 líneas — Plantilla: Configurar Atajos de Pago
 
 #### `backend/app/templates/componentes/`
 
@@ -333,7 +333,7 @@ Principios que explican el resto del código:
 - **`_capacidad.html`** · 143 líneas
 - **`_gasto_fijo.html`** · 210 líneas
 - **`_subnav.html`** · 27 líneas — Subnavegación interna del módulo "Mis Finanzas" (SRS v1.3, bloque 1).
-- **`index.html`** · 755 líneas — Plantilla: Mis Finanzas
+- **`index.html`** · 760 líneas — Plantilla: Mis Finanzas
 
 #### `backend/app/templates/gastos/`
 
@@ -370,7 +370,7 @@ Principios que explican el resto del código:
 
 #### `backend/app/templates/presupuesto/`
 
-- **`index.html`** · 794 líneas — Plantilla: Gastos y Presupuesto
+- **`index.html`** · 811 líneas — Plantilla: Gastos y Presupuesto
 
 #### `backend/app/templates/privado/`
 

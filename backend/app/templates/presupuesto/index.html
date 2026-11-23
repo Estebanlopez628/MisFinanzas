@@ -252,82 +252,99 @@
             </article>
           </div>
 
-          {# SRS v4.20, sección 2: en móvil se oculta toda la proyección. #}
-          <div class="cierre-deuda__proyeccion">
-          {# SRS v4.19: proyección de saldo a 6 meses con amortización paralela. #}
-          <h4 class="cierre-deuda__subtitulo cierre-deuda__subtitulo--seis">Proyección de saldo (6 meses)</h4>
-          {% set puntos6 = consejo.cierre.puntos[:6] %}
-          {% set p6_primero = puntos6[0] %}
-          {% set p6_ultimo = puntos6[-1] %}
-          {% set escala = (puntos6 | map(attribute='base') | list + puntos6 | map(attribute='optimizado') | list) | max %}
-          {% if escala <= 0 %}{% set escala = 1 %}{% endif %}
-          <div class="cierre-deuda__extremos">
-            <span class="cierre-deuda__extremo cierre-deuda__extremo--inicial">
-              Inicial: {{ p6_primero.mes }} {{ p6_primero.anio }}
-              <strong>{{ p6_primero.base | cop }}</strong>
-            </span>
-            <span class="cierre-deuda__extremo cierre-deuda__extremo--final">
-              Mes 6: {{ p6_ultimo.mes }} {{ p6_ultimo.anio }}
-              <strong>{{ p6_ultimo.optimizado | cop }}</strong>
-            </span>
-          </div>
-          {% set ruta_base = namespace(p=[]) %}
-          {% set ruta_opt = namespace(p=[]) %}
-          {% for punto in puntos6 %}
-            {% set x = (20 + loop.index0 * 64) | round(1) %}
-            {% set yb = (138 - (punto.base / escala * 118)) | round(1) %}
-            {% set yo = (138 - (punto.optimizado / escala * 118)) | round(1) %}
-            {% set ruta_base.p = ruta_base.p + [(x | string) ~ ',' ~ (yb | string)] %}
-            {% set ruta_opt.p = ruta_opt.p + [(x | string) ~ ',' ~ (yo | string)] %}
-          {% endfor %}
-          {% set linea_base = ruta_base.p | join(' ') %}
-          {% set linea_opt = ruta_opt.p | join(' ') %}
-          {% set area_diff = ruta_base.p | join(' ') ~ ' ' ~ (ruta_opt.p | reverse | join(' ')) %}
-          <div class="cierre-deuda__grafica">
-            <svg viewBox="0 0 360 150" role="img"
-                 aria-label="Proyección de saldo a seis meses: base frente a optimizado">
-              <defs>
-                <linearGradient id="mfDiff" x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0%" stop-color="#10b981" stop-opacity="0.25" />
-                  <stop offset="100%" stop-color="#0ea5e9" stop-opacity="0.35" />
-                </linearGradient>
-                <linearGradient id="mfUnder" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-color="#10b981" stop-opacity="0.22" />
-                  <stop offset="100%" stop-color="#0f172a" stop-opacity="0" />
-                </linearGradient>
-              </defs>
-              <line x1="20" y1="138" x2="340" y2="138" stroke="#334155" stroke-width="1" />
-              <polygon points="{{ linea_opt }} 340,138 20,138" fill="url(#mfUnder)" />
-              <polygon points="{{ area_diff }}" fill="url(#mfDiff)" />
-              <polyline points="{{ linea_base }}" fill="none" stroke="#38bdf8" stroke-width="3.5"
-                        stroke-dasharray="7 7" stroke-linecap="round" />
-              <polyline points="{{ linea_opt }}" fill="none" stroke="#10b981" stroke-width="3.5"
-                        stroke-linecap="round" />
-            </svg>
-            <span class="cierre-deuda__ahorro">+ Ahorro acumulado</span>
-          </div>
-          <div class="cierre-deuda__meses">
-            {% for punto in puntos6 %}
-              <button type="button" class="cierre-deuda__mes{% if loop.index0 == 2 %} cierre-deuda__mes--activo{% endif %}"
-                      data-mes="{{ punto.mes }} {{ punto.anio }}"
-                      data-base="{{ punto.base | cop }}"
-                      data-optimo="{{ punto.optimizado | cop }}"
-                      data-reduccion="{{ (punto.base - punto.optimizado) | cop }}">
-                <span>{{ punto.mes }} {{ punto.anio }}</span>
-              </button>
-            {% endfor %}
-          </div>
-          <p class="cierre-deuda__detalle" data-cierre-detalle>
-            {{ p6_primero.mes }} {{ p6_primero.anio }} · Saldo Base:
-            {{ p6_primero.base | cop }} · Saldo Optimizado:
-            {{ p6_primero.optimizado | cop }} · Reducción extra acumulada:
-            {{ (p6_primero.base - p6_primero.optimizado) | cop }}
-          </p>
-          <ul class="comparativa__leyenda">
-            <li><span class="dona__muestra comparativa__muestra--base"></span> Base (Normal)</li>
-            <li><span class="dona__muestra comparativa__muestra--optimizado"></span> Optimizado (Con tu excedente)</li>
-          </ul>
-          </div>
+          {# SRS v4.22: reemplazo total de la proyección anterior por barras
+             comparativas de impacto por deuda recomendada. Visible en web y
+             móvil; las cifras vienen de `consejo.cierre` (Python). #}
+          <section class="impacto-deudas" data-impacto-deudas
+                   aria-labelledby="impacto-deudas-titulo">
+            <div class="impacto-deudas__encabezado">
+              <h4 class="impacto-deudas__titulo" id="impacto-deudas-titulo">
+                ¡Tu Excedente Aplasta tus Deudas!
+              </h4>
+              <p class="impacto-deudas__subtitulo">
+                ¡Con tus abonos extra recortas el tiempo de pago de tus deudas de
+                <span class="impacto-deudas__subrayado">{{ consejo.cierre.resumen_barras.meses_base_texto }}</span>
+                a solo {{ consejo.cierre.resumen_barras.meses_objetivo_texto }}!
+                (-{{ consejo.cierre.resumen_barras.porcentaje_global }}% de tiempo)
+              </p>
+            </div>
+
+            {% set max_base_barras = consejo.cierre.resumen_barras.max_base %}
+            {% if max_base_barras <= 0 %}{% set max_base_barras = 1 %}{% endif %}
+            <div class="impacto-deudas__lista">
+              {% for barra in consejo.cierre.barras_deuda %}
+                {% set ancho_base = (((barra.meses_base / max_base_barras) * 100) | round(0)) | int %}
+                {% if ancho_base < 28 %}{% set ancho_base = 28 %}{% endif %}
+                {% set ancho_opt = (((barra.meses_excedente / max_base_barras) * 100) | round(0)) | int %}
+                {% if ancho_opt < 10 %}{% set ancho_opt = 10 %}{% endif %}
+                <article class="impacto-deuda">
+                  <div class="impacto-deuda__cabecera">
+                    <p class="impacto-deuda__nombre">
+                      <strong>{{ barra.nombre }}</strong>
+                      <span>(Deuda de {{ barra.saldo | cop }} · cuota: {{ barra.cuota | cop }}/mes)</span>
+                    </p>
+                    {% if barra.porcentaje_ahorro > 0 %}
+                      <span class="impacto-deuda__badge">-{{ barra.porcentaje_ahorro }}%</span>
+                    {% endif %}
+                  </div>
+
+                  <div class="impacto-deuda__barras">
+                    <div class="impacto-deuda__fila">
+                      <span class="impacto-deuda__etiqueta">Pago mínimo</span>
+                      <div class="impacto-deuda__pista">
+                        <div class="impacto-deuda__barra impacto-deuda__barra--base"
+                             style="width: {{ ancho_base }}%;">
+                          <span class="impacto-deuda__meses">
+                            {{ barra.meses_base }} {% if barra.meses_base == 1 %}mes{% else %}meses{% endif %}
+                          </span>
+                          <span class="impacto-deuda__fecha">({{ barra.fecha_cierre_base }})</span>
+                        </div>
+                        {% if ancho_base >= 95 and barra.meses_ahorrados > 0 %}
+                          <span class="impacto-deuda__conector" aria-hidden="true">
+                            <svg viewBox="0 0 16 28" width="16" height="28" fill="none">
+                              <path d="M2 2H11V24M11 24L7 20M11 24L15 20" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                          </span>
+                        {% endif %}
+                      </div>
+                    </div>
+
+                    <div class="impacto-deuda__fila impacto-deuda__fila--optimo">
+                      <span class="impacto-deuda__etiqueta">Pagando de más con tu excedente</span>
+                      <div class="impacto-deuda__pista impacto-deuda__pista--optimo">
+                        <div class="impacto-deuda__barra impacto-deuda__barra--optimo"
+                             style="width: {{ ancho_opt }}%;">
+                          <svg viewBox="0 0 20 20" width="18" height="18" fill="currentColor"
+                               aria-hidden="true">
+                            <path fill-rule="evenodd" clip-rule="evenodd"
+                                  d="M16.704 5.29a1 1 0 010 1.42l-7.5 7.5a1 1 0 01-1.414 0l-3.5-3.5a1 1 0 011.414-1.42L8.5 12.086l6.793-6.796a1 1 0 011.411 0z" />
+                          </svg>
+                        </div>
+                        <span class="impacto-deuda__tiempo">
+                          {{ barra.meses_excedente }} {% if barra.meses_excedente == 1 %}mes (1 cuota){% else %}meses ({{ barra.meses_excedente }} cuotas){% endif %}
+                        </span>
+                        {% if barra.meses_ahorrados > 0 %}
+                          <div class="impacto-deuda__ahorro">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none"
+                                 stroke="currentColor" stroke-width="2.2" stroke-linecap="round"
+                                 stroke-linejoin="round" aria-hidden="true">
+                              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                              <path d="M7 11V7a5 5 0 0 1 9.9-1" />
+                            </svg>
+                            <span class="impacto-deuda__ahorro-texto">
+                              <strong>¡Te ahorras {{ barra.meses_ahorrados }} {% if barra.meses_ahorrados == 1 %}mes{% else %}meses{% endif %}!</strong>
+                              <small>· deuda pagada antes de tiempo</small>
+                            </span>
+                          </div>
+                        {% endif %}
+                      </div>
+                    </div>
+                  </div>
+                </article>
+              {% endfor %}
+            </div>
+          </section>
         </section>
       {% else %}
         <h3 class="capacidad__subtitulo">Base frente a optimizado (12 meses)</h3>

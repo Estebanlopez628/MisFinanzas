@@ -33,18 +33,18 @@ def test_cabeceras_en_dos_lineas() -> None:
     assert "<th scope=\"col\">Descripción</th>" in html
 
 
-def test_proyeccion_solo_escritorio() -> None:
-    """La proyección se envuelve y se oculta bajo 768 px."""
+def test_proyeccion_reemplazada_por_barras() -> None:
+    """v4.22 elimina el wrapper oculto y muestra las barras en web y móvil."""
     html = (RUTA / "templates/presupuesto/index.html").read_text(encoding="utf-8")
-    assert 'class="cierre-deuda__proyeccion"' in html
+    assert 'class="cierre-deuda__proyeccion"' not in html
+    assert 'class="impacto-deudas"' in html
+    assert "¡Tu Excedente Aplasta tus Deudas!" in html
+
     css = (RUTA / "static/css/estilos.css").read_text(encoding="utf-8")
-    inicio = css.rfind(
-        "@media (max-width: 767px) {", 0, css.index("SRS v4.20, sección 4")
-    )
-    bloque = css[inicio : inicio + 900]
-    assert ".cierre-deuda__proyeccion" in bloque
-    assert "display: none !important" in bloque
-    assert "text-align: center !important" in bloque
+    assert ".impacto-deudas__encabezado" in css
+    assert "@media (min-width: 640px)" in css
+    # El banner de liquidez de v4.20 permanece centrado en móvil.
+    assert "text-align: center !important" in css
 
 
 def test_pluralizacion_y_redaccion() -> None:

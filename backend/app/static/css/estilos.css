@@ -375,10 +375,10 @@ a.tarjeta:focus-visible {
 }
 
 .tarjeta__icono-imagen {
-  width: 24px;
-  height: 24px;
-  max-width: 24px;
-  max-height: 24px;
+  width: 26px;
+  height: 26px;
+  max-width: 26px;
+  max-height: 26px;
   display: inline-block;
   object-fit: contain;
   flex-shrink: 0;
@@ -4273,10 +4273,10 @@ strong.valor-negativo.recibo__cifra--saldo {
 @media (max-width: 767px) {
   /* SRS v4.4, sección 6: ícono oficial dentro del encabezado de OLB_BYTE. */
 .olb-interno__icono {
-  width: 28px;
-  height: 28px;
-  max-width: 28px;
-  max-height: 28px;
+  width: 30px;
+  height: 30px;
+  max-width: 30px;
+  max-height: 30px;
   display: inline-block;
   object-fit: contain;
   flex-shrink: 0;
@@ -4581,16 +4581,16 @@ strong.valor-negativo.recibo__cifra--saldo {
     text-transform: uppercase;
   }
 
+  .tabla--atajos thead th:nth-child(1),
   .tabla--atajos thead th:nth-child(2),
-  .tabla--atajos thead th:nth-child(3),
-  .tabla--atajos thead th:nth-child(4) {
+  .tabla--atajos thead th:nth-child(3) {
     display: block;
   }
 
+  .tabla--atajos thead th:nth-child(2),
   .tabla--atajos thead th:nth-child(3),
-  .tabla--atajos thead th:nth-child(4),
-  .tabla--atajos tr[data-chancuco-fila] > td:nth-child(3),
-  .tabla--atajos tr[data-chancuco-fila] > td:nth-child(4) {
+  .tabla--atajos tr[data-chancuco-fila] > td:nth-child(2),
+  .tabla--atajos tr[data-chancuco-fila] > td:nth-child(3) {
     text-align: right;
     white-space: nowrap;
   }
@@ -4631,25 +4631,24 @@ strong.valor-negativo.recibo__cifra--saldo {
     min-width: 0;
   }
 
-  .tabla--atajos tr[data-chancuco-fila] > td:nth-child(2) {
+  .tabla--atajos tr[data-chancuco-fila] > td:nth-child(1) {
     grid-column: 1;
   }
 
-  .tabla--atajos tr[data-chancuco-fila] > td:nth-child(3) {
+  .tabla--atajos tr[data-chancuco-fila] > td:nth-child(2) {
     grid-column: 2;
   }
 
-  .tabla--atajos tr[data-chancuco-fila] > td:nth-child(4) {
+  .tabla--atajos tr[data-chancuco-fila] > td:nth-child(3) {
     grid-column: 3;
   }
 
-  .tabla--atajos tr[data-chancuco-fila] > td:nth-child(1),
-  .tabla--atajos tr[data-chancuco-fila] > td:nth-child(5) {
+  .tabla--atajos tr[data-chancuco-fila] > td:nth-child(4) {
     display: none;
   }
 
   /* La celda de acciones solo aloja el modal: se ocultan sus controles. */
-  .tabla--atajos tr[data-chancuco-fila] > td:nth-child(6) {
+  .tabla--atajos tr[data-chancuco-fila] > td:nth-child(5) {
     position: absolute;
     width: 0;
     height: 0;
@@ -4659,9 +4658,9 @@ strong.valor-negativo.recibo__cifra--saldo {
 
   /* En móvil no se muestra ningún botón de la celda de acciones: la fila entera
      abre el modal. «Actualizar» es un <button>, por eso también se incluye. */
-  .tabla--atajos tr[data-chancuco-fila] > td:nth-child(6) > a,
-  .tabla--atajos tr[data-chancuco-fila] > td:nth-child(6) > button,
-  .tabla--atajos tr[data-chancuco-fila] > td:nth-child(6) > form {
+  .tabla--atajos tr[data-chancuco-fila] > td:nth-child(5) > a,
+  .tabla--atajos tr[data-chancuco-fila] > td:nth-child(5) > button,
+  .tabla--atajos tr[data-chancuco-fila] > td:nth-child(5) > form {
     display: none !important;
   }
 
@@ -4800,18 +4799,18 @@ strong.valor-negativo.recibo__cifra--saldo {
     vertical-align: middle !important;
   }
 
+  .tabla--atajos thead th:nth-child(1),
+  .tabla--atajos tbody tr[data-chancuco-fila] > td:nth-child(1) {
+    width: 38% !important;
+  }
+
   .tabla--atajos thead th:nth-child(2),
   .tabla--atajos tbody tr[data-chancuco-fila] > td:nth-child(2) {
-    width: 38% !important;
+    width: 34% !important;
   }
 
   .tabla--atajos thead th:nth-child(3),
   .tabla--atajos tbody tr[data-chancuco-fila] > td:nth-child(3) {
-    width: 34% !important;
-  }
-
-  .tabla--atajos thead th:nth-child(4),
-  .tabla--atajos tbody tr[data-chancuco-fila] > td:nth-child(4) {
     width: 28% !important;
   }
 
@@ -4820,11 +4819,8 @@ strong.valor-negativo.recibo__cifra--saldo {
     width: auto !important;
   }
 
-  .tabla--atajos thead th:nth-child(1),
-  .tabla--atajos thead th:nth-child(5),
-  .tabla--atajos thead th:nth-child(6),
-  .tabla--atajos tbody tr[data-chancuco-fila] > td:nth-child(1),
-  .tabla--atajos tbody tr[data-chancuco-fila] > td:nth-child(5) {
+  .tabla--atajos thead th:nth-child(4),
+  .tabla--atajos tbody tr[data-chancuco-fila] > td:nth-child(4) {
     display: none !important;
   }
 }
@@ -4832,14 +4828,17 @@ strong.valor-negativo.recibo__cifra--saldo {
 .app-modal__acciones--abono {
   flex-wrap: wrap;
   justify-content: center;
+  /* SRS v4.22, sección 2: separar los botones del borde del campo de valor. */
+  margin-top: 22px;
+  padding-top: 8px;
 }
 
 /* SRS (abonos + atajos): los valores de las columnas 2 y 3 se centran junto a
    sus cabeceras, conservando el salto de línea y los anchos ya aprobados. */
+.tabla--atajos thead th:nth-child(2),
 .tabla--atajos thead th:nth-child(3),
-.tabla--atajos thead th:nth-child(4),
-.tabla--atajos tbody tr[data-chancuco-fila] > td:nth-child(3),
-.tabla--atajos tbody tr[data-chancuco-fila] > td:nth-child(4) {
+.tabla--atajos tbody tr[data-chancuco-fila] > td:nth-child(2),
+.tabla--atajos tbody tr[data-chancuco-fila] > td:nth-child(3) {
   text-align: center !important;
 }
 
@@ -5833,6 +5832,297 @@ dialog::backdrop {
 
 .panel.capacidad .dona {
   margin-inline: auto;
+}
+
+/* SRS v4.22: logo del encabezado de Mis Finanzas, homologado al de OLB_BYTE. */
+.modulo__icono {
+  width: 30px;
+  height: 30px;
+  max-width: 30px;
+  max-height: 30px;
+  display: inline-block;
+  object-fit: contain;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+
+/* -------- SRS v4.22: barras comparativas de impacto por deuda -------- */
+
+.impacto-deudas {
+  width: 100%;
+  border-radius: 16px;
+  border: 1px solid rgba(30, 41, 59, 0.9);
+  background: #0b1324;
+  padding: 16px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+  color: #f1f5f9;
+}
+
+.impacto-deudas__encabezado {
+  text-align: center;
+  margin-bottom: 24px;
+  padding-inline: 8px;
+}
+
+.impacto-deudas__titulo {
+  margin: 0 0 8px;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+}
+
+.impacto-deudas__subtitulo {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: #34d399;
+}
+
+.impacto-deudas__subrayado {
+  text-decoration: underline;
+  text-decoration-color: rgba(52, 211, 153, 0.5);
+  text-underline-offset: 4px;
+}
+
+.impacto-deudas__lista {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.impacto-deuda {
+  border-radius: 12px;
+  border: 1px solid rgba(51, 65, 85, 0.7);
+  background: #131d33;
+  padding: 16px;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
+}
+
+.impacto-deuda__cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.impacto-deuda__nombre {
+  margin: 0;
+  min-width: 0;
+  font-size: 14px;
+  line-height: 1.4;
+  color: #e2e8f0;
+}
+
+.impacto-deuda__nombre strong {
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.impacto-deuda__badge {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: #22c55e;
+  color: #052e16;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 4px 12px;
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.25);
+}
+
+.impacto-deuda__barras {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.impacto-deuda__fila {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.impacto-deuda__etiqueta {
+  color: #e2e8f0;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.impacto-deuda__pista {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.impacto-deuda__pista--optimo {
+  flex-wrap: wrap;
+}
+
+.impacto-deuda__barra {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 36px;
+  max-width: 100%;
+  overflow: hidden;
+  border-radius: 9999px;
+  padding: 0 16px;
+  flex-shrink: 0;
+}
+
+.impacto-deuda__barra--base {
+  justify-content: space-between;
+  background: linear-gradient(90deg, #38bdf8, #0284c7);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.impacto-deuda__meses {
+  margin-inline: auto;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.impacto-deuda__fecha {
+  color: rgba(224, 242, 254, 0.9);
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.impacto-deuda__conector {
+  display: none;
+  color: #22c55e;
+}
+
+.impacto-deuda__barra--optimo {
+  min-width: 44px;
+  background: #10b981;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+  color: #052e16;
+}
+
+.impacto-deuda__tiempo {
+  flex-shrink: 0;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.impacto-deuda__ahorro {
+  flex: 1 1 160px;
+  min-width: 160px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px dashed rgba(16, 185, 129, 0.6);
+  border-radius: 12px;
+  background: rgba(6, 78, 59, 0.3);
+  padding: 6px 12px;
+  color: #10b981;
+}
+
+.impacto-deuda__ahorro-texto {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+.impacto-deuda__ahorro-texto strong {
+  color: #34d399;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.impacto-deuda__ahorro-texto small {
+  color: #a7f3d0;
+  font-size: 11px;
+}
+
+@media (min-width: 640px) {
+  .impacto-deudas {
+    padding: 24px;
+  }
+
+  .impacto-deudas__titulo {
+    font-size: 22px;
+  }
+
+  .impacto-deudas__subtitulo {
+    font-size: 20px;
+  }
+
+  .impacto-deudas__lista {
+    gap: 24px;
+  }
+
+  .impacto-deuda {
+    padding: 20px;
+  }
+
+  .impacto-deuda__fila {
+    flex-direction: row;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .impacto-deuda__etiqueta {
+    width: 176px;
+    flex-shrink: 0;
+    text-align: right;
+    font-size: 14px;
+  }
+
+  .impacto-deuda__pista--optimo {
+    flex-wrap: nowrap;
+  }
+
+  .impacto-deuda__barra {
+    height: 40px;
+  }
+
+  .impacto-deuda__conector {
+    display: flex;
+  }
+
+  .impacto-deuda__meses,
+  .impacto-deuda__tiempo {
+    font-size: 14px;
+  }
+}
+
+/* SRS v4.22, sección 3: en escritorio las leyendas van centradas debajo de
+   la dona. Móvil (< 768px) queda intacto: ya estaba correcto. */
+@media (min-width: 768px) {
+  .panel.capacidad .dona-contenedor {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .panel.capacidad .dona {
+    margin-inline: auto;
+  }
+
+  .panel.capacidad .dona__leyenda {
+    margin-top: 16px !important;
+    text-align: center;
+  }
+
+  .panel.capacidad .dona__leyenda li {
+    justify-content: center;
+    text-align: center;
+  }
 }
 
 .campo__control--bloqueado {

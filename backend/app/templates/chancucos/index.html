@@ -84,10 +84,6 @@
             <span class="ayuda">Déjalo vacío si el pago es único.</span>
           </label>
         </div>
-        <label class="campo campo--casilla">
-          <input type="checkbox" name="favorito" value="1" />
-          <span>Marcar como favorito</span>
-        </label>
         <button class="boton boton--primario" type="submit">Guardar atajo</button>
       </form>
     </section>
@@ -97,7 +93,6 @@
       <ul class="lista-parametros">
         <li><span>Copiar</span><strong>Copia el número al portapapeles</strong></li>
         <li><span>Pagar</span><strong>Abre la pasarela en otra pestaña</strong></li>
-        <li><span>Favoritos</span><strong>Aparecen primero en la lista</strong></li>
       </ul>
       <p class="aviso">
         Los atajos que crees aquí aparecen en modo lectura al pie de la columna
@@ -114,7 +109,6 @@
         <table class="tabla tabla--atajos">
           <thead>
             <tr>
-              <th scope="col">Favorito</th>
               <th scope="col">Descripción</th>
               <th scope="col">Valor a<br />Pagar</th>
               <th scope="col">Días de<br />Pago</th>
@@ -125,14 +119,6 @@
           <tbody>
             {% for item in chancucos %}
               <tr class="fila-atajo" data-chancuco-fila data-id-chancuco="{{ item.id_chancuco }}">
-                <td>
-                  <form method="post" action="{{ url_for('alternar_favorito_chancuco', id_chancuco=item.id_chancuco) }}">
-                    <button class="boton boton--secundario boton--pequeno" type="submit"
-                            aria-label="{{ 'Quitar de favoritos' if item.favorito else 'Marcar como favorito' }}">
-                      {{ '★' if item.favorito else '☆' }}
-                    </button>
-                  </form>
-                </td>
                 <td class="atajo-descripcion">{{ item.descripcion }}</td>
                 <td class="tabla__numero">
                   {% if item.valor_pago %}
@@ -206,10 +192,6 @@
                         <span class="campo__etiqueta">Enlace de pago (opcional)</span>
                         <input class="campo__control" type="url" name="url_pago"
                                value="{{ item.url_pago or '' }}" placeholder="https://pagos.entidad.com" />
-                      </label>
-                      <label class="campo campo--casilla">
-                        <input type="checkbox" name="favorito" value="1" {% if item.favorito %}checked{% endif %} />
-                        <span>Marcar como favorito</span>
                       </label>
                       <div class="acciones-formulario acciones-formulario--edicion">
                         <button class="boton boton--primario boton--pequeno atajo-accion" type="submit">Actualizar</button>

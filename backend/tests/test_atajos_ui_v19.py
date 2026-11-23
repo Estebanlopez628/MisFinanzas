@@ -139,13 +139,13 @@ def test_el_css_de_movil_oculta_columnas_y_el_js_abre_el_modal() -> None:
 
     movil = css.split("@media (max-width: 640px)", 1)[1]
     assert ".tabla--atajos thead tr" in movil
-    assert ".tabla--atajos thead th:nth-child(2)" in movil
+    assert ".tabla--atajos thead th:nth-child(1)" in movil
     assert "max-content" in movil
     assert ".tabla--atajos tr[data-chancuco-fila]" in movil
     assert "> td:nth-child(1)" in movil
-    assert "> td:nth-child(5)" in movil
-    assert "> td:nth-child(6) > a" in movil
-    assert "> td:nth-child(6) > button" in movil
+    assert "> td:nth-child(4)" in movil
+    assert "> td:nth-child(5) > a" in movil
+    assert "> td:nth-child(5) > button" in movil
     descripcion_movil = movil.split(".tabla--atajos .atajo-descripcion {", 1)[1].split("}", 1)[0]
     assert "font-size: 0.74rem;" in descripcion_movil
     assert ">Ver</summary>" not in plantilla

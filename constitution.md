@@ -123,7 +123,12 @@ Principios innegociables. Toda especificación, plan y tarea debe cumplirlos de 
     - La proyección a 6 meses es exclusiva de escritorio; el banner móvil va centrado y el de liquidez es legible en ambos tamaños.
 
 24. **Abonos extraordinarios a deudas y centrado de la dona (SRS v4.21):**
-    - TodoGasto o deducción con categoría «Créditos y Obligaciones» y toda deuda registrada ofrecen «Abonar» en su modal de edición, en web y móvil, con un modal propio que pide el valor y ofrece «Registrar abono», «Registrar abono + cuota» y «Cancelar».
+    - Todo gasto o deducción con categoría «Créditos y Obligaciones» y toda deuda registrada ofrecen «Abonar» en su modal de edición, en web y móvil, con un modal propio que pide el valor y ofrece «Registrar abono», «Registrar abono + cuota» y «Cancelar».
     - El abono descuenta el saldo y recalcula las cuotas; nunca modifica la cuota pactada salvo que el resto sea menor, en cuyo caso se ajusta a ese resto. Los abonos se guardan en su propia tabla, separados de las cuotas automáticas.
     - «Registrar abono + cuota» marca el gasto o deducción vinculado como pagado del corte; al pagar la deuda, su cuota vinculada deja de contarse en totales, dona y Consejero.
     - Las leyendas, el título, la descripción y la dona del panel de capacidad van centrados en móvil y escritorio, y las cabeceras «Valor a pagar» y «Días de pago» conservan su salto de línea con centrado.
+
+25. **Barras comparativas de impacto (SRS v4.22):**
+    - La proyección a 6 meses se sustituye por «¡Tu Excedente Aplasta tus Deudas!», visible en web y móvil, con barras proporcionales, porcentaje de ahorro por deuda y zona demarcada con candado abierto. Las cifras las calcula Python; la vista es Jinja2/CSS/SVG, sin React.
+    - El modal de abono separa sus botones del campo de valor; las leyendas de la dona se centran debajo en escritorio sin alterar móvil; «Configurar atajos de pago» no ofrece favoritos y la tabla usa cinco columnas.
+    - El logo de OLB_BYTE mide 30 px y Mis Finanzas muestra el logo oficial al entrar al módulo.

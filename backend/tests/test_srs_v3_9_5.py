@@ -29,11 +29,11 @@ def test_icono_homologado_en_la_tarjeta(cliente_admin: TestClient) -> None:
 
     html = cliente_admin.get("/").text
     assert '<img class="tarjeta__icono-imagen"' in html
-    assert 'alt="OLB_BYTE" width="24" height="24"' in html
+    assert 'alt="OLB_BYTE" width="26" height="26"' in html
 
     css = (RUTA_APP / "static/css/estilos.css").read_text(encoding="utf-8")
     bloque = css.split(".tarjeta__icono-imagen {", 1)[1].split("}", 1)[0]
-    assert "width: 24px" in bloque and "height: 24px" in bloque
+    assert "width: 26px" in bloque and "height: 26px" in bloque
     assert "object-fit: contain" in bloque
     assert "flex-shrink: 0" in bloque
 

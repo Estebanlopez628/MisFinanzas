@@ -429,6 +429,59 @@ def _datos_cierre(
             }
         )
 
+    # SRS v4.22: barras comparativas por deuda recomendada. El plazo con pago
+    # mínimo es el plan vigente de cada deuda; el plazo con excedente es el mes
+    # real en que esa deuda cierra en la simulación (no un cociente agregado).
+    meses_por_deuda = {
+        str(fila["id_deuda"]): int(fila["mes"])
+        for fila in (cuotas_liberadas_detalle or [])
+        if fila.get("id_deuda") and fila.get("mes")
+    }
+    barras: list[dict[str, object]] = []
+    for estado in estados:
+        meses_base_deuda = max(1, int(estado.cuotas))
+        meses_opt_deuda = meses_por_deuda.get(estado.deuda.id_deuda)
+        if meses_opt_deuda is None:
+            ritmo = redondear_dinero(estado.cuota + extra)
+            meses_opt_deuda = (
+                max(1, math.ceil(estado.saldo_inicial / ritmo))
+                if ritmo > CERO
+                else meses_base_deuda
+            )
+        meses_opt_deuda = max(1, min(meses_base_deuda, int(meses_opt_deuda)))
+        ahorrados_deuda = max(0, meses_base_deuda - meses_opt_deuda)
+        porcentaje_deuda = int(round((ahorrados_deuda / meses_base_deuda) * 100))
+        barras.append(
+            {
+                "id_deuda": estado.deuda.id_deuda,
+                "nombre": estado.deuda.acreedor,
+                "saldo": estado.saldo_inicial,
+                "cuota": estado.cuota,
+                "meses_base": meses_base_deuda,
+                "meses_excedente": meses_opt_deuda,
+                "meses_ahorrados": ahorrados_deuda,
+                "porcentaje_ahorro": porcentaje_deuda,
+                "fecha_cierre_base": _fecha_cierre(referencia, meses_base_deuda),
+            }
+        )
+
+    max_base_barras = max((int(barra["meses_base"]) for barra in barras), default=1)
+    meses_objetivo = int(barras[0]["meses_excedente"]) if barras else max_base_barras
+    pct_global = (
+        int(round(((max_base_barras - meses_objetivo) / max_base_barras) * 100))
+        if max_base_barras > 0
+        else 0
+    )
+    resumen_barras = {
+        "max_base": max_base_barras,
+        "meses_objetivo": meses_objetivo,
+        "porcentaje_global": max(0, pct_global),
+        "meses_base_texto": f"{max_base_barras} {_palabra_plazo(max_base_barras, 'mes', 'meses')}",
+        "meses_objetivo_texto": (
+            f"{meses_objetivo} {_palabra_plazo(meses_objetivo, 'mes', 'meses')}"
+        ),
+    }
+
     # SRS v4.13: solo cifras verificables. La reducción a 12 meses es la
     # diferencia real entre ambas curvas; nunca se inventan intereses.
     return {
@@ -459,6 +512,8 @@ def _datos_cierre(
             for estado in estados
         ],
         "cuotas_liberadas_detalle": cuotas_liberadas_detalle or [],
+        "barras_deuda": barras,
+        "resumen_barras": resumen_barras,
         "costo_total_base": deuda_inicial,
         "costo_total_opt": deuda_inicial,
     }

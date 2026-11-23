@@ -67,23 +67,21 @@ def test_redaccion_hacia_proximas_metas(bd) -> None:
 
 
 def test_grafica_seis_meses() -> None:
-    """La plantilla slicea a seis meses y muestra extremos y badges."""
+    """v4.22 sustituye la gráfica a seis meses por barras comparativas."""
     html = (RUTA / "templates/presupuesto/index.html").read_text(encoding="utf-8")
-    assert "Proyección de saldo (6 meses)" in html
-    assert "puntos6 = consejo.cierre.puntos[:6]" in html
-    assert "cierre-deuda__extremo--inicial" in html
-    assert "cierre-deuda__extremo--final" in html
-    assert "Mes 6:" in html
-    assert "+ Ahorro acumulado" in html
-    assert "stroke-dasharray=\"7 7\"" in html
-    assert 'points="{{ area_diff }}"' in html
-    assert "data-cierre-detalle" in html
-    assert "comparativa__leyenda" in html
+    assert "¡Tu Excedente Aplasta tus Deudas!" in html
+    assert "resumen_barras.meses_base_texto" in html
+    assert "resumen_barras.porcentaje_global" in html
+    assert "impacto-deudas__subrayado" in html
+    assert "impacto-deuda__badge" in html
+    assert "impacto-deuda__conector" in html
+    assert "impacto-deuda__ahorro" in html
+    assert "Proyección de saldo (6 meses)" not in html
 
     css = (RUTA / "static/css/estilos.css").read_text(encoding="utf-8")
-    assert "repeat(6, minmax(0, 1fr))" in css
-    assert "overflow-x: auto" in css
-    assert ".cierre-deuda__subtitulo--seis" in css
+    assert ".impacto-deudas__lista" in css
+    assert ".impacto-deuda__barra--base" in css
+    assert ".impacto-deuda__barra--optimo" in css
 
 
 def test_banner_movil_y_dona_centrada() -> None:

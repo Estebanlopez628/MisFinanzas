@@ -70,9 +70,9 @@ def test_la_vista_renderiza_la_grafica_unificada(bd, cliente_admin) -> None:
     respuesta = cliente_admin.get("/presupuesto")
     assert respuesta.status_code == 200
     assert "data-cierre-consejero" in respuesta.text
-    assert "mfUnder" in respuesta.text  # v4.19: gráfica a 6 meses
-    assert "Proyección de saldo (6 meses)" in respuesta.text
-    assert "data-cierre-detalle" in respuesta.text
+    assert "data-impacto-deudas" in respuesta.text  # v4.22: barras comparativas
+    assert "¡Tu Excedente Aplasta tus Deudas!" in respuesta.text
+    assert "impacto-deuda__barra--base" in respuesta.text
 
 
 def test_plantilla_y_js_de_la_grafica() -> None:
@@ -81,13 +81,15 @@ def test_plantilla_y_js_de_la_grafica() -> None:
     for texto in (
         "data-cierre-consejero",
         "Comparativa de cierre de deuda",
-        "mfUnder",
-        "Proyección de saldo (6 meses)",
-        "data-cierre-detalle",
-        "Base (Normal)",
-        "Optimizado (Con tu excedente)",
+        "data-impacto-deudas",
+        "¡Tu Excedente Aplasta tus Deudas!",
+        "impacto-deuda__barra--base",
+        "impacto-deuda__barra--optimo",
+        "impacto-deuda__ahorro",
+        "¡Te ahorras",
     ):
         assert texto in html
+    assert "Proyección de saldo (6 meses)" not in html
 
     js = (RUTA_APP / "static/js/consejero.js").read_text(encoding="utf-8")
     assert "[data-cierre-detalle]" in js

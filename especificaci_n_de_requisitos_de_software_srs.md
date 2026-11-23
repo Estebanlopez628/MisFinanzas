@@ -830,3 +830,27 @@ Intactos: el cierre del Consejero sobre deudas recomendadas, la redacción exact
 - Usuarios QA: `prueba_qa@misfinanzas.local` / `QA_MisFinanzas_2026!` y `prueba_qa_admin@misfinanzas.local` / `QA_Admin_2026!`.
 - `scripts/qa_v4_21.py`: **34/34 comprobaciones** en Chromium (1280 px y 375 px), con los cuatro puntos de entrada, el modal y sus tres botones, el descuento real de saldo y cuotas, el centrado de donas y cabeceras, sin desbordamiento horizontal ni errores de consola. Los datos sembrados se eliminan al terminar. Solo tras el gate se ejecutaron `git add`, `commit` y `push`.
 - Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-84), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.21.
+
+---
+
+## 25. SRS v4.22 — Barras de impacto, modal, dona y logos
+
+Versión 4.22 y **línea base vigente**. No se rehace v4.21 (abonos) ni ningún módulo aprobado anteriormente. El JSX de la Sección 4 del delta es **ilustrativo**: se implementa en Jinja2 + CSS puro + SVG, sin React ni Tailwind.
+
+### 25.1 No regresión
+
+Intactos: abonos a deudas y su modal, cierre del Consejero sobre deudas recomendadas, redacción exacta de v4.20, velocímetros, cabeceras de atajos en dos líneas, dona móvil, Resultado del periodo, siete factores 2026, OLB_BYTE, WhatsApp y Ayuda.
+
+### 25.2 Cambios
+
+1. **Comparativa de impacto:** se elimina «Proyección de saldo (6 meses)» y se sustituye por «¡Tu Excedente Aplasta tus Deudas!», visible en web y móvil. Encabezado con porcentaje global, tarjetas por deuda recomendada con badge `-N%`, barra azul de pago mínimo, barra verde con excedente, zona punteada con candado abierto y conector de recorte. Ahorro = `MAX(0, base − excedente)`; porcentaje = `round((base − excedente)/base × 100)`; pluralización sin `(s)`.
+2. **Modal de abono:** 22 px de margen superior en el contenedor de botones, separándolos del campo de valor en web y móvil.
+3. **Leyendas de la dona:** en escritorio (`>= 768px`) dona y leyendas se apilan en columna centrada; móvil queda intacto.
+4. **Atajos:** se retira toda la opción de favorito de «Configurar atajos de pago» (alta, edición, estrella y columna). La tabla pasa a cinco columnas y se reindexan los anchos 38/34/28 y el centrado de «Valor a pagar» y «Días de pago».
+5. **Logos:** icono OLB_BYTE a 26 px en el dashboard y 30 px en el encabezado del módulo; Mis Finanzas incorpora el logo oficial `icono-192.png` a 30 px.
+
+### 25.3 Gate QA y cierre documental
+
+- Usuarios QA: `prueba_qa@misfinanzas.local` / `QA_MisFinanzas_2026!` y `prueba_qa_admin@misfinanzas.local` / `QA_Admin_2026!`.
+- `scripts/qa_v4_22.py`: **33/33 comprobaciones** en Chromium (1280 px y 375 px), con título y subtítulo, tres tarjetas, badges, barras, zonas punteadas, espaciado 24/20 px, modal separado, leyendas en columna solo en web, sin favoritos, logos y sin desbordamiento ni errores de consola. Los datos sembrados se eliminan al terminar. Solo tras el gate se ejecutaron `git add`, `commit` y `push`.
+- Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-85), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.22.

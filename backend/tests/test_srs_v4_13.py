@@ -107,8 +107,9 @@ def test_plantilla_y_js_con_los_nuevos_textos() -> None:
     assert " saldo · Sin abono extra" in html
     assert " saldo ·" in html  # línea inferior del cockpit (v4.17)
     assert "Abonando +" in html
-    assert "Reducción extra acumulada:" in html
-    assert "data-reduccion" in html
+    assert "¡Tu Excedente Aplasta tus Deudas!" in html
+    assert "impacto-deuda__barra--base" in html
+    assert "impacto-deuda__barra--optimo" in html
     assert "Más de 12 meses" not in html
     assert "¡Ahorras" not in html
 
