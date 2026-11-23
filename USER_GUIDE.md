@@ -54,7 +54,7 @@ Todos tus gastos fijos y deducciones se organizan en 8 categorías cerradas con 
 
 ## 5.1 Comparativa «¡Tu Excedente Aplasta tus Deudas!»
 
-En «Gastos y Presupuestos» verás, **tanto en el celular como en la computadora**, una comparativa por cada deuda recomendada. Cada tarjeta muestra el nombre de la deuda, su saldo y su cuota, un badge verde con el porcentaje de tiempo que recortas, una barra azul con el plazo pagando solo el mínimo y una barra verde con el plazo aplicando tu excedente. La zona punteada con candado indica los meses que te ahorras. El encabezado resume de cuántos meses a cuántos baja tu plazo y el porcentaje global de ahorro. Todo se calcula con tus cifras reales, sin intereses inventados.
+En «Gastos y Presupuestos» verás, **tanto en el celular como en la computadora**, una comparativa por cada deuda recomendada. Cada tarjeta muestra el nombre de la deuda, su saldo y su cuota, un badge verde con el porcentaje de tiempo que recortas, una barra azul con el plazo pagando solo el mínimo y una barra verde con el plazo aplicando tu excedente. La zona punteada con candado indica los meses que te ahorras. El encabezado resume de cuántos meses a cuántos baja tu plazo y el porcentaje global de ahorro. Todo se calcula con tus cifras reales, sin intereses inventados. En el celular el porcentaje de ahorro aparece junto a «Pago mínimo», la fecha de cierre se muestra compacta (por ejemplo `11/2027`) y el resumen verde va en el mismo recuadro que el de los velocímetros, para que nada se corte ni se superponga.
 
 ## 6. Atajos de Pago y recibos
 

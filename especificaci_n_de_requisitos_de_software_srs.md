@@ -854,3 +854,26 @@ Intactos: abonos a deudas y su modal, cierre del Consejero sobre deudas recomend
 - Usuarios QA: `prueba_qa@misfinanzas.local` / `QA_MisFinanzas_2026!` y `prueba_qa_admin@misfinanzas.local` / `QA_Admin_2026!`.
 - `scripts/qa_v4_22.py`: **33/33 comprobaciones** en Chromium (1280 px y 375 px), con título y subtítulo, tres tarjetas, badges, barras, zonas punteadas, espaciado 24/20 px, modal separado, leyendas en columna solo en web, sin favoritos, logos y sin desbordamiento ni errores de consola. Los datos sembrados se eliminan al terminar. Solo tras el gate se ejecutaron `git add`, `commit` y `push`.
 - Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-85), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.22.
+
+---
+
+## 26. SRS v4.24 — Ajustes móviles de las barras
+
+Versión 4.24 y **línea base vigente**. No se rehace v4.22 ni ningún módulo aprobado anteriormente.
+
+### 26.1 No regresión
+
+Intactos: contenido y cálculo del Consejero, velocímetros, banner verde, abonos, donas, atajos, modales, OLB_BYTE y WhatsApp.
+
+### 26.2 Cambios
+
+1. **Fecha compacta:** `fecha_cierre_base_corta` en `MM/AAAA` para la barra azul, en vez del nombre completo del mes.
+2. **Sin recorte:** la barra usa `min-width: max-content` y `overflow: visible`; ningún texto se corta ni se sale del recuadro.
+3. **Fondo:** el componente y sus sub-tarjetas usan el mismo fondo de los velocímetros (`rgba(15, 23, 42, 0.55)` / `0.45`).
+4. **Móvil:** el badge `-N%` se muestra junto a «Pago mínimo»; la cuota no incluye `/mes`; el panel usa 14 px de padding; gráfica y velocímetros comparten exactamente el mismo ancho; el subtítulo replica el recuadro verde del banner (fondo, borde, color, 0.8 rem, centrado y radio 14 px). Las reglas móviles se declaran al final del CSS para no ser sobrescritas.
+
+### 26.3 Gate QA y cierre documental
+
+- Usuarios QA: `prueba_qa@misfinanzas.local` / `QA_MisFinanzas_2026!` y `prueba_qa_admin@misfinanzas.local` / `QA_Admin_2026!`.
+- `scripts/qa_v4_23.py`: **13/13 comprobaciones** y `scripts/qa_v4_24.py`: **14/14 comprobaciones** en Chromium (1280 px y 375 px). Validación adicional de desbordes, recortes y solapes en 360/375/390 px sobre las tres tarjetas, sin hallazgos.
+- Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-86), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.24.

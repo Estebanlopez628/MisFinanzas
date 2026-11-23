@@ -132,3 +132,8 @@ Principios innegociables. Toda especificación, plan y tarea debe cumplirlos de 
     - La proyección a 6 meses se sustituye por «¡Tu Excedente Aplasta tus Deudas!», visible en web y móvil, con barras proporcionales, porcentaje de ahorro por deuda y zona demarcada con candado abierto. Las cifras las calcula Python; la vista es Jinja2/CSS/SVG, sin React.
     - El modal de abono separa sus botones del campo de valor; las leyendas de la dona se centran debajo en escritorio sin alterar móvil; «Configurar atajos de pago» no ofrece favoritos y la tabla usa cinco columnas.
     - El logo de OLB_BYTE mide 30 px y Mis Finanzas muestra el logo oficial al entrar al módulo.
+
+26. **Legibilidad de las barras en móvil (SRS v4.24):**
+    - La fecha de cierre se muestra en formato `MM/AAAA` y la barra es al menos tan ancha como su texto: ningún rótulo puede recortarse ni salirse del recuadro.
+    - El fondo del componente iguala al de los velocímetros; en móvil el porcentaje acompaña a «Pago mínimo», la cuota no lleva `/mes`, el subtítulo replica el recuadro verde del banner y gráfica y velocímetros comparten el mismo ancho.
+    - Las reglas móviles se declaran después de las bases para no ser sobrescritas.

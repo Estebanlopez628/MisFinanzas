@@ -2431,6 +2431,18 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v110`; **872 pruebas** en verde, `compileall`, `node --check` y `generar_guia.py --verificar` correctos (115 fichas). Gate QA `scripts/qa_v4_22.py`: **33/33 comprobaciones** en Chromium (1280 px y 375 px), con título y subtítulo, tres tarjetas, badges, barras, zonas punteadas, espaciado 24/20 px, modal separado, leyendas en columna solo en web, sin favoritos y sin desbordamiento ni errores de consola. Durante el gate se detectó que el servidor seguía sirviendo código viejo (500 por `resumen_barras` ausente); se reinició y pasó. Los checks de gastos fijos se dejaron sin cambios a petición del propietario.
 
+### 2026-11-23 — SRS v4.24: ajustes móviles de las barras (ADR-86)
+
+**Decisión (ADR-86).** A petición del propietario se refinan las barras comparativas: la fecha larga recortaba las letras y el fondo era demasiado oscuro. En una segunda ronda se pidió mover el porcentaje junto a «Pago mínimo» en móvil, quitar `/mes` de la cuota, alinear gráfica y velocímetros y dar al subtítulo el mismo recuadro verde del banner. Se registran como v4.24 (la fecha/fondo se probó como v4.23 intermedio, sin push).
+
+**Consecuencias aplicadas.**
+- `_fecha_cierre_corta()` produce `MM/AAAA` y `barras_deuda` expone `fecha_cierre_base_corta`; la barra azul usa esa etiqueta.
+- `.impacto-deuda__barra` usa `min-width: max-content` y `overflow: visible`, así que nunca recorta su texto; el recuadro y las sub-tarjetas usan `rgba(15, 23, 42, 0.55)` / `0.45`, el mismo fondo de los velocímetros.
+- En móvil: badge `-N%` dentro del grupo de «Pago mínimo» (el de la cabecera se oculta), cuota sin `/mes`, padding del panel a 14 px, gráfica y velocímetros con el mismo ancho y el subtítulo con el fondo/borde/color/tamaño/centrado del `.cierre-deuda__pill`.
+- Los media queries móviles se movieron al final del CSS: al estar antes de las reglas base eran sobrescritos (defecto detectado por el gate y corregido).
+
+**Verificación.** `sw.js` en `olb-finanzas-v111`; gates QA `scripts/qa_v4_23.py` **13/13** y `scripts/qa_v4_24.py` **14/14** en Chromium (1280 px y 375 px). Validación adicional en 360/375/390 px: ningún elemento se sale del recuadro, `scrollWidth <= clientWidth` en todos los textos, sin solapes entre badge/etiqueta, barras/textos y zona de ahorro, y `scrollWidth === innerWidth`. Suite completa en verde. Los datos QA se eliminan al terminar cada gate.
+
 
 
 

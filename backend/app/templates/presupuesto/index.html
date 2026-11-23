@@ -281,23 +281,30 @@
                   <div class="impacto-deuda__cabecera">
                     <p class="impacto-deuda__nombre">
                       <strong>{{ barra.nombre }}</strong>
-                      <span>(Deuda de {{ barra.saldo | cop }} · cuota: {{ barra.cuota | cop }}/mes)</span>
+                      <span>(Deuda de {{ barra.saldo | cop }} · cuota: {{ barra.cuota | cop }})</span>
                     </p>
                     {% if barra.porcentaje_ahorro > 0 %}
-                      <span class="impacto-deuda__badge">-{{ barra.porcentaje_ahorro }}%</span>
+                      <span class="impacto-deuda__badge impacto-deuda__badge--web">-{{ barra.porcentaje_ahorro }}%</span>
                     {% endif %}
                   </div>
 
                   <div class="impacto-deuda__barras">
                     <div class="impacto-deuda__fila">
-                      <span class="impacto-deuda__etiqueta">Pago mínimo</span>
+                      <div class="impacto-deuda__etiqueta-grupo">
+                        <span class="impacto-deuda__etiqueta">Pago mínimo</span>
+                        {# SRS v4.24: en móvil el porcentaje va junto a «Pago mínimo»
+                           para que la descripción de la deuda no se recorte. #}
+                        {% if barra.porcentaje_ahorro > 0 %}
+                          <span class="impacto-deuda__badge impacto-deuda__badge--movil">-{{ barra.porcentaje_ahorro }}%</span>
+                        {% endif %}
+                      </div>
                       <div class="impacto-deuda__pista">
                         <div class="impacto-deuda__barra impacto-deuda__barra--base"
                              style="width: {{ ancho_base }}%;">
                           <span class="impacto-deuda__meses">
                             {{ barra.meses_base }} {% if barra.meses_base == 1 %}mes{% else %}meses{% endif %}
                           </span>
-                          <span class="impacto-deuda__fecha">({{ barra.fecha_cierre_base }})</span>
+                          <span class="impacto-deuda__fecha">({{ barra.fecha_cierre_base_corta }})</span>
                         </div>
                         {% if ancho_base >= 95 and barra.meses_ahorrados > 0 %}
                           <span class="impacto-deuda__conector" aria-hidden="true">
@@ -311,7 +318,9 @@
                     </div>
 
                     <div class="impacto-deuda__fila impacto-deuda__fila--optimo">
-                      <span class="impacto-deuda__etiqueta">Pagando de más con tu excedente</span>
+                      <div class="impacto-deuda__etiqueta-grupo">
+                        <span class="impacto-deuda__etiqueta">Pagando de más con tu excedente</span>
+                      </div>
                       <div class="impacto-deuda__pista impacto-deuda__pista--optimo">
                         <div class="impacto-deuda__barra impacto-deuda__barra--optimo"
                              style="width: {{ ancho_opt }}%;">

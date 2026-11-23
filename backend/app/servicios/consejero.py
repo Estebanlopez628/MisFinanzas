@@ -359,6 +359,22 @@ def _fecha_cierre(referencia: date, offset_meses: int) -> str:
     return f"{_MESES_COMPLETOS[indice]} {anio}"
 
 
+def _fecha_cierre_corta(referencia: date, offset_meses: int) -> str:
+    """Devuelve «MM/AAAA» para las barras comparativas (SRS v4.23).
+
+    Args:
+        referencia: Mes de partida de la proyección.
+        offset_meses: Cuántos meses después cae el cierre.
+
+    Returns:
+        Etiqueta compacta como «11/2027», que cabe dentro de la barra azul.
+    """
+    posicion = referencia.month - 1 + max(0, offset_meses)
+    indice = posicion % 12
+    anio = referencia.year + posicion // 12
+    return f"{indice + 1:02d}/{anio}"
+
+
 def _palabra_plazo(cantidad: int, singular: str, plural: str) -> str:
     """Devuelve «1 cuota» o « N cuotas» sin el sufijo `(s)` (SRS v4.20).
 
@@ -462,6 +478,9 @@ def _datos_cierre(
                 "meses_ahorrados": ahorrados_deuda,
                 "porcentaje_ahorro": porcentaje_deuda,
                 "fecha_cierre_base": _fecha_cierre(referencia, meses_base_deuda),
+                "fecha_cierre_base_corta": _fecha_cierre_corta(
+                    referencia, meses_base_deuda
+                ),
             }
         )
 
