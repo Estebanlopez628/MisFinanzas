@@ -145,3 +145,7 @@ Principios innegociables. Toda especificación, plan y tarea debe cumplirlos de 
 28. **Grilla simétrica y checks sin parpadeo (SRS v4.26):**
     - Los modales de Editar deuda y Editar deducción usan dos botones lado a lado y un tercero a ancho completo; la acción secundaria se mantiene accesible en la cabecera.
     - El ✔ de un gasto fijo cambia al instante y se guarda en segundo plano; solo se revierte si falla el servidor, sin recargar la página ni mostrar alertas que desplacen el contenido. La lógica de créditos vinculados y metas no se modifica.
+
+29. **Abono en la fila inferior (SRS v4.27):**
+    - En los modales de deuda y deducción «Abonar» ocupa la fila inferior a ancho completo y «Cancelar» se elimina, porque la X de la cabecera ya cierra.
+    - No se introducen librerías de navegación parcial: donas, Consejero, checks y subnavegación se mantienen intactos.

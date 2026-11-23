@@ -920,3 +920,24 @@ Intactos: modal de Editar Gasto Fijo y Registrar Abono, tarjetas de corte, 7 fac
 - Usuarios QA: `prueba_qa@misfinanzas.local` / `QA_MisFinanzas_2026!` y `prueba_qa_admin@misfinanzas.local` / `QA_Admin_2026!`.
 - `scripts/qa_v4_26.py`: **25/25 comprobaciones** en Chromium (1280 px y 375 px), con la grilla medida en ambos modales, check a 0,7 ms (web) y 0,5 ms (móvil), sin recarga, estado invertido y persistente tras recargar.
 - Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-88), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.26.
+
+---
+
+## 29. SRS v4.27 — Abono en la fila inferior
+
+Versión 4.27 y **línea base vigente**. No se rehace v4.26 ni ningún módulo aprobado.
+
+### 29.1 No regresión
+
+Intactos: donas, Consejero, velocímetros, checks optimistas, subnavegación, gráfica comparativa, Atajos, OLB_BYTE y WhatsApp. No se introduce HTMX ni librería de navegación parcial.
+
+### 29.2 Cambios
+
+1. En «Editar deuda» y «Editar deducción fija» se elimina el botón «Cancelar»: la X de la cabecera cumple esa función.
+2. «Abonar» se mueve a la fila inferior con `grid-column: 1 / -1` (ancho completo). La fila superior conserva «Actualizar» y «Eliminar». Igual en web y móvil.
+
+### 29.3 Gate QA y cierre documental
+
+- Usuarios QA: `prueba_qa@misfinanzas.local` / `QA_MisFinanzas_2026!` y `prueba_qa_admin@misfinanzas.local` / `QA_Admin_2026!`.
+- `scripts/qa_v4_26.py`: **25/25 comprobaciones** en Chromium (1280 px y 375 px), con la grilla y los checks sin cambios. Suite completa: **884 pruebas** en verde.
+- Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-89), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.27.

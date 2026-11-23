@@ -27,15 +27,19 @@ def _id_admin(bd) -> str:
     return cuenta.id_usuario
 
 
-def test_modales_usan_grilla_de_dos_botones_y_cancelar() -> None:
-    """Editar deuda y editar deducción comparten la misma grilla 2 + 1."""
+def test_modales_usan_grilla_de_dos_botones_y_abono_abajo() -> None:
+    """Editar deuda y editar deducción comparten la grilla con Abonar abajo."""
     deudas_html = (RUTA / "templates/deudas/index.html").read_text(encoding="utf-8")
     presupuesto_html = (RUTA / "templates/presupuesto/index.html").read_text(encoding="utf-8")
 
     for html in (deudas_html, presupuesto_html):
         assert "acciones-formulario--grilla" in html
         assert "boton--ancho-completo" in html
-        assert ">Cancelar</button>" in html
+        assert "data-abrir-abono" in html
+        assert "data-cancelar-edicion" in html  # la X de la cabecera cierra
+        inicio = html.index("acciones-formulario--grilla")
+        bloque = html[inicio : html.index("</div>", inicio)]
+        assert "Cancelar" not in bloque
 
     css = (RUTA / "static/css/estilos.css").read_text(encoding="utf-8")
     bloque = css.split(".acciones-formulario--grilla {", 1)[1].split("}", 1)[0]

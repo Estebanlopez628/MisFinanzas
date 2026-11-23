@@ -2466,6 +2466,16 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v113`; suite completa en verde. Gate QA `scripts/qa_v4_26.py`: **25/25 comprobaciones** en Chromium (1280 px y 375 px), con la grilla medida (201/201 px y 148,5/148,5 px; botón inferior del doble de ancho), check a **0,7 ms en web y 0,5 ms en móvil**, sin recarga, estado invertido y persistente tras `reload()`. Los datos QA se eliminan al terminar.
 
+### 2026-11-23 — SRS v4.27: abono abajo en los modales (ADR-89)
+
+**Decisión (ADR-89).** El propietario pidió mover «Abonar» a la fila inferior de los modales de Editar deuda y Editar deducción, y quitar «Cancelar» porque la X de la cabecera ya cierra. Descartó expresamente cualquier cambio en la navegación: se evaluó HTMX local, pero se optó por **no introducirlo** para no alterar donas, Consejero ni los checks optimistas.
+
+**Consecuencias aplicadas.**
+- En ambos modales la fila superior queda con «Actualizar» y «Eliminar»; la inferior, con «Abonar» a `grid-column: 1 / -1`. Se retiró el botón «Cancelar» y el «Abonar» que estaba en la cabecera.
+- No se tocó `dona.js`, `consejero.js`, `app.js`, la subnavegación ni los endpoints. La grilla CSS de v4.26 se conserva.
+
+**Verificación.** `sw.js` en `olb-finanzas-v114`; **884 pruebas** en verde. Gate QA `scripts/qa_v4_26.py` **25/25** sin cambios: la grilla mide 201/201 px en web y 148,5/148,5 px en móvil, con el botón inferior del doble de ancho; checks a 0,6/0,5 ms. Sin errores de consola.
+
 
 
 

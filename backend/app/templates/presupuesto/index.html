@@ -563,14 +563,6 @@
                       data-guardar-formulario="editar-deduccion-{{ deduccion.id_deduccion }}">
                   <div class="edicion-gasto__cabecera">
                     <h3 class="panel__titulo">Editar deducción</h3>
-                    {# SRS v4.26: el abono va en la cabecera para conservar la grilla. #}
-                    {% if deduccion.id_deuda %}
-                      <button class="boton boton--secundario boton--pequeno" type="button"
-                              data-abrir-abono data-id-deuda="{{ deduccion.id_deuda }}"
-                              data-deuda="{{ deduccion.deuda.acreedor if deduccion.deuda else 'tu deuda' }}">
-                        Abonar
-                      </button>
-                    {% endif %}
                     <button class="edicion-gasto__cerrar" type="button" data-cancelar-edicion
                             aria-label="Cerrar edición" title="Cerrar">×</button>
                   </div>
@@ -599,15 +591,20 @@
                   {# SRS v1.9: «Actualizar» primero y «Eliminar» a su lado. El
                      cierre va en la cabecera, así que ya no hay «Cancelar».
                      «Eliminar» usa formaction para no anidar formularios. #}
-                  {# SRS v4.26: grilla simétrica (2 arriba + 1 abajo). #}
+                  {# SRS v4.27: «Abonar» ocupa el lugar del antiguo «Cancelar». #}
                   <div class="acciones-formulario acciones-formulario--edicion acciones-formulario--grilla">
                     <button class="boton boton--primario boton--pequeno" type="submit">Actualizar</button>
                     <button class="boton boton--peligro boton--pequeno" type="submit"
                             formmethod="post"
                             formaction="{{ url_for('eliminar_deduccion_fija', id_deduccion=deduccion.id_deduccion) }}"
                             data-confirmar="¿Eliminar esta deducción fija?" data-confirmar-peligro>Eliminar</button>
-                    <button class="boton boton--secundario boton--pequeno boton--ancho-completo"
-                            type="button" data-cancelar-edicion>Cancelar</button>
+                    {% if deduccion.id_deuda %}
+                      <button class="boton boton--secundario boton--pequeno boton--ancho-completo"
+                              type="button" data-abrir-abono data-id-deuda="{{ deduccion.id_deuda }}"
+                              data-deuda="{{ deduccion.deuda.acreedor if deduccion.deuda else 'tu deuda' }}">
+                        Abonar
+                      </button>
+                    {% endif %}
                   </div>
                 </form>
               </details>

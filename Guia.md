@@ -326,7 +326,7 @@ Principios que explican el resto del código:
 
 #### `backend/app/templates/deudas/`
 
-- **`index.html`** · 285 líneas — Plantilla: Registro y Detalles de deudas
+- **`index.html`** · 283 líneas — Plantilla: Registro y Detalles de deudas
 
 #### `backend/app/templates/finanzas/`
 
@@ -370,7 +370,7 @@ Principios que explican el resto del código:
 
 #### `backend/app/templates/presupuesto/`
 
-- **`index.html`** · 823 líneas — Plantilla: Gastos y Presupuesto
+- **`index.html`** · 820 líneas — Plantilla: Gastos y Presupuesto
 
 #### `backend/app/templates/privado/`
 

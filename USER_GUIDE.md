@@ -58,6 +58,8 @@ En «Gastos y Presupuestos» verás, **tanto en el celular como en la computador
 
 Al marcar un gasto fijo con el ✔, el cambio se ve al instante: el círculo se pone verde y el nombre se tacha para que sepas que ya lo pagaste. El guardado ocurre en segundo plano y no recarga la página; si algo falla, el check vuelve a su estado anterior y aparece un aviso discreto. Los créditos vinculados y las metas siguen registrando sus abonos como siempre.
 
+En los modales de «Editar deuda» y «Editar deducción fija», el botón «Abonar» queda abajo y a todo el ancho; «Actualizar» y «Eliminar» van en la fila de arriba. Para cerrar sin guardar, usa la **X** de la esquina superior derecha.
+
 ## 6. Atajos de Pago y recibos
 
 Puedes guardar tus pagos o abonos frecuentes con su monto exacto ('Valor a pagar') para registrarlos con un solo toque y generar un comprobante visual limpio y fácil de leer.

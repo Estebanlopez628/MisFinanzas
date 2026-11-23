@@ -208,11 +208,6 @@
                         <input type="hidden" name="periodicidad" value="{{ deuda.periodicidad }}" />
                         <div class="edicion-gasto__cabecera">
                           <h3 class="panel__titulo">Editar deuda</h3>
-                          {# SRS v4.26: la acción secundaria va en la cabecera para
-                             no romper la grilla simétrica de dos botones + uno. #}
-                          <button class="boton boton--peligro boton--pequeno" type="button"
-                                  data-eliminar-deuda="{{ deuda.id_deuda }}"
-                                  title="Eliminar deuda">Eliminar</button>
                           <button class="edicion-gasto__cerrar" type="button" data-cancelar-edicion
                                   aria-label="Cerrar edición" title="Cerrar">×</button>
                         </div>
@@ -248,14 +243,17 @@
                           total de la deuda. Revisa los datos y digítalos nuevamente.
                         </div>
                         {# SRS v4.26: grilla simétrica (2 arriba + 1 abajo). #}
+                        {# SRS v4.27: «Abonar» ocupa el lugar del antiguo «Cancelar»;
+                           la X de la cabecera ya cierra el modal. #}
                         <div class="acciones-formulario acciones-formulario--edicion acciones-formulario--grilla">
                           <button class="boton boton--primario boton--pequeno" type="submit"
                                   data-actualizar-deuda>Actualizar</button>
-                          <button class="boton boton--secundario boton--pequeno" type="button"
-                                  data-abrir-abono data-id-deuda="{{ deuda.id_deuda }}"
-                                  data-deuda="{{ deuda.acreedor }}">Abonar</button>
+                          <button class="boton boton--peligro boton--pequeno" type="button"
+                                  data-eliminar-deuda="{{ deuda.id_deuda }}"
+                                  title="Eliminar deuda">Eliminar</button>
                           <button class="boton boton--secundario boton--pequeno boton--ancho-completo"
-                                  type="button" data-cancelar-edicion>Cancelar</button>
+                                  type="button" data-abrir-abono data-id-deuda="{{ deuda.id_deuda }}"
+                                  data-deuda="{{ deuda.acreedor }}">Abonar</button>
                         </div>
                       </form>
                     </details>
