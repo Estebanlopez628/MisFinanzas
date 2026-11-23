@@ -2869,6 +2869,19 @@ strong.valor-negativo.recibo__cifra--saldo {
   line-height: 1.4;
 }
 
+/* SRS v4.5, sección 1.2: sub-desglose apilado por origen dentro de cada
+   categoría consolidada de la dona global. No afecta a la dona de extras. */
+.dona__desglose {
+  list-style: none;
+  margin: 4px 0 0 1.25rem;
+  padding: 0 0 0 0.5rem;
+  display: grid;
+  gap: 2px;
+  border-left: 1px solid rgba(148, 163, 184, 0.35);
+  color: var(--text-muted);
+  font-size: 0.72rem;
+}
+
 .barra {
   width: 100%;
   min-width: 80px;
@@ -4390,18 +4403,9 @@ strong.valor-negativo.recibo__cifra--saldo {
   flex-shrink: 0;
 }
 
-@media (min-width: 768px) {
-  .cierre-deuda__velocimetros {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 16px;
-    max-width: 520px;
-    margin: 0 auto 20px auto;
-  }
-
-  .cierre-deuda__grafica svg {
-    max-height: 170px;
-  }
-}
+/* SRS v4.5, sección 3: el bloque de escritorio vive más abajo, en un
+   `@media (min-width: 768px)` de nivel superior. Aquí no puede anidarse
+   porque este tramo pertenece al `@media (max-width: 767px)` de móvil. */
 
 .cierre-deuda__meses button {
   background: transparent !important;
@@ -5032,6 +5036,28 @@ dialog.detalle-orden {
   .ayuda-inicio__enlace--movil,
   .ayuda-inicio__separador {
     display: none;
+  }
+
+  /* SRS v4.5, sección 3: velocímetros de 156×88 en dos columnas de hasta
+     640 px. Los estilos en línea son la base móvil, por eso se fuerza aquí
+     solo desde 768 px. La vista < 768 px no se toca. */
+  .cierre-deuda__velocimetros {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 20px !important;
+    width: 100% !important;
+    max-width: 640px !important;
+    margin: 0 auto 20px auto !important;
+  }
+
+  .cierre-deuda__velocimetro svg {
+    width: 156px !important;
+    height: 88px !important;
+    max-width: 156px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .cierre-deuda__grafica svg {
+    max-height: 170px;
   }
 }
 

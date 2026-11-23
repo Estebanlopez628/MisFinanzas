@@ -261,6 +261,76 @@
     validarPlan();
   }
 
+  // SRS v4.5, sección 2.2: la descripción ahora se edita en el modal y se
+  // conservan las tres capas de protección del alta: validación preventiva,
+  // botón «Eliminar» con modal propio y bloqueo síncrono de «Actualizar».
+  document.querySelectorAll("[data-actualizar-deuda]").forEach(function (boton) {
+    var formulario = boton.closest("form");
+    if (!formulario) {
+      return;
+    }
+    var alerta = formulario.querySelector("[data-alerta-edicion-deuda]");
+    var total = formulario.querySelector('[name="saldo_total"]');
+    var cuota = formulario.querySelector('[name="cuota"]');
+    var cuotas = formulario.querySelector('[name="cuotas_pendientes"]');
+
+    /**
+     * Interpreta un monto escrito con separadores colombianos.
+     *
+     * @param {string} texto Valor del input.
+     * @returns {number} Monto numérico, 0 si no es válido.
+     */
+    function numero(texto) {
+      var limpio = (texto || "").replace(/[^\d,]/g, "").replace(",", ".");
+      var valor = parseFloat(limpio);
+      return isFinite(valor) ? valor : 0;
+    }
+
+    /**
+     * Bloquea «Actualizar» cuando el plan no cubre el capital.
+     */
+    function validarEdicion() {
+      var totalValor = numero(total && total.value);
+      var cuotaValor = numero(cuota && cuota.value);
+      var cuotasValor = numero(cuotas && cuotas.value);
+      var incompleto = totalValor <= 0 || cuotaValor <= 0 || cuotasValor <= 0;
+      var insuficiente = !incompleto && cuotaValor * cuotasValor < totalValor;
+      if (alerta) {
+        alerta.hidden = !insuficiente;
+      }
+      boton.disabled = insuficiente;
+      boton.classList.toggle("boton--deshabilitado", insuficiente);
+    }
+
+    [total, cuota, cuotas].forEach(function (campo) {
+      if (campo) {
+        campo.addEventListener("input", validarEdicion);
+        campo.addEventListener("change", validarEdicion);
+      }
+    });
+    validarEdicion();
+
+    var actualizando = false;
+    formulario.addEventListener("submit", function (evento) {
+      if (actualizando) {
+        evento.preventDefault();
+        return;
+      }
+      actualizando = true;
+      var textoOriginal = boton.textContent;
+      try {
+        boton.disabled = true;
+        boton.textContent = "Actualizando...";
+      } finally {
+        window.setTimeout(function () {
+          actualizando = false;
+          boton.disabled = false;
+          boton.textContent = textoOriginal;
+        }, 2000);
+      }
+    });
+  });
+
   if (sessionStorage.getItem("misfinanzas_scroll_to_new_debt") === "true") {
     sessionStorage.removeItem("misfinanzas_scroll_to_new_debt");
     window.requestAnimationFrame(function () {

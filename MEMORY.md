@@ -2295,6 +2295,19 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v100`; **785 pruebas** en verde, `compileall`, `node --check` y `generar_guia.py --verificar` correctos; `/salud` → 200. Recorrido `scripts/qa_v4_4.py`: **38/38 comprobaciones** en Chromium a 360/390/768/1280 px, sin desbordamiento ni errores de consola. Usuarios QA: `prueba_qa@misfinanzas.local` / `QA_MisFinanzas_2026!` y `prueba_qa_admin@misfinanzas.local` / `QA_Admin_2026!`.
 
+### 2026-11-22 — SRS v4.5: dona global, descripción de deudas y velocímetros (ADR-76)
+
+**Decisión (ADR-76).** La dona de Gastos y Presupuestos pasa a ser global: su base es el sueldo más los ingresos **brutos** de Trabajos Extras. Las categorías homólogas se suman en una sola tajada y el libre de ambos orígenes se dibuja una sola vez como «Total libre». El Consejero sigue recibiendo el mismo libre consolidado, por lo que su aritmética y el colchón de $300.000 no cambian. La dona individual de Trabajos Extras queda intacta.
+
+**Consecuencias aplicadas.**
+- `capacidad_endeudamiento()` calcula `totales_finanzas` y `totales_extras`, suma las categorías y usa `_arcos_categoria_global()`, que produce un arco «Total libre» con `desglose` por origen. Los sub-ítems se pintan en `_capacidad.html` con `.dona__desglose`.
+- Se añadieron los campos `base_global`, `gastos_globales`, `porcentaje_libre_global` y `categorias_globales` al `dataclass Capacidad`, sin alterar los campos históricos.
+- Las deducciones de crédito vuelven a alimentar la categoría 8 del módulo para que el desglose cuadre con los gastos reales.
+- Deudas: input de descripción visible y `required` en el modal, `PUT/PATCH /api/deudas/{id}` con persistencia y objeto actualizado, validación en vivo y bloqueo síncrono también en «Actualizar».
+- Velocímetros: el escritorio usa 640 px y SVG 156×88. Se detectó que un `@media (max-width: 767px)` sin cerrar anidaba la regla de escritorio; se movió a un media query de nivel superior. La base inline de 540 px y 120×68 de móvil no se tocó.
+
+**Verificación.** `sw.js` en `olb-finanzas-v101`; **801 pruebas** en verde, `compileall`, `node --check` y `generar_guia.py --verificar` correctos. Recorrido `scripts/qa_v4_5.py`: **34/34 comprobaciones** en Chromium a 360/390/768/1280 px, incluida la comprobación computada de 156×88/640 px en escritorio y 120×68 en móvil. Gate QA ejecutado antes de `git add`/`commit`/`push`.
+
 
 
 

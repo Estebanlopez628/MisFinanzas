@@ -249,6 +249,99 @@ def api_eliminar_deuda(
     return JSONResponse(content={"ok": True, "id_deuda": id_deuda})
 
 
+@router.api_route(
+    "/api/deudas/{id_deuda}",
+    methods=["PUT", "PATCH"],
+    name="api_actualizar_deuda",
+)
+def api_actualizar_deuda(
+    id_deuda: str,
+    request: Request,
+    usuario: UsuarioSesion = Depends(obtener_usuario_actual),
+    bd: Session = Depends(obtener_bd),
+    acreedor: Annotated[str, Form()] = "",
+    descripcion: Annotated[str, Form()] = "",
+    saldo_total: Annotated[str, Form()] = "",
+    cuota: Annotated[str, Form()] = "",
+    cuotas_pendientes: Annotated[str, Form()] = "",
+    periodicidad: Annotated[str, Form()] = "",
+) -> JSONResponse:
+    """Actualiza una deuda propia y devuelve el objeto persistido (SRS v4.5, 2.2).
+
+    Acepta `PUT` y `PATCH`. Los campos omitidos conservan el valor actual, de modo
+    que la descripción se pueda corregir sin reenviar todo el plan de pagos.
+
+    Args:
+        id_deuda: Deuda a modificar.
+        request: Petición HTTP (se usa para el contexto de auditoría).
+        usuario: Usuario autenticado.
+        bd: Sesión de base de datos.
+        acreedor: Acreedor; vacío conserva el actual.
+        descripcion: Nombre o detalle editable; vacío lo deja sin descripción.
+        saldo_total: Capital pendiente; vacío conserva el actual.
+        cuota: Valor de cada pago; vacío conserva el actual.
+        cuotas_pendientes: Pagos que faltan; vacío conserva el actual.
+        periodicidad: `QUINCENAL` o `MENSUAL`; vacío conserva la actual.
+
+    Returns:
+        JSON con la deuda actualizada, o un error limpio si falla la validación.
+    """
+    del request  # La petición solo se declara para consistencia con el router.
+    actual = bd.get(Deuda, id_deuda)
+    if actual is None or actual.id_usuario != usuario.id_usuario:
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content={"ok": False, "detail": "La deuda no existe."},
+        )
+    datos = {
+        "acreedor": acreedor or actual.acreedor,
+        "descripcion": descripcion,
+        "saldo_total": saldo_total or str(actual.saldo_total),
+        "cuota": cuota or str(actual.cuota_mensual),
+        "cuotas_pendientes": cuotas_pendientes or str(actual.cuotas_pendientes),
+        "periodicidad": periodicidad or actual.periodicidad,
+    }
+    try:
+        validados = esquemas.validar_formulario(esquemas.DeudaEditar, **datos)
+        deuda = deudas.actualizar_deuda(
+            bd,
+            usuario.id_usuario,
+            id_deuda,
+            validados.acreedor,
+            validados.saldo_total,
+            validados.cuota,
+            validados.cuotas_pendientes,
+            validados.periodicidad,
+            validados.descripcion or None,
+        )
+    except (ValueError, ArithmeticError) as error:
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={"ok": False, "detail": str(error)},
+        )
+    if deuda is None:
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content={"ok": False, "detail": "La deuda no existe."},
+        )
+    auditoria.registrar(bd, usuario.id_usuario, "DEUDA_ACTUALIZADA", "deudas", deuda.acreedor)
+    return JSONResponse(
+        content={
+            "ok": True,
+            "deuda": {
+                "id_deuda": deuda.id_deuda,
+                "acreedor": deuda.acreedor,
+                "descripcion": deuda.descripcion or "",
+                "saldo_total": str(deuda.saldo_total),
+                "cuota_mensual": str(deuda.cuota_mensual),
+                "cuotas_pendientes": deuda.cuotas_pendientes,
+                "periodicidad": deuda.periodicidad,
+                "estado": deuda.estado,
+            },
+        }
+    )
+
+
 @router.post("/deudas", name="crear_deuda", response_model=None)
 def crear_deuda(
     request: Request,

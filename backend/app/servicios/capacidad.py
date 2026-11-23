@@ -99,6 +99,10 @@ class Capacidad:
         categorias: Las ocho categorías cerradas con su valor, color y peso.
         arcos_categoria: Segmentos de la dona por categoría, con los colores
             exactos del catálogo, más la base mínima y lo disponible.
+        base_global: Base de la dona global (sueldo + ingresos brutos de extras).
+        gastos_globales: Suma de las categorías consolidadas de ambos orígenes.
+        porcentaje_libre_global: Peso del libre sobre la base global.
+        categorias_globales: Categorías sumadas de Mis Finanzas y Trabajos Extras.
     """
 
     ingreso: Decimal
@@ -119,6 +123,11 @@ class Capacidad:
     disponible_abono: Decimal = CERO
     categorias: list[dict[str, object]] = field(default_factory=list)
     arcos_categoria: list[dict[str, object]] = field(default_factory=list)
+    # SRS v4.5: campos de la dona global; la dona de Trabajos Extras no los usa.
+    base_global: Decimal = CERO
+    gastos_globales: Decimal = CERO
+    porcentaje_libre_global: Decimal = CERO
+    categorias_globales: list[dict[str, object]] = field(default_factory=list)
 
 
 def repartir_libre(libre: Decimal) -> tuple[Decimal, Decimal]:
@@ -312,6 +321,119 @@ def _arcos_categoria(
                 "desplazamiento": redondear_dinero(-avance),
                 "color": color,
                 "clase": clase,
+            }
+        )
+        avance += porcentaje
+    return arcos
+
+
+def _arcos_categoria_global(
+    totales_finanzas: dict[str, Decimal],
+    totales_extras: dict[str, Decimal],
+    libre: Decimal,
+    libre_salario: Decimal,
+    libre_extras: Decimal,
+    ingreso_global: Decimal,
+) -> list[dict[str, object]]:
+    """Construye los arcos de la dona global con categorías homólogas sumadas.
+
+    SRS v4.5, sección 1: una categoría presente en Mis Finanzas y en Trabajos
+    Extras se dibuja como **una sola tajada** con el color canónico. El dinero
+    libre de ambos orígenes también se dibuja una sola vez, como «Total libre».
+    Cada arco lleva un `desglose` con el valor y el porcentaje de cada origen
+    para que la leyenda pueda mostrar la trazabilidad jerárquica.
+
+    Args:
+        totales_finanzas: Valor de cada categoría en Mis Finanzas.
+        totales_extras: Valor de cada categoría en Trabajos Extras.
+        libre: Saldo libre consolidado de ambos orígenes.
+        libre_salario: Parte del libre que viene de Mis Finanzas.
+        libre_extras: Parte del libre que viene de Trabajos Extras.
+        ingreso_global: Base global (sueldo + ingresos brutos de extras).
+
+    Returns:
+        Arcos con etiqueta, valor, porcentaje, color y desglose por origen.
+    """
+    if ingreso_global <= CERO:
+        return []
+
+    totales: dict[str, Decimal] = {}
+    for categoria in catalogo.CATEGORIAS:
+        nombre = categoria.nombre
+        totales[nombre] = redondear_dinero(
+            redondear_dinero(totales_finanzas.get(nombre, CERO))
+            + redondear_dinero(totales_extras.get(nombre, CERO))
+        )
+
+    candidatos: list[tuple[str, Decimal, str, str]] = []
+    for categoria in catalogo.CATEGORIAS:
+        valor = totales[categoria.nombre]
+        if valor > CERO:
+            candidatos.append(
+                (categoria.nombre, valor, categoria.color, "valor-negativo")
+            )
+    if libre > CERO:
+        candidatos.append(
+            ("Total libre", redondear_dinero(libre), catalogo.COLOR_DINERO_LIBRE, "valor-positivo")
+        )
+    if not candidatos:
+        return []
+
+    comprometido = redondear_dinero(sum((fila[1] for fila in candidatos), start=CERO))
+    denominador = max(ingreso_global, comprometido)
+    porcentajes = [_porcentaje(fila[1], denominador) for fila in candidatos]
+    redondeados = [valor.quantize(Decimal("0.1")) for valor in porcentajes]
+    diferencia = CIEN - sum(redondeados, start=CERO)
+    if redondeados:
+        mayor = max(range(len(redondeados)), key=lambda indice: porcentajes[indice])
+        redondeados[mayor] += diferencia
+
+    desgloses: dict[str, list[dict[str, object]]] = {}
+    for categoria in catalogo.CATEGORIAS:
+        nombre = categoria.nombre
+        valor_finanzas = redondear_dinero(totales_finanzas.get(nombre, CERO))
+        valor_extras = redondear_dinero(totales_extras.get(nombre, CERO))
+        # Una sola origen no necesita sub-ítems: evitar redundancia en la leyenda.
+        if valor_finanzas > CERO and valor_extras > CERO:
+            desgloses[nombre] = [
+                {
+                    "origen": "Mis Finanzas",
+                    "valor": valor_finanzas,
+                    "porcentaje": _porcentaje(valor_finanzas, denominador),
+                },
+                {
+                    "origen": "Trabajos Extras",
+                    "valor": valor_extras,
+                    "porcentaje": _porcentaje(valor_extras, denominador),
+                },
+            ]
+    if libre > CERO:
+        desgloses["Total libre"] = [
+            {
+                "origen": "Mis Finanzas",
+                "valor": redondear_dinero(libre_salario),
+                "porcentaje": _porcentaje(libre_salario, denominador),
+            },
+            {
+                "origen": "Trabajos Extras",
+                "valor": redondear_dinero(libre_extras),
+                "porcentaje": _porcentaje(libre_extras, denominador),
+            },
+        ]
+
+    arcos: list[dict[str, object]] = []
+    avance = CERO
+    for (etiqueta, valor, color, clase), porcentaje in zip(candidatos, redondeados):
+        arcos.append(
+            {
+                "etiqueta": etiqueta,
+                "valor": redondear_dinero(valor),
+                "porcentaje": porcentaje,
+                "longitud": redondear_dinero(porcentaje),
+                "desplazamiento": redondear_dinero(-avance),
+                "color": color,
+                "clase": clase,
+                "desglose": desgloses.get(etiqueta, []),
             }
         )
         avance += porcentaje
@@ -707,11 +829,21 @@ def capacidad_endeudamiento(
     # Trabajos extras: entran por su valor de pago y salen con sus gastos fijos.
     # Su libre se muestra aparte del libre del salario.
     bloques = servicio_trabajos.pagos_del_mes(bd, id_usuario, anio, mes)
-    # SRS v4.4, sección 1: las dos donas están aisladas. De Trabajos Extras
-    # solo se trae su saldo libre neto; sus gastos y créditos nunca entran en
-    # las categorías de Gastos y Presupuestos.
+    # SRS v4.5, sección 1: la dona global usa los ingresos BRUTOS de Trabajos
+    # Extras como base y suma también sus gastos. El Consejero sigue tomando el
+    # libre consolidado, que es algebraicamente el mismo de la v4.4.
+    ingresos_extras = redondear_dinero(
+        sum((bloque["ingreso"] for bloque in bloques), start=CERO)
+    )
     libre_extras = servicio_trabajos.libre_neto_mes(bd, id_usuario, anio, mes)
     ingreso = redondear_dinero(ingreso_base + libre_extras)
+    base_global = redondear_dinero(ingreso_base + ingresos_extras)
+    gastos_extras = [
+        gasto
+        for bloque in bloques
+        for periodo in bloque["periodos"]
+        for gasto in periodo["gastos"]
+    ]
 
     # SRS v4.4: las deducciones del módulo cuentan aunque estén vinculadas a una
     # deuda; su valor es la cuota y ya no se añade como tajada suelta.
@@ -740,14 +872,38 @@ def capacidad_endeudamiento(
     libre_salario = redondear_dinero(libre - libre_extras)
     base, disponible = repartir_libre(libre)
 
-    totales = agrupar_por_categoria(
+    # SRS v4.5: las deducciones de crédito también alimentan la categoría 8 del
+    # módulo, para que el desglose por origen de la dona global cuadre con los
+    # gastos realmente registrados.
+    totales_finanzas = agrupar_por_categoria(
         gastos_modelo,
-        [fija for fija in fijas if not catalogo.es_credito(fija.descripcion)],
+        fijas,
         CERO,
         deducciones_ley,
     )
-    categorias = resumen_categorias(totales, ingreso)
-    arcos_categoria = _arcos_categoria(totales, base, disponible, ingreso)
+    # Los créditos vinculados de Trabajos Extras se cuentan en su categoría,
+    # igual que en la dona individual (que no se modifica).
+    totales_extras = agrupar_por_categoria(gastos_extras, [], CERO)
+    totales = {
+        nombre: redondear_dinero(
+            redondear_dinero(totales_finanzas.get(nombre, CERO))
+            + redondear_dinero(totales_extras.get(nombre, CERO))
+        )
+        for nombre in (categoria.nombre for categoria in catalogo.CATEGORIAS)
+    }
+    gastos_globales = redondear_dinero(sum(totales.values(), start=CERO))
+    categorias_globales = resumen_categorias(totales, base_global)
+    # Las categorías de Mis Finanzas se conservan para los consumidores de la
+    # v4.4; la dona global usa `categorias_globales`.
+    categorias = resumen_categorias(totales_finanzas, ingreso)
+    arcos_categoria = _arcos_categoria_global(
+        totales_finanzas,
+        totales_extras,
+        libre,
+        libre_salario,
+        libre_extras,
+        base_global,
+    )
 
     if ingreso <= CERO:
         estado = ESTADO_SIN_DATOS
@@ -784,4 +940,9 @@ def capacidad_endeudamiento(
         disponible_abono=disponible,
         categorias=categorias,
         arcos_categoria=arcos_categoria,
+        # SRS v4.5: base y categorías globales para la dona consolidada.
+        base_global=base_global,
+        gastos_globales=gastos_globales,
+        porcentaje_libre_global=_porcentaje(libre, base_global),
+        categorias_globales=categorias_globales,
     )

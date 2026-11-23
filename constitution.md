@@ -73,3 +73,11 @@ Principios innegociables. Toda especificación, plan y tarea debe cumplirlos de 
     - `GET /api/deudas` expone la vinculación; el borrado usa el modal propio y `DELETE /api/deudas/{id}`; el alta es idempotente y el botón se bloquea de forma síncrona.
     - La posición de desplazamiento se preserva con `history.scrollRestoration = "manual"`; está prohibido devolver al inicio.
     - No se modifican la gráfica del Consejero, el ícono PWA neón azul, WhatsApp nativo, Atajos Guardados, `showPicker()`, los modales propios ni la paleta de diez colores.
+
+16. **Balance global con trazabilidad de origen (SRS v4.5):**
+    - La dona de Gastos y Presupuestos es global: su base es el sueldo más los ingresos brutos de Trabajos Extras; las categorías homólogas se consolidan en una tajada y el libre se dibuja una sola vez.
+    - Toda categoría compartida debe poder verificarse en la leyenda mediante sub-ítems apilados por origen (`Mis Finanzas` / `Trabajos Extras`), con valores y porcentajes que sumen el total.
+    - El Consejero consume el total libre consolidado y respeta el colchón de $300.000; la dona individual de Trabajos Extras es inmutable.
+    - La descripción de una deuda es editable desde el modal y desde `PUT/PATCH /api/deudas/{id}`, preservando validaciones, borrado confirmado y bloqueo anti-doble clic.
+    - En escritorio (`>= 768px`) los velocímetros miden 156×88 px en dos columnas de hasta 640 px; el móvil conserva 120×68 px.
+    - Ningún bloque se publica sin el gate QA con usuario de prueba y la documentación sincronizada.

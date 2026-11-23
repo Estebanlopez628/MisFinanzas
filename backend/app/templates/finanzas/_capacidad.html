@@ -12,6 +12,9 @@
   {# SRS v1.8: las cifras del panel usan la paleta de referencia: verde para el
      dinero a favor y rojo para lo que sale del bolsillo o deja saldo negativo. #}
   {%- set clase_libre = 'valor-negativo' if capacidad.libre < 0 else 'valor-positivo' -%}
+  {# SRS v4.5: el centro de la dona global usa el porcentaje sobre la base
+     consolidada; la dona de Trabajos Extras conserva el suyo. #}
+  {%- set porcentaje_centro = capacidad.porcentaje_libre if solo_trabajos else capacidad.porcentaje_libre_global -%}
   <section class="panel capacidad" aria-labelledby="capacidad-titulo">
     <h2 class="panel__titulo" id="capacidad-titulo">{{ titulo }}</h2>
     <p class="ayuda">{{ descripcion }}</p>
@@ -46,7 +49,7 @@
           </svg>
           <div class="dona__centro">
             <strong class="capacidad__centro-valor {{ clase_libre }}" data-centro-valor
-                    data-valor-defecto="{{ capacidad.porcentaje_libre | porcentaje(1) }}">{{ capacidad.porcentaje_libre | porcentaje(1) }}</strong>
+                    data-valor-defecto="{{ porcentaje_centro | porcentaje(1) }}">{{ porcentaje_centro | porcentaje(1) }}</strong>
             <span class="dona__centro-etiqueta" data-centro-etiqueta data-etiqueta-defecto="libre">libre</span>
             <span class="dona__centro-detalle" data-centro-detalle></span>
           </div>
@@ -59,27 +62,35 @@
               {{ arco.etiqueta }}:
               <strong class="{{ arco.clase }}">{{ arco.valor | cop }}</strong>
               ({{ arco.porcentaje | porcentaje(1) }})
+              {# SRS v4.5, sección 1.2: trazabilidad apilada por origen. Los
+                 sub-ítems solo aparecen cuando la categoría es compartida. #}
+              {% if arco.desglose %}
+                <ul class="dona__desglose">
+                  {% for parte in arco.desglose %}
+                    <li>
+                      ↳ {{ parte.origen }}:
+                      <strong class="{{ arco.clase }}">{{ parte.valor | cop }}</strong>
+                      ({{ parte.porcentaje | porcentaje(1) }})
+                    </li>
+                  {% endfor %}
+                </ul>
+              {% endif %}
             </li>
           {% endfor %}
+          {% if solo_trabajos %}
           <li>
             Ingreso del mes: <strong class="valor-positivo">{{ capacidad.ingreso | cop }}</strong>
           </li>
-          {% if not solo_trabajos %}
+          {% else %}
           <li>
-            Libre de tu salario:
-            <strong class="{{ 'valor-negativo' if capacidad.libre_salario < 0 else 'valor-positivo' }}">{{ capacidad.libre_salario | cop }}</strong>
-            ({{ ((capacidad.libre_salario / capacidad.ingreso) * 100) | porcentaje(1) }})
+            Ingreso global del mes: <strong class="valor-positivo">{{ capacidad.base_global | cop }}</strong>
           </li>
+          {% if capacidad.libre <= 0 %}
           <li>
-            Libre de trabajos extras:
-            <strong class="{{ 'valor-negativo' if capacidad.libre_extras < 0 else 'valor-positivo' }}">{{ capacidad.libre_extras | cop }}</strong>
-            ({{ ((capacidad.libre_extras / capacidad.ingreso) * 100) | porcentaje(1) }})
+            Total libre: <strong class="{{ clase_libre }}">{{ capacidad.libre | cop }}</strong>
+            ({{ porcentaje_centro | porcentaje(1) }})
           </li>
-          <li>
-            Total libre:
-            <strong class="{{ clase_libre }}">{{ capacidad.libre | cop }}</strong>
-            ({{ capacidad.porcentaje_libre | porcentaje(1) }})
-          </li>
+          {% endif %}
           {% endif %}
         </ul>
         {# Una sola leyenda: los arcos ya traen nombre, color, valor y porcentaje

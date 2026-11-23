@@ -106,7 +106,7 @@ Principios que explican el resto del código:
 ### Resumen del inventario
 
 - **115 archivos** documentados: 56 Python, 40 plantillas Jinja2 y 19 recursos estáticos.
-- **69 clases**, **627 funciones** y **43 métodos** de clase.
+- **69 clases**, **631 funciones** y **43 métodos** de clase.
 
 ### Detalle por archivo
 
@@ -160,8 +160,8 @@ Principios que explican el resto del código:
   - Funciones: `ver_ayuda`
 - **`chancucos.py`** · 250 líneas — Panel de Chancucos: referencias de pago con copiado y botón *Pagar*.
   - Funciones: `ver_chancucos`, `crear_chancuco`, `editar_chancuco`, `alternar_favorito`, `eliminar_chancuco`
-- **`deudas.py`** · 448 líneas — Rutas del módulo "Registro y Detalles de deudas".
-  - Funciones: `_clave_idempotencia`, `_deuda_reciente`, `_recordar_deuda`, `_contexto`, `ver_deudas`, `api_deudas`, `api_eliminar_deuda`, `crear_deuda`, `editar_deuda`, `eliminar_deuda`
+- **`deudas.py`** · 541 líneas — Rutas del módulo "Registro y Detalles de deudas".
+  - Funciones: `_clave_idempotencia`, `_deuda_reciente`, `_recordar_deuda`, `_contexto`, `ver_deudas`, `api_deudas`, `api_eliminar_deuda`, `api_actualizar_deuda`, `crear_deuda`, `editar_deuda`, `eliminar_deuda`
 - **`feedback.py`** · 271 líneas — API de reportes de soporte «Ayuda y comentarios» (SRS v2.0, Fase A).
   - Clases: `CambioEstado`
   - Funciones: `enviar_feedback`, `contar_feedback_pendiente`, `listar_feedback`, `actualizar_estado_feedback`, `actualizar_feedback_api`, `listar_feedback_propio`, `ver_comentarios`
@@ -203,9 +203,9 @@ Principios que explican el resto del código:
 - **`auxilio.py`** · 146 líneas — Evaluación del derecho al auxilio de transporte (SRS RF-07).
   - Clases: `EvaluacionAuxilio`
   - Funciones: `evaluar_auxilio_transporte`, `evaluar_auxilio_salarial`
-- **`capacidad.py`** · 788 líneas — Capacidad de endeudamiento y proyección a doce meses (SRS v1.7, bloque F).
+- **`capacidad.py`** · 949 líneas — Capacidad de endeudamiento y proyección a doce meses (SRS v1.7, bloque F).
   - Clases: `Capacidad`
-  - Funciones: `repartir_libre`, `es_credito`, `_porcentaje`, `agrupar_por_categoria`, `resumen_categorias`, `_arcos_categoria`, `_repartir_arcos`, `_meses_equivalentes`, `_etiqueta_mes`, `_mover_mes`, `meses_siguientes`, `deudas_por_terminar`, `proyeccion_capacidad`, `_mensaje_semaforo`, `capacidad_trabajos`, `capacidad_endeudamiento`
+  - Funciones: `repartir_libre`, `es_credito`, `_porcentaje`, `agrupar_por_categoria`, `resumen_categorias`, `_arcos_categoria`, `_arcos_categoria_global`, `_repartir_arcos`, `_meses_equivalentes`, `_etiqueta_mes`, `_mover_mes`, `meses_siguientes`, `deudas_por_terminar`, `proyeccion_capacidad`, `_mensaje_semaforo`, `capacidad_trabajos`, `capacidad_endeudamiento`
 - **`chancucos.py`** · 276 líneas — Referencias de pago rápido ("Chancucos").
   - Funciones: `_normalizar_dia`, `_normalizar_dias`, `_validar_url`, `crear_chancuco`, `actualizar_chancuco`, `listar_chancucos`, `alternar_favorito`, `eliminar_chancuco`
 - **`comercial.py`** · 1587 líneas — Operación comercial de OLB_BYTE: ventas a crédito, cartera y deuda con proveedor.
@@ -257,7 +257,7 @@ Principios que explican el resto del código:
 
 #### `backend/app/static/css/`
 
-- **`estilos.css`** · 5411 líneas — Fondo y superficies
+- **`estilos.css`** · 5437 líneas — Fondo y superficies
 - **`factura-olb.css`** · 711 líneas — Sello de Anulada si aplica
 
 #### `backend/app/static/js/`
@@ -271,8 +271,8 @@ Principios que explican el resto del código:
 - **`comentarios.js`** · 46 líneas — Cambio de estado en el panel administrativo de reportes (SRS v2.0, 5.5).
 - **`consejero.js`** · 41 líneas — Tooltip táctil de la gráfica «Comparativa de cierre de deuda» (SRS v3.7).
   - Funciones: `mostrar`
-- **`deudas.js`** · 285 líneas — Interacción de filas con modal centrado (SRS v1.9, secciones 2.3 y 3.3).
-  - Funciones: `esMovil`, `sacarDeLaTabla`, `devolverALaTabla`, `vigilarPortabilidad`, `cerrarOtras`, `conectarFilas`, `pendienteDeDeuda`, `numeroDeuda`, `validarPlan`
+- **`deudas.js`** · 355 líneas — Interacción de filas con modal centrado (SRS v1.9, secciones 2.3 y 3.3).
+  - Funciones: `esMovil`, `sacarDeLaTabla`, `devolverALaTabla`, `vigilarPortabilidad`, `cerrarOtras`, `conectarFilas`, `pendienteDeDeuda`, `numeroDeuda`, `validarPlan`, `numero`, `validarEdicion`
 - **`dona.js`** · 122 líneas — Interacción de las gráficas tipo dona (capacidad de endeudamiento y cartera).
   - Funciones: `centro`, `mostrar`, `restaurar`, `iniciar`
 - **`factura.js`** · 422 líneas — Factura y recibo de abono de OLB_BYTE como imagen PNG (ADR-50).
@@ -326,11 +326,11 @@ Principios que explican el resto del código:
 
 #### `backend/app/templates/deudas/`
 
-- **`index.html`** · 266 líneas — Plantilla: Registro y Detalles de deudas
+- **`index.html`** · 279 líneas — Plantilla: Registro y Detalles de deudas
 
 #### `backend/app/templates/finanzas/`
 
-- **`_capacidad.html`** · 132 líneas
+- **`_capacidad.html`** · 143 líneas
 - **`_gasto_fijo.html`** · 202 líneas
 - **`_subnav.html`** · 27 líneas — Subnavegación interna del módulo "Mis Finanzas" (SRS v1.3, bloque 1).
 - **`index.html`** · 771 líneas — Plantilla: Mis Finanzas
@@ -1671,13 +1671,16 @@ Si quieres usar el logo como imagen en lugar del texto «OB / OLB BYTE», reempl
 ## 11. Lista de verificación antes de cerrar un bloque
 
 1. `python -m compileall -q app scripts` sin errores.
-2. `pytest -q` en verde (hoy: **785**; v4.4 cerró con 785 y v3.9.5 con 776).
+2. `pytest -q` en verde (hoy: **801**; v4.5 añadió 16 y v4.4 cerró con 785).
 3. `node --check` de todos los JS que se hayan tocado, sin errores.
-4. Migraciones nuevas probadas **dos veces** sobre copia de `finanzas.db` y aplicadas en Neon (v4.4 no añade columnas ni tablas).
-5. `sw.js` con la caché subida si cambió CSS o JS (hoy: `olb-finanzas-v100`).
+4. Migraciones nuevas probadas **dos veces** sobre copia de `finanzas.db` y aplicadas en Neon (v4.5 no añade columnas ni tablas).
+5. `sw.js` con la caché subida si cambió CSS o JS (hoy: `olb-finanzas-v101`).
 6. `python scripts\generar_guia.py` y luego `--verificar` sin problemas (115 fichas).
-7. `MEMORY.md` con la bitácora y el ADR si cambió una regla (hoy: ADR-75 para v4.4).
+7. `MEMORY.md` con la bitácora y el ADR si cambió una regla (hoy: ADR-76 para v4.5).
 8. `AGENTS.md` §9 con el estado verificado y el conteo de pruebas.
-9. `constitution.md`, `diccionario_datos.md`, `USER_GUIDE.md` y la SRS con la versión activa (hoy: **v4.4**, sección 15).
-10. Para v4.4, además: `.venv\Scripts\python -m scripts.crear_usuario_qa.py` y
-    `.venv\Scripts\python -m scripts.qa_v4_4.py` con el servidor levantado (38 comprobaciones).
+9. `constitution.md`, `diccionario_datos.md`, `USER_GUIDE.md` y la SRS con la versión activa (hoy: **v4.5**, sección 16).
+10. Para v4.5, además: `.venv\Scripts\python -m scripts.crear_usuario_qa.py` y
+    `.venv\Scripts\python -m scripts.qa_v4_5.py` con el servidor levantado (34 comprobaciones).
+11. La regla de escritorio de los velocímetros debe estar en un `@media (min-width: 768px)`
+    de nivel superior: aguas arriba hay un `@media (max-width: 767px)` abierto que anida
+    cualquier bloque nuevo y lo deja inactivo en pantallas grandes.

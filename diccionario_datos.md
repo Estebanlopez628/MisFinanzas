@@ -669,3 +669,23 @@ El endpoint `GET /api/deudas` expone dos campos **derivados, no persistidos**:
 | `modulos_vinculados` | arreglo de texto | `[]`, `['Finanzas']`, `['Trabajos Extras']` o ambos, según las reglas anteriores. |
 
 Los campos `misfinanzas_saved_scroll_y` y `misfinanzas_saved_scroll_ancla` viven en `sessionStorage` del navegador; no forman parte de la base de datos.
+
+## 16. SRS v4.5 — Campos derivados de la dona global (sin cambios de esquema)
+
+La versión 4.5 **no añade columnas ni tablas**. Reutiliza `gastos.id_deuda` e `id_trabajo` para distinguir el origen de cada compromiso (§7 y §11).
+
+**Agrupación global en memoria** (`servicios/capacidad.py`):
+
+| Concepto | Origen | Regla |
+| --- | --- | --- |
+| `base_global` | `sueldo_basico` del perfil + `pagos_del_mes().ingreso` de Trabajos Extras | Base del 100 % de la dona global; usa ingresos brutos, no el neto. |
+| `totales_finanzas[categoria]` | `gastos`, `deducciones_fijas` y deducciones de ley de Mis Finanzas | Una categoría por nombre canónico del catálogo. |
+| `totales_extras[categoria]` | `gastos` con `id_trabajo` de Trabajos Extras | Incluye los créditos vinculados en «Créditos y Obligaciones». |
+| `categorias_globales` | Suma de ambos totales por categoría | Misma categoría => un solo valor y un solo color. |
+| `Total libre` | `base_global − gastos_globales` | Un solo arco; `desglose` con `Libre - Mis Finanzas` y `Libre - Trabajos Extras`. |
+
+Cada arco expone `desglose: [{origen, valor, porcentaje}]`. El sub-desglose se emite solo cuando una categoría tiene valores en ambos orígenes; «Total libre» siempre lo incluye. Los porcentajes se calculan sobre el mismo denominador del arco, por lo que la suma de sub-ítems cuadra con el porcentaje de la categoría (salvo redondeo a un decimal).
+
+**Campo editable:** `deudas.descripcion` (VARCHAR 150, §8) pasa a ser modificable desde el modal y desde `PUT /api/deudas/{id}` / `PATCH /api/deudas/{id}`; el endpoint devuelve el objeto actualizado. Los campos omitidos conservan su valor actual.
+
+**Velocímetros:** parámetros de presentación sin persistencia. Escritorio (`>= 768px`): `max-width: 640px`, `gap: 20px`, SVG `156×88`. Móvil: `max-width: 540px`, SVG `120×68`.

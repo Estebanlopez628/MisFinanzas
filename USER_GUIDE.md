@@ -98,4 +98,12 @@ En «Registro y Detalles de deudas» hay una columna nueva, **«Vinculación»**
 
 Al guardar cambios en formularios largos, la página ya no vuelve arriba: conserva el punto donde estabas y vuelve al bloque de quincena correspondiente.
 
+### Cambios de la versión 4.5
+
+La gráfica de **Gastos y Presupuesto** ahora muestra tu balance completo: reúne el sueldo de Mis Finanzas con lo que ganas en Trabajos Extras. Las categorías iguales se juntan en una sola porción. Por ejemplo, si tienes créditos en ambas partes, verás una sola porción «Créditos y Obligaciones» con su monto total. Debajo de cada categoría aparece un desglose sangrado que te dice cuánto viene de «Mis Finanzas» y cuánto de «Trabajos Extras», para que puedas comprobar de dónde sale cada porcentaje. El dinero libre también se reúne en una sola porción «Total libre», con su desglose por origen. El Consejero sigue usando ese total libre para recomendarte abonos, sin tocar tus $300.000 de colchón. La gráfica propia de Trabajos Extras no cambia.
+
+En **Registro y Detalles de deudas** ya puedes corregir el nombre o la descripción de una deuda directamente en el lápiz de edición, sin tener que borrarla y volver a crearla. Al guardar se actualizan también los gastos fijos vinculados que muestran ese nombre. El botón «Eliminar», las validaciones y la protección contra doble clic siguen funcionando igual.
+
+En la computadora, los dos velocímetros de la comparativa de cierre del Consejero son un poco más grandes y siguen uno al lado del otro. En el celular mantienen su tamaño de siempre.
+
 © 2026 MisFinanzas

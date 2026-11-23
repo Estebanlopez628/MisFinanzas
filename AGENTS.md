@@ -63,7 +63,8 @@ Plataforma web/móvil híbrida (PWA) con backend y frontend **100% Python**, arq
     ├── scripts/reparar_pagos_trabajos.py # Restaura y deduplica pagos de Trabajos Extras (ADR-60)
     ├── scripts/crear_usuario_qa.py      # Aprovisiona las cuentas QA de la SRS v4.4
     ├── scripts/qa_v4_4.py               # Recorrido de QA en Chromium (38 comprobaciones)
-    ├── tests/                          # Suite completa (785 pruebas)
+    ├── scripts/qa_v4_5.py               # Recorrido de QA en Chromium (34 comprobaciones)
+    ├── tests/                          # Suite completa (801 pruebas)
     └── app/
         ├── main.py                     # Punto de entrada FastAPI (fábrica de app)
         ├── dependencias.py             # Sesión, `SesionRequerida` y RBAC por rol
@@ -191,6 +192,8 @@ Plataforma web/móvil híbrida (PWA) con backend y frontend **100% Python**, arq
 24. **Donas separadas (SRS v4.4):** la dona de Gastos y Presupuestos solo usa gastos y deducciones de ese módulo; la de Trabajos Extras mantiene sus ingresos, gastos y créditos vinculados. De extras solo se traslada `libre_neto_mes()`. El Consejero consume el libre consolidado. La cuota vinculada se cuenta una sola vez, nunca como tajada suelta.
 25. **Deudas (SRS v4.4):** `GET /api/deudas` expone `esta_vinculada` y `modulos_vinculados`; la columna «Vinculación» usa verde/ámbar; el modal incluye «Eliminar» con `DELETE /api/deudas/{id}` y el modal propio. Alta idempotente (usuario + mismos valores en 10 s) y guardia síncrona del botón. Se retira la tarjeta de cuotas acumuladas.
 26. **Scroll e íconos (SRS v4.4):** `history.scrollRestoration = "manual"`; restaurar con `scrollTo({ top: savedScrollY, behavior: "instant" })` y anclar con `scrollIntoView({ behavior: "instant", block: "nearest" })`. Ícono OLB_BYTE a 24 px en navegación y 28 px en el encabezado interno; ícono PWA neón azul intacto.
+27. **Dona global (SRS v4.5):** base = sueldo + ingresos brutos de extras; categorías homólogas sumadas en una sola tajada; una sola tajada «Total libre» con sub-desglose apilado por origen en la leyenda (`.dona__desglose`). La dona individual de Trabajos Extras y el cálculo del Consejero no se tocan.
+28. **Deudas y velocímetros (SRS v4.5):** descripción editable en el modal y en `PUT/PATCH /api/deudas/{id}`, con validación en vivo, «Eliminar» propio y bloqueo síncrono de «Actualizar». Escritorio: 640 px y SVG 156×88; móvil: 540 px y SVG 120×68. El bloque de escritorio debe vivir en un `@media (min-width: 768px)` de nivel superior (hay un `@media (max-width: 767px)` abierto aguas arriba).
 
 ---
 
@@ -483,3 +486,5 @@ La configuración vive en `.vscode/launch.json`. También existe **Pruebas (pyte
 - [x] **SRS v4.4 — Bloque 1 (separación contable):** donas aisladas, `libre_neto_mes()`, libre consolidado para el Consejero, etiqueta «Sueldo-percibido» e íconos 24/28 px. Pruebas históricas de anti-duplicación actualizadas a la nueva semántica (decisión del propietario: seguir la SRS al pie de la letra).
 - [x] **SRS v4.4 — Bloque 2 (deudas y scroll):** `GET/DELETE /api/deudas`, columna «Vinculación» con badges, botón rojo «Eliminar», tarjeta de cuotas retirada, idempotencia backend y guardia síncrona del alta, `history.scrollRestoration = "manual"` y anclas por bloque.
 - [x] **SRS v4.4 — Cierre documental y QA:** Guías, Diccionario, Constitución, `MEMORY.md` (ADR-75), `AGENTS.md` y SRS §15 sincronizados. Usuarios QA `prueba_qa@misfinanzas.local` / `QA_MisFinanzas_2026!` y `prueba_qa_admin@misfinanzas.local` / `QA_Admin_2026!`. `sw.js` en `olb-finanzas-v100`. Verificación: **785 pruebas** en verde, `compileall`, `node --check`, `generar_guia.py --verificar` y `/salud` correctos; recorrido Chromium **38/38**.
+- [x] **SRS v4.5 — Bloques 1 a 3:** dona global agrupada con desglose apilado por origen, descripción editable en deudas con `PUT/PATCH /api/deudas/{id}` y velocímetros de 156×88 en escritorio (móvil intacto). Se corrigió un `@media (max-width: 767px)` abierto que anidaba la regla de escritorio.
+- [x] **SRS v4.5 — Cierre documental y QA:** Guías, Diccionario, Constitución, `MEMORY.md` (ADR-76), `AGENTS.md` y SRS §16 sincronizados como línea base vigente. `sw.js` en `olb-finanzas-v101`. Verificación: **801 pruebas** en verde, `compileall`, `node --check` y `generar_guia.py --verificar` correctos; gate QA `scripts/qa_v4_5.py` **34/34** ejecutado antes del push.

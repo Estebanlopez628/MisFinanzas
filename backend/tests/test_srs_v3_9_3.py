@@ -25,10 +25,12 @@ def test_fondo_del_consejero_igual_al_de_olas_graficas() -> None:
 
 
 def test_velocimetros_compactos_en_escritorio() -> None:
-    """Dos columnas de hasta 520 px, SVG 120x68 y curva limitada."""
-    assert "max-width: 520px" in CSS
-    assert "width: 120px" in CSS
+    """Dos columnas (640 px en v4.5), SVG 156x88 en web y 120x68 en móvil."""
+    assert "max-width: 640px" in CSS
+    assert "width: 120px" in CSS  # base móvil
     assert "height: 68px" in CSS
+    assert "width: 156px" in CSS  # escritorio >= 768 px
+    assert "height: 88px" in CSS
     assert "max-height: 170px" in CSS
     assert ".cierre-deuda__meses button" in CSS
     assert "background: transparent !important" in CSS

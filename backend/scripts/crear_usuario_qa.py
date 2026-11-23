@@ -77,7 +77,8 @@ def main() -> None:
             )
         if not deudas.listar_deudas(bd, cuenta.id_usuario):
             deuda = deudas.crear_deuda(
-                bd, cuenta.id_usuario, "Banco QA", "1.200.000", "300.000", 4
+                bd, cuenta.id_usuario, "Banco QA", "1.200.000", "300.000", 4,
+                descripcion="Crédito QA",
             )
             gastos.crear_gasto(
                 bd,

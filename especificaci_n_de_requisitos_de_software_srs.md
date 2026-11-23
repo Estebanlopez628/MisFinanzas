@@ -563,3 +563,37 @@ Versión 4.4 y **línea base vigente**. Separa contablemente las donas de Finanz
 ### 15.8 Cierre documental
 
 Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-75), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.4.
+
+---
+
+## 16. SRS v4.5 — Dona global con trazabilidad, descripción editable y velocímetros web
+
+Versión 4.5 y **línea base vigente**. Tres ajustes ejecutables sobre v4.4. Está prohibido tocar cualquier funcionalidad no listada aquí.
+
+### 16.1 Regla suprema de no regresión
+
+Se conservan sin cambio la dona individual de Trabajos Extras, el «Saldo libre restante» de Quincena 1 / 2 / pago mensual, la etiqueta «Sueldo-percibido», la columna «Vinculación», el botón «Eliminar», el blindaje anti-duplicados de tres capas, `icono_OLBBYTE.png`, el ícono PWA neón azul, WhatsApp nativo, `showPicker()`, los modales propios, la paleta de diez colores y la preservación de scroll.
+
+### 16.2 Dona global agrupada con desglose de origen (web y móvil)
+
+- Base global: `Base_Global = Sueldo_Percibido + Total_Ingresos_Trabajos_Extras` (ingresos brutos). Las categorías de gasto de ambos módulos y el dinero libre cierran exactamente el 100,0 %.
+- Las categorías homólogas se suman en **una sola tajada** con un único color del catálogo. El libre de Mis Finanzas y el de Trabajos Extras se suman en una sola tajada «Total libre».
+- Cada categoría compartida muestra en la leyenda, apilada y con sangría, `↳ <categoría> - Mis Finanzas` y `↳ <categoría> - Trabajos Extras`, con valor y porcentaje global. «Total libre» muestra `↳ Libre - Mis Finanzas` y `↳ Libre - Trabajos Extras`. Las categorías de un solo origen no repiten sub-ítems.
+- El Consejero sigue consumiendo el total libre consolidado y respetando el colchón de $300.000. La dona de Trabajos Extras permanece intacta.
+
+### 16.3 Descripción editable en deudas (web y móvil)
+
+- El modal de edición incorpora un input visible, pre-cargado y `required` para la descripción/nombre.
+- Permanecen activas la validación en vivo `cuota × cuotas ≥ total`, el botón rojo «Eliminar» con el modal propio y el bloqueo síncrono de «Actualizar».
+- `PUT /api/deudas/{id}` y `PATCH /api/deudas/{id}` aceptan y persisten `descripcion` en PostgreSQL y devuelven el objeto actualizado. Los campos omitidos conservan su valor.
+
+### 16.4 Velocímetros ampliados solo en escritorio
+
+- En `@media (min-width: 768px)`: contenedor de dos columnas con `gap: 20px`, `max-width: 640px` y SVG de `156px × 88px`.
+- En móvil (`< 768px`) se mantienen `max-width: 540px` y SVG de `120px × 68px`.
+
+### 16.5 Gate QA y cierre documental
+
+- Usuarios QA: `prueba_qa@misfinanzas.local` / `QA_MisFinanzas_2026!` y `prueba_qa_admin@misfinanzas.local` / `QA_Admin_2026!`.
+- `scripts/qa_v4_5.py`: **34/34 comprobaciones** en Chromium a 360/390/768/1280 px. Solo después del gate se ejecutaron `git add`, `commit` y `push`.
+- Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-76), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.5.

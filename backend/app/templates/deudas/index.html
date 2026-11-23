@@ -205,13 +205,20 @@
                             action="{{ url_for('editar_deuda', id_deuda=deuda.id_deuda) }}"
                             data-proteccion>
                         <input type="hidden" name="acreedor" value="{{ deuda.acreedor }}" />
-                        <input type="hidden" name="descripcion" value="{{ deuda.descripcion or '' }}" />
                         <input type="hidden" name="periodicidad" value="{{ deuda.periodicidad }}" />
                         <div class="edicion-gasto__cabecera">
                           <h3 class="panel__titulo">Editar deuda</h3>
                           <button class="edicion-gasto__cerrar" type="button" data-cancelar-edicion
                                   aria-label="Cerrar edición" title="Cerrar">×</button>
                         </div>
+                        {# SRS v4.5, sección 2: la descripción vuelve a ser
+                           editable en web y móvil, sin borrar y recrear la deuda. #}
+                        <label class="campo">
+                          <span class="campo__etiqueta">Descripción / Nombre de la deuda</span>
+                          <input class="campo__control" type="text" name="descripcion"
+                                 value="{{ deuda.descripcion or '' }}"
+                                 placeholder="Tarjeta, crédito de consumo…" required />
+                        </label>
                         <label class="campo">
                           <span class="campo__etiqueta">Total Adeudado (COP)</span>
                           <input class="campo__control" type="text" name="saldo_total"
@@ -231,12 +238,18 @@
                                  required />
                         </label>
                         <div class="acciones-formulario acciones-formulario--edicion">
-                          <button class="boton boton--primario boton--pequeno" type="submit">Actualizar</button>
+                          <button class="boton boton--primario boton--pequeno" type="submit"
+                                  data-actualizar-deuda>Actualizar</button>
                           {# SRS v4.4, sección 5.2: borrado desde el mismo modal,
                              confirmado con el modal propio de la app. #}
                           <button class="boton boton--peligro boton--pequeno" type="button"
                                   data-eliminar-deuda="{{ deuda.id_deuda }}"
                                   title="Eliminar deuda">Eliminar</button>
+                         {# SRS v4.5, sección 2.2: validación preventiva también al actualizar. #}
+                         <div class="alerta alerta--error" data-alerta-edicion-deuda role="alert" hidden>
+                           El número de cuotas por el valor de cuota no alcanza a cubrir el valor
+                           total de la deuda. Revisa los datos y digítalos nuevamente.
+                         </div>
                         </div>
                       </form>
                     </details>

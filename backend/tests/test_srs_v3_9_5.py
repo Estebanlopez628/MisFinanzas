@@ -48,6 +48,7 @@ def test_velocimetros_en_dos_columnas_sin_tocar_movil() -> None:
 
     css = (RUTA_APP / "static/css/estilos.css").read_text(encoding="utf-8")
     inicio = css.index("@media (min-width: 768px) {", css.index(".cierre-deuda"))
-    bloque = css[inicio : inicio + 600]
+    bloque = css[inicio : inicio + 900]
     assert "grid-template-columns: repeat(2, minmax(0, 1fr))" in bloque
-    assert "max-width: 520px" in bloque
+    # SRS v4.5: el escritorio pasa de 540/520 px a 640 px.
+    assert "max-width: 640px" in bloque
