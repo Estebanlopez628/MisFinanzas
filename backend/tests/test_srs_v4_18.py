@@ -62,11 +62,13 @@ def test_plazo_de_la_deuda_recomendada(bd) -> None:
         bd, id_usuario, "Ana", Decimal("645204"), date(2026, 11, 1)
     )
     assert "cancelarás esta deuda" in resultado.mensaje
-    assert "con pago mínimo" in resultado.mensaje
+    assert "realizando el pago mínimo" in resultado.mensaje
     assert "pagando solo lo mínimo" not in resultado.mensaje
     assert "por más tiempo" not in " ".join(resultado.pasos)
-    assert "cuotas antes que con pago mínimo" in " ".join(resultado.pasos)
-    assert "todas tus deudas activas" in " ".join(resultado.pasos)
+    assert "cuotas antes que realizando el pago mínimo de la cuota" in " ".join(
+        resultado.pasos
+    )
+    assert "todas tus deudas recomendadas" in " ".join(resultado.pasos)
 
 
 def test_no_nombrar_deudas_fuera_del_plan(bd) -> None:
@@ -79,9 +81,9 @@ def test_no_nombrar_deudas_fuera_del_plan(bd) -> None:
         bd, id_usuario, "Ana", Decimal("700000"), date(2026, 11, 1)
     )
     pasos = " ".join(resultado.pasos)
-    assert "deudas de tu plan" in pasos
+    assert "deudas que te acabo de recomendar" in pasos
     assert "Alkomprar" in pasos and "Addi" in pasos
-    paso_liberacion = next(paso for paso in resultado.pasos if "liberarás" in paso)
+    paso_liberacion = next(paso for paso in resultado.pasos if "podrás liberar" in paso)
     assert "BBVA" not in paso_liberacion
     nombres = {fila["nombre"] for fila in resultado.cierre["cuotas_liberadas_detalle"]}
     assert "BBVA" not in nombres

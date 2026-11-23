@@ -779,3 +779,10 @@ Las reglas CSS viven fuera de `@media (max-width: 767px)` para aplicar en ambos 
 - La proyección visual usa `consejo.cierre.puntos[:6]`: badges `Inicial` y `Mes 6`, curva base `#38bdf8` con `stroke-dasharray="7 7"` y 3,5 px, curva optimizada `#10b981` continua de 3,5 px, área diferencial con «+ Ahorro acumulado», seis píldoras y una sola línea `data-cierre-detalle`.
 - Presentación: banner `.cierre-deuda__pill` con `border-radius: 14px` y texto justificado en móvil; `.capacidad__resumen` centrado en escritorio; texto corrido global `text-align: justify`.
 - «Atajos guardados» en móvil: `<table>` real `table-fixed` con `min-width: 0`, columnas 38 % / 34 % / 28 % y `padding: 10px 8px` idéntico en `th` y `td`.
+
+## 23. SRS v4.20 — Subconjunto recomendado y presentación (sin cambios de esquema)
+
+- `_consejo_deuda()` calcula `plan = orden[:3]` antes de simular. `serie_base`, `serie_optima`, `deuda_inicial`, `cuota_total`, `meses_minimo`, `meses_excedente` y `Consejo.cierre` se derivan **solo** de ese subconjunto. Las deudas fuera del plan no afectan plazos ni fechas.
+- `_palabra_plazo(cantidad, singular, plural)` elimina el sufijo `(s)`: «1 cuota» / «N cuotas», «1 mes» / «N meses».
+- Textos exactos: «en la deuda que tienes con …», «realizando el pago mínimo de la cuota», «Al cerrar las deudas que te acabo de recomendar (…) podrás liberar $X de cuota mensual para tus próximas metas a pagar» y «Realizando el pago mínimo, cerrarías todas tus deudas recomendadas en …; con los abonos las cerrarías en …».
+- Cabeceras 2 y 3 de atajos: `Valor a<br />Pagar` y `Días de<br />Pago`. El wrapper `.cierre-deuda__proyeccion` se oculta bajo 768 px. El banner de comparativa va `text-align: center` en móvil. `.consejero__liquidez` usa 14 px en móvil y 16 px en escritorio.

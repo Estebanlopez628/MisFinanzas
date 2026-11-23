@@ -783,3 +783,26 @@ En móvil, el banner verde sobre los velocímetros usa `border-radius: 14px` y t
 - Usuarios QA: `prueba_qa@misfinanzas.local` / `QA_MisFinanzas_2026!` y `prueba_qa_admin@misfinanzas.local` / `QA_Admin_2026!`.
 - `scripts/qa_v4_19.py`: **19/19 comprobaciones** en Chromium (web y 375 px), incluidos plazo paralelo 36 meses, gráfica de 6 meses y ancho real del 38 % en la tabla de atajos. Solo tras el gate se ejecutaron `git add`, `commit` y `push`.
 - Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-82), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.19.
+
+---
+
+## 23. SRS v4.20 — Ajustes quirúrgicos post-v4.19
+
+Versión 4.20 y **línea base vigente**. Cuatro ajustes puntuales; no se rehace v4.17, v4.18 ni v4.19.
+
+### 23.1 No regresión
+
+Intactos: alineación de columnas de atajos, gráfica a 6 meses en escritorio, compactación de tarjetas, velocímetros, radio del banner, dona centrada, justificación del resto de párrafos, siete factores 2026, «Resultado del periodo», Deudas, selectores de fecha, modales propios, WhatsApp, OLB_BYTE y Ayuda.
+
+### 23.2 Cambios
+
+1. **Cabeceras de atajos:** «VALOR A / PAGAR» y «DÍAS DE / PAGO» con `<br />`, sin tocar anchos ni alineación izquierda.
+2. **Proyección a 6 meses:** visible en escritorio (`>= 768px`), oculta por completo en móvil (`< 768px`).
+3. **Consejero:** pluralización sin `(s)` — «1 cuota» / «N cuotas»; «realizando el pago mínimo»; viñetas con «la deuda que tienes con» y la estructura exacta «Al cerrar las deudas que te acabo de recomendar (…) podrás liberar $X de cuota mensual para tus próximas metas a pagar.»; cierre «Realizando el pago mínimo, cerrarías todas tus deudas recomendadas en …; con los abonos las cerrarías en …». El plazo se calcula **exclusivamente sobre el subconjunto recomendado**, ignorando deudas largas no incluidas en el plan; banner de liquidez con tipografía 14 px en móvil y 16 px en escritorio.
+4. **Banner de comparativa en móvil:** texto centrado en vez de justificado, conservando el radio de 14 px.
+
+### 23.3 Gate QA y cierre documental
+
+- Usuarios QA: `prueba_qa@misfinanzas.local` / `QA_MisFinanzas_2026!` y `prueba_qa_admin@misfinanzas.local` / `QA_Admin_2026!`.
+- `scripts/qa_v4_20.py`: **17/17 comprobaciones** en Chromium (1280 px y 375 px), incluidos los dos `<br />`, la proyección oculta en móvil, la redacción exacta y la ausencia del plazo de la hipoteca no recomendada. Solo tras el gate se ejecutaron `git add`, `commit` y `push`.
+- Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-83), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.20.

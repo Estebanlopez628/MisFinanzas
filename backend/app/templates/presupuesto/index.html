@@ -90,7 +90,8 @@
       <h2 class="panel__titulo">🧭 Consejero financiero</h2>
       <p class="consejero__saludo">{{ consejo.titulo }}</p>
       <p class="diagnostico__mensaje">{{ consejo.mensaje }}</p>
-      <p class="ayuda">
+      {# SRS v4.20, sección 3.2: jerarquía mayor en el banner de liquidez. #}
+      <p class="ayuda consejero__liquidez">
         Dinero libre disponible para abonar: <strong>{{ consejo.excedente | cop }}</strong>.
         Ya se reservaron {{ consejo.umbral | cop }} de base mínima de liquidez.
       </p>
@@ -251,6 +252,8 @@
             </article>
           </div>
 
+          {# SRS v4.20, sección 2: en móvil se oculta toda la proyección. #}
+          <div class="cierre-deuda__proyeccion">
           {# SRS v4.19: proyección de saldo a 6 meses con amortización paralela. #}
           <h4 class="cierre-deuda__subtitulo cierre-deuda__subtitulo--seis">Proyección de saldo (6 meses)</h4>
           {% set puntos6 = consejo.cierre.puntos[:6] %}
@@ -324,6 +327,7 @@
             <li><span class="dona__muestra comparativa__muestra--base"></span> Base (Normal)</li>
             <li><span class="dona__muestra comparativa__muestra--optimizado"></span> Optimizado (Con tu excedente)</li>
           </ul>
+          </div>
         </section>
       {% else %}
         <h3 class="capacidad__subtitulo">Base frente a optimizado (12 meses)</h3>

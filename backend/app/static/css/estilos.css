@@ -4832,10 +4832,23 @@ strong.valor-negativo.recibo__cifra--saldo {
 /* SRS v4.19, sección 3: en móvil el banner verde sobre los velocímetros usa el
    mismo radio que las tarjetas y su texto va justificado. */
 @media (max-width: 767px) {
+  /* SRS v4.20, sección 4: banner centrado en móvil. */
   .cierre-deuda__pill {
     border-radius: 14px !important;
-    text-align: justify !important;
+    text-align: center !important;
   }
+
+  /* SRS v4.20, sección 2: la proyección a 6 meses solo existe en escritorio. */
+  .cierre-deuda__proyeccion {
+    display: none !important;
+  }
+}
+
+/* SRS v4.20, sección 3.2: banner de liquidez con tamaño medio en móvil y base
+   en escritorio, conservando la justificación. */
+.consejero__liquidez {
+  font-size: 0.875rem;
+  font-weight: 500;
 }
 
 /* SRS v4.19, sección 5.2: justificación global de texto corrido. Las celdas
@@ -5403,6 +5416,11 @@ dialog.detalle-orden {
   .cierre-deuda__mes--libre {
     background: #10b981 !important;
     color: #052e16 !important;
+  }
+
+  /* SRS v4.20, sección 3.2: tamaño base del banner de liquidez. */
+  .consejero__liquidez {
+    font-size: 1rem;
   }
 
   /* SRS v4.19, sección 4: dona y leyendas centradas en escritorio. */

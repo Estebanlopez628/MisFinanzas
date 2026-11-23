@@ -144,4 +144,10 @@ El Consejero calcula las deudas en paralelo: todas se pagan al mismo tiempo y un
 
 La gráfica de proyección ahora muestra solo **6 meses**, con el saldo inicial y el del mes 6 destacados arriba y una sola línea de detalle que se actualiza al tocar cada mes. En el celular el banner verde sobre los velocímetros tiene el mismo borde redondeado que las tarjetas, la dona se ve centrada en la computadora y la tabla de «Atajos guardados» alinea cada dato exactamente debajo de su encabezado. Los textos explicativos van justificados.
 
+### Cambios de la versión 4.20
+
+El Consejero ahora calcula cuándo terminas de pagar usando **solo las deudas que te recomienda atacar**. Una deuda larga que no esté en ese plan ya no alarga el plazo ni genera mensajes extraños. Los textos dicen «1 cuota» o «N cuotas» (sin «(s)»), nombran «la deuda que tienes con…» y explican que la cuota liberada queda para tus próximas metas.
+
+En el celular, la gráfica de 6 meses ya no aparece y el banner verde sobre los velocímetros va centrado. En «Atajos guardados», las cabeceras «VALOR A PAGAR» y «DÍAS DE PAGO» van en dos líneas sin mover las columnas. El dinero libre disponible se lee un poco más grande.
+
 © 2026 MisFinanzas

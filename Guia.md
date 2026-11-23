@@ -106,7 +106,7 @@ Principios que explican el resto del código:
 ### Resumen del inventario
 
 - **115 archivos** documentados: 56 Python, 40 plantillas Jinja2 y 19 recursos estáticos.
-- **69 clases**, **631 funciones** y **43 métodos** de clase.
+- **69 clases**, **632 funciones** y **43 métodos** de clase.
 
 ### Detalle por archivo
 
@@ -211,9 +211,9 @@ Principios que explican el resto del código:
 - **`comercial.py`** · 1587 líneas — Operación comercial de OLB_BYTE: ventas a crédito, cartera y deuda con proveedor.
   - Clases: `LineaVenta`, `PagoInicial`
   - Funciones: `ahora_tienda`, `normalizar_telefono`, `_dinero`, `_sumar_meses`, `_texto_garantia`, `_validar_linea`, `_cliente_para_venta`, `_siguiente_numero_orden`, `deuda_proveedor`, `_registrar_movimiento_proveedor`, `registrar_cliente`, `listar_clientes`, `buscar_clientes`, `registrar_venta`, `obtener_venta`, `_venta_activa`, `_recalcular_estado_pago`, `_validar_metodo`, `registrar_abono`, `_devuelto`, `_registrar_devolucion`, `anular_venta`, `registrar_devolucion`, `pendiente_devolver`, `obtener_abono`, `abonos_de_venta`, `buscar_cartera`, `registrar_abono_proveedor`, `listar_movimientos_proveedor`, `_texto_busqueda`, `filtrar_ventas`, `listar_ventas`, `cartera`, `resumen_cartera`, `estado_garantia`, `clasificar_saldo`, `_barra_divergente`, `balance_tres_bloques`, `barras_balance`, `segmentos_dona`, `etiqueta_producto`, `opciones_garantia`, `registrar_garantia`, `actualizar_estado_garantia`, `listar_garantias`, `garantia_vigente_al_reclamo`, `ranking_fallas`, `formatear_pesos`, `texto_compartir_factura`, `enlace_whatsapp_factura`, `enlace_whatsapp_recibo`, `enlace_whatsapp_cobro`, `_enlace_wa`
-- **`consejero.py`** · 746 líneas — Consejero financiero del excedente mensual (SRS v1.8).
+- **`consejero.py`** · 769 líneas — Consejero financiero del excedente mensual (SRS v1.8).
   - Clases: `Consejo`, `_EstadoDeuda`
-  - Funciones: `_cuotas_mensuales`, `_estados`, `_ordenar`, `_simular`, `_altura`, `_serie_comparada`, `_fecha_cierre`, `_datos_cierre`, `_consejo_deuda`, `_consejo_ahorro`, `consejo_financiero`
+  - Funciones: `_cuotas_mensuales`, `_estados`, `_ordenar`, `_simular`, `_altura`, `_serie_comparada`, `_fecha_cierre`, `_palabra_plazo`, `_datos_cierre`, `_consejo_deuda`, `_consejo_ahorro`, `consejo_financiero`
 - **`correo.py`** · 261 líneas — Envío de correos del sistema: APIs transaccionales HTTPS o SMTP (SRS v3.1).
   - Funciones: `_destinatario`, `_enviar_por_api`, `enviar_correo`, `configuracion_valida`, `enviar_recuperacion`
 - **`deducciones_fijas.py`** · 335 líneas — Deducciones fijas del salario (SRS v1.4, REQ-08; vinculación SRS v1.9).
@@ -257,7 +257,7 @@ Principios que explican el resto del código:
 
 #### `backend/app/static/css/`
 
-- **`estilos.css`** · 5796 líneas — Fondo y superficies
+- **`estilos.css`** · 5814 líneas — Fondo y superficies
 - **`factura-olb.css`** · 711 líneas — Sello de Anulada si aplica
 
 #### `backend/app/static/js/`
@@ -370,7 +370,7 @@ Principios que explican el resto del código:
 
 #### `backend/app/templates/presupuesto/`
 
-- **`index.html`** · 782 líneas — Plantilla: Gastos y Presupuesto
+- **`index.html`** · 786 líneas — Plantilla: Gastos y Presupuesto
 
 #### `backend/app/templates/privado/`
 
@@ -1570,6 +1570,13 @@ recorta a 6 meses con badges de extremos, área diferencial y seis píldoras.
 En móvil el banner verde comparte radio con los velocímetros, «Atajos guardados»
 usa una tabla `table-fixed` 38/34/28 con `min-width: 0` y el texto corrido va
 justificado; la dona se centra en escritorio.
+
+En v4.20 el cierre del Consejero se calcula solo sobre `plan = orden[:3]`, por lo
+que una deuda hipotecaria no recomendada ya no distorsiona los meses ni las
+fechas. La pluralización es exacta («1 cuota» / «N cuotas»), las viñetas nombran
+«la deuda que tienes con…» y la de liberación usa «deudas que te acabo de
+recomendar (…) podrás liberar». Las cabeceras de atajos van en dos líneas, la
+proyección a 6 meses solo existe en escritorio y el banner móvil va centrado.
 | Coherencia de deuda | `cuota × cuotas = total adeudado` (tolerancia `$1 × cuotas`) |
 | Cuota final | `saldo_pendiente` (absorbe el redondeo y deja cero) |
 
@@ -1717,17 +1724,17 @@ Si quieres usar el logo como imagen en lugar del texto «OB / OLB BYTE», reempl
 ## 11. Lista de verificación antes de cerrar un bloque
 
 1. `python -m compileall -q app scripts` sin errores.
-2. `pytest -q` en verde (hoy: **842**; v4.19 añadió 6 y v4.18 cerró con 836).
+2. `pytest -q` en verde (hoy: **847**; v4.20 añadió 5 y v4.19 cerró con 842).
 3. `node --check` de todos los JS que se hayan tocado, sin errores.
 4. Migraciones nuevas probadas **dos veces** sobre copia de `finanzas.db` y aplicadas en Neon.
    Toda migración usa parámetros nombrados con `text()`: el estilo `?` de SQLite falla en PostgreSQL.
-5. `sw.js` con la caché subida si cambió CSS o JS (hoy: `olb-finanzas-v107`).
+5. `sw.js` con la caché subida si cambió CSS o JS (hoy: `olb-finanzas-v108`).
 6. `python scripts\generar_guia.py` y luego `--verificar` sin problemas (115 fichas).
-7. `MEMORY.md` con la bitácora y el ADR si cambió una regla (hoy: ADR-82 para v4.19).
+7. `MEMORY.md` con la bitácora y el ADR si cambió una regla (hoy: ADR-83 para v4.20).
 8. `AGENTS.md` §9 con el estado verificado y el conteo de pruebas.
-9. `constitution.md`, `diccionario_datos.md`, `USER_GUIDE.md` y la SRS con la versión activa (hoy: **v4.19**, sección 22).
-10. Para v4.19, además: `.venv\Scripts\python -m scripts.crear_usuario_qa.py` y
-    `.venv\Scripts\python -m scripts.qa_v4_19.py` con el servidor levantado (19 comprobaciones).
+9. `constitution.md`, `diccionario_datos.md`, `USER_GUIDE.md` y la SRS con la versión activa (hoy: **v4.20**, sección 23).
+10. Para v4.20, además: `.venv\Scripts\python -m scripts.crear_usuario_qa.py` y
+    `.venv\Scripts\python -m scripts.qa_v4_20.py` con el servidor levantado (17 comprobaciones).
 11. La regla de escritorio de los velocímetros debe estar en un `@media (min-width: 768px)`
     de nivel superior: aguas arriba hay un `@media (max-width: 767px)` abierto que anida
     cualquier bloque nuevo y lo deja inactivo en pantallas grandes.

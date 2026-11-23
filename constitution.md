@@ -116,3 +116,8 @@ Principios innegociables. Toda especificación, plan y tarea debe cumplirlos de 
     - La proyección visual se limita a seis meses con extremos de alto contraste y una sola línea de detalle.
     - La dona se centra en escritorio, el banner móvil comparte radio con los velocímetros y los textos corridos van justificados.
     - Las tablas financieras móviles alinean cada dato con su cabecera mediante anchos fijos y padding compartido.
+
+23. **Coherencia del Consejero y foco en el plan (SRS v4.20):**
+    - Los plazos de cierre se calculan exclusivamente sobre las deudas recomendadas; una deuda larga no incluida en el plan no puede distorsionar el mensaje.
+    - La redacción usa pluralización exacta y nombra cada deuda con saldo y cuota, sin términos ambiguos.
+    - La proyección a 6 meses es exclusiva de escritorio; el banner móvil va centrado y el de liquidez es legible en ambos tamaños.

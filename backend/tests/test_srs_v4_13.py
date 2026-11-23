@@ -95,7 +95,7 @@ def test_meses_completos_y_desglose_de_deudas(bd) -> None:
     assert "saldo:" in resultado.mensaje
     assert "cuota:" in resultado.mensaje
     assert any("saldo:" in paso and "cuota:" in paso for paso in resultado.pasos)
-    assert any("liberarás" in paso and "(" in paso for paso in resultado.pasos)
+    assert any("podrás liberar" in paso and "(" in paso for paso in resultado.pasos)
 
 
 def test_plantilla_y_js_con_los_nuevos_textos() -> None:

@@ -37,7 +37,7 @@ def test_plazo_base_es_paralelo_no_suma(bd) -> None:
     )
     assert resultado.meses_base == 36
     assert resultado.cierre["meses_minimo"] == 36
-    assert "todas tus deudas activas" in " ".join(resultado.pasos)
+    assert "todas tus deudas recomendadas" in " ".join(resultado.pasos)
 
 
 def test_cascada_de_cuota_libera_antes(bd) -> None:
@@ -60,7 +60,7 @@ def test_redaccion_hacia_proximas_metas(bd) -> None:
     resultado = consejero.consejo_financiero(
         bd, id_usuario, "Ana", Decimal("645204"), date(2026, 11, 1)
     )
-    paso = next(paso for paso in resultado.pasos if "liberarás" in paso)
+    paso = next(paso for paso in resultado.pasos if "podrás liberar" in paso)
     assert "para tus próximas metas a pagar" in paso
     assert "Alkomprar" in paso
     assert paso.count(";") >= 0

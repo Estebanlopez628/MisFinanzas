@@ -2391,6 +2391,18 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v107`; **842 pruebas** en verde, `compileall`, `node --check` y `generar_guia.py --verificar` correctos. Gate QA `scripts/qa_v4_19.py`: **19/19 comprobaciones** en Chromium (1280 px y 375 px), con plazo paralelo 36 meses y ancho real del 38 % confirmado.
 
+### 2026-11-23 — SRS v4.20: ajustes post-v4.19 (ADR-83)
+
+**Decisión (ADR-83).** Cuatro cambios puntuales, sin repetir v4.17–v4.19. El más importante es contable: el cierre del Consejero se calcula solo sobre las deudas que el plan recomienda, no sobre todo el inventario (antes una hipoteca de 164 meses generaba «127 meses antes… Julio 2040»).
+
+**Consecuencias aplicadas.**
+- `_consejo_deuda()` ordena y recorta `plan = orden[:3]` **antes** de simular; `serie_base`, `serie_optima`, `deuda_inicial`, `cuota_total`, plazos, `_datos_cierre()` y el desglose usan ese subconjunto. Se actualizaron las pruebas históricas de redacción.
+- Pluralización con `_palabra_plazo()`: «1 cuota»/«N cuotas», «1 mes»/«N meses», sin `(s)`. Textos exactos de las tres viñetas y del cierre, con «realizando el pago mínimo» y «deudas que te acabo de recomendar».
+- Plantilla: `<br />` en «VALOR A / PAGAR» y «DÍAS DE / PAGO»; wrapper `.cierre-deuda__proyeccion` oculto en móvil; `.consejero__liquidez` a 14 px móvil / 16 px escritorio.
+- Banner verde de la comparativa: `text-align: center` en móvil (se conserva el radio de 14 px).
+
+**Verificación.** `sw.js` en `olb-finanzas-v108`; **847 pruebas** en verde, `compileall`, `node --check` y `generar_guia.py --verificar` correctos. Gate QA `scripts/qa_v4_20.py`: **17/17 comprobaciones** en Chromium, incluidos los dos saltos de línea, la proyección oculta en móvil y la ausencia del plazo de la hipoteca no recomendada.
+
 
 
 

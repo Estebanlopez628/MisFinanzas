@@ -359,6 +359,20 @@ def _fecha_cierre(referencia: date, offset_meses: int) -> str:
     return f"{_MESES_COMPLETOS[indice]} {anio}"
 
 
+def _palabra_plazo(cantidad: int, singular: str, plural: str) -> str:
+    """Devuelve «1 cuota» o « N cuotas» sin el sufijo `(s)` (SRS v4.20).
+
+    Args:
+        cantidad: Número a pluralizar.
+        singular: Forma en singular.
+        plural: Forma en plural.
+
+    Returns:
+        La palabra correcta según la cantidad.
+    """
+    return singular if cantidad == 1 else plural
+
+
 def _datos_cierre(
     estados: list[_EstadoDeuda],
     consejo: Consejo,
@@ -469,16 +483,24 @@ def _consejo_deuda(
     Returns:
         El consejo configurado en modo deuda.
     """
-    serie_base, _liquidacion_base, _liberada_base, _detalle_base = _simular(
-        estados, excedente, aplicar_excedente=False
-    )
-    serie_optima, _liquidacion, liberada, detalle_cerradas = _simular(
-        estados, excedente
-    )
+    # SRS v4.20, sección 3.4: el cierre se calcula solo sobre el subconjunto de
+    # deudas recomendadas. Las deudas largas no incluidas en el plan se ignoran.
     orden = _ordenar(estados, excedente)
+    plan = orden[:3]
+    plan_ids = {estado.deuda.id_deuda for estado in plan}
     objetivo = orden[0]
     cancela_completa = objetivo.saldo <= excedente
     referencia_efectiva = referencia or date.today()
+
+    serie_base, liquidacion_base, _liberada_base, _detalle_base = _simular(
+        plan, excedente, aplicar_excedente=False
+    )
+    serie_optima, liquidacion_optima, liberada, detalle_cerradas = _simular(
+        plan, excedente
+    )
+    detalle_plan = [
+        fila for fila in detalle_cerradas if fila["id_deuda"] in plan_ids
+    ]
 
     # SRS v4.18: el plazo de la deuda recomendada es el de ESA deuda, no el
     # cierre global. Se toma del mes real en que cierra en la simulación.
@@ -501,24 +523,26 @@ def _consejo_deuda(
     if cancela_completa:
         criterio = (
             f"puedes cancelarla completa y liberas su cuota {meses_antes_objetivo} "
-            f"meses antes ({meses_antes_objetivo} cuotas antes que con pago mínimo)"
+            f"meses antes ({meses_antes_objetivo} "
+            f"{_palabra_plazo(meses_antes_objetivo, 'cuota', 'cuotas')} antes que "
+            "realizando el pago mínimo de la cuota)"
         )
     else:
         criterio = "es la de menor saldo y la cierras antes"
 
     # SRS v4.13: plazos exactos hasta saldo cero, sin la frase «más de 12 meses».
-    deuda_inicial = redondear_dinero(sum((e.saldo for e in estados), start=CERO))
-    cuota_total = redondear_dinero(sum((e.cuota for e in estados), start=CERO))
+    deuda_inicial = redondear_dinero(sum((e.saldo for e in plan), start=CERO))
+    cuota_total = redondear_dinero(sum((e.cuota for e in plan), start=CERO))
     ritmo = redondear_dinero(cuota_total + excedente)
-    # SRS v4.19: plazo en paralelo = el mayor plazo individual, nunca la suma.
+    # SRS v4.19/v4.20: MAX de plazos, solo entre las deudas recomendadas.
     meses_minimo = (
-        _liquidacion_base
-        if _liquidacion_base is not None
-        else max((estado.cuotas for estado in estados), default=0)
+        liquidacion_base
+        if liquidacion_base is not None
+        else max((estado.cuotas for estado in plan), default=0)
     )
     meses_excedente = (
-        _liquidacion
-        if _liquidacion is not None
+        liquidacion_optima
+        if liquidacion_optima is not None
         else (math.ceil(deuda_inicial / ritmo) if ritmo > CERO else 0)
     )
     fecha_minimo = _fecha_cierre(referencia_efectiva, meses_minimo)
@@ -531,52 +555,51 @@ def _consejo_deuda(
         f"cuota: {formatear_cop(objetivo.cuota)}/mes"
     )
 
-    # SRS v4.18: el desglose de cuota liberada se limita a las deudas que el
-    # propio plan propuso (objetivo + las dos siguientes). Nunca aparece una
-    # deuda no listada previamente.
-    plan = orden[:3]
-    plan_ids = {estado.deuda.id_deuda for estado in plan}
-    detalle_plan = [
-        fila for fila in detalle_cerradas if fila["id_deuda"] in plan_ids
-    ]
+    # SRS v4.18/v4.20: la liberación solo cubre el plan ya recomendado.
     liberada_plan = redondear_dinero(
         sum((fila["cuota"] for fila in detalle_plan), start=CERO)
     )
 
     pasos = [
-        f"Concentra el excedente de {formatear_cop(excedente)} en "
-        f"{objetivo.deuda.acreedor} ({objetivo_detalle}): {criterio}."
+        f"Concentra el excedente de {formatear_cop(excedente)} en la deuda que "
+        f"tienes con {objetivo.deuda.acreedor} ({objetivo_detalle}): {criterio}."
     ]
-    if len(orden) > 1:
-        siguientes = "; ".join(
-            f"{estado.deuda.acreedor} (saldo: {formatear_cop(estado.saldo_inicial)} · "
-            f"cuota: {formatear_cop(estado.cuota)}/mes)"
-            for estado in orden[1:3]
-        )
-        pasos.append(f"Cuando esa deuda cierre, sigue con {siguientes}.")
+    if len(plan) > 1:
+        siguientes: list[str] = []
+        for indice, estado in enumerate(plan[1:3]):
+            detalle_siguiente = (
+                f"saldo: {formatear_cop(estado.saldo_inicial)} · "
+                f"cuota: {formatear_cop(estado.cuota)}/mes"
+            )
+            prefijo = "la deuda que tienes con " if indice == 0 else ""
+            siguientes.append(f"{prefijo}{estado.deuda.acreedor} ({detalle_siguiente})")
+        pasos.append(f"Cuando esa deuda cierre, sigue con {'; '.join(siguientes)}.")
     if liberada_plan > CERO:
         desglose = "; ".join(
             f"{fila['nombre']} {formatear_cop(fila['cuota'])}"
             for fila in detalle_plan
         )
-        detalle_texto = f" ({desglose})" if desglose else ""
         pasos.append(
-            f"Al cerrar las deudas de tu plan liberarás "
-            f"{formatear_cop(liberada_plan)} de cuota mensual para tus próximas "
-            f"metas a pagar{detalle_texto}."
+            f"Al cerrar las deudas que te acabo de recomendar ({desglose}) podrás "
+            f"liberar {formatear_cop(liberada_plan)} de cuota mensual para tus "
+            "próximas metas a pagar."
         )
     pasos.append(
-        f"Con pago mínimo, cerrarías todas tus deudas activas en {fecha_minimo} "
-        f"({meses_minimo} meses); con tu excedente las cierras en {fecha_excedente} "
-        f"({meses_excedente} meses)."
+        f"Realizando el pago mínimo, cerrarías todas tus deudas recomendadas en "
+        f"{fecha_minimo} ({meses_minimo} "
+        f"{_palabra_plazo(meses_minimo, 'mes', 'meses')}); con los abonos las "
+        f"cerrarías en {fecha_excedente} ({meses_antes} meses antes)."
     )
 
     mensaje = (
         f"{alias}, con {formatear_cop(excedente)} de excedente te conviene atacar "
         f"primero {objetivo.deuda.acreedor} ({objetivo_detalle}). Con ese ritmo "
-        f"cancelarás esta deuda en {meses_objetivo} meses "
-        f"({meses_objetivo} cuota(s)), {meses_antes_objetivo} meses antes que con "
-        f"pago mínimo ({objetivo.cuotas} meses · {fecha_objetivo_minimo})."
+        f"cancelarás esta deuda en {meses_objetivo} "
+        f"{_palabra_plazo(meses_objetivo, 'mes', 'meses')} ({meses_objetivo} "
+        f"{_palabra_plazo(meses_objetivo, 'cuota', 'cuotas')}), "
+        f"{meses_antes_objetivo} meses antes que realizando el pago mínimo "
+        f"({objetivo.cuotas} {_palabra_plazo(objetivo.cuotas, 'mes', 'meses')} · "
+        f"{fecha_objetivo_minimo})."
     )
 
     resultado = Consejo(
@@ -598,7 +621,7 @@ def _consejo_deuda(
         maximo=maximo,
     )
     cierre = _datos_cierre(
-        estados,
+        plan,
         resultado,
         etiquetas,
         referencia_efectiva,
