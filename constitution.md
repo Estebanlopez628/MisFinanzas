@@ -158,3 +158,7 @@ Principios innegociables. Toda especificación, plan y tarea debe cumplirlos de 
 31. **Modales propios a nivel superior (SRS v4.29):**
     - Los estilos de `.app-modal` no pueden quedar dentro de un media query móvil: los modales de abono, confirmación y aviso deben centrarse en el viewport también en escritorio.
     - Las reglas exclusivas de móvil se agrupan en su propio `@media` y la profundidad de llaves antes de `.app-modal` debe ser cero.
+
+32. **Atajos en dos filas y capa superior de OLB (SRS v4.30):**
+    - En escritorio cada atajo muestra descripción, valor con salto de línea y día arriba, y referencia con Copiar y Pagar abajo, sin recortar la descripción.
+    - Los modales propios que se abren desde un `<dialog>` nativo se trasladan temporalmente dentro de él para heredar su capa superior y no quedar ocultos.

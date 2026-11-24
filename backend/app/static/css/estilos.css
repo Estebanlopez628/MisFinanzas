@@ -978,6 +978,59 @@ a.tarjeta:focus-visible {
   letter-spacing: 0.04em;
 }
 
+/* SRS v4.30: en escritorio cada atajo se lee en dos filas: descripción, valor
+   con salto de línea y día arriba; referencia, Copiar y Pagar abajo. */
+@media (min-width: 768px) {
+  .lista-atajos__item {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-rows: auto auto;
+    row-gap: 8px;
+    align-items: center;
+  }
+
+  .lista-atajos__texto {
+    display: contents;
+  }
+
+  .lista-atajos__descripcion {
+    grid-column: 1;
+    grid-row: 1;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+  }
+
+  .lista-atajos__texto small.ayuda {
+    grid-column: 2;
+    grid-row: 1;
+    margin: 0;
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .lista-atajos__texto .badge--fecha {
+    grid-column: 3;
+    grid-row: 1;
+    justify-self: end;
+  }
+
+  .lista-atajos__referencia {
+    grid-column: 1 / 3;
+    grid-row: 2;
+    justify-self: start;
+  }
+
+  .lista-atajos__item > a {
+    grid-column: 3;
+    grid-row: 2;
+    justify-self: end;
+  }
+
+  .lista-atajos__item > details {
+    display: none;
+  }
+}
+
 @media (max-width: 560px) {
   .lista-atajos__item {
     grid-template-columns: 1fr;

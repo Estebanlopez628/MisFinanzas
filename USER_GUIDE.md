@@ -62,7 +62,7 @@ En los modales de «Editar deuda» y «Editar deducción fija», el botón «Abo
 
 También puedes hacer varios abonos a una meta en el mismo mes: abre el gasto fijo de la meta, pulsa **Abonar** y digita el valor; cada abono se suma al acumulado y se refleja en el check. Todos los perfiles ven la misma comparativa de cierre: si aún no tienes deudas, verás el mismo panel con un mensaje invitándote a registrar una.
 
-Los cuadros para abonar a un crédito o a una meta, así como las confirmaciones y avisos, aparecen siempre en el centro de la pantalla, tanto en la computadora como en el celular.
+Los cuadros para abonar a un crédito o a una meta, así como las confirmaciones y avisos, aparecen siempre en el centro de la pantalla, tanto en la computadora como en el celular. En la computadora, cada atajo de pago se lee en dos filas: descripción, valor y día arriba; referencia, Copiar y Pagar abajo. En el celular, al anular una orden el cuadro de confirmación aparece encima del detalle de la orden.
 
 ## 6. Atajos de Pago y recibos
 

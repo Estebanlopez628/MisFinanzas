@@ -197,7 +197,7 @@ contenido %}
             <span class="lista-atajos__descripcion">{{ item.descripcion }}</span>
             {# SRS v1.9: el valor exacto se conoce antes de pulsar «Pagar». #}
             {% if item.valor_pago %}
-              <small class="ayuda">Valor a pagar: {{ item.valor_pago | cop }}</small>
+              <small class="ayuda">Valor a<br />Pagar: {{ item.valor_pago | cop }}</small>
             {% endif %}
             {# SRS v1.7: el día de pago se muestra como distintivo de la tarjeta. #}
             {{ dias_pago(item) }}

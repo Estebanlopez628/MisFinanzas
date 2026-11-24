@@ -254,6 +254,35 @@
   var respuestaConfirmacion = null;
 
   /**
+   * Coloca un modal dentro del `<dialog>` abierto para que herede su capa
+   * superior; un div con z-index siempre queda detrás de un dialog nativo.
+   *
+   * @param {Element} modal Modal propio de la app.
+   * @returns {Element | null} Dialog abierto, o null si no hay.
+   */
+  function elevarSobreDialogo(modal) {
+    var dialogo = document.querySelector("dialog[open]");
+    if (dialogo && modal && modal.parentElement !== dialogo) {
+      modal.setAttribute("data-padre-original", modal.parentElement.tagName.toLowerCase());
+      dialogo.appendChild(modal);
+    }
+    return dialogo;
+  }
+
+  /**
+   * Devuelve un modal a su contenedor original al cerrarse.
+   *
+   * @param {Element} modal Modal propio de la app.
+   */
+  function reposicionarModal(modal) {
+    if (!modal || !modal.hasAttribute("data-padre-original")) {
+      return;
+    }
+    modal.removeAttribute("data-padre-original");
+    document.body.appendChild(modal);
+  }
+
+  /**
    * Cierra el modal de confirmación con una respuesta.
    *
    * @param {boolean} valor `true` si el usuario aceptó.
@@ -263,6 +292,7 @@
       return;
     }
     modalConfirmacion.hidden = true;
+    reposicionarModal(modalConfirmacion);
     if (respuestaConfirmacion) {
       respuestaConfirmacion(valor);
       respuestaConfirmacion = null;
@@ -293,6 +323,7 @@
       aceptar.className = peligro ? "boton boton--peligro" : "boton boton--primario";
       aceptar.textContent = peligro ? "Eliminar" : "Confirmar";
     }
+    elevarSobreDialogo(modalConfirmacion);
     modalConfirmacion.hidden = false;
     return new Promise(function (resolver) {
       respuestaConfirmacion = resolver;
@@ -333,6 +364,7 @@
     if (cuerpo) {
       cuerpo.textContent = mensaje;
     }
+    elevarSobreDialogo(modalAviso);
     modalAviso.hidden = false;
     var entendido = modalAviso.querySelector("[data-aviso-entendido]");
     if (entendido) {
@@ -343,7 +375,10 @@
   if (modalAviso) {
     var entendido = modalAviso.querySelector("[data-aviso-entendido]");
     if (entendido) {
-      entendido.addEventListener("click", function () { modalAviso.hidden = true; });
+      entendido.addEventListener("click", function () {
+        modalAviso.hidden = true;
+        reposicionarModal(modalAviso);
+      });
     }
     modalAviso.addEventListener("click", function (evento) {
       if (evento.target === modalAviso) {

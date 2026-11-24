@@ -988,3 +988,24 @@ Un `@media (max-width: 767px)` abierto desde el ícono de OLB_BYTE engullía la 
 - Usuarios QA: `prueba_qa@misfinanzas.local` / `QA_MisFinanzas_2026!` y `prueba_qa_admin@misfinanzas.local` / `QA_Admin_2026!`.
 - `scripts/qa_v4_29.py`: **18/18 comprobaciones**; en 1280 px los modales de crédito, meta y confirmación miden tarjeta centrada en (640, 450) con `position: fixed` y `z-index: 9999`. Suite: **892 pruebas** en verde.
 - Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-91), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.29.
+
+---
+
+## 32. SRS v4.30 — Atajos en dos filas y anulación móvil
+
+Versión 4.30 y **línea base vigente**. No se rehace v4.29.
+
+### 32.1 No regresión
+
+Intactos: donas, Consejero, velocímetros, checks optimistas, abonos a metas, modales de edición y paridad de roles.
+
+### 32.2 Cambios
+
+1. En web (`>= 768px`) cada atajo de pago se reparte en dos filas: descripción completa | «Valor a<br>Pagar:» con el valor en COP | día; abajo referencia con Copiar y botón Pagar. La descripción deja de acortarse con puntos suspensivos. Móvil sin cambios.
+2. En móvil, las órdenes de OLB_BYTE se abren en un `<dialog>` nativo. La confirmación de anulación (y el aviso) se trasladan dentro del dialog mientras están visibles, para heredar su capa superior; al cerrarse vuelven al `body`.
+
+### 32.3 Gate QA y cierre documental
+
+- Usuarios QA: `prueba_qa@misfinanzas.local` / `QA_MisFinanzas_2026!` y `prueba_qa_admin@misfinanzas.local` / `QA_Admin_2026!`.
+- `scripts/qa_v4_30.py`: **11/11 comprobaciones** (dos filas y texto completo en 1280 px; confirmación visible y al frente del dialog en 375 px). Suite: **894 pruebas** en verde. Gates v4.26/28/29 sin regresiones.
+- Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-92), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.30.

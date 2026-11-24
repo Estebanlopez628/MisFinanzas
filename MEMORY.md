@@ -2500,6 +2500,16 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v116`; **892 pruebas** en verde. Gate `qa_v4_29.py` **18/18**: en 1280 px los modales de crédito, meta y confirmación tienen `position: fixed`, `z-index: 9999`, `display: flex` y tarjeta centrada exactamente en (640, 450). Los gates anteriores (v4.26, v4.28, v4.28b) siguen en verde sin regresiones.
 
+### 2026-11-23 — SRS v4.30: atajos en dos filas y anulación móvil (ADR-92)
+
+**Decisión (ADR-92).** El propietario reportó dos pendientes: la distribución web de los atajos de pago no se veía en dos filas, y en móvil no aparecía la confirmación al anular una orden de OLB_BYTE.
+
+**Consecuencias aplicadas.**
+- Atajos web (≥768 px): `.lista-atajos__item` usa `grid-template-rows: auto auto`; `.lista-atajos__texto` pasa a `display: contents` para repartir descripción, «Valor a<br>Pagar:» y día en la fila superior, con referencia + Copiar + Pagar abajo. La descripción deja de recortarse con elipsis. Móvil intacto.
+- Anulación móvil: en móvil las órdenes se muestran en tarjetas que abren un `<dialog>` nativo (capa superior). El modal de confirmación es un `<div>` con `z-index`, que siempre queda detrás de un dialog. `elevarSobreDialogo()` traslada el modal dentro del `<dialog>` abierto mientras se muestra, y `reposicionarModal()` lo devuelve al `body` al cerrarse. Igua tratamiento para el modal de aviso.
+
+**Verificación.** `sw.js` en `olb-finanzas-v117`; **894 pruebas** en verde. Gate `qa_v4_30.py` **11/11**: en 1280 px dos filas medidas, descripción completa, valor en dos líneas y referencia abajo; en 375 px la confirmación aparece visible, `elementFromPoint` en el centro devuelve `.app-modal__cuerpo` y el modal queda dentro de `DIALOG`. Gates v4.26/28/29 sin regresiones. Para reproducir OLB se autorizó el correo QA solo en el entorno del servidor de prueba, sin tocar la configuración del repositorio.
+
 
 
 
