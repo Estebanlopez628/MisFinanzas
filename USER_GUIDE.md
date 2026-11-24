@@ -64,6 +64,8 @@ También puedes hacer varios abonos a una meta en el mismo mes: abre el gasto fi
 
 Los cuadros para abonar a un crédito o a una meta, así como las confirmaciones y avisos, aparecen siempre en el centro de la pantalla, tanto en la computadora como en el celular. En la computadora, cada atajo de pago se lee en dos filas: descripción, valor y día arriba; referencia, Copiar y Pagar abajo. En el celular, al anular una orden el cuadro de confirmación aparece encima del detalle de la orden.
 
+En «Registro y Detalles de deudas», el formulario «Nueva deuda» ocupa en la computadora el mismo ancho que las tres tarjetas de resumen y muestra sus seis datos en dos filas de tres columnas, con el botón «Guardar deuda» en un pie separado. En el celular se mantiene el formulario de siempre.
+
 ## 6. Atajos de Pago y recibos
 
 Puedes guardar tus pagos o abonos frecuentes con su monto exacto ('Valor a pagar') para registrarlos con un solo toque y generar un comprobante visual limpio y fácil de leer.

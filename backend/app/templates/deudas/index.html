@@ -76,7 +76,9 @@
         {# SRS v3.0, punto 1: el módulo de origen viaja en el POST para que el
            enlace de retorno siga presente después de guardar la deuda. #}
         {% if volver %}<input type="hidden" name="volver" value="{{ volver }}" />{% endif %}
-        <div class="fila-campos">
+        {# SRS v4.31: grilla 3 × 3 en escritorio — fila descriptiva arriba y
+           valores alineados por la base abajo, con el ancho de las KPI. #}
+        <div class="fila-campos fila-campos--deuda-nueva">
           <label class="campo">
             <span class="campo__etiqueta">Acreedor</span>
             <input class="campo__control" type="text" name="acreedor"
@@ -88,6 +90,17 @@
             <input class="campo__control" type="text" name="descripcion"
                    value="{{ valores.descripcion if valores else '' }}"
                    placeholder="Tarjeta, crédito de consumo…" />
+          </label>
+          <label class="campo">
+            <span class="campo__etiqueta">Periodicidad</span>
+            <select class="campo__control" name="periodicidad">
+              {% for opcion in periodicidades %}
+                <option value="{{ opcion }}"
+                        {% if opcion == (valores.periodicidad if valores else 'MENSUAL') %}selected{% endif %}>
+                  {{ opcion | capitalize }}
+                </option>
+              {% endfor %}
+            </select>
           </label>
           <label class="campo">
             <span class="campo__etiqueta">Total Adeudado (COP)</span>
@@ -107,19 +120,10 @@
                    inputmode="numeric" value="{{ valores.cuotas_pendientes if valores else '' }}"
                    placeholder="60" required />
           </label>
-          <label class="campo">
-            <span class="campo__etiqueta">Periodicidad</span>
-            <select class="campo__control" name="periodicidad">
-              {% for opcion in periodicidades %}
-                <option value="{{ opcion }}"
-                        {% if opcion == (valores.periodicidad if valores else 'MENSUAL') %}selected{% endif %}>
-                  {{ opcion | capitalize }}
-                </option>
-              {% endfor %}
-            </select>
-          </label>
         </div>
-        <button class="boton boton--primario" type="submit" data-guardar-deuda>Guardar deuda</button>
+        <div class="acciones-formulario acciones-formulario--deuda-nueva">
+          <button class="boton boton--primario" type="submit" data-guardar-deuda>Guardar deuda</button>
+        </div>
         {# SRS v3.9.1, sección 1: alerta preventiva con el mismo estilo rojo de
            las demás validaciones, justo debajo del botón. #}
         <div class="alerta alerta--error" data-alerta-deuda role="alert" hidden>

@@ -85,7 +85,7 @@ def test_layout_y_capas_de_modales() -> None:
     web = css.split("@media (min-width: 768px) {")[-1]
     assert ".rejilla-paneles--deudas" in web
     assert "flex-direction: column" in web
-    assert "margin-inline: auto" in web
+    assert "margin-inline: 0" in web
     assert ".app-modal {" in css
     bloque = css.split(".app-modal {", 1)[1].split("}", 1)[0]
     assert "z-index: 9999" in bloque

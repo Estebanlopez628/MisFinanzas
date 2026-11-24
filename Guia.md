@@ -257,7 +257,7 @@ Principios que explican el resto del código:
 
 #### `backend/app/static/css/`
 
-- **`estilos.css`** · 6324 líneas — Fondo y superficies
+- **`estilos.css`** · 6345 líneas — Fondo y superficies
 - **`factura-olb.css`** · 711 líneas — Sello de Anulada si aplica
 
 #### `backend/app/static/js/`
@@ -326,7 +326,7 @@ Principios que explican el resto del código:
 
 #### `backend/app/templates/deudas/`
 
-- **`index.html`** · 283 líneas — Plantilla: Registro y Detalles de deudas
+- **`index.html`** · 287 líneas — Plantilla: Registro y Detalles de deudas
 
 #### `backend/app/templates/finanzas/`
 

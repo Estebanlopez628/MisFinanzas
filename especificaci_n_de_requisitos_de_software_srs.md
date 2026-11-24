@@ -1009,3 +1009,25 @@ Intactos: donas, Consejero, velocímetros, checks optimistas, abonos a metas, mo
 - Usuarios QA: `prueba_qa@misfinanzas.local` / `QA_MisFinanzas_2026!` y `prueba_qa_admin@misfinanzas.local` / `QA_Admin_2026!`.
 - `scripts/qa_v4_30.py`: **11/11 comprobaciones** (dos filas y texto completo en 1280 px; confirmación visible y al frente del dialog en 375 px). Suite: **894 pruebas** en verde. Gates v4.26/28/29 sin regresiones.
 - Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-92), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.30.
+
+---
+
+## 33. SRS v4.31 — Nueva deuda a ancho KPI y grilla 3 × 3
+
+Versión 4.31 y **línea base vigente**. El documento se autodenomina v4.21, pero la línea base pusheada es v4.30; se registra v4.31. Solo se rediseña «Nueva deuda» en escritorio.
+
+### 33.1 No regresión
+
+Intactos: «Deudas registradas», la vista móvil, el alta de deudas, las KPI y el resto de módulos.
+
+### 33.2 Cambios
+
+1. En `>= 768px` la tarjeta «Nueva deuda» ocupa el ancho total de las tres KPI superiores, sin margen lateral.
+2. Los seis campos se organizan en `repeat(3, minmax(0, 1fr))`, `gap: 18px` y `align-items: end`: arriba Acreedor | Descripción | Periodicidad; abajo Total Adeudado (COP) | Cuota (COP) | No. Cuotas Pendientes. `margin-inline: -23px` compensa el padding del panel para alinear columnas con las KPI.
+3. Pie con `border-top` y botón «Guardar deuda» centrado.
+
+### 33.3 Gate QA y cierre documental
+
+- Usuario QA: `prueba_qa@misfinanzas.local` / `QA_MisFinanzas_2026!`.
+- `scripts/qa_v4_31.py`: **10/10 comprobaciones** en 1280 y 375 px, con ancho 1080 px, columnas 348 px centradas en 274/640/1006, alta de deuda correcta y móvil sin desbordamiento. Suite: **896 pruebas** en verde.
+- Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-93), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.31.

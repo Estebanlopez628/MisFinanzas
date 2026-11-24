@@ -105,9 +105,9 @@ def main() -> None:
             estilo(pagina, ".rejilla-paneles--deudas", "flexDirection"),
         )
         comprobar(
-            "web: primera tarjeta centrada",
+            "web: primera tarjeta a ancho completo (v4.31)",
             estilo(pagina, ".rejilla-paneles--deudas > .panel:first-child", "maxWidth")
-            == "900px",
+            == "none",
             estilo(pagina, ".rejilla-paneles--deudas > .panel:first-child", "maxWidth"),
         )
         css = (RUTA_CSS).read_text(encoding="utf-8")

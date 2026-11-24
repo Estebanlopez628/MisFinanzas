@@ -6286,8 +6286,9 @@ dialog::backdrop {
   grid-column: 1 / -1;
 }
 
-/* SRS v4.28, sección 6: en escritorio «Nueva deuda» va centrada y estrecha
-   arriba; «Deudas registradas» ocupa todo el ancho debajo. Móvil intacto. */
+/* SRS v4.28 / v4.31: en escritorio «Nueva deuda» ocupa el ancho completo de
+   las tres KPI superiores y reparte sus campos en una grilla 3 × 3; «Deudas
+   registradas» queda ancha debajo. Móvil intacto. */
 @media (min-width: 768px) {
   .rejilla-paneles--deudas {
     display: flex;
@@ -6298,14 +6299,34 @@ dialog::backdrop {
 
   .rejilla-paneles--deudas > .panel:first-child {
     width: 100%;
-    max-width: 900px;
-    margin-inline: auto;
+    max-width: none;
+    margin-inline: 0;
   }
 
   .rejilla-paneles--deudas > .panel--tabla {
     width: 100%;
     max-width: none;
     margin-top: 0;
+  }
+
+  /* El panel tiene 22 px de padding y 1 px de borde: se compensan para que
+     las tres columnas del formulario caigan exactamente sobre las tres KPI. */
+  .fila-campos--deuda-nueva,
+  .acciones-formulario--deuda-nueva {
+    margin-inline: -23px;
+  }
+
+  .fila-campos--deuda-nueva {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: end;
+    gap: 18px;
+  }
+
+  .acciones-formulario--deuda-nueva {
+    margin-top: 18px;
+    padding-top: 18px;
+    border-top: 1px solid var(--borde-suave);
+    justify-content: center;
   }
 }
 

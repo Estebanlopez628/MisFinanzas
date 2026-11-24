@@ -2510,6 +2510,18 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v117`; **894 pruebas** en verde. Gate `qa_v4_30.py` **11/11**: en 1280 px dos filas medidas, descripción completa, valor en dos líneas y referencia abajo; en 375 px la confirmación aparece visible, `elementFromPoint` en el centro devuelve `.app-modal__cuerpo` y el modal queda dentro de `DIALOG`. Gates v4.26/28/29 sin regresiones. Para reproducir OLB se autorizó el correo QA solo en el entorno del servidor de prueba, sin tocar la configuración del repositorio.
 
+### 2026-11-23 — SRS v4.31: Nueva deuda a ancho KPI y grilla 3 × 3 (ADR-93)
+
+**Decisión (ADR-93).** El documento se autodenomina v4.21, pero la línea base pusheada es v4.30; se registra como v4.31. Se rediseña solo «Nueva deuda» en escritorio, sin tocar «Deudas registradas» ni la vista móvil.
+
+**Consecuencias aplicadas.**
+- En ≥768 px `.rejilla-paneles--deudas > .panel:first-child` deja de tener `max-width: 900px` y `margin-inline: auto`: ocupa el mismo ancho que `.rejilla-tarjetas--deudas` (1080 px medidos).
+- Los seis campos se reordenan como Acreedor | Descripción | Periodicidad (fila 1) y Total Adeudado | Cuota | No. Cuotas (fila 2), con `.fila-campos--deuda-nueva` en `repeat(3, minmax(0, 1fr))`, `gap: 18px` y `align-items: end`.
+- Para que las columnas caigan exactamente sobre las KPI se compensa el padding del panel (22 px + 1 px de borde) con `margin-inline: -23px` en la grilla y en el pie.
+- El botón «Guardar deuda» se envuelve en `.acciones-formulario--deuda-nueva`, con `border-top` y centrado.
+
+**Verificación.** `sw.js` en `olb-finanzas-v118`; **896 pruebas** en verde. Gate `qa_v4_31.py` **10/10**: panel y KPI miden 1080 px, grilla 348/348/348 con dos filas, centros de columna 274/640/1006 idénticos a los de las KPI, pie con borde superior, alta de deuda correcta y móvil sin desbordamiento.
+
 
 
 

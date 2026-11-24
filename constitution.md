@@ -162,3 +162,7 @@ Principios innegociables. Toda especificación, plan y tarea debe cumplirlos de 
 32. **Atajos en dos filas y capa superior de OLB (SRS v4.30):**
     - En escritorio cada atajo muestra descripción, valor con salto de línea y día arriba, y referencia con Copiar y Pagar abajo, sin recortar la descripción.
     - Los modales propios que se abren desde un `<dialog>` nativo se trasladan temporalmente dentro de él para heredar su capa superior y no quedar ocultos.
+
+33. **Formulario de Nueva deuda en escritorio (SRS v4.31):**
+    - La tarjeta ocupa el ancho exacto de las tres KPI y sus seis campos forman una grilla 3 × 3 con base alineada y pie separado por una divisoria.
+    - Las columnas se alinean con las KPI compensando el padding del panel; móvil y «Deudas registradas» no cambian.
