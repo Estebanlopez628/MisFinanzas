@@ -106,7 +106,7 @@ Principios que explican el resto del código:
 ### Resumen del inventario
 
 - **115 archivos** documentados: 56 Python, 40 plantillas Jinja2 y 19 recursos estáticos.
-- **70 clases**, **649 funciones** y **43 métodos** de clase.
+- **70 clases**, **653 funciones** y **43 métodos** de clase.
 
 ### Detalle por archivo
 
@@ -168,8 +168,8 @@ Principios que explican el resto del código:
 - **`finanzas.py`** · 1134 líneas — Módulo "Mis Finanzas": liquidación, guardado e historial.
   - Clases: `EntradaFinanzas`
   - Funciones: `_texto`, `_entero`, `_descuento_por_fechas`, `_leer_entradas`, `_liquidar`, `_deducciones_segun_quincena`, `_datos_formateados`, `_detalle_formateado`, `_detalle_incapacidad_json`, `_fijas_del_periodo`, `_total_fijas`, `_total_deducciones_ley`, `_saldos_quincenas`, `_contexto_calculadora`, `ver_finanzas`, `procesar_finanzas`, `calcular_finanzas_json`, `guardar_liquidacion`, `_filas_historial`, `_etiqueta_periodo`, `ver_historial`, `exportar_historial_csv`, `imprimir_periodo`, `eliminar_periodo`
-- **`gastos.py`** · 629 líneas — Rutas del presupuesto de gastos.
-  - Funciones: `_etiquetas_quincena`, `_parsear_fecha`, `ver_gastos`, `api_gastos_fijos`, `crear_gasto`, `editar_gasto`, `_volver`, `eliminar_gasto`, `marcar_pagado_gasto`, `desmarcar_pagado_gasto`, `api_marcar_pagado_gasto`, `api_desmarcar_pagado_gasto`, `registrar_abono_gasto`, `api_abonar_meta`, `limpiar_pagos_gastos`
+- **`gastos.py`** · 661 líneas — Rutas del presupuesto de gastos.
+  - Funciones: `_etiquetas_quincena`, `_parsear_fecha`, `ver_gastos`, `api_gastos_fijos`, `crear_gasto`, `editar_gasto`, `_volver`, `eliminar_gasto`, `marcar_pagado_gasto`, `desmarcar_pagado_gasto`, `api_marcar_pagado_gasto`, `api_desmarcar_pagado_gasto`, `registrar_abono_gasto`, `api_omitir_gasto`, `api_abonar_meta`, `limpiar_pagos_gastos`
 - **`incapacidades.py`** · 310 líneas — Rutas del módulo de incapacidades.
   - Funciones: `_valores_del_formulario`, `_parsear_fecha`, `_validar`, `_contexto`, `ver_incapacidades`, `calcular_incapacidad_formulario`, `guardar_incapacidad`, `eliminar_incapacidad`
 - **`olb_byte.py`** · 1271 líneas — Módulo comercial OLB_BYTE: ventas a crédito, cobros, anulaciones y factura.
@@ -233,8 +233,8 @@ Principios que explican el resto del código:
 - **`nomina.py`** · 443 líneas — Motor de nómina colombiana — Tarea 2.
   - Clases: `DeduccionesLey`, `RecargoCalculado`, `ResultadoRecargos`, `LiquidacionNomina`
   - Funciones: `_obtener_parametros`, `_validar_no_negativo`, `calcular_valor_hora_ordinaria`, `calcular_deducciones_ley`, `calcular_recargo`, `calcular_recargos`, `calcular_total_devengado`, `liquidar_periodo`
-- **`pagos_metas.py`** · 622 líneas — Metas de ahorro convertidas en gastos fijos con check de pago (SRS v1.6).
-  - Funciones: `_posicion`, `_desde_posicion`, `_rango_del_mes`, `_gastos_de_meta_en_mes`, `_quincenas_de_la_meta`, `_meses_a_generar`, `_valor_vigente`, `asegurar_gastos_de_metas`, `sincronizar_abono`, `sincronizar_gasto`, `propagar_valor`, `marcar_pagado`, `desmarcar_pagado`, `registrar_abono_manual`, `registrar_abono_meta`, `limpiar_checks`, `inhabilitar_gasto`, `quitar_gasto`
+- **`pagos_metas.py`** · 661 líneas — Metas de ahorro convertidas en gastos fijos con check de pago (SRS v1.6).
+  - Funciones: `_posicion`, `_desde_posicion`, `_rango_del_mes`, `_gastos_de_meta_en_mes`, `_quincenas_de_la_meta`, `_meses_a_generar`, `_valor_vigente`, `asegurar_gastos_de_metas`, `sincronizar_abono`, `sincronizar_gasto`, `propagar_valor`, `marcar_pagado`, `desmarcar_pagado`, `registrar_abono_manual`, `registrar_abono_meta`, `limpiar_checks`, `inhabilitar_gasto`, `omitir_pago`, `quitar_gasto`
 - **`perfiles.py`** · 392 líneas — Perfil financiero del usuario (onboarding).
   - Funciones: `obtener_perfil`, `perfil_configurado`, `_validar_porcentaje`, `parsear_dia_quincena`, `validar_dias_quincena`, `dias_quincena`, `etiquetas_quincena`, `validar_quincenas`, `calcular_quincenas_desde_neto`, `guardar_perfil`, `porcentajes_quincena`, `sueldo_del_periodo`
 - **`periodos.py`** · 191 líneas — Persistencia y consulta de periodos de nómina.
@@ -257,13 +257,13 @@ Principios que explican el resto del código:
 
 #### `backend/app/static/css/`
 
-- **`estilos.css`** · 6345 líneas — Fondo y superficies
+- **`estilos.css`** · 6444 líneas — Fondo y superficies
 - **`factura-olb.css`** · 711 líneas — Sello de Anulada si aplica
 
 #### `backend/app/static/js/`
 
-- **`app.js`** · 995 líneas — Mejoras progresivas globales.
-  - Funciones: `restaurarBotonCopiar`, `confirmarCopia`, `copiar`, `seleccionarManual`, `cerrarEdicion`, `limpiarMensajeError`, `elevarSobreDialogo`, `reposicionarModal`, `cerrarConfirmacion`, `pedirConfirmacion`, `mostrarAvisoApp`, `anclaCercana`, `guardarScroll`, `cerrarModalAbono`, `abrirModalAbono`, `registrarAbono`, `cerrar`, `abrir`, `registrar`, `hayModal`, `aplicarEstado`
+- **`app.js`** · 1083 líneas — Mejoras progresivas globales.
+  - Funciones: `restaurarBotonCopiar`, `confirmarCopia`, `copiar`, `seleccionarManual`, `cerrarEdicion`, `limpiarMensajeError`, `elevarSobreDialogo`, `reposicionarModal`, `cerrarConfirmacion`, `pedirConfirmacion`, `mostrarAvisoApp`, `anclaCercana`, `guardarScroll`, `cerrarModalAbono`, `abrirModalAbono`, `registrarAbono`, `cerrar`, `accion`, `cerrar`, `abrir`, `registrar`, `hayModal`, `aplicarEstado`
 - **`ayuda.js`** · 127 líneas — Envío de reportes desde «Ayuda y comentarios» (SRS v2.0, sección 5.3).
   - Funciones: `escapar`, `cargarMisReportes`
 - **`categorias.js`** · 526 líneas — Selector cerrado de categorías, vinculación con deudas y conservación de
@@ -298,7 +298,7 @@ Principios que explican el resto del código:
 #### `backend/app/templates/`
 
 - **`_categorias.html`** · 126 líneas
-- **`base.html`** · 192 líneas — Vista previa al compartir el enlace (WhatsApp, redes). La URL pública sale de APP_URL;
+- **`base.html`** · 212 líneas — Vista previa al compartir el enlace (WhatsApp, redes). La URL pública sale de APP_URL;
 - **`dashboard.html`** · 96 líneas — Plantilla: Panel principal
 - **`login.html`** · 95 líneas — Plantilla: Iniciar sesión
 - **`olvide_contrasena.html`** · 35 líneas — Plantilla: Recuperar contraseña
@@ -331,9 +331,9 @@ Principios que explican el resto del código:
 #### `backend/app/templates/finanzas/`
 
 - **`_capacidad.html`** · 143 líneas
-- **`_gasto_fijo.html`** · 220 líneas
-- **`_subnav.html`** · 27 líneas — Subnavegación interna del módulo "Mis Finanzas" (SRS v1.3, bloque 1).
-- **`index.html`** · 753 líneas — Plantilla: Mis Finanzas
+- **`_gasto_fijo.html`** · 225 líneas
+- **`_subnav.html`** · 43 líneas — Subnavegación interna del módulo "Mis Finanzas" (SRS v1.3, bloque 1).
+- **`index.html`** · 757 líneas — Plantilla: Mis Finanzas
 
 #### `backend/app/templates/gastos/`
 

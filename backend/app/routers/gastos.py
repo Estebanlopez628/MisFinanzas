@@ -540,6 +540,38 @@ def registrar_abono_gasto(
     return _volver(origen)
 
 
+@router.post("/api/gastos/{id_gasto}/omitir", name="api_omitir_gasto")
+def api_omitir_gasto(
+    id_gasto: str,
+    usuario: UsuarioSesion = Depends(obtener_usuario_actual),
+    bd: Session = Depends(obtener_bd),
+) -> JSONResponse:
+    """Omite el pago de un gasto fijo normal durante diez días.
+
+    Args:
+        id_gasto: Gasto a omitir.
+        usuario: Usuario autenticado.
+        bd: Sesión de base de datos.
+
+    Returns:
+        JSON con `ok` y la fecha de reactivación, o error limpio.
+    """
+    gasto = pagos_metas.omitir_pago(bd, usuario.id_usuario, id_gasto, date.today())
+    if gasto is None:
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content={"ok": False, "detail": "El gasto no existe o es una meta."},
+        )
+    auditoria.registrar(bd, usuario.id_usuario, "PAGO_OMITIDO", "gastos", id_gasto)
+    return JSONResponse(
+        content={
+            "ok": True,
+            "id_gasto": id_gasto,
+            "hasta": gasto.inhabilitado_hasta.isoformat() if gasto.inhabilitado_hasta else None,
+        }
+    )
+
+
 @router.post("/api/gastos/{id_gasto}/abono-meta", name="api_abonar_meta")
 def api_abonar_meta(
     id_gasto: str,

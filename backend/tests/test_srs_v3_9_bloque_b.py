@@ -37,7 +37,7 @@ def test_modales_propios_en_la_base() -> None:
     css = (RUTA_APP / "static/css/estilos.css").read_text(encoding="utf-8")
     assert ".app-modal" in css
     assert "z-index: 9999" in css
-    assert "backdrop-filter: blur(4px)" in css
+    assert "background: var(--bg-card)" in css
     assert "background: #0F172A" in css
 
 

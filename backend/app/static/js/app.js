@@ -780,6 +780,94 @@
   }
 })();
 
+/* SRS v4.35: modal de la X en gastos fijos normales (omitir 10 días o eliminar). */
+(function () {
+  var modal = document.getElementById("modal-omitir-gasto");
+  if (!modal) return;
+
+  var cuerpo = document.getElementById("modal-omitir-gasto-cuerpo");
+  var error = document.getElementById("modal-omitir-gasto-error");
+  var idGasto = null;
+  var origen = "";
+
+  function cerrar() {
+    modal.hidden = true;
+    idGasto = null;
+    if (modal.parentElement !== document.body) {
+      document.body.appendChild(modal);
+    }
+  }
+
+  document.addEventListener("click", function (evento) {
+    var boton = evento.target.closest("[data-omitir-gasto]");
+    if (!boton) return;
+    evento.preventDefault();
+    idGasto = boton.getAttribute("data-id-gasto");
+    origen = boton.getAttribute("data-origen") || "";
+    if (cuerpo) {
+      cuerpo.textContent = boton.getAttribute("data-descripcion") || "Este gasto fijo";
+    }
+    if (error) {
+      error.hidden = true;
+      error.textContent = "";
+    }
+    var detalles = boton.closest("details");
+    if (detalles) {
+      detalles.open = false;
+    }
+    // Si hay un dialog nativo abierto, el modal debe vivir dentro de él para
+    // heredar su capa superior.
+    var dialogo = document.querySelector("dialog[open]");
+    if (dialogo && modal.parentElement !== dialogo) {
+      dialogo.appendChild(modal);
+    }
+    modal.hidden = false;
+  });
+
+  function accion(ruta, usarOrigen) {
+    if (!idGasto) return;
+    var datos = new FormData();
+    if (usarOrigen) {
+      datos.append("origen", origen);
+    }
+    fetch(ruta, { method: "POST", body: datos })
+      .then(function (respuesta) {
+        return respuesta.json().then(function (cuerpoJson) {
+          return { ok: respuesta.ok && cuerpoJson.ok !== false, detalle: cuerpoJson.detail };
+        });
+      })
+      .then(function (resultado) {
+        if (!resultado.ok) {
+          throw new Error(resultado.detalle || "No se pudo completar la acción.");
+        }
+        window.location.reload();
+      })
+      .catch(function (errorCapturado) {
+        if (error) {
+          error.textContent = errorCapturado.message;
+          error.hidden = false;
+        }
+      });
+  }
+
+  var confirmar = modal.querySelector("[data-omitir-confirmar]");
+  if (confirmar) {
+    confirmar.addEventListener("click", function () {
+      accion("/api/gastos/" + encodeURIComponent(idGasto) + "/omitir", false);
+    });
+  }
+  var eliminar = modal.querySelector("[data-eliminar-confirmar]");
+  if (eliminar) {
+    eliminar.addEventListener("click", function () {
+      accion("/gastos/" + encodeURIComponent(idGasto) + "/eliminar", true);
+    });
+  }
+  var cancelar = modal.querySelector("[data-omitir-cancelar]");
+  if (cancelar) {
+    cancelar.addEventListener("click", cerrar);
+  }
+})();
+
 /* SRS v4.28: abonos libres y acumulables a metas de ahorro. */
 (function () {
   var modal = document.getElementById("modal-abono-meta");

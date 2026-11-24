@@ -289,6 +289,10 @@ abrir el módulo.
 
 ---
 
+> **SRS v4.35:** la omisión temporal de 10 días de un gasto fijo normal reutiliza `inhabilitado_hasta` (sin columna nueva). Cumplido el plazo, `valor_computable()` vuelve a incluir el gasto automáticamente. Las metas conservan su omisión de 15 días.
+
+---
+
 ## 9. `chancucos` — *Atajos de pago*
 
 Referencias de pago rápido. Desde SRS v1.8 **todos los usuarios autenticados**

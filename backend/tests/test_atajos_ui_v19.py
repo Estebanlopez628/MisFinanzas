@@ -120,7 +120,7 @@ def test_los_atajos_de_mis_finanzas_abren_su_propio_modal(
     assert "justify-items: center;" in centrado.split("}", 1)[0]
     movil = css.split("@media (max-width: 640px)", 1)[1]
     assert ".lista-atajos__item[data-atajo-fila]" in movil
-    assert ".lista-atajos__texto small.ayuda" in movil
+    assert ".atajo-movil-fecha" in movil
     assert "> .lista-atajos__referencia" in movil
     assert ">Ver</summary>" not in html
     assert '<summary class="sr-only" aria-hidden="true">' in html

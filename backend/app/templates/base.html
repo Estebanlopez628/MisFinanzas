@@ -158,6 +158,26 @@
     </div>
   </div>
 
+  {# SRS v4.35: acción de la X en gastos fijos normales (metas excluidas). #}
+  <div class="app-modal" id="modal-omitir-gasto" hidden role="dialog" aria-modal="true"
+       aria-labelledby="modal-omitir-gasto-titulo">
+    <div class="app-modal__tarjeta">
+      <h2 class="app-modal__titulo" id="modal-omitir-gasto-titulo">
+        Cuéntanos qué deseas hacer con este gasto
+      </h2>
+      <p class="app-modal__cuerpo" id="modal-omitir-gasto-cuerpo"></p>
+      <p class="alerta alerta--error" id="modal-omitir-gasto-error" role="alert" hidden></p>
+      <div class="app-modal__acciones app-modal__acciones--abono">
+        <button class="boton boton--secundario boton--pequeno" type="button"
+                data-omitir-confirmar>Omitir pago (10 días)</button>
+        <button class="boton boton--peligro boton--pequeno" type="button"
+                data-eliminar-confirmar>Eliminar</button>
+        <button class="boton boton--secundario boton--pequeno" type="button"
+                data-omitir-cancelar>Cancelar</button>
+      </div>
+    </div>
+  </div>
+
   {# SRS v4.28: abonos libres y acumulables a metas de ahorro. #}
   <div class="app-modal" id="modal-abono-meta" hidden role="dialog" aria-modal="true"
        aria-labelledby="modal-abono-meta-titulo">

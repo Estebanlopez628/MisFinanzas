@@ -142,7 +142,7 @@ def test_tarjeta_de_finanzas_muestra_el_dia(cliente_admin, bd) -> None:
     html = cliente_admin.get("/finanzas").text
 
     assert "Día 15" in html
-    assert "badge--fecha" in html
+    assert "atajo-dia-texto" in html
 
 
 def test_atajo_antiguo_sin_dia_sigue_visible(cliente_admin, bd) -> None:

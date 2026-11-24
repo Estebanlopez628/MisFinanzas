@@ -66,6 +66,8 @@ Los cuadros para abonar a un crédito o a una meta, así como las confirmaciones
 
 En «Registro y Detalles de deudas», el formulario «Nueva deuda» ocupa en la computadora el mismo ancho que las tres tarjetas de resumen y muestra sus seis datos en dos filas de tres columnas, con el botón «Guardar deuda» en un pie separado. En el celular se mantiene el formulario de siempre.
 
+Al pulsar la **X** de un gasto fijo normal aparece un cuadro que te pregunta qué deseas hacer: puedes **omitir el pago durante 10 días** (el gasto sigue registrado y vuelve solo) o **eliminarlo**. Las metas no usan este cuadro: conservan su forma habitual de saltar el pago.
+
 ## 6. Atajos de Pago y recibos
 
 Puedes guardar tus pagos o abonos frecuentes con su monto exacto ('Valor a pagar') para registrarlos con un solo toque y generar un comprobante visual limpio y fácil de leer.

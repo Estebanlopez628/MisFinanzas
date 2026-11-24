@@ -8,7 +8,7 @@
   <div class="atajo-detalle">
     <div class="atajo-detalle__fila atajo-detalle__fila--cabecera">
       <span class="atajo-detalle__descripcion">{{ item.descripcion }}</span>
-      <span class="atajo-detalle__fecha">Fecha pago: {{ dias_pago(item) if item.dia_pago_1 else 'Sin día definido' }}</span>
+      <span class="atajo-detalle__fecha">Fecha pago: {{ dias_pago(item, 'atajo-dia-texto') if item.dia_pago_1 else 'Sin día definido' }}</span>
     </div>
     <div class="atajo-detalle__fila atajo-detalle__fila--datos">
       <span class="atajo-detalle__ref">REF: {{ item.numero_referencia }}</span>
@@ -219,10 +219,10 @@ contenido %}
             <span class="lista-atajos__descripcion">{{ item.descripcion }}</span>
             {# SRS v1.9: el valor exacto se conoce antes de pulsar «Pagar». #}
             {% if item.valor_pago %}
-              <small class="ayuda">Valor a<br />Pagar: {{ item.valor_pago | cop }}</small>
+              <small class="ayuda">Valor a pagar: {{ item.valor_pago | cop }}</small>
             {% endif %}
             {# SRS v1.7: el día de pago se muestra como distintivo de la tarjeta. #}
-            {{ dias_pago(item) }}
+            <span class="atajo-movil-fecha">Fecha de pago: {{ dias_pago(item, 'atajo-dia-texto') }}</span>
           </span>
           <span class="lista-atajos__referencia">
             <code>{{ item.numero_referencia }}</code>

@@ -2553,6 +2553,19 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v121`; **899 pruebas** en verde. Gate `qa_v4_31.py` **14/14**: seis controles a 42 px y etiqueta «INTERVALO DE PAGO» sin que aparezca «Periodicidad». No hay etiquetas con la palabra antigua en las plantillas.
 
+### 2026-11-23 — SRS v4.35: omisión de 10 días y cinco ajustes visuales (ADR-97)
+
+**Decisión (ADR-97).** El documento se autodenomina v4.22, pero la línea base pusheada es v4.34; se registra v4.35. Se ejecutan los seis puntos con alcance quirúrgico y exclusiones explícitas de metas.
+
+**Consecuencias por punto.**
+1. `servicios/pagos_metas.py` añade `DIAS_OMITIDO = 10` y `omitir_pago()`; `routers/gastos.py` expone `POST /api/gastos/{id}/omitir`; `base.html` añade `#modal-omitir-gasto` y `app.js` abre el modal desde `[data-omitir-gasto]`. La macro `_gasto_fijo.html` usa la X con modal solo si no hay `id_proyeccion`; el indicador dice «Pago omitido hasta». Las metas conservan su X de 15 días.
+2. `.app-modal` y `details.edicion-gasto--modal[open]` pasan a `var(--bg-card)` sólido; los controles del modal usan `box-sizing: border-box; width/max-width: 100%`; el pie usa grilla 2+1 con «Cancelar» a ancho completo. Se conservan z-index y scroll.
+3. `_subnav.html` añade íconos SVG a las pestañas 2, 3 y 4; la primera queda intacta. CSS con `gap: 8px`.
+4. `deudas/index.html` ajusta los `<th>`: `Total <br /> Adeudado`, `No. De <br /> cuotas <br /> pendientes`, `Intervalo <br /> De pago`.
+5. `chancucos/_dias.html` se invoca con `atajo-dia-texto` (sin badge); CSS quita fondo/borde del día. La vista inicial móvil muestra Descripción | Valor a pagar | Fecha de pago y el modal conserva la distribución ordenada.
+
+**Verificación.** `sw.js` en `olb-finanzas-v122`; **905 pruebas** en verde. Gate `qa_v4_35.py` **28/28** en 1280 y 375 px: modal de la X con metas excluidas, omisión aplicada y visible, modales opacos y sin desborde, tres íconos, cabeceras exactas y atajos sin óvalo. Durante el gate se corrigió un `ReferenceError` por llamar `elevarSobreDialogo` fuera de su IIFE; se sustituyó por lógica local.
+
 
 
 

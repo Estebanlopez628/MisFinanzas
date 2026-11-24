@@ -11,16 +11,32 @@
   <a class="subnav-finanzas__enlace {% if seccion|default('') == 'gastos' %}subnav-finanzas__enlace--activo{% endif %}"
      href="{{ url_for('ver_presupuesto') }}"
      {% if seccion|default('') == 'gastos' %}aria-current="page"{% endif %}>
+    <svg class="subnav-finanzas__icono" viewBox="0 0 24 24" width="16" height="16"
+         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+         stroke-linejoin="round" aria-hidden="true">
+      <path d="M4 4h16v16H4z" /><path d="M4 9h16" /><path d="M9 9v11" />
+    </svg>
     Gastos y Presupuesto
   </a>
   <a class="subnav-finanzas__enlace {% if seccion|default('') == 'atajos' %}subnav-finanzas__enlace--activo{% endif %}"
      href="{{ url_for('ver_chancucos') }}"
      {% if seccion|default('') == 'atajos' %}aria-current="page"{% endif %}>
+    <svg class="subnav-finanzas__icono" viewBox="0 0 24 24" width="16" height="16"
+         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+         stroke-linejoin="round" aria-hidden="true">
+      <path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7" />
+      <path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7" />
+    </svg>
     Configurar Atajos de Pago
   </a>
   <a class="subnav-finanzas__enlace {% if seccion|default('') == 'historial' %}subnav-finanzas__enlace--activo{% endif %}"
      href="{{ url_for('ver_historial') }}"
      {% if seccion|default('') == 'historial' %}aria-current="page"{% endif %}>
+    <svg class="subnav-finanzas__icono" viewBox="0 0 24 24" width="16" height="16"
+         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+         stroke-linejoin="round" aria-hidden="true">
+      <path d="M3 12a9 9 0 1 0 3-6.7L3 8" /><path d="M3 3v5h5" /><path d="M12 7v5l3 2" />
+    </svg>
     Historial de Registros
   </a>
 </nav>

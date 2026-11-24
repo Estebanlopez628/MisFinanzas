@@ -978,6 +978,23 @@ a.tarjeta:focus-visible {
   letter-spacing: 0.04em;
 }
 
+/* SRS v4.35: el día va como texto plano, sin óvalo azul. */
+.atajo-dia-texto {
+  background: none;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  color: inherit;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.atajo-movil-fecha {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
 /* SRS v4.33: distribución exacta del atajo, compartida por tarjeta web y modal. */
 .atajo-detalle {
   display: flex;
@@ -1048,8 +1065,8 @@ a.tarjeta:focus-visible {
 }
 
 @media (max-width: 560px) {
-  .lista-atajos__item {
-    grid-template-columns: 1fr;
+  .lista-atajos__item[data-atajo-fila] {
+    grid-template-columns: minmax(0, 1fr) auto auto;
     justify-items: start;
   }
 }
@@ -1097,6 +1114,7 @@ a.tarjeta:focus-visible {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 8px;
   min-height: 42px;
   padding: 10px 18px;
   border: 1px solid var(--borde-suave);
@@ -1110,6 +1128,19 @@ a.tarjeta:focus-visible {
   box-shadow: 0 2px 6px rgba(2, 6, 23, 0.25);
   transition: background var(--transicion), color var(--transicion),
     transform var(--transicion), box-shadow var(--transicion), border-color var(--transicion);
+}
+
+/* SRS v4.35: íconos representativos en las pestañas secundarias. */
+.subnav-finanzas__icono {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  color: currentColor;
+  opacity: 0.85;
+}
+
+.subnav-finanzas__enlace--activo .subnav-finanzas__icono {
+  opacity: 1;
 }
 
 .subnav-finanzas__enlace:hover,
@@ -1422,7 +1453,7 @@ a.tarjeta:focus-visible {
     position: fixed;
     inset: 0;
     z-index: 9001;
-    background: rgba(15, 23, 42, 0.72);
+    background: var(--bg-card);
   }
 
   .edicion-gasto--modal .edicion-gasto__formulario {
@@ -4372,8 +4403,8 @@ strong.valor-negativo.recibo__cifra--saldo {
   align-items: center;
   justify-content: center;
   padding: 1rem;
-  background: rgba(0, 0, 0, 0.65);
-  backdrop-filter: blur(4px);
+  /* SRS v4.35: superficie sólida y homogénea, sin ver lo que hay detrás. */
+  background: var(--bg-card);
 }
 
 .app-modal[hidden] {
@@ -5065,7 +5096,23 @@ p,
     cursor: pointer;
   }
 
-  .lista-atajos__item[data-atajo-fila] .lista-atajos__texto small.ayuda,
+  /* SRS v4.35: vista inicial móvil tipo tabla con tres datos. */
+  .lista-atajos__item[data-atajo-fila] {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .lista-atajos__item[data-atajo-fila] .lista-atajos__texto {
+    display: contents;
+  }
+
+  .lista-atajos__item[data-atajo-fila] small.ayuda {
+    margin: 0;
+    white-space: nowrap;
+  }
+
   .lista-atajos__item[data-atajo-fila] > .lista-atajos__referencia,
   .lista-atajos__item[data-atajo-fila] > a {
     display: none !important;
@@ -5310,7 +5357,8 @@ details.edicion-gasto--modal[open] {
 /* El fondo oscuro del modal de edición lo pone el propio <details> abierto;
    se anula el ::before heredado para no duplicar capas. */
 details.edicion-gasto--modal[open] {
-  background: rgba(15, 23, 42, 0.72);
+  /* SRS v4.35: fondo opaco para que ningún elemento de fondo se encime. */
+  background: var(--bg-card);
 }
 
 details.edicion-gasto--modal[open]::before {
@@ -5374,6 +5422,28 @@ details.edicion-gasto--modal[open] > .edicion-gasto__formulario {
   overscroll-behavior: contain;
   z-index: 51;
   box-shadow: 0 18px 46px rgba(0, 0, 0, 0.45);
+}
+
+/* SRS v4.35: controles contenidos y pie simétrico en Editar gasto. */
+.edicion-gasto__formulario .campo__control {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+}
+
+.edicion-gasto__formulario .acciones-formulario--grilla {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.edicion-gasto__formulario .acciones-formulario--grilla > .boton {
+  width: 100%;
+  min-width: 0;
+}
+
+.edicion-gasto__formulario .boton--ancho-completo {
+  grid-column: 1 / -1;
 }
 
 .modal-centrado > * {

@@ -42,6 +42,8 @@ from app.servicios import ahorro, gastos
 CERO = Decimal("0")
 # Plazo de un pago saltado con × (una quincena completa).
 DIAS_INHABILITADO = 15
+# SRS v4.35: omisión temporal de un gasto fijo normal (no meta).
+DIAS_OMITIDO = 10
 PREFIJO_META = "Meta · "
 ACCION_INHABILITADO = "inhabilitado"
 ACCION_ELIMINADO = "eliminado"
@@ -587,6 +589,43 @@ def inhabilitar_gasto(
     gasto.monto_pagado = None
     gasto.check_visible = False
     gasto.inhabilitado_hasta = hoy + timedelta(days=DIAS_INHABILITADO)
+    bd.commit()
+    sincronizar_gasto(bd, gasto)
+    bd.refresh(gasto)
+    return gasto
+
+
+def omitir_pago(
+    bd: Session, id_usuario: str, id_gasto: str, hoy: date
+) -> Gasto | None:
+    """Omite temporalmente el cobro de un gasto fijo normal durante 10 días.
+
+    SRS v4.35: a diferencia de las metas (15 días), el gasto se conserva y
+    deja de contarse en los compromisos activos hasta `hoy + 10`; pasado ese
+    plazo vuelve a incluirse automáticamente sin intervención manual.
+
+    Args:
+        bd: Sesión de base de datos.
+        id_usuario: Dueño del gasto.
+        id_gasto: Gasto fijo a omitir; no debe ser de una meta.
+        hoy: Fecha en la que se activa la omisión.
+
+    Returns:
+        El gasto actualizado, o `None` si no existe, es ajeno o es de una meta.
+    """
+    gasto = bd.get(Gasto, id_gasto)
+    if (
+        gasto is None
+        or gasto.id_usuario != id_usuario
+        or gasto.id_proyeccion is not None
+    ):
+        return None
+
+    gasto.pagado = False
+    gasto.pagado_en = None
+    gasto.monto_pagado = None
+    gasto.check_visible = False
+    gasto.inhabilitado_hasta = hoy + timedelta(days=DIAS_OMITIDO)
     bd.commit()
     sincronizar_gasto(bd, gasto)
     bd.refresh(gasto)

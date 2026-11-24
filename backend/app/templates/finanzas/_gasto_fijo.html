@@ -49,7 +49,10 @@
     <span class="lista-gastos__nombre">
       {{ gasto.descripcion }} - {{ gasto.categoria }}{% if gasto.quincena is none %} · todo el mes{% endif %}
       {% if inhabilitado %}
-        <small class="lista-gastos__estado">Inhabilitado hasta {{ gasto.inhabilitado_hasta.strftime('%d/%m') }}</small>
+        <small class="lista-gastos__estado">
+          {{ 'Pago omitido hasta' if not gasto.id_proyeccion else 'Inhabilitado hasta' }}
+          {{ gasto.inhabilitado_hasta.strftime('%d/%m') }}
+        </small>
       {% endif %}
     </span>
     {# El valor mostrado es siempre la cuota vigente de la deuda, aunque el
@@ -107,7 +110,7 @@
           </label>
           {# SRS v1.9: el cierre va en la cabecera, así que aquí solo queda
              «Actualizar» y, cuando aplica, «Eliminar» a su lado. #}
-          <div class="acciones-formulario acciones-formulario--edicion">
+          <div class="acciones-formulario acciones-formulario--edicion acciones-formulario--grilla">
             <button class="boton boton--primario boton--pequeno" type="submit">Actualizar</button>
             {# SRS (abonos): solo los gastos que pagan una deuda pueden abonarla. #}
             {% if gasto.id_deuda %}
@@ -125,27 +128,29 @@
                 Abonar
               </button>
             {% endif %}
+            <button class="boton boton--secundario boton--pequeno boton--ancho-completo"
+                    type="button" data-cancelar-edicion>Cancelar</button>
           </div>
         </form>
       </details>
-      <form
-        method="post"
-        action="{{ url_for('eliminar_gasto', id_gasto=gasto.id_gasto) }}"
-        data-proteccion
-      >
-        <input type="hidden" name="origen" value="{{ origen }}" />
-        {% if id_trabajo %}
-          <input type="hidden" name="id_trabajo" value="{{ id_trabajo }}" />
-        {% endif %}
-        <button
-          class="boton boton--peligro boton-circular"
-          type="submit"
-          aria-label="{{ 'Saltar pago de' if es_pago_recurrente else 'Eliminar' }} {{ gasto.descripcion }}"
-          title="{{ 'Saltar este pago 15 días' if es_pago_recurrente else 'Eliminar gasto' }}"
-        >
-          ×
-        </button>
-      </form>
+      {% if gasto.id_proyeccion %}
+        {# SRS v4.35: las metas conservan su X y su salto de 15 días. #}
+        <form method="post"
+              action="{{ url_for('eliminar_gasto', id_gasto=gasto.id_gasto) }}"
+              data-proteccion>
+          <input type="hidden" name="origen" value="{{ origen }}" />
+          <button class="boton boton--peligro boton-circular" type="submit"
+                  aria-label="Saltar pago de {{ gasto.descripcion }}"
+                  title="Saltar este pago 15 días">×</button>
+        </form>
+      {% else %}
+        {# SRS v4.35: gasto fijo normal → modal «Omitir pago / Eliminar». #}
+        <button class="boton boton--peligro boton-circular" type="button"
+                data-omitir-gasto data-id-gasto="{{ gasto.id_gasto }}"
+                data-origen="{{ origen }}" data-descripcion="{{ gasto.descripcion }}"
+                aria-label="Omitir o eliminar {{ gasto.descripcion }}"
+                title="Omitir pago o eliminar gasto">×</button>
+      {% endif %}
       {% if inhabilitado %}
         {# Pago saltado: no admite ✔; solo un abono manual por si quedó dinero. #}
         <form

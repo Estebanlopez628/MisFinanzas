@@ -45,7 +45,7 @@ def test_modales_usan_grilla_de_dos_botones_y_abono_abajo() -> None:
     bloque = css.split(".acciones-formulario--grilla {", 1)[1].split("}", 1)[0]
     assert "display: grid" in bloque
     assert "grid-template-columns: 1fr 1fr" in bloque
-    assert "gap: 12px" in bloque
+    assert "gap: 10px" in bloque
     assert "grid-column: 1 / -1" in css
 
 

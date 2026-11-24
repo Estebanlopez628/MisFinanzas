@@ -1085,3 +1085,23 @@ Versión 4.34 y **línea base vigente**.
 
 - `scripts/qa_v4_31.py`: **14/14 comprobaciones** con los seis controles a 42 px y la etiqueta nueva. Suite: **899 pruebas** en verde.
 - Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-96), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.34.
+
+---
+
+## 37. SRS v4.35 — Omisión de 10 días y ajustes visuales
+
+Versión 4.35 y **línea base vigente**. El documento se autodenomina v4.22; se registra v4.35. Alcance quirúrgico sobre cinco puntos, sin tocar cálculos ni módulos estabilizados.
+
+### 37.1 Cambios
+
+1. **Omisión de 10 días:** la X de un gasto fijo normal (Finanzas y Trabajos Extras, web y móvil) abre un modal propio con «Cuéntanos qué deseas hacer con este gasto», «Omitir pago (10 días)» y «Eliminar». No borra el gasto, deja de contarlo 10 días con indicador «Pago omitido hasta» y se reactiva solo. Las metas quedan excluidas y conservan su X de 15 días.
+2. **Modales homogéneos:** fondo opaco `var(--bg-card)`, z-index al frente, campos con `box-sizing: border-box` y `max-width: 100%`, pie con Actualizar/Abonar arriba y Cancelar a ancho completo, scroll preservado.
+3. **Íconos:** pestañas 2, 3 y 4 de Mis Finanzas llevan ícono representativo; «Resumen / Liquidación» intacta.
+4. **Cabeceras de deudas:** Acreedor | Total<br>Adeudado | Cuota | No. De<br>cuotas<br>pendientes | Intervalo<br>De pago | Vinculación | Estado.
+5. **Atajos:** el día se muestra como texto sin óvalo; la vista inicial móvil muestra Descripción | Valor a pagar | Fecha de pago y el modal conserva la distribución ordenada.
+
+### 37.2 Gate QA y cierre documental
+
+- Usuario QA: `prueba_qa@misfinanzas.local` / `QA_MisFinanzas_2026!`.
+- `scripts/qa_v4_35.py`: **28/28 comprobaciones** en 1280 y 375 px. Suite: **905 pruebas** en verde.
+- Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-97), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.35.
