@@ -1105,3 +1105,25 @@ Versión 4.35 y **línea base vigente**. El documento se autodenomina v4.22; se 
 - Usuario QA: `prueba_qa@misfinanzas.local` / `QA_MisFinanzas_2026!`.
 - `scripts/qa_v4_35.py`: **28/28 comprobaciones** en 1280 y 375 px. Suite: **905 pruebas** en verde.
 - Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-97), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.35.
+
+---
+
+## 38. SRS v4.36 — Modal X rediseñado y blur suave
+
+Versión 4.36 y **línea base vigente**. El documento se autodenomina v4.23; se registra v4.36. No se rehace v4.35.
+
+### 38.1 No regresión
+
+Intactos: layout de atajos en escritorio y su modal, cuadrícula 3 × 3, cabeceras de deudas, íconos de pestañas, Optimistic UI, velocímetros, donas, Consejero, OLB_BYTE y Ayuda.
+
+### 38.2 Cambios
+
+1. Modal de la X en gastos fijos normales: cierre X arriba a la derecha, saludo «Hola [alias], cuéntanos qué deseas hacer con este gasto fijo.», descripción del gasto y dos botones —«Omitir pago (10 dias)» y «Eliminar Gasto»— sin Cancelar inferior. Las metas siguen excluidas.
+2. Backdrop de modales y alertas: velo `rgba(15, 23, 42, 0.45)` con `backdrop-filter: blur(6px)`, sin gris plano; superficie de la tarjeta igual a los demás modales; scroll preservado.
+3. Vista inicial móvil de Atajos de pago: «Pagar los : días X» / «Pagar los : días X · días Y». El modal y la vista web no cambian.
+
+### 38.3 Gate QA y cierre documental
+
+- Usuario QA: `prueba_qa@misfinanzas.local` / `QA_MisFinanzas_2026!`.
+- `scripts/qa_v4_35.py`: **32/32 comprobaciones** en 1280 y 375 px. Suite: **905 pruebas** en verde.
+- Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-98), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.36.

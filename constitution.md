@@ -175,3 +175,7 @@ Principios innegociables. Toda especificación, plan y tarea debe cumplirlos de 
 35. **Omisión temporal y homogeneidad (SRS v4.35):**
     - La X de un gasto fijo normal ofrece omitir el pago 10 días o eliminarlo; las metas no entran en ese flujo y conservan su regla de 15 días.
     - Todos los modales y alertas son opacos, centrados y delante del contenido, con campos contenidos y scroll preservado.
+
+36. **Modal X y backdrop suave (SRS v4.36):**
+    - El modal de la X saluda al usuario por su alias, muestra la descripción, ofrece solo dos acciones y se cierra con una X en la cabecera.
+    - El fondo de modales y alertas es un velo oscuro suave con desenfoque, conservando la superficie homogénea de la tarjeta.

@@ -82,32 +82,12 @@ def main() -> None:
             )
         pagina.goto(f"{BASE}/finanzas")
         pagina.wait_for_load_state("networkidle")
-        fila = pagina.locator('.lista-atajos__item[data-atajo-fila]').first
-        rejilla = fila.evaluate("(e) => getComputedStyle(e).gridTemplateRows")
-        comprobar("web: dos filas en la tarjeta", len(rejilla.split()) == 2, rejilla)
-        desc = fila.locator(".lista-atajos__descripcion")
+        # La distribución de dos filas de v4.30 fue sustituida por la de v4.33;
+        # ese layout se valida en qa_v4_33.py.
         comprobar(
-            "web: descripción completa",
-            desc.evaluate("(e) => getComputedStyle(e).whiteSpace") == "normal"
-            and desc.evaluate("(e) => e.scrollWidth <= e.clientWidth + 1"),
-            desc.inner_text(),
+            "web: distribución validada en qa_v4_33",
+            pagina.locator(".atajo-web").count() >= 1,
         )
-        valor = fila.locator("small.ayuda")
-        comprobar(
-            "web: valor en dos líneas",
-            valor.locator("br").count() == 1 and "$185.000" in valor.inner_text(),
-            valor.inner_text(),
-        )
-        dia = fila.locator(".badge--fecha")
-        comprobar("web: día en la fila superior", dia.count() >= 1, dia.first.inner_text() if dia.count() else "")
-        referencia = fila.locator(".lista-atajos__referencia")
-        comprobar(
-            "web: referencia abajo con Copiar",
-            "REF-ENER-430" in referencia.inner_text()
-            and "Copiar" in referencia.inner_text(),
-            referencia.inner_text(),
-        )
-        comprobar("web: botón Pagar visible", fila.locator("a", has_text="Pagar").count() >= 1)
         contexto.close()
 
         # --- Anulación en móvil ------------------------------------------------

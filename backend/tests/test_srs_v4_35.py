@@ -60,8 +60,10 @@ def test_modal_omitir_y_editar_gasto() -> None:
     fila = (RUTA / "templates/finanzas/_gasto_fijo.html").read_text(encoding="utf-8")
 
     assert 'id="modal-omitir-gasto"' in base
-    assert "Cuéntanos qué deseas hacer con este gasto" in base
+    assert "cuéntanos qué deseas hacer con este gasto fijo" in base
+    assert "Omitir pago (10 dias)" in base and "Eliminar Gasto" in base
     assert "data-omitir-confirmar" in base and "data-eliminar-confirmar" in base
+    assert "data-omitir-cancelar" in base
     assert "data-omitir-gasto" in fila
     assert "acciones-formulario--grilla" in fila
     assert "boton--ancho-completo" in fila
@@ -72,8 +74,9 @@ def test_modales_opacos_y_capas() -> None:
     """Los modales usan fondo sólido y la jerarquía de z-index se conserva."""
     css = (RUTA / "static/css/estilos.css").read_text(encoding="utf-8")
     app_modal = css.split(".app-modal {", 1)[1].split("}", 1)[0]
-    assert "background: var(--bg-card)" in app_modal
-    assert css.count("background: var(--bg-card)") >= 3
+    assert "background: rgba(15, 23, 42, 0.45)" in app_modal
+    assert "backdrop-filter: blur(6px)" in app_modal
+    assert css.count("backdrop-filter: blur(6px)") >= 3
     controles = css.split(".edicion-gasto__formulario .campo__control {", 1)[1].split("}", 1)[0]
     assert "box-sizing: border-box" in controles
     assert "max-width: 100%" in controles
@@ -108,7 +111,10 @@ def test_atajos_dia_plano_y_vista_movil() -> None:
     html = (RUTA / "templates/finanzas/index.html").read_text(encoding="utf-8")
     css = (RUTA / "static/css/estilos.css").read_text(encoding="utf-8")
     assert "atajo-dia-texto" in html
-    assert "Fecha de pago:" in html
+    assert "Pagar los :" in html
+    assert "dias_pago_plural" in html
+    dias = (RUTA / "templates/chancucos/_dias.html").read_text(encoding="utf-8")
+    assert "días {{ item.dia_pago_1 }}" in dias
     assert "Valor a pagar:" in html
     dia = css.split(".atajo-dia-texto {", 1)[1].split("}", 1)[0]
     assert "background: none" in dia and "border: 0" in dia

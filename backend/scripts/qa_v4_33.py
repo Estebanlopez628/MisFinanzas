@@ -159,7 +159,7 @@ def main() -> None:
                 comprobar(
                     f"{prefijo}: vista primaria intacta",
                     pagina.locator(".lista-atajos__descripcion").first.is_visible()
-                    and pagina.locator(".badge--fecha").first.is_visible(),
+                    and pagina.locator(".atajo-movil-fecha").first.is_visible(),
                 )
                 comprobar(
                     f"{prefijo}: tarjeta web oculta",

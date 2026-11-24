@@ -162,18 +162,20 @@
   <div class="app-modal" id="modal-omitir-gasto" hidden role="dialog" aria-modal="true"
        aria-labelledby="modal-omitir-gasto-titulo">
     <div class="app-modal__tarjeta">
-      <h2 class="app-modal__titulo" id="modal-omitir-gasto-titulo">
-        Cuéntanos qué deseas hacer con este gasto
-      </h2>
-      <p class="app-modal__cuerpo" id="modal-omitir-gasto-cuerpo"></p>
+      <div class="edicion-gasto__cabecera">
+        <h2 class="app-modal__titulo" id="modal-omitir-gasto-titulo">
+          Hola {{ usuario.alias }}, cuéntanos qué deseas hacer con este gasto fijo.
+        </h2>
+        <button class="edicion-gasto__cerrar" type="button" data-omitir-cancelar
+                aria-label="Cerrar" title="Cerrar">×</button>
+      </div>
+      <p class="app-modal__cuerpo" id="modal-omitir-gasto-detalle"></p>
       <p class="alerta alerta--error" id="modal-omitir-gasto-error" role="alert" hidden></p>
       <div class="app-modal__acciones app-modal__acciones--abono">
         <button class="boton boton--secundario boton--pequeno" type="button"
-                data-omitir-confirmar>Omitir pago (10 días)</button>
+                data-omitir-confirmar>Omitir pago (10 dias)</button>
         <button class="boton boton--peligro boton--pequeno" type="button"
-                data-eliminar-confirmar>Eliminar</button>
-        <button class="boton boton--secundario boton--pequeno" type="button"
-                data-omitir-cancelar>Cancelar</button>
+                data-eliminar-confirmar>Eliminar Gasto</button>
       </div>
     </div>
   </div>

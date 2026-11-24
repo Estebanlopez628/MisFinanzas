@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% from "finanzas/_gasto_fijo.html" import fila_gasto with context %}
 {% from "_categorias.html" import selector_categoria, vinculo_deuda, vinculo_condicional with context %}
-{% from "chancucos/_dias.html" import dias_pago with context %}
+{% from "chancucos/_dias.html" import dias_pago, dias_pago_plural with context %}
 
 {% macro atajo_detalle(item) -%}
   {# SRS v4.33: distribución exacta compartida por la tarjeta web y el modal móvil. #}
@@ -222,7 +222,7 @@ contenido %}
               <small class="ayuda">Valor a pagar: {{ item.valor_pago | cop }}</small>
             {% endif %}
             {# SRS v1.7: el día de pago se muestra como distintivo de la tarjeta. #}
-            <span class="atajo-movil-fecha">Fecha de pago: {{ dias_pago(item, 'atajo-dia-texto') }}</span>
+            <span class="atajo-movil-fecha">Pagar los : {{ dias_pago_plural(item) }}</span>
           </span>
           <span class="lista-atajos__referencia">
             <code>{{ item.numero_referencia }}</code>

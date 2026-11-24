@@ -138,15 +138,33 @@ def main() -> None:
                 )
                 comprobar(
                     f"{prefijo}: texto del modal",
-                    "Cuéntanos qué deseas hacer con este gasto" in cuerpo,
+                    "cuéntanos qué deseas hacer con este gasto fijo" in cuerpo.lower(),
                     cuerpo,
                 )
                 comprobar(
-                    f"{prefijo}: modal opaco y centrado",
+                    f"{prefijo}: modal con velo desenfocado y centrado",
                     estilo(pagina, "#modal-omitir-gasto", "backgroundColor")
-                    == "rgb(30, 41, 59)"
+                    == "rgba(15, 23, 42, 0.45)"
+                    and estilo(pagina, "#modal-omitir-gasto", "backdropFilter")
+                    == "blur(6px)"
                     and estilo(pagina, "#modal-omitir-gasto", "position") == "fixed",
                     estilo(pagina, "#modal-omitir-gasto", "backgroundColor"),
+                )
+                textos_botones = pagina.locator(
+                    "#modal-omitir-gasto .app-modal__acciones"
+                ).inner_text()
+                comprobar(
+                    f"{prefijo}: solo dos acciones",
+                    "Omitir pago (10 dias)" in textos_botones
+                    and "Eliminar Gasto" in textos_botones
+                    and "Cancelar" not in textos_botones,
+                    textos_botones,
+                )
+                comprobar(
+                    f"{prefijo}: cierre X arriba",
+                    pagina.locator(
+                        "#modal-omitir-gasto .edicion-gasto__cerrar"
+                    ).count() == 1,
                 )
                 if ancho >= 768:
                     with pagina.expect_navigation(wait_until="networkidle", timeout=10000):
@@ -176,7 +194,7 @@ def main() -> None:
                     comprobar(
                         f"{prefijo}: fondo sólido",
                         estilo(pagina, "details.edicion-gasto--modal[open]", "backgroundColor")
-                        == "rgb(30, 41, 59)",
+                        == "rgba(15, 23, 42, 0.45)",
                     )
                     controles = tarjeta.locator(".campo__control")
                     desborde = controles.evaluate_all(
@@ -228,7 +246,7 @@ def main() -> None:
                 texto = pagina.locator('li[data-atajo-fila]').first.inner_text()
                 comprobar(
                     f"{prefijo}: vista inicial con tres datos",
-                    "Valor a pagar" in texto and "Fecha de pago" in texto,
+                    "Valor a pagar" in texto and "Pagar los :" in texto and "días 15" in texto,
                     texto[:100],
                 )
             comprobar(f"{prefijo}: sin errores", not errores, "; ".join(errores[:2]))

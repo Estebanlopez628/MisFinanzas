@@ -2566,6 +2566,16 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v122`; **905 pruebas** en verde. Gate `qa_v4_35.py` **28/28** en 1280 y 375 px: modal de la X con metas excluidas, omisión aplicada y visible, modales opacos y sin desborde, tres íconos, cabeceras exactas y atajos sin óvalo. Durante el gate se corrigió un `ReferenceError` por llamar `elevarSobreDialogo` fuera de su IIFE; se sustituyó por lógica local.
 
+### 2026-11-24 — SRS v4.36: modal X rediseñado y blur suave (ADR-98)
+
+**Decisión (ADR-98).** El documento se autodenomina v4.23, pero la línea base es v4.35; se registra v4.36. Solo dos puntos: el contenido del modal de la X y el backdrop de modales/alertas, más una etiqueta móvil.
+
+**Consecuencias por punto.**
+1. `base.html` cambia `#modal-omitir-gasto`: cierre X arriba a la derecha con `data-omitir-cancelar` (sin Cancelar inferior), saludo «Hola {{ usuario.alias }}, cuéntanos qué deseas hacer con este gasto fijo.» y párrafo con la descripción. Los botones quedan como «Omitir pago (10 dias)» y «Eliminar Gasto». `app.js` apunta al nuevo id del detalle. CSS: `.app-modal`, `details.edicion-gasto--modal[open]` y su `::before` usan `rgba(15, 23, 42, 0.45)` con `backdrop-filter: blur(6px)`; la superficie de la tarjeta sigue siendo `var(--bg-card)`/`#0F172A`, igual que los demás modales.
+2. `chancucos/_dias.html` añade `dias_pago_plural()` («días 15 · días 30») y `finanzas/index.html` la usa solo en la vista inicial móvil: «Pagar los : días 15». La tarjeta web y el modal al tocar siguen con «Fecha pago: Día 15» y línea azul.
+
+**Verificación.** `sw.js` en `olb-finanzas-v123`; **905 pruebas** en verde. Gate `qa_v4_35.py` **32/32** con saludo, cierre X, dos botones, blur medido y «Pagar los : días 15». Gates anteriores sin regresiones: `qa_v4_30.py` 3/3, `qa_v4_33.py` 30/30, `qa_v4_29.py` 18/18.
+
 
 
 

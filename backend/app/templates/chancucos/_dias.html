@@ -12,3 +12,12 @@
     </span>
   {%- endif -%}
 {%- endmacro %}
+
+{# SRS v4.36: texto en plural para la vista inicial móvil de Atajos de pago. #}
+{% macro dias_pago_plural(item, clase="atajo-dia-texto") -%}
+  {%- if item.dia_pago_1 -%}
+    <span class="{{ clase }}" title="Días de pago mensuales">
+      días {{ item.dia_pago_1 }}{% if item.dia_pago_2 %} · días {{ item.dia_pago_2 }}{% endif %}
+    </span>
+  {%- endif -%}
+{%- endmacro %}

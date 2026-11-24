@@ -1453,7 +1453,8 @@ a.tarjeta:focus-visible {
     position: fixed;
     inset: 0;
     z-index: 9001;
-    background: var(--bg-card);
+    background: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(6px);
   }
 
   .edicion-gasto--modal .edicion-gasto__formulario {
@@ -4403,8 +4404,9 @@ strong.valor-negativo.recibo__cifra--saldo {
   align-items: center;
   justify-content: center;
   padding: 1rem;
-  /* SRS v4.35: superficie sólida y homogénea, sin ver lo que hay detrás. */
-  background: var(--bg-card);
+  /* SRS v4.36: velo oscuro muy suave con desenfoque, sin gris plano. */
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(6px);
 }
 
 .app-modal[hidden] {
@@ -5357,8 +5359,9 @@ details.edicion-gasto--modal[open] {
 /* El fondo oscuro del modal de edición lo pone el propio <details> abierto;
    se anula el ::before heredado para no duplicar capas. */
 details.edicion-gasto--modal[open] {
-  /* SRS v4.35: fondo opaco para que ningún elemento de fondo se encime. */
-  background: var(--bg-card);
+  /* SRS v4.36: mismo velo desenfocado que el resto de modales. */
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(6px);
 }
 
 details.edicion-gasto--modal[open]::before {

@@ -785,7 +785,7 @@
   var modal = document.getElementById("modal-omitir-gasto");
   if (!modal) return;
 
-  var cuerpo = document.getElementById("modal-omitir-gasto-cuerpo");
+  var cuerpo = document.getElementById("modal-omitir-gasto-detalle");
   var error = document.getElementById("modal-omitir-gasto-error");
   var idGasto = null;
   var origen = "";
