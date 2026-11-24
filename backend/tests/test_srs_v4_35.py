@@ -89,7 +89,7 @@ def test_iconos_subnav() -> None:
     assert "subnav-finanzas__icono" not in html
     for nombre in ("presupuesto/index.html", "chancucos/index.html", "historial/index.html"):
         vista = (RUTA / "templates" / nombre).read_text(encoding="utf-8")
-        assert 'class="heroe__titulo-icono"' in vista
+        assert 'heroe__titulo-icono' in vista
     css = (RUTA / "static/css/estilos.css").read_text(encoding="utf-8")
     assert ".heroe__titulo-icono" in css
 

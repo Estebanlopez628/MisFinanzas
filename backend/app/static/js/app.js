@@ -182,12 +182,57 @@
    *
    * @param {HTMLDetailsElement} detalles Desplegable de edición abierto.
    */
+  // SRS v4.38: la fila inhabilitada usa `opacity < 1`, que crea un contexto de
+  // apilamiento y deja el modal detrás de la liquidación. Mientras está abierto
+  // se traslada al <body> (como en Deudas) y al cerrarse vuelve a su fila.
+  function sacarDelContexto(detalles) {
+    // Solo los ítems inhabilitados tienen `opacity < 1`: los demás modales
+    // (atajos, deudas, OLB_BYTE) se quedan en su sitio, sin cambios.
+    if (
+      !detalles.open ||
+      !detalles.classList.contains("edicion-gasto--modal") ||
+      !detalles.closest("li.lista-gastos__item--inhabilitado")
+    ) {
+      return;
+    }
+    if (detalles._marcadorEdicion) {
+      return;
+    }
+    var marcador = document.createComment("modal-edicion-gasto");
+    detalles.parentNode.insertBefore(marcador, detalles);
+    detalles._marcadorEdicion = marcador;
+    document.body.appendChild(detalles);
+  }
+
+  function devolverAlContexto(detalles) {
+    var marcador = detalles._marcadorEdicion;
+    if (!marcador) {
+      return;
+    }
+    if (marcador.parentNode) {
+      marcador.parentNode.insertBefore(detalles, marcador);
+      marcador.parentNode.removeChild(marcador);
+    }
+    detalles._marcadorEdicion = null;
+  }
+
+  document.querySelectorAll("details.edicion-gasto--modal").forEach(function (detalles) {
+    detalles.addEventListener("toggle", function () {
+      if (detalles.open) {
+        sacarDelContexto(detalles);
+      } else {
+        devolverAlContexto(detalles);
+      }
+    });
+  });
+
   function cerrarEdicion(detalles) {
     var formulario = detalles.querySelector("form");
     if (formulario) {
       formulario.reset();
     }
     detalles.open = false;
+    devolverAlContexto(detalles);
   }
 
   // SRS v1.7: «Cancelar» cierra el desplegable de edición y descarta lo escrito.
@@ -401,6 +446,8 @@
     evento.preventDefault();
     pedirConfirmacion(mensaje, formulario.hasAttribute("data-confirmar-peligro")).then(function (ok) {
       if (ok) {
+        // La posición se guarda de nuevo porque el modal pudo desplazar la vista.
+        guardarScroll();
         formulario.submit();
       }
     });
@@ -427,6 +474,7 @@
         if (typeof formulario.requestSubmit === "function") {
           formulario.requestSubmit(control);
         } else {
+          guardarScroll();
           formulario.submit();
         }
       } else if (control.tagName === "A") {
@@ -576,11 +624,12 @@
     });
   }
 
-  // SRS v4.4, sección 6: conservar la posición de desplazamiento cuando un
-  // formulario recarga la página. Nunca se fuerza el desplazamiento al inicio:
-  // se guarda `window.scrollY`, se restaura con `behavior: "instant"` y, si el módulo
-  // expone un bloque de pago cercano, se ancla con `block: "nearest"`.
+  // SRS v4.4 y v4.38: conservar la posición exacta de desplazamiento cuando un
+  // formulario, un modal o una acción con fetch recarga la página. Se guardan
+  // X e Y y se restauran con `behavior: "instant"`; el bloque de pago cercano
+  // solo se ancla con `block: "nearest"` para no alterar la posición guardada.
   var CLAVE_SCROLL = "misfinanzas_saved_scroll_y";
+  var CLAVE_SCROLL_X = "misfinanzas_saved_scroll_x";
   var CLAVE_ANCLA = "misfinanzas_saved_scroll_ancla";
 
   // Si el navegador restaura por su cuenta, lo hace después de este script y
@@ -627,35 +676,100 @@
   }
 
   /**
-   * Guarda la posición actual antes de que el servidor responda.
+   * Guarda la posición vertical y horizontal antes de cualquier navegación.
+   *
+   * @returns {void}
    */
   function guardarScroll() {
     try {
-      sessionStorage.setItem(CLAVE_SCROLL, String(window.scrollY || 0));
+      sessionStorage.setItem(
+        CLAVE_SCROLL_X,
+        String(window.scrollX || window.pageXOffset || 0)
+      );
+      sessionStorage.setItem(
+        CLAVE_SCROLL,
+        String(window.scrollY || window.pageYOffset || 0)
+      );
       sessionStorage.setItem(CLAVE_ANCLA, anclaCercana());
     } catch (error) {
-      // Sin sessionStorage el formulario sigue funcionando desde el inicio.
+      // Sin sessionStorage la aplicación sigue funcionando desde el inicio.
     }
   }
 
+  // Los manejadores fuera de este ámbito (omitir, eliminar, habilitar, abonos)
+  // recargan la página: deben guardar la posición antes de recargar.
+  window.guardarScrollApp = guardarScroll;
+  window.recargarManteniendoScroll = function (yaGuardado) {
+    if (!yaGuardado) {
+      guardarScroll();
+    }
+    window.location.reload();
+  };
+
   document.addEventListener("submit", guardarScroll, true);
 
+  var xGuardado = null;
+  var yGuardado = null;
+  var anclaGuardada = null;
   try {
-    var scrollGuardado = sessionStorage.getItem(CLAVE_SCROLL);
-    var anclaGuardada = sessionStorage.getItem(CLAVE_ANCLA);
+    var textoX = sessionStorage.getItem(CLAVE_SCROLL_X);
+    var textoY = sessionStorage.getItem(CLAVE_SCROLL);
+    anclaGuardada = sessionStorage.getItem(CLAVE_ANCLA);
+    sessionStorage.removeItem(CLAVE_SCROLL_X);
     sessionStorage.removeItem(CLAVE_SCROLL);
     sessionStorage.removeItem(CLAVE_ANCLA);
-    if (scrollGuardado !== null) {
-      window.scrollTo({ top: Number(scrollGuardado) || 0, behavior: "instant" });
-      if (anclaGuardada) {
-        var bloque = document.getElementById(anclaGuardada);
-        if (bloque && bloque.scrollIntoView) {
-          bloque.scrollIntoView({ behavior: "instant", block: "nearest" });
-        }
-      }
+    if (textoX !== null || textoY !== null) {
+      xGuardado = Number(textoX) || 0;
+      yGuardado = Number(textoY) || 0;
     }
   } catch (error) {
     // Sin sessionStorage no hay posición que restaurar.
+  }
+
+  /**
+   * Restaura la posición guardada una vez que el layout está listo.
+   *
+   * @returns {void}
+   */
+  function restaurarScroll() {
+    if (xGuardado === null && yGuardado === null) {
+      return;
+    }
+    // SRS v4.38: se restaura literalmente X e Y. El antiguo `scrollIntoView`
+    // del ancla podía desplazar la vista después de guardar y era la causa de
+    // que una acción en quincena 1 devolviera a otra posición. El flujo de
+    // retorno de deudas tiene su propio anclaje en `deudas.js` y no se toca.
+    // El backend vuelve a `/finanzas#quincenas`: el salto automático del ancla
+    // debe retirarse para que la posición la decida esta restauración. El
+    // anclaje del retorno de deudas vive en `deudas.js` y no se toca.
+    try {
+      if (window.location.hash === "#quincenas") {
+        window.history.replaceState(
+          null, "", window.location.pathname + window.location.search
+        );
+      }
+    } catch (error) {
+      // Sin history no hay ancla que retirar.
+    }
+    var objetivoX = xGuardado || 0;
+    var objetivoY = yGuardado || 0;
+    window.scrollTo({ left: objetivoX, top: objetivoY, behavior: "instant" });
+    // El layout puede seguir acomodándose (cálculo inicial, fuentes, imágenes).
+    // Se reaplica la misma posición en el siguiente cuadro y poco después.
+    requestAnimationFrame(function () {
+      window.scrollTo({ left: objetivoX, top: objetivoY, behavior: "instant" });
+    });
+    setTimeout(function () {
+      window.scrollTo({ left: objetivoX, top: objetivoY, behavior: "instant" });
+    }, 180);
+  }
+
+  if (document.readyState === "complete") {
+    requestAnimationFrame(restaurarScroll);
+  } else {
+    window.addEventListener("load", function () {
+      requestAnimationFrame(restaurarScroll);
+    });
   }
 
   // SRS (abonos): modal propio para registrar abonos a deudas vinculadas.
@@ -738,7 +852,7 @@
         if (!resultado.ok) {
           throw new Error(resultado.detalle || "No se pudo registrar el abono.");
         }
-        window.location.reload();
+        window.recargarManteniendoScroll();
       })
       .catch(function (error) {
         if (abonoError) {
@@ -853,7 +967,7 @@
         if (!resultado.ok) {
           throw new Error(resultado.detalle || "No se pudo completar la acción.");
         }
-        window.location.reload();
+        window.recargarManteniendoScroll();
       })
       .catch(function (errorCapturado) {
         if (error) {
@@ -873,12 +987,28 @@
   if (eliminar) {
     eliminar.addEventListener("click", function () {
       if (esMeta) {
+        // El aviso tiene z-index superior al modal de la X, así que puede
+        // mostrarse sin cerrarlo: el usuario sigue viendo sus otras opciones.
         if (typeof window.mostrarAvisoApp === "function") {
           window.mostrarAvisoApp(AVISO_META);
         }
         return;
       }
-      accion("/gastos/" + encodeURIComponent(idGasto) + "/eliminar", true);
+      // Eliminar devuelve una redirección HTML, no JSON: se envía como
+      // formulario nativo para que el navegador navegue y se guarde el scroll.
+      var formulario = document.createElement("form");
+      formulario.method = "post";
+      formulario.action = "/gastos/" + encodeURIComponent(idGasto) + "/eliminar";
+      var campoOrigen = document.createElement("input");
+      campoOrigen.type = "hidden";
+      campoOrigen.name = "origen";
+      campoOrigen.value = origen;
+      formulario.appendChild(campoOrigen);
+      document.body.appendChild(formulario);
+      // El submit guarda la posición; el cierre del modal va después para que
+      // no reacomodar la fila antes de guardar.
+      formulario.submit();
+      cerrar();
     });
   }
   var cancelar = modal.querySelector("[data-omitir-cancelar]");
@@ -893,6 +1023,11 @@
     var boton = evento.target.closest("[data-habilitar-gasto]");
     if (!boton || boton.dataset.enviando === "1") return;
     evento.preventDefault();
+    // Se guarda antes de cambiar la etiqueta del botón, porque ese cambio puede
+    // reacomodar la fila y desplazar la vista antes de la recarga.
+    if (typeof window.guardarScrollApp === "function") {
+      window.guardarScrollApp();
+    }
     boton.dataset.enviando = "1";
     var id = boton.getAttribute("data-id-gasto");
     var texto = boton.textContent;
@@ -910,7 +1045,7 @@
         if (!resultado.ok) {
           throw new Error(resultado.detalle || "No se pudo habilitar el gasto.");
         }
-        window.location.reload();
+        window.recargarManteniendoScroll(true);
       })
       .catch(function (errorCapturado) {
         boton.textContent = texto;
@@ -987,7 +1122,7 @@
         if (!resultado.ok) {
           throw new Error(resultado.detalle || "No se pudo registrar el abono.");
         }
-        window.location.reload();
+        window.recargarManteniendoScroll();
       })
       .catch(function (errorCapturado) {
         if (error) {
@@ -1030,6 +1165,7 @@
    o confirmación, sin saltar a lo alto ni abajo del documento. */
 (function () {
   var guardado = null;
+  var antesClic = null;
 
   function hayModal() {
     return !!document.querySelector(
@@ -1037,16 +1173,35 @@
     );
   }
 
+  // Fase de captura: la posición se toma antes de que el manejador abra el modal
+  // y de que un `focus()` pueda desplazar la página.
+  document.addEventListener(
+    "click",
+    function () {
+      if (!hayModal()) {
+        antesClic = {
+          x: window.scrollX || window.pageXOffset || 0,
+          y: window.scrollY || window.pageYOffset || 0,
+        };
+      }
+    },
+    true
+  );
+
   var observador = new MutationObserver(function () {
     if (hayModal()) {
       if (guardado === null) {
-        guardado = window.scrollY;
+        guardado = antesClic || {
+          x: window.scrollX || window.pageXOffset || 0,
+          y: window.scrollY || window.pageYOffset || 0,
+        };
+        antesClic = null;
       }
     } else if (guardado !== null) {
       var destino = guardado;
       guardado = null;
       requestAnimationFrame(function () {
-        window.scrollTo({ top: destino, behavior: "instant" });
+        window.scrollTo({ left: destino.x, top: destino.y, behavior: "instant" });
       });
     }
   });

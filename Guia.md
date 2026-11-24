@@ -106,7 +106,7 @@ Principios que explican el resto del código:
 ### Resumen del inventario
 
 - **115 archivos** documentados: 56 Python, 40 plantillas Jinja2 y 19 recursos estáticos.
-- **70 clases**, **656 funciones** y **43 métodos** de clase.
+- **70 clases**, **659 funciones** y **43 métodos** de clase.
 
 ### Detalle por archivo
 
@@ -257,13 +257,13 @@ Principios que explican el resto del código:
 
 #### `backend/app/static/css/`
 
-- **`estilos.css`** · 6461 líneas — Fondo y superficies
+- **`estilos.css`** · 6482 líneas — Fondo y superficies
 - **`factura-olb.css`** · 711 líneas — Sello de Anulada si aplica
 
 #### `backend/app/static/js/`
 
-- **`app.js`** · 1140 líneas — Mejoras progresivas globales.
-  - Funciones: `restaurarBotonCopiar`, `confirmarCopia`, `copiar`, `seleccionarManual`, `cerrarEdicion`, `limpiarMensajeError`, `elevarSobreDialogo`, `reposicionarModal`, `cerrarConfirmacion`, `pedirConfirmacion`, `mostrarAvisoApp`, `anclaCercana`, `guardarScroll`, `cerrarModalAbono`, `abrirModalAbono`, `registrarAbono`, `configurarEliminar`, `cerrar`, `accion`, `cerrar`, `abrir`, `registrar`, `hayModal`, `aplicarEstado`
+- **`app.js`** · 1295 líneas — Mejoras progresivas globales.
+  - Funciones: `restaurarBotonCopiar`, `confirmarCopia`, `copiar`, `seleccionarManual`, `sacarDelContexto`, `devolverAlContexto`, `cerrarEdicion`, `limpiarMensajeError`, `elevarSobreDialogo`, `reposicionarModal`, `cerrarConfirmacion`, `pedirConfirmacion`, `mostrarAvisoApp`, `anclaCercana`, `guardarScroll`, `restaurarScroll`, `cerrarModalAbono`, `abrirModalAbono`, `registrarAbono`, `configurarEliminar`, `cerrar`, `accion`, `cerrar`, `abrir`, `registrar`, `hayModal`, `aplicarEstado`
 - **`ayuda.js`** · 127 líneas — Envío de reportes desde «Ayuda y comentarios» (SRS v2.0, sección 5.3).
   - Funciones: `escapar`, `cargarMisReportes`
 - **`categorias.js`** · 526 líneas — Selector cerrado de categorías, vinculación con deudas y conservación de
@@ -318,7 +318,7 @@ Principios que explican el resto del código:
 #### `backend/app/templates/chancucos/`
 
 - **`_dias.html`** · 24 líneas
-- **`index.html`** · 228 líneas — Plantilla: Configurar Atajos de Pago
+- **`index.html`** · 224 líneas — Plantilla: Configurar Atajos de Pago
 
 #### `backend/app/templates/componentes/`
 
@@ -326,7 +326,7 @@ Principios que explican el resto del código:
 
 #### `backend/app/templates/deudas/`
 
-- **`index.html`** · 287 líneas — Plantilla: Registro y Detalles de deudas
+- **`index.html`** · 294 líneas — Plantilla: Registro y Detalles de deudas
 
 #### `backend/app/templates/finanzas/`
 
@@ -342,7 +342,7 @@ Principios que explican el resto del código:
 #### `backend/app/templates/historial/`
 
 - **`imprimir.html`** · 41 líneas — Plantilla: Liquidación
-- **`index.html`** · 117 líneas — Plantilla: Historial de Registros
+- **`index.html`** · 114 líneas — Plantilla: Historial de Registros
 
 #### `backend/app/templates/incapacidades/`
 
@@ -370,7 +370,7 @@ Principios que explican el resto del código:
 
 #### `backend/app/templates/presupuesto/`
 
-- **`index.html`** · 816 líneas — Plantilla: Gastos y Presupuesto
+- **`index.html`** · 813 líneas — Plantilla: Gastos y Presupuesto
 
 #### `backend/app/templates/privado/`
 

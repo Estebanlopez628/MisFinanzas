@@ -68,6 +68,8 @@ En «Registro y Detalles de deudas», el formulario «Nueva deuda» ocupa en la 
 
 Al pulsar la **X** de un gasto fijo o de una meta aparece el mismo cuadro: te saluda por tu nombre, muestra la descripción y ofrece **omitir el pago 10 días** o **eliminar**. Las metas **no se pueden eliminar desde gastos fijos**: el botón aparece bloqueado y, al intentarlo, verás «No puedes eliminar una meta desde gastos fijos, debes hacerlo en el módulo de registro de metas». Cuando un gasto o meta está omitido, verás el botón **Habilitar** para reactivarlo de inmediato. En el celular, la lista de atajos muestra «Pagar los : días 15».
 
+Los títulos de cada vista muestran un emoji de color a la izquierda (💰 Mis Finanzas, 🧾 Gastos y Presupuesto, 🔗 Atajos, 📜 Historial). Al abrir o cerrar un cuadro, o al habilitar, eliminar o editar un gasto, la página permanece en el mismo punto donde estabas, sin subir al inicio. Desde **Editar deuda** también puedes corregir el acreedor.
+
 ## 6. Atajos de Pago y recibos
 
 Puedes guardar tus pagos o abonos frecuentes con su monto exacto ('Valor a pagar') para registrarlos con un solo toque y generar un comprobante visual limpio y fácil de leer.

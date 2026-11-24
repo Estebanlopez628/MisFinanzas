@@ -148,6 +148,9 @@ def main() -> None:
                     pagina.locator("#modal-aviso-cuerpo").inner_text().split()
                 )
                 comprobar(f"{prefijo}: aviso al intentar", AVISO in cuerpo, cuerpo)
+                # SRS v4.38: el aviso se cierra antes de seguir usando el modal.
+                pagina.locator("#modal-aviso [data-aviso-entendido]").click()
+                pagina.wait_for_timeout(150)
 
                 # Punto 1b: Omitir pago en la meta.
                 with pagina.expect_navigation(wait_until="networkidle", timeout=10000):

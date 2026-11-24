@@ -1150,3 +1150,26 @@ Intactos: layout de Atajos (web y móvil), cuadrícula 3 × 3 de Nueva deuda, ca
 - Usuario QA: `prueba_qa@misfinanzas.local` / `QA_MisFinanzas_2026!`.
 - `scripts/qa_v4_37.py`: **32/32 comprobaciones** en 1280 y 375 px. Suite: **909 pruebas** en verde.
 - Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-99), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.37.
+
+---
+
+## 40. SRS v4.38 — Emojis de color, scroll exacto y acreedor editable
+
+Versión 4.38 y **línea base vigente**. El documento se autodenomina v4.24; se registra v4.38. No se rehace v4.37.
+
+### 40.1 No regresión
+
+Intactos: layout de Atajos, cuadrícula 3 × 3, cabeceras de deudas, Optimistic UI, velo y blur de modales, velocímetros, donas, Consejero, factores 2026, OLB_BYTE, Ayuda y flujo de retorno de deudas desde gastos fijos.
+
+### 40.2 Cambios
+
+1. Los títulos grandes de Gastos y Presupuesto (🧾), Configurar Atajos de Pago (🔗) e Historial de Registros (📜) muestran emojis a todo color; Mis Finanzas conserva 💰. Los botones de pestaña siguen sin íconos.
+2. Antes de abrir un modal o ejecutar una acción que recargue, se guardan X e Y; al cerrarse o completarse se restauran literalmente, sin `scrollIntoView`. Aplica a Habilitar, eliminar, editar, omitir, abonos y confirmaciones, en Web y Móvil.
+3. El modal Editar de un gasto o meta inhabilitada conserva fondo sólido y `z-index: 9002`; se traslada al `<body>` mientras está abierto para escapar del contexto de apilamiento de la fila atenuada, con campos y botones contenidos.
+4. «Editar deuda» permite modificar el acreedor, conservando el resto del plan de pagos.
+
+### 40.3 Gate QA y cierre documental
+
+- Usuario QA: `prueba_qa@misfinanzas.local` / `QA_MisFinanzas_2026!`.
+- `scripts/qa_v4_38.py`: **58/58 comprobaciones** en 1280 y 375 px. Suite: **913 pruebas** en verde.
+- Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-100), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.38.

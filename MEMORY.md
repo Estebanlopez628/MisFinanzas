@@ -2588,6 +2588,18 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v124`; **909 pruebas** en verde. Gate `qa_v4_37.py` **32/32** en 1280 y 375 px: modal de meta con Eliminar bloqueado y aviso exacto, Habilitar que reactiva, Editar sólido con z-index 9002, íconos en títulos y pestañas limpias. Gates v4.30/31/33/35 sin regresiones.
 
+### 2026-11-24 — SRS v4.38: emojis de color, scroll exacto y acreedor editable (ADR-100)
+
+**Decisión (ADR-100).** El documento se autodenomina v4.24, pero la línea base es v4.37; se registra v4.38. Se atienden los cuatro puntos del propietarios y el ajuste adicional sin tocar los módulos estabilizados.
+
+**Consecuencias por punto.**
+1. `presupuesto/index.html`, `chancucos/index.html` e `historial/index.html` sustituyen los SVG por emojis a todo color (🧾, 🔗, 📜) con `.modulo__icono heroe__titulo-icono`; Mis Finanzas conserva 💰. Las pestañas siguen sin íconos.
+2. `app.js` guarda `scrollX`/`scrollY` antes de cualquier submit, confirmación o recarga (`window.guardarScrollApp`, `window.recargarManteniendoScroll`) y restaura en `load` + cuadro siguiente + 180 ms. Se retiró el `scrollIntoView` del ancla que desplazaba la vista; el retorno de deudas conserva su propio anclaje en `deudas.js`. Habilitar guarda antes de cambiar la etiqueta; Eliminar envía formulario nativo; `#quincenas` se retira del hash antes de restaurar.
+3. `estilos.css` da opacidad plena a la fila inhabilitada cuando su modal está abierto (antes solo en móvil); `app.js` traslada ese `<details>` al `<body>` solo mientras está abierto y lo devuelve al cerrar, para que no quede atrapado en el contexto de apilamiento de `opacity: 0.6`. El aviso de meta sube a `z-index: 10001` sin cerrar el modal de la X.
+4. `deudas/index.html` convierte el campo oculto `acreedor` en un campo de texto visible dentro de «Editar deuda»; el backend ya aceptaba y persistía el cambio.
+
+**Verificación.** `sw.js` en `olb-finanzas-v125`; **913 pruebas** en verde. Gate `qa_v4_38.py` **58/58** en 1280 y 375 px: emojis, modal Editar sólido y al frente con campos contenidos, aviso exacto, Habilitar y Eliminar sin salto de scroll. Gates v4.33 (30/30), v4.35 (34/34), v4.37 (32/32), v4.30 (3/3) sin regresiones.
+
 
 
 

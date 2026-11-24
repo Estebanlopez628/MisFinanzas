@@ -208,13 +208,20 @@
                             method="post"
                             action="{{ url_for('editar_deuda', id_deuda=deuda.id_deuda) }}"
                             data-proteccion>
-                        <input type="hidden" name="acreedor" value="{{ deuda.acreedor }}" />
                         <input type="hidden" name="periodicidad" value="{{ deuda.periodicidad }}" />
                         <div class="edicion-gasto__cabecera">
                           <h3 class="panel__titulo">Editar deuda</h3>
                           <button class="edicion-gasto__cerrar" type="button" data-cancelar-edicion
                                   aria-label="Cerrar edición" title="Cerrar">×</button>
                         </div>
+                        {# SRS v4.38: el acreedor también se puede corregir desde
+                           «Editar deuda», sin borrar y recrear el registro. #}
+                        <label class="campo">
+                          <span class="campo__etiqueta">Acreedor</span>
+                          <input class="campo__control" type="text" name="acreedor"
+                                 value="{{ deuda.acreedor }}"
+                                 placeholder="Banco, entidad o persona" required />
+                        </label>
                         {# SRS v4.5, sección 2: la descripción vuelve a ser
                            editable en web y móvil, sin borrar y recrear la deuda. #}
                         <label class="campo">

@@ -184,3 +184,8 @@ Principios innegociables. Toda especificación, plan y tarea debe cumplirlos de 
     - Gastos fijos normales y metas comparten el modal de la X, pero una meta nunca se elimina desde gastos fijos; se muestra el mensaje exacto de derivación al módulo de metas.
     - Los ítems omitidos ofrecen «Habilitar» para reactivarse de inmediato, y el modal Editar gasto mantiene superficie sólida por encima de todo contenido.
     - Los íconos representativos acompañan al título grande de cada vista de Mis Finanzas, no a los botones de pestaña.
+
+38. **Emojis, scroll exacto y acreedor (SRS v4.38):**
+    - Los títulos grandes usan emojis a todo color; las pestañas permanecen sin íconos.
+    - Toda acción que recargue la página conserva la posición vertical y horizontal exacta, sin re-anclaje.
+    - El modal Editar de ítems inhabilitados se muestra sólido y por encima del contenido, y el acreedor se puede corregir desde Deudas.

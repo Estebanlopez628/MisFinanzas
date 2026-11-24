@@ -204,7 +204,9 @@ datos visibles: acreedor, descripción, total adeudado, cuota, cuotas pendientes
 periodicidad. Desaparecen la tasa, la fecha límite y el abono manual. **SRS v1.9,
 ADR-58:** se admite interés implícito —`cuota × cuotas` puede superar el capital—,
 pero se calcula en privado y nunca se guarda ni se muestra; los pagos siguen
-abonando capital completo.
+abonando capital completo. **SRS v4.38:** el acreedor es editable desde
+«Editar deuda», sin borrar ni recrear el registro; se normaliza con `strip()` y
+se limita a 100 caracteres.
 
 | Campo | Tipo | Nulo | Obligatorio | Descripción / Regla |
 | --- | --- | --- | --- | --- |

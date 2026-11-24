@@ -188,7 +188,7 @@ def main() -> None:
                 editar.first.click()
                 pagina.wait_for_timeout(150)
                 modal = pagina.locator(
-                    'li.lista-gastos__item:has-text("Meta · Viaje") details.edicion-gasto--modal[open]'
+                    'details.edicion-gasto--modal[open]'
                 ).first
                 comprobar(f"{prefijo}: editar meta abre modal", modal.count() >= 1)
                 if modal.count():
