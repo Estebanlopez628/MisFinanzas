@@ -1031,3 +1031,19 @@ Intactos: «Deudas registradas», la vista móvil, el alta de deudas, las KPI y 
 - Usuario QA: `prueba_qa@misfinanzas.local` / `QA_MisFinanzas_2026!`.
 - `scripts/qa_v4_31.py`: **10/10 comprobaciones** en 1280 y 375 px, con ancho 1080 px, columnas 348 px centradas en 274/640/1006, alta de deuda correcta y móvil sin desbordamiento. Suite: **896 pruebas** en verde.
 - Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-93), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.31.
+
+---
+
+## 34. SRS v4.32 — Campos más compactos en Nueva deuda
+
+Versión 4.32 y **línea base vigente**. Ajuste puntual sobre v4.31, sin tocar móvil ni «Deudas registradas».
+
+### 34.1 Cambios
+
+1. La grilla conserva el ancho de las KPI, pero con `padding-inline: 12px`: los campos quedan separados 12 px de los bordes del panel.
+2. Las cajas de texto bajan de 50 a 42 px de alto, con padding 8/12 y tipografía 0.9 rem.
+
+### 34.2 Gate QA y cierre documental
+
+- `scripts/qa_v4_31.py`: **12/12 comprobaciones** (márgenes 12/12, cajas de 42 px, grilla y alta correctas). Suite: **896 pruebas** en verde.
+- Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-94), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.32.

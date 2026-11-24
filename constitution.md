@@ -166,3 +166,4 @@ Principios innegociables. Toda especificación, plan y tarea debe cumplirlos de 
 33. **Formulario de Nueva deuda en escritorio (SRS v4.31):**
     - La tarjeta ocupa el ancho exacto de las tres KPI y sus seis campos forman una grilla 3 × 3 con base alineada y pie separado por una divisoria.
     - Las columnas se alinean con las KPI compensando el padding del panel; móvil y «Deudas registradas» no cambian.
+    - Las cajas de texto son compactas (42 px) y conservan 12 px de separación respecto a los bordes del contenedor.

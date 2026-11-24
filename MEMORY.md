@@ -2522,6 +2522,16 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v118`; **896 pruebas** en verde. Gate `qa_v4_31.py` **10/10**: panel y KPI miden 1080 px, grilla 348/348/348 con dos filas, centros de columna 274/640/1006 idénticos a los de las KPI, pie con borde superior, alta de deuda correcta y móvil sin desbordamiento.
 
+### 2026-11-23 — SRS v4.32: campos más compactos (ADR-94)
+
+**Decisión (ADR-94).** El propietario observó que las cajas de texto quedaban demasiado grandes y casi tocaban los bordes laterales del contenedor. Se ajusta el formulario sin deshacer la grilla 3 × 3.
+
+**Consecuencias aplicadas.**
+- La grilla mantiene el ancho de las KPI (`margin-inline: -23px`) pero añade `padding-inline: 12px`, dejando 12 px de aire a cada lado; las columnas pasan de 348 a 340 px y sus centros quedan a 8 px de los de las KPI.
+- `.fila-campos--deuda-nueva .campo__control` baja a `min-height: 42px`, `padding: 8px 12px` y `font-size: 0.9rem` (antes 50 px, 12/14 px y 0.95 rem).
+
+**Verificación.** `sw.js` en `olb-finanzas-v119`; **896 pruebas** en verde. Gate `qa_v4_31.py` **12/12**: márgenes izquierdo y derecho de 12 px, cajas de 42 px, grilla 340/340/340, alta de deuda y móvil sin cambios.
+
 
 
 

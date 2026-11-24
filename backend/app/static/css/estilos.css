@@ -6309,17 +6309,24 @@ dialog::backdrop {
     margin-top: 0;
   }
 
-  /* El panel tiene 22 px de padding y 1 px de borde: se compensan para que
-     las tres columnas del formulario caigan exactamente sobre las tres KPI. */
+  /* El panel tiene 22 px de padding y 1 px de borde: se compensa para conservar
+     el ancho de las KPI, pero con 12 px de aire interior para no tocar los bordes. */
   .fila-campos--deuda-nueva,
   .acciones-formulario--deuda-nueva {
     margin-inline: -23px;
+    padding-inline: 12px;
   }
 
   .fila-campos--deuda-nueva {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     align-items: end;
     gap: 18px;
+  }
+
+  .fila-campos--deuda-nueva .campo__control {
+    min-height: 42px;
+    padding: 8px 12px;
+    font-size: 0.9rem;
   }
 
   .acciones-formulario--deuda-nueva {

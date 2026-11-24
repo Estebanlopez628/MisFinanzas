@@ -105,9 +105,22 @@ def main() -> None:
             centros_campos = [c["x"] + c["width"] / 2 for c in cajas[:3]]
             centros_kpi = [c["x"] + c["width"] / 2 for c in kpis]
             comprobar(
-                "web: fila 1 alineada con KPI",
-                all(abs(centros_campos[i] - centros_kpi[i]) < 4 for i in range(3)),
+                "web: fila 1 alineada con KPI con margen interior",
+                all(abs(centros_campos[i] - centros_kpi[i]) <= 12 for i in range(3)),
                 f"{[round(c) for c in centros_campos]} vs {[round(c) for c in centros_kpi]}",
+            )
+            x_panel = pagina.locator(".rejilla-paneles--deudas > .panel").first.bounding_box()["x"]
+            margen_izq = cajas[0]["x"] - x_panel
+            comprobar(
+                "web: campos separados de los bordes",
+                margen_izq >= 10
+                and (x_panel + ancho_panel - (cajas[2]["x"] + cajas[2]["width"])) >= 10,
+                f"izq={round(margen_izq)} der={round(x_panel + ancho_panel - (cajas[2]['x'] + cajas[2]['width']))}",
+            )
+            comprobar(
+                "web: cajas de texto más bajas",
+                cajas[0]["height"] <= 44,
+                f"{round(cajas[0]['height'])} px",
             )
             comprobar(
                 "web: fila 2 debajo de la fila 1",
