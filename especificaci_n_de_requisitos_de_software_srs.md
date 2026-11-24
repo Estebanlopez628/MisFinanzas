@@ -1047,3 +1047,25 @@ Versión 4.32 y **línea base vigente**. Ajuste puntual sobre v4.31, sin tocar m
 
 - `scripts/qa_v4_31.py`: **12/12 comprobaciones** (márgenes 12/12, cajas de 42 px, grilla y alta correctas). Suite: **896 pruebas** en verde.
 - Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-94), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.32.
+
+---
+
+## 35. SRS v4.33 — Atajos con distribución exacta
+
+Versión 4.33 y **línea base vigente**. Sustituye la distribución de v4.30 en el componente de Atajos de pago.
+
+### 35.1 No regresión
+
+Intactos: vista primaria móvil, cálculos, Optimistic UI, donas, velocímetros y demás modales.
+
+### 35.2 Cambios
+
+1. Web (`>= 768px`): fila 1 descripción + «Fecha pago: Día X» con línea inferior azul; fila 2 «REF: …» a la izquierda y «Valor a Pagar: …» a la derecha; fila 3 Copiar bajo REF y Pagar azul bajo el valor.
+2. Móvil (`< 768px`): la lista no cambia; al tocar el atajo, el modal muestra la misma distribución.
+3. Los botones Copiar y Pagar se igualan a 34 px de alto para quedar al mismo nivel.
+
+### 35.3 Gate QA y cierre documental
+
+- Usuario QA: `prueba_qa@misfinanzas.local` / `QA_MisFinanzas_2026!`.
+- `scripts/qa_v4_33.py`: **30/30 comprobaciones** en 1280 y 375 px. Suite: **899 pruebas** en verde.
+- Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-95), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.33.

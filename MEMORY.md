@@ -2532,6 +2532,17 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v119`; **896 pruebas** en verde. Gate `qa_v4_31.py` **12/12**: márgenes izquierdo y derecho de 12 px, cajas de 42 px, grilla 340/340/340, alta de deuda y móvil sin cambios.
 
+### 2026-11-23 — SRS v4.33: atajos con distribución exacta (ADR-95)
+
+**Decisión (ADR-95).** Se sustituye la distribución de v4.30 por la especificada: descripción a la izquierda y «Fecha pago: Día X» a la derecha con línea inferior azul; segunda fila con «REF: …» pegado a la izquierda y «Valor a Pagar: …» a la derecha; tercera fila con Copiar bajo REF y Pagar bajo el valor. La vista primaria móvil no cambia: solo el modal.
+
+**Consecuencias aplicadas.**
+- Macro `atajo_detalle(item)` compartida por `.atajo-web` (solo ≥768 px) y `.atajo-detalle--modal` (móvil). Se ocultan los elementos heredados en web.
+- `.atajo-detalle__fecha` con `border-bottom: 2px solid var(--accent-blue)`.
+- Los botones se igualan a `height: 34px` con `box-sizing: border-box` para que queden al mismo nivel.
+
+**Verificación.** `sw.js` en `olb-finanzas-v120`; **899 pruebas** en verde. Gate `qa_v4_33.py` **30/30** en 1280 y 375 px: tres filas, textos exactos, línea azul, alineación izquierda/derecha y botones lado a lado, sin desbordamiento ni errores.
+
 
 
 

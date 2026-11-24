@@ -7,20 +7,20 @@ from pathlib import Path
 RUTA = Path(__file__).resolve().parent.parent / "app"
 
 
-def test_atajos_web_dos_filas() -> None:
-    """El atajo se reparte en dos filas solo desde 768 px."""
+def test_atajos_distribucion_v433() -> None:
+    """La distribución de tres filas se comparte entre tarjeta y modal."""
     html = (RUTA / "templates/finanzas/index.html").read_text(encoding="utf-8")
     css = (RUTA / "static/css/estilos.css").read_text(encoding="utf-8")
 
-    assert "Valor a<br />Pagar:" in html
-    inicio = css.index("SRS v4.30")
-    bloque = css[inicio : inicio + 1800]
-    assert "@media (min-width: 768px)" in bloque
-    regla = bloque.split(".lista-atajos__item {", 1)[1].split("}", 1)[0]
-    assert "grid-template-rows: auto auto" in regla
-    assert ".lista-atajos__texto {" in bloque
-    assert "display: contents" in bloque
-    assert "grid-row: 2" in bloque
+    for texto in (
+        "Fecha pago:", "REF:", "Valor a Pagar:", 'class="atajo-web"',
+        'class="atajo-detalle--modal"',
+    ):
+        assert texto in html
+    assert html.count("atajo_detalle(item)") >= 2
+    assert "border-bottom: 2px solid var(--accent-blue)" in css
+    assert ".atajo-web {" in css
+    assert "display: block" in css
 
 
 def test_confirmacion_se_eleva_sobre_dialog() -> None:

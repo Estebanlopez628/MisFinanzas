@@ -2,6 +2,28 @@
 {% from "finanzas/_gasto_fijo.html" import fila_gasto with context %}
 {% from "_categorias.html" import selector_categoria, vinculo_deuda, vinculo_condicional with context %}
 {% from "chancucos/_dias.html" import dias_pago with context %}
+
+{% macro atajo_detalle(item) -%}
+  {# SRS v4.33: distribución exacta compartida por la tarjeta web y el modal móvil. #}
+  <div class="atajo-detalle">
+    <div class="atajo-detalle__fila atajo-detalle__fila--cabecera">
+      <span class="atajo-detalle__descripcion">{{ item.descripcion }}</span>
+      <span class="atajo-detalle__fecha">Fecha pago: {{ dias_pago(item) if item.dia_pago_1 else 'Sin día definido' }}</span>
+    </div>
+    <div class="atajo-detalle__fila atajo-detalle__fila--datos">
+      <span class="atajo-detalle__ref">REF: {{ item.numero_referencia }}</span>
+      <span class="atajo-detalle__valor">Valor a Pagar: {{ item.valor_pago | cop if item.valor_pago else 'No definido' }}</span>
+    </div>
+    <div class="atajo-detalle__fila atajo-detalle__fila--acciones">
+      <button class="boton boton--secundario boton--pequeno" type="button"
+              data-copiar="{{ item.numero_referencia }}">Copiar</button>
+      {% if item.url_pago %}
+        <a class="boton boton--primario boton--pequeno" href="{{ item.url_pago }}"
+           target="_blank" rel="noopener">Pagar</a>
+      {% endif %}
+    </div>
+  </div>
+{%- endmacro %}
 {% block titulo %}Mis Finanzas{% endblock %} {% block
 contenido %}
 <section class="heroe">
@@ -222,6 +244,9 @@ contenido %}
           >
           {% endif %}
 
+          {# SRS v4.33: tarjeta completa solo en escritorio. #}
+          <div class="atajo-web">{{ atajo_detalle(item) }}</div>
+
           {# SRS v1.9: en móvil solo se ven descripción y día; al tocar la fila
              se abre este modal centrado con toda la información del atajo. #}
           <details class="edicion-gasto edicion-gasto--modal atajo-finanzas-modal">
@@ -232,29 +257,8 @@ contenido %}
                 <button class="edicion-gasto__cerrar" type="button" data-cancelar-edicion
                         aria-label="Cerrar detalle" title="Cerrar">×</button>
               </div>
-              <dl class="atajo-modal__datos">
-                <div><dt>Descripción</dt><dd>{{ item.descripcion }}</dd></div>
-                <div>
-                  <dt>Valor a pagar</dt>
-                  <dd>{{ item.valor_pago | cop if item.valor_pago else 'No definido' }}</dd>
-                </div>
-                <div><dt>Días de pago</dt><dd>{{ dias_pago(item) if item.dia_pago_1 else 'Sin día definido' }}</dd></div>
-                <div>
-                  <dt>Referencia</dt>
-                  <dd>
-                    <code>{{ item.numero_referencia }}</code>
-                    <button class="boton boton--secundario boton--pequeno atajo-accion" type="button"
-                            data-copiar="{{ item.numero_referencia }}">Copiar</button>
-                  </dd>
-                </div>
-                <div><dt>Favorito</dt><dd>{{ 'Sí' if item.favorito else 'No' }}</dd></div>
-              </dl>
-              <div class="acciones-formulario acciones-formulario--edicion">
-                {% if item.url_pago %}
-                  <a class="boton boton--primario boton--pequeno atajo-accion" href="{{ item.url_pago }}"
-                     target="_blank" rel="noopener">Pagar</a>
-                {% endif %}
-              </div>
+              {# SRS v4.33: el modal móvil usa la misma distribución que la tarjeta web. #}
+              <div class="atajo-detalle--modal">{{ atajo_detalle(item) }}</div>
             </div>
           </details>
         </li>

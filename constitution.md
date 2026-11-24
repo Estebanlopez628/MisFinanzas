@@ -167,3 +167,6 @@ Principios innegociables. Toda especificación, plan y tarea debe cumplirlos de 
     - La tarjeta ocupa el ancho exacto de las tres KPI y sus seis campos forman una grilla 3 × 3 con base alineada y pie separado por una divisoria.
     - Las columnas se alinean con las KPI compensando el padding del panel; móvil y «Deudas registradas» no cambian.
     - Las cajas de texto son compactas (42 px) y conservan 12 px de separación respecto a los bordes del contenedor.
+
+34. **Distribución exacta de atajos (SRS v4.33):**
+    - Web y modal móvil comparten la misma estructura de tres filas con «Fecha pago: Día X» subrayada en azul y botones igualados; la vista primaria móvil se mantiene intacta.

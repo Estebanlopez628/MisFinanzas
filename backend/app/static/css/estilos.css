@@ -978,56 +978,72 @@ a.tarjeta:focus-visible {
   letter-spacing: 0.04em;
 }
 
-/* SRS v4.30: en escritorio cada atajo se lee en dos filas: descripción, valor
-   con salto de línea y día arriba; referencia, Copiar y Pagar abajo. */
+/* SRS v4.33: distribución exacta del atajo, compartida por tarjeta web y modal. */
+.atajo-detalle {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.atajo-detalle__fila {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.atajo-detalle__descripcion {
+  font-weight: 600;
+  font-size: 0.9rem;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.atajo-detalle__fecha {
+  color: #bae6fd;
+  border-bottom: 2px solid var(--accent-blue);
+  padding-bottom: 2px;
+  white-space: nowrap;
+  font-size: 0.85rem;
+}
+
+.atajo-detalle__ref,
+.atajo-detalle__valor {
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.atajo-detalle__fila--acciones > .boton {
+  min-width: 7rem;
+  height: 34px;
+  line-height: 1;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.atajo-web {
+  display: none;
+}
+
 @media (min-width: 768px) {
-  .lista-atajos__item {
-    grid-template-columns: minmax(0, 1fr) auto auto;
-    grid-template-rows: auto auto;
-    row-gap: 8px;
-    align-items: center;
-  }
-
-  .lista-atajos__texto {
-    display: contents;
-  }
-
-  .lista-atajos__descripcion {
-    grid-column: 1;
-    grid-row: 1;
-    white-space: normal;
-    overflow: visible;
-    text-overflow: clip;
-  }
-
-  .lista-atajos__texto small.ayuda {
-    grid-column: 2;
-    grid-row: 1;
-    margin: 0;
-    text-align: right;
-    white-space: nowrap;
-  }
-
-  .lista-atajos__texto .badge--fecha {
-    grid-column: 3;
-    grid-row: 1;
-    justify-self: end;
-  }
-
-  .lista-atajos__referencia {
-    grid-column: 1 / 3;
-    grid-row: 2;
-    justify-self: start;
-  }
-
-  .lista-atajos__item > a {
-    grid-column: 3;
-    grid-row: 2;
-    justify-self: end;
-  }
-
+  .lista-atajos__item > .lista-atajos__texto,
+  .lista-atajos__item > .lista-atajos__referencia,
+  .lista-atajos__item > a,
   .lista-atajos__item > details {
     display: none;
+  }
+
+  .lista-atajos__item {
+    display: block;
+  }
+
+  .atajo-web {
+    display: block;
   }
 }
 
