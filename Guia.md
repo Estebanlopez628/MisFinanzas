@@ -1423,7 +1423,7 @@ tramos con su descuento, más el listado de incapacidades registradas.
 
 Cuatro tarjetas de resumen, formulario de seis campos y tabla tipo Excel con
 las columnas Acreedor, Total Adeudado, Cuota, No. de cuotas pendientes (en tres
-líneas, columna estrecha), Periodicidad y Estado (SRS v1.9, sección 2.3). Hay
+líneas, columna estrecha), Intervalo de pago y Estado (SRS v1.9, sección 2.3). Hay
 **una sola fila por deuda**: se eliminaron el bloque de «Cuotas aplicadas» y el
 mensaje de deuda sin cuotas. Al final de cada fila van el lápiz de edición y la
 × de borrado; el modal centrado ofrece solo Total Adeudado, Cuota y No. Cuotas,

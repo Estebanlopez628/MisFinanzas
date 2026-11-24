@@ -122,6 +122,23 @@ def main() -> None:
                 cajas[0]["height"] <= 44,
                 f"{round(cajas[0]['height'])} px",
             )
+            alturas = [
+                pagina.locator(f'[name="{nombre}"]').first.bounding_box()["height"]
+                for nombre in nombres
+            ]
+            comprobar(
+                "web: los seis controles miden igual",
+                max(alturas) - min(alturas) < 1,
+                str([round(a) for a in alturas]),
+            )
+            texto_formulario = pagina.locator(".fila-campos--deuda-nueva").inner_text()
+            normalizado = texto_formulario.lower()
+            comprobar(
+                "web: etiqueta Intervalo de pago",
+                "intervalo de pago" in normalizado
+                and "periodicidad" not in normalizado,
+                texto_formulario[:80],
+            )
             comprobar(
                 "web: fila 2 debajo de la fila 1",
                 cajas[3]["y"] > cajas[0]["y"] + 20

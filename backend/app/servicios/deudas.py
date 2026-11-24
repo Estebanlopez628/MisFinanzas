@@ -92,7 +92,7 @@ def _limpiar_periodicidad(periodicidad: str) -> str:
     """
     normalizada = (periodicidad or PERIODICIDAD_MENSUAL).strip().upper()
     if normalizada not in PERIODICIDADES:
-        raise ValueError("La periodicidad debe ser QUINCENAL o MENSUAL.")
+        raise ValueError("El intervalo de pago debe ser QUINCENAL o MENSUAL.")
     return normalizada
 
 

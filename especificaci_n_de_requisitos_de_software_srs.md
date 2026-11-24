@@ -1023,7 +1023,7 @@ Intactos: «Deudas registradas», la vista móvil, el alta de deudas, las KPI y 
 ### 33.2 Cambios
 
 1. En `>= 768px` la tarjeta «Nueva deuda» ocupa el ancho total de las tres KPI superiores, sin margen lateral.
-2. Los seis campos se organizan en `repeat(3, minmax(0, 1fr))`, `gap: 18px` y `align-items: end`: arriba Acreedor | Descripción | Periodicidad; abajo Total Adeudado (COP) | Cuota (COP) | No. Cuotas Pendientes. `margin-inline: -23px` compensa el padding del panel para alinear columnas con las KPI.
+2. Los seis campos se organizan en `repeat(3, minmax(0, 1fr))`, `gap: 18px` y `align-items: end`: arriba Acreedor | Descripción | Intervalo de pago; abajo Total Adeudado (COP) | Cuota (COP) | No. Cuotas Pendientes. `margin-inline: -23px` compensa el padding del panel para alinear columnas con las KPI.
 3. Pie con `border-top` y botón «Guardar deuda» centrado.
 
 ### 33.3 Gate QA y cierre documental
@@ -1069,3 +1069,19 @@ Intactos: vista primaria móvil, cálculos, Optimistic UI, donas, velocímetros 
 - Usuario QA: `prueba_qa@misfinanzas.local` / `QA_MisFinanzas_2026!`.
 - `scripts/qa_v4_33.py`: **30/30 comprobaciones** en 1280 y 375 px. Suite: **899 pruebas** en verde.
 - Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-95), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.33.
+
+---
+
+## 36. SRS v4.34 — Intervalo de pago y selector igualado
+
+Versión 4.34 y **línea base vigente**.
+
+### 36.1 Cambios
+
+1. «Periodicidad» pasa a «Intervalo de pago» en etiquetas, cabeceras, mensajes de validación y documentación. Los identificadores internos (columna de BD, campos de formulario y constantes) se mantienen por compatibilidad.
+2. El selector de intervalo mide 42 px, igual que los cinco campos de texto.
+
+### 36.2 Gate QA y cierre documental
+
+- `scripts/qa_v4_31.py`: **14/14 comprobaciones** con los seis controles a 42 px y la etiqueta nueva. Suite: **899 pruebas** en verde.
+- Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-96), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.34.

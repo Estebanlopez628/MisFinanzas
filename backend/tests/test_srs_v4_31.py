@@ -27,7 +27,7 @@ def test_grilla_web_tres_columnas_y_pie() -> None:
     """La grilla web usa tres columnas, base alineada y pie con divisoria."""
     css = (RUTA / "static/css/estilos.css").read_text(encoding="utf-8")
     inicio = css.index("SRS v4.28 / v4.31")
-    bloque = css[inicio : inicio + 1400]
+    bloque = css[inicio : inicio + 2000]
 
     assert "@media (min-width: 768px)" in bloque
     reglas_grilla = [

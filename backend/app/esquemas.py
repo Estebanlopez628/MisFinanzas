@@ -339,7 +339,7 @@ class DeudaNueva(_FormularioBase):
         """
         normal = valor.strip().upper()
         if normal not in servicio_deudas.PERIODICIDADES:
-            raise ValueError("La periodicidad debe ser QUINCENAL o MENSUAL.")
+            raise ValueError("El intervalo de pago debe ser QUINCENAL o MENSUAL.")
         return normal
 
     @field_validator("tasa_implicita", mode="before")

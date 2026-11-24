@@ -648,7 +648,7 @@ Recálculo en tiempo real (<100 ms) sin recargar página. Se implementa con func
 ### 2026-11-21 — Tabla de deudas en móvil tipo Excel (ajusta ADR-62)
 
 - La tabla dejó de ser una sola caja con cabecera sticky, que en el celular se arrastraba con el dedo. En móvil la tabla se convierte en bloques: la cabecera queda fija y solo se desplaza el cuerpo, con altura de cuatro filas (`max-height: 227px`, medido en Chromium a 390 px).
-- Periodicidad y estado pasan a una línea bajo el acreedor (`.deudas__detalle-movil`), para que las cuatro columnas quepan. Tocar una fila sigue abriendo el modal de edición, centrado.
+- Intervalo de pago y estado pasan a una línea bajo el acreedor (`.deudas__detalle-movil`), para que las cuatro columnas quepan. Tocar una fila sigue abriendo el modal de edición, centrado.
 - Verificado: 4 filas visibles, la cabecera queda en su sitio al deslizar, `scrollY` sin cambios y sin desbordamiento horizontal. Pendiente: iPhone real.
 - `sw.js` en `olb-finanzas-v82`; prueba `test_deudas_ui_v19.py` actualizada al nuevo contrato.
 
@@ -2061,7 +2061,7 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Cambios realizados**
 1. Se elimina por completo «Próximas cuotas» y el cálculo de `planes` en `routers/deudas.py`; bajo cada deuda solo se listan las cuotas aplicadas. No hay campos ni columnas de interés.
-2. La tabla usa las seis columnas pedidas: Acreedor, Total Adeudado, Cuota, No. Cuotas Pendientes, Periodicidad y Estado, más una séptima de acciones.
+2. La tabla usa las seis columnas pedidas: Acreedor, Total Adeudado, Cuota, No. Cuotas Pendientes, Intervalo de pago y Estado, más una séptima de acciones.
 3. Escritorio: lápiz (macro `boton_editar`) y × al final de cada fila. El lápiz abre el patrón `<details class="edicion-gasto--modal">` con solo Total Adeudado, Cuota y No. Cuotas Pendientes, más «Actualizar» y «Cancelar»; acreedor, descripción y periodicidad viajan ocultos para la ruta de edición de 2.2.
 4. Móvil: CSS oculta los iconos de la fila y `js/deudas.js` abre el mismo modal al tocar cualquier parte de `tr[data-deuda-fila]`, cerrando primero cualquier otro modal abierto. `sw.js` pasa a `olb-finanzas-v51`.
 
@@ -2516,7 +2516,7 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Consecuencias aplicadas.**
 - En ≥768 px `.rejilla-paneles--deudas > .panel:first-child` deja de tener `max-width: 900px` y `margin-inline: auto`: ocupa el mismo ancho que `.rejilla-tarjetas--deudas` (1080 px medidos).
-- Los seis campos se reordenan como Acreedor | Descripción | Periodicidad (fila 1) y Total Adeudado | Cuota | No. Cuotas (fila 2), con `.fila-campos--deuda-nueva` en `repeat(3, minmax(0, 1fr))`, `gap: 18px` y `align-items: end`.
+- Los seis campos se reordenan como Acreedor | Descripción | Intervalo de pago (fila 1) y Total Adeudado | Cuota | No. Cuotas (fila 2), con `.fila-campos--deuda-nueva` en `repeat(3, minmax(0, 1fr))`, `gap: 18px` y `align-items: end`.
 - Para que las columnas caigan exactamente sobre las KPI se compensa el padding del panel (22 px + 1 px de borde) con `margin-inline: -23px` en la grilla y en el pie.
 - El botón «Guardar deuda» se envuelve en `.acciones-formulario--deuda-nueva`, con `border-top` y centrado.
 
@@ -2542,6 +2542,16 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 - Los botones se igualan a `height: 34px` con `box-sizing: border-box` para que queden al mismo nivel.
 
 **Verificación.** `sw.js` en `olb-finanzas-v120`; **899 pruebas** en verde. Gate `qa_v4_33.py` **30/30** en 1280 y 375 px: tres filas, textos exactos, línea azul, alineación izquierda/derecha y botones lado a lado, sin desbordamiento ni errores.
+
+### 2026-11-23 — SRS v4.34: intervalo de pago y selector igualado (ADR-96)
+
+**Decisión (ADR-96).** El propietario pidió que el selector de periodicidad no fuera más grande que los otros campos y que la palabra «Periodicidad» se cambiara por «Intervalo de pago» en todo el programa.
+
+**Consecuencias aplicadas.**
+- `.fila-campos--deuda-nueva select.campo__control` fija `height: 42px` y `padding-block: 8px`, igualando los seis controles (medidos 42/42/42/42/42/42 px).
+- Se renombran las etiquetas y cabeceras visibles en `deudas/index.html`, los mensajes de validación en `esquemas.py` y `servicios/deudas.py`, la prueba de UI y los documentos `AGENTS.md`, `MEMORY.md`, `Guia.md`, SRS y `constitution.md`. Los identificadores internos (`periodicidad`, `PERIODICIDAD_*`, columna `deudas.periodicidad` y `name="periodicidad"`) se conservan para no romper la base ni los formularios.
+
+**Verificación.** `sw.js` en `olb-finanzas-v121`; **899 pruebas** en verde. Gate `qa_v4_31.py` **14/14**: seis controles a 42 px y etiqueta «INTERVALO DE PAGO» sin que aparezca «Periodicidad». No hay etiquetas con la palabra antigua en las plantillas.
 
 
 

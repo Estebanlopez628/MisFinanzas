@@ -57,7 +57,7 @@ def test_la_tabla_tipo_excel_no_muestra_próximas_cuotas_ni_intereses(
         "Total Adeudado",
         "Cuota",
         "No. de",
-        "Periodicidad",
+        "Intervalo de pago",
         "Vinculación",
         "Estado",
     ):

@@ -170,3 +170,4 @@ Principios innegociables. Toda especificación, plan y tarea debe cumplirlos de 
 
 34. **Distribución exacta de atajos (SRS v4.33):**
     - Web y modal móvil comparten la misma estructura de tres filas con «Fecha pago: Día X» subrayada en azul y botones igualados; la vista primaria móvil se mantiene intacta.
+    - La etiqueta visible es «Intervalo de pago»; todos los controles de una fila comparten la misma altura.
