@@ -1127,3 +1127,26 @@ Intactos: layout de atajos en escritorio y su modal, cuadrícula 3 × 3, cabecer
 - Usuario QA: `prueba_qa@misfinanzas.local` / `QA_MisFinanzas_2026!`.
 - `scripts/qa_v4_35.py`: **32/32 comprobaciones** en 1280 y 375 px. Suite: **905 pruebas** en verde.
 - Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-98), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.36.
+
+---
+
+## 39. SRS v4.37 — Modal unificado, Habilitar e íconos en títulos
+
+Versión 4.37 y **línea base vigente**. El documento se autodenomina v4.24; se registra v4.37. No se rehace v4.36.
+
+### 39.1 No regresión
+
+Intactos: layout de Atajos (web y móvil), cuadrícula 3 × 3 de Nueva deuda, cabeceras de deudas, color y blur de modales, Optimistic UI, velocímetros, donas, Consejero, factores 2026, OLB_BYTE y Ayuda.
+
+### 39.2 Cambios
+
+1. La X abre el mismo modal en gastos fijos normales y en metas. «Omitir pago (10 dias)» aplica a ambos; «Eliminar Gasto» queda bloqueado en metas con el mensaje exacto «No puedes eliminar una meta desde gastos fijos, debes hacerlo en el módulo de registro de metas.»
+2. En ítems omitidos/inhabilitados, «Habilitar» reemplaza a «Abonar» y reactiva de inmediato el gasto o la meta.
+3. El modal Editar gasto usa superficie 100 % opaca y `z-index: 9002`, sin que se trasluzcan montos ni tarjetas de fondo; conserva el scroll.
+4. Los íconos salen de las pestañas y pasan al `<h1>` de Mis Finanzas, Gastos y Presupuesto, Configurar Atajos de Pago e Historial de Registros.
+
+### 39.3 Gate QA y cierre documental
+
+- Usuario QA: `prueba_qa@misfinanzas.local` / `QA_MisFinanzas_2026!`.
+- `scripts/qa_v4_37.py`: **32/32 comprobaciones** en 1280 y 375 px. Suite: **909 pruebas** en verde.
+- Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-99), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.37.

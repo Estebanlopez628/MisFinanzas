@@ -28,7 +28,7 @@ def _admin(bd):
 
 
 def test_omitir_pago_diez_dias(cliente_admin: TestClient, bd) -> None:
-    """El gasto normal se omite 10 días y la meta queda excluida."""
+    """El gasto normal y la meta se omiten 10 días (modal unificado)."""
     cuenta = _admin(bd)
     hoy = date.today()
     gasto = gastos.crear_gasto(
@@ -49,9 +49,10 @@ def test_omitir_pago_diez_dias(cliente_admin: TestClient, bd) -> None:
         bd, cuenta.id_usuario, hoy.year, hoy.month
     )
     gasto_meta = bd.query(Gasto).filter(Gasto.id_proyeccion == meta.id_proyeccion).first()
+    # SRS v4.37: el modal unificado también permite omitir metas 10 días.
     assert pagos_metas.omitir_pago(
         bd, cuenta.id_usuario, gasto_meta.id_gasto, hoy
-    ) is None
+    ) is not None
 
 
 def test_modal_omitir_y_editar_gasto() -> None:
@@ -83,14 +84,14 @@ def test_modales_opacos_y_capas() -> None:
 
 
 def test_iconos_subnav() -> None:
-    """Las tres pestañas secundarias llevan ícono y la primera no."""
+    """SRS v4.37: las pestañas van limpias y el ícono vive en el título grande."""
     html = (RUTA / "templates/finanzas/_subnav.html").read_text(encoding="utf-8")
-    assert html.count('class="subnav-finanzas__icono"') == 3
-    inicio = html.index("Resumen / Liquidación")
-    assert "subnav-finanzas__icono" not in html[:inicio]
+    assert "subnav-finanzas__icono" not in html
+    for nombre in ("presupuesto/index.html", "chancucos/index.html", "historial/index.html"):
+        vista = (RUTA / "templates" / nombre).read_text(encoding="utf-8")
+        assert 'class="heroe__titulo-icono"' in vista
     css = (RUTA / "static/css/estilos.css").read_text(encoding="utf-8")
-    assert ".subnav-finanzas__icono" in css
-    assert "gap: 8px" in css
+    assert ".heroe__titulo-icono" in css
 
 
 def test_cabeceras_deudas_exactas() -> None:

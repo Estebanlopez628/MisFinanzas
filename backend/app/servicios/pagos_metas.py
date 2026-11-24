@@ -598,27 +598,23 @@ def inhabilitar_gasto(
 def omitir_pago(
     bd: Session, id_usuario: str, id_gasto: str, hoy: date
 ) -> Gasto | None:
-    """Omite temporalmente el cobro de un gasto fijo normal durante 10 días.
+    """Omite temporalmente el cobro de un gasto fijo o de una meta durante 10 días.
 
-    SRS v4.35: a diferencia de las metas (15 días), el gasto se conserva y
-    deja de contarse en los compromisos activos hasta `hoy + 10`; pasado ese
-    plazo vuelve a incluirse automáticamente sin intervención manual.
+    SRS v4.37: el modal de la X es el mismo para gastos normales y metas
+    proyectadas. En ambos casos el registro se conserva y deja de contarse en
+    los compromisos hasta `hoy + 10`, fecha en que se reactiva automáticamente.
 
     Args:
         bd: Sesión de base de datos.
         id_usuario: Dueño del gasto.
-        id_gasto: Gasto fijo a omitir; no debe ser de una meta.
+        id_gasto: Gasto fijo o de meta a omitir.
         hoy: Fecha en la que se activa la omisión.
 
     Returns:
-        El gasto actualizado, o `None` si no existe, es ajeno o es de una meta.
+        El gasto actualizado, o `None` si no existe o es ajeno.
     """
     gasto = bd.get(Gasto, id_gasto)
-    if (
-        gasto is None
-        or gasto.id_usuario != id_usuario
-        or gasto.id_proyeccion is not None
-    ):
+    if gasto is None or gasto.id_usuario != id_usuario:
         return None
 
     gasto.pagado = False
@@ -626,6 +622,38 @@ def omitir_pago(
     gasto.monto_pagado = None
     gasto.check_visible = False
     gasto.inhabilitado_hasta = hoy + timedelta(days=DIAS_OMITIDO)
+    bd.commit()
+    sincronizar_gasto(bd, gasto)
+    bd.refresh(gasto)
+    return gasto
+
+
+def habilitar_gasto(
+    bd: Session, id_usuario: str, id_gasto: str
+) -> Gasto | None:
+    """Reactiva de inmediato un gasto fijo o meta previamente omitido.
+
+    SRS v4.37: el botón «Habilitar» sustituye a «Abonar» en los ítems
+    inhabilitados. Limpia la fecha de omisión y devuelve el gasto a los
+    compromisos de la quincena sin esperar los diez días.
+
+    Args:
+        bd: Sesión de base de datos.
+        id_usuario: Dueño del gasto.
+        id_gasto: Gasto a reactivar.
+
+    Returns:
+        El gasto reactivado, o `None` si no existe o es ajeno.
+    """
+    gasto = bd.get(Gasto, id_gasto)
+    if gasto is None or gasto.id_usuario != id_usuario:
+        return None
+
+    gasto.inhabilitado_hasta = None
+    gasto.pagado = False
+    gasto.pagado_en = None
+    gasto.monto_pagado = None
+    gasto.check_visible = True
     bd.commit()
     sincronizar_gasto(bd, gasto)
     bd.refresh(gasto)

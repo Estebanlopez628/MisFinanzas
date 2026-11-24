@@ -133,47 +133,19 @@
           </div>
         </form>
       </details>
-      {% if gasto.id_proyeccion %}
-        {# SRS v4.35: las metas conservan su X y su salto de 15 días. #}
-        <form method="post"
-              action="{{ url_for('eliminar_gasto', id_gasto=gasto.id_gasto) }}"
-              data-proteccion>
-          <input type="hidden" name="origen" value="{{ origen }}" />
-          <button class="boton boton--peligro boton-circular" type="submit"
-                  aria-label="Saltar pago de {{ gasto.descripcion }}"
-                  title="Saltar este pago 15 días">×</button>
-        </form>
-      {% else %}
-        {# SRS v4.35: gasto fijo normal → modal «Omitir pago / Eliminar». #}
-        <button class="boton boton--peligro boton-circular" type="button"
-                data-omitir-gasto data-id-gasto="{{ gasto.id_gasto }}"
-                data-origen="{{ origen }}" data-descripcion="{{ gasto.descripcion }}"
-                aria-label="Omitir o eliminar {{ gasto.descripcion }}"
-                title="Omitir pago o eliminar gasto">×</button>
-      {% endif %}
+      {# SRS v4.37: la X abre el mismo modal en gastos normales y metas. #}
+      <button class="boton boton--peligro boton-circular" type="button"
+              data-omitir-gasto data-id-gasto="{{ gasto.id_gasto }}"
+              data-origen="{{ origen }}" data-descripcion="{{ gasto.descripcion }}"
+              data-es-meta="{{ '1' if gasto.id_proyeccion else '0' }}"
+              aria-label="Omitir o eliminar {{ gasto.descripcion }}"
+              title="Omitir pago o eliminar gasto">×</button>
       {% if inhabilitado %}
-        {# Pago saltado: no admite ✔; solo un abono manual por si quedó dinero. #}
-        <form
-          class="formulario-abono-manual"
-          method="post"
-          action="{{ url_for('registrar_abono_gasto', id_gasto=gasto.id_gasto) }}"
-          data-proteccion
-        >
-          <input type="hidden" name="origen" value="{{ origen }}" />
-          {% if id_trabajo %}
-            <input type="hidden" name="id_trabajo" value="{{ id_trabajo }}" />
-          {% endif %}
-          <input
-            class="campo__control campo__control--compacto"
-            type="text"
-            name="valor"
-            inputmode="decimal"
-            placeholder="Abonar"
-            aria-label="Monto a abonar en {{ gasto.descripcion }}"
-            required data-moneda
-          />
-          <button class="boton boton--secundario boton--pequeno" type="submit">Abonar</button>
-        </form>
+        {# SRS v4.37: en lugar de Abonar, el ítem omitido ofrece reactivarlo ya. #}
+        <button class="boton boton--primario boton--pequeno" type="button"
+                data-habilitar-gasto data-id-gasto="{{ gasto.id_gasto }}"
+                aria-label="Habilitar {{ gasto.descripcion }}"
+                title="Reactivar de inmediato">Habilitar</button>
       {% elif gasto.pagado and gasto.check_visible %}
         {# SRS v1.7: el ✔ solo se pinta si el check está visible. Al desmarcarlo #}
         {# se revierte el pago y su abono, para corregir una marca por error. #}

@@ -2576,6 +2576,18 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v123`; **905 pruebas** en verde. Gate `qa_v4_35.py` **32/32** con saludo, cierre X, dos botones, blur medido y «Pagar los : días 15». Gates anteriores sin regresiones: `qa_v4_30.py` 3/3, `qa_v4_33.py` 30/30, `qa_v4_29.py` 18/18.
 
+### 2026-11-24 — SRS v4.37: modal unificado, Habilitar e íconos en títulos (ADR-99)
+
+**Decisión (ADR-99).** El documento se autodenomina v4.24, pero la línea base es v4.36; se registra v4.37. Se atienden cuatro puntos sin tocar los layouts ya estabilizados.
+
+**Consecuencias por punto.**
+1. `_gasto_fijo.html` usa la misma X para gastos normales y metas (`data-es-meta`); `omitir_pago()` ya admite metas con el mismo plazo de 10 días. En `app.js`, el botón «Eliminar Gasto» queda con `aria-disabled`, clase atenuada y `title` con el mensaje exacto; al intentar clic se muestra `mostrarAvisoApp` con ese texto.
+2. `pagos_metas.habilitar_gasto()` y `POST /api/gastos/{id}/habilitar` limpian `inhabilitado_hasta` y devuelven el gasto a la quincena. La macro sustituye el formulario de abono por el botón «Habilitar» en ítems omitidos; `app.js` lo envía y recarga.
+3. `estilos.css` fija `background: var(--bg-card)` y `z-index: 9002` en `.edicion-gasto__formulario` dentro del modal y en `.modal-centrado > *`, sin traslucidez ni solapes con el fondo.
+4. `_subnav.html` queda sin íconos; `presupuesto/index.html`, `chancucos/index.html` e `historial/index.html` los muestran en el `<h1>` con la clase `heroe__titulo-icono`. Finanzas conserva 💰.
+
+**Verificación.** `sw.js` en `olb-finanzas-v124`; **909 pruebas** en verde. Gate `qa_v4_37.py` **32/32** en 1280 y 375 px: modal de meta con Eliminar bloqueado y aviso exacto, Habilitar que reactiva, Editar sólido con z-index 9002, íconos en títulos y pestañas limpias. Gates v4.30/31/33/35 sin regresiones.
+
 
 
 

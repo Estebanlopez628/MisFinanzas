@@ -123,9 +123,11 @@ def main() -> None:
 
             # Punto 1: X en gasto normal abre el modal; meta conserva su X.
             x_normal = pagina.locator(f'[data-omitir-gasto][data-descripcion="{NORMAL}"]')
-            x_meta = pagina.locator('li.lista-gastos__item:has-text("Meta · Viaje") button[data-omitir-gasto]')
+            x_meta = pagina.locator(
+                'li.lista-gastos__item:has-text("Meta · Viaje") button[data-omitir-gasto][data-es-meta="1"]'
+            )
             comprobar(f"{prefijo}: X normal con modal", x_normal.count() >= 1)
-            comprobar(f"{prefijo}: meta excluida del modal", x_meta.count() == 0)
+            comprobar(f"{prefijo}: meta incluida en el modal unificado", x_meta.count() >= 1)
             if x_normal.count():
                 x_normal.first.click()
                 pagina.wait_for_timeout(150)
@@ -211,9 +213,12 @@ def main() -> None:
             pagina.goto(f"{BASE}/presupuesto")
             pagina.wait_for_load_state("networkidle")
             comprobar(
-                f"{prefijo}: tres íconos de pestaña",
-                pagina.locator(".subnav-finanzas__icono").count() == 3,
-                str(pagina.locator(".subnav-finanzas__icono").count()),
+                f"{prefijo}: pestañas sin íconos",
+                pagina.locator(".subnav-finanzas__icono").count() == 0,
+            )
+            comprobar(
+                f"{prefijo}: ícono en el título",
+                pagina.locator(".heroe__titulo-icono").count() >= 1,
             )
 
             # Punto 4: cabeceras de deudas.

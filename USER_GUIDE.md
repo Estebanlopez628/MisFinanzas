@@ -66,7 +66,7 @@ Los cuadros para abonar a un crédito o a una meta, así como las confirmaciones
 
 En «Registro y Detalles de deudas», el formulario «Nueva deuda» ocupa en la computadora el mismo ancho que las tres tarjetas de resumen y muestra sus seis datos en dos filas de tres columnas, con el botón «Guardar deuda» en un pie separado. En el celular se mantiene el formulario de siempre.
 
-Al pulsar la **X** de un gasto fijo normal aparece un cuadro que te saluda por tu nombre, muestra la descripción del gasto y te pregunta qué deseas hacer: puedes **omitir el pago durante 10 días** (el gasto sigue registrado y vuelve solo) o **eliminarlo**. Puedes cerrarlo con la **X** de la esquina. Las metas no usan este cuadro: conservan su forma habitual de saltar el pago. En el celular, la lista de atajos muestra «Pagar los : días 15».
+Al pulsar la **X** de un gasto fijo o de una meta aparece el mismo cuadro: te saluda por tu nombre, muestra la descripción y ofrece **omitir el pago 10 días** o **eliminar**. Las metas **no se pueden eliminar desde gastos fijos**: el botón aparece bloqueado y, al intentarlo, verás «No puedes eliminar una meta desde gastos fijos, debes hacerlo en el módulo de registro de metas». Cuando un gasto o meta está omitido, verás el botón **Habilitar** para reactivarlo de inmediato. En el celular, la lista de atajos muestra «Pagar los : días 15».
 
 ## 6. Atajos de Pago y recibos
 

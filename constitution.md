@@ -179,3 +179,8 @@ Principios innegociables. Toda especificación, plan y tarea debe cumplirlos de 
 36. **Modal X y backdrop suave (SRS v4.36):**
     - El modal de la X saluda al usuario por su alias, muestra la descripción, ofrece solo dos acciones y se cierra con una X en la cabecera.
     - El fondo de modales y alertas es un velo oscuro suave con desenfoque, conservando la superficie homogénea de la tarjeta.
+
+37. **Modal unificado y reactivación (SRS v4.37):**
+    - Gastos fijos normales y metas comparten el modal de la X, pero una meta nunca se elimina desde gastos fijos; se muestra el mensaje exacto de derivación al módulo de metas.
+    - Los ítems omitidos ofrecen «Habilitar» para reactivarse de inmediato, y el modal Editar gasto mantiene superficie sólida por encima de todo contenido.
+    - Los íconos representativos acompañan al título grande de cada vista de Mis Finanzas, no a los botones de pestaña.

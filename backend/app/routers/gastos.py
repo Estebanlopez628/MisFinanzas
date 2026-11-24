@@ -572,6 +572,32 @@ def api_omitir_gasto(
     )
 
 
+@router.post("/api/gastos/{id_gasto}/habilitar", name="api_habilitar_gasto")
+def api_habilitar_gasto(
+    id_gasto: str,
+    usuario: UsuarioSesion = Depends(obtener_usuario_actual),
+    bd: Session = Depends(obtener_bd),
+) -> JSONResponse:
+    """Reactiva un gasto o meta omitida antes de cumplirse los diez días.
+
+    Args:
+        id_gasto: Gasto a reactivar.
+        usuario: Usuario autenticado.
+        bd: Sesión de base de datos.
+
+    Returns:
+        JSON con `ok` o error limpio en `detail`.
+    """
+    gasto = pagos_metas.habilitar_gasto(bd, usuario.id_usuario, id_gasto)
+    if gasto is None:
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content={"ok": False, "detail": "El gasto no existe."},
+        )
+    auditoria.registrar(bd, usuario.id_usuario, "GASTO_HABILITADO", "gastos", id_gasto)
+    return JSONResponse(content={"ok": True, "id_gasto": id_gasto})
+
+
 @router.post("/api/gastos/{id_gasto}/abono-meta", name="api_abonar_meta")
 def api_abonar_meta(
     id_gasto: str,

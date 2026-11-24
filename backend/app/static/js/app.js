@@ -789,6 +789,17 @@
   var error = document.getElementById("modal-omitir-gasto-error");
   var idGasto = null;
   var origen = "";
+  var esMeta = false;
+  var AVISO_META =
+    "No puedes eliminar una meta desde gastos fijos, debes hacerlo en el módulo de registro de metas.";
+
+  function configurarEliminar() {
+    var eliminar = modal.querySelector("[data-eliminar-confirmar]");
+    if (!eliminar) return;
+    eliminar.classList.toggle("boton--deshabilitado", esMeta);
+    eliminar.setAttribute("aria-disabled", esMeta ? "true" : "false");
+    eliminar.title = esMeta ? AVISO_META : "Eliminar gasto fijo";
+  }
 
   function cerrar() {
     modal.hidden = true;
@@ -804,6 +815,8 @@
     evento.preventDefault();
     idGasto = boton.getAttribute("data-id-gasto");
     origen = boton.getAttribute("data-origen") || "";
+    esMeta = boton.getAttribute("data-es-meta") === "1";
+    configurarEliminar();
     if (cuerpo) {
       cuerpo.textContent = boton.getAttribute("data-descripcion") || "Este gasto fijo";
     }
@@ -859,6 +872,12 @@
   var eliminar = modal.querySelector("[data-eliminar-confirmar]");
   if (eliminar) {
     eliminar.addEventListener("click", function () {
+      if (esMeta) {
+        if (typeof window.mostrarAvisoApp === "function") {
+          window.mostrarAvisoApp(AVISO_META);
+        }
+        return;
+      }
       accion("/gastos/" + encodeURIComponent(idGasto) + "/eliminar", true);
     });
   }
@@ -866,6 +885,44 @@
   if (cancelar) {
     cancelar.addEventListener("click", cerrar);
   }
+})();
+
+/* SRS v4.37: botón Habilitar en ítems omitidos/inhabilitados. */
+(function () {
+  document.addEventListener("click", function (evento) {
+    var boton = evento.target.closest("[data-habilitar-gasto]");
+    if (!boton || boton.dataset.enviando === "1") return;
+    evento.preventDefault();
+    boton.dataset.enviando = "1";
+    var id = boton.getAttribute("data-id-gasto");
+    var texto = boton.textContent;
+    boton.textContent = "Habilitando...";
+    boton.style.pointerEvents = "none";
+    fetch("/api/gastos/" + encodeURIComponent(id) + "/habilitar", {
+      method: "POST",
+    })
+      .then(function (respuesta) {
+        return respuesta.json().then(function (cuerpo) {
+          return { ok: respuesta.ok && cuerpo.ok !== false, detalle: cuerpo.detail };
+        });
+      })
+      .then(function (resultado) {
+        if (!resultado.ok) {
+          throw new Error(resultado.detalle || "No se pudo habilitar el gasto.");
+        }
+        window.location.reload();
+      })
+      .catch(function (errorCapturado) {
+        boton.textContent = texto;
+        if (typeof window.mostrarAvisoApp === "function") {
+          window.mostrarAvisoApp(errorCapturado.message);
+        }
+      })
+      .finally(function () {
+        boton.dataset.enviando = "0";
+        boton.style.pointerEvents = "";
+      });
+  });
 })();
 
 /* SRS v4.28: abonos libres y acumulables a metas de ahorro. */
