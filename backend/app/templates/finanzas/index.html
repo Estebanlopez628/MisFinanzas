@@ -130,8 +130,10 @@ contenido %}
           {{ fila_gasto(gasto, hoy, 'finanzas') }}
           {% endfor %}
         </ul>
-        {% if gastos_visibles | selectattr('pagado') | selectattr('check_visible') | list %}
-        {# SRS v1.7: acción masiva visible, con confirmación, y los pagos se conservan. #}
+        {# SRS v4.40: el botón está siempre disponible cuando hay gastos. Antes
+           solo se pintaba si el servidor ya veía un ✔, por lo que en móvil no
+           aparecía hasta cambiar de pestaña y volver. La acción sigue siendo
+           la misma: oculta los ✔ visibles sin borrar los pagos registrados. #}
         <form class="acciones-formulario" method="post"
               action="{{ url_for('limpiar_pagos_gastos') }}" data-proteccion
               data-confirmar="Se ocultarán los ✔ de esta quincena. Los pagos ya registrados se conservan. ¿Continuar?">
@@ -143,7 +145,6 @@ contenido %}
             {{ 'Limpiar checks' if quincena.numero == 0 else 'Limpiar checks de esta quincena' }}
           </button>
         </form>
-        {% endif %}
         {% else %}
         <p class="ayuda">Sin gastos fijos asignados a este pago.</p>
         {% endif %}

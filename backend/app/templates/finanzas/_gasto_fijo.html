@@ -3,8 +3,8 @@
   (SRS v1.7, bloques C y E).
 
   Se usa desde «Mis Finanzas» y desde «Trabajos Extras» para que ambas vistas
-  compartan exactamente la misma fila: lápiz de edición, «Cancelar», × de
-  eliminación o salto, ✔ de pago y abono manual. La macro no aplica reglas de
+  compartan exactamente la misma fila: lápiz de edición, cierre X del modal,
+  × de eliminación o salto, ✔ de pago y abono manual. La macro no aplica reglas de
   negocio: solo pinta el estado que ya calculó el servidor.
 #}
 
@@ -110,7 +110,9 @@
           </label>
           {# SRS v1.9: el cierre va en la cabecera, así que aquí solo queda
              «Actualizar» y, cuando aplica, «Eliminar» a su lado. #}
-          <div class="acciones-formulario acciones-formulario--edicion acciones-formulario--grilla">
+          {# SRS v4.39: se retira «Cancelar» (la X de la cabecera cierra) y
+             «Actualizar» queda centrado. #}
+          <div class="acciones-formulario acciones-formulario--edicion acciones-formulario--grilla acciones-formulario--gasto">
             <button class="boton boton--primario boton--pequeno" type="submit">Actualizar</button>
             {# SRS (abonos): solo los gastos que pagan una deuda pueden abonarla. #}
             {% if gasto.id_deuda %}
@@ -128,8 +130,6 @@
                 Abonar
               </button>
             {% endif %}
-            <button class="boton boton--secundario boton--pequeno boton--ancho-completo"
-                    type="button" data-cancelar-edicion>Cancelar</button>
           </div>
         </form>
       </details>

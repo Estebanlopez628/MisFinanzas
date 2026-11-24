@@ -70,6 +70,8 @@ Al pulsar la **X** de un gasto fijo o de una meta aparece el mismo cuadro: te sa
 
 Los títulos de cada vista muestran un emoji de color a la izquierda (💰 Mis Finanzas, 🧾 Gastos y Presupuesto, 🔗 Atajos, 📜 Historial). Al abrir o cerrar un cuadro, o al habilitar, eliminar o editar un gasto, la página permanece en el mismo punto donde estabas, sin subir al inicio. Desde **Editar deuda** también puedes corregir el acreedor.
 
+El cuadro **Editar gasto** ya no tiene botón «Cancelar»: se cierra con la **X** de la esquina y sus botones quedan centrados. El botón **Limpiar checks** está visible desde que entras a Gastos fijos, tanto en el celular como en la computadora, aunque todavía no hayas marcado ningún ✔.
+
 ## 6. Atajos de Pago y recibos
 
 Puedes guardar tus pagos o abonos frecuentes con su monto exacto ('Valor a pagar') para registrarlos con un solo toque y generar un comprobante visual limpio y fácil de leer.

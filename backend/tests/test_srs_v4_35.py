@@ -56,7 +56,7 @@ def test_omitir_pago_diez_dias(cliente_admin: TestClient, bd) -> None:
 
 
 def test_modal_omitir_y_editar_gasto() -> None:
-    """El modal de la X existe y Editar gasto lleva Cancelar a ancho completo."""
+    """El modal de la X existe y Editar gasto se cierra con la X de la cabecera."""
     base = (RUTA / "templates/base.html").read_text(encoding="utf-8")
     fila = (RUTA / "templates/finanzas/_gasto_fijo.html").read_text(encoding="utf-8")
 
@@ -67,7 +67,10 @@ def test_modal_omitir_y_editar_gasto() -> None:
     assert "data-omitir-cancelar" in base
     assert "data-omitir-gasto" in fila
     assert "acciones-formulario--grilla" in fila
-    assert "boton--ancho-completo" in fila
+    assert "acciones-formulario--gasto" in fila
+    # SRS v4.39: sin «Cancelar»; la X de la cabecera cierra el modal.
+    assert "data-cancelar-edicion" in fila
+    assert ">Cancelar<" not in fila
     assert "gasto.id_proyeccion" in fila
 
 

@@ -346,7 +346,8 @@ def test_vistas_muestran_el_check_y_el_estado_del_mes(cliente_admin, bd) -> None
     assert finanzas.status_code == 200
     assert f"/gastos/{gasto.id_gasto}/pagado" in finanzas.text
     assert "Meta · Viaje" in finanzas.text
-    assert "Limpiar checks" not in finanzas.text
+    # SRS v4.40: el botón está visible desde la primera carga, con o sin ✔.
+    assert "Limpiar checks" in finanzas.text
 
     pagos_metas.marcar_pagado(bd, id_admin, gasto.id_gasto, HOY)
     finanzas = cliente_admin.get("/finanzas")

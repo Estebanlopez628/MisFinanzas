@@ -762,6 +762,10 @@
     setTimeout(function () {
       window.scrollTo({ left: objetivoX, top: objetivoY, behavior: "instant" });
     }, 180);
+    // El ancla `#quincenas` del backend puede desplazar la vista más tarde.
+    setTimeout(function () {
+      window.scrollTo({ left: objetivoX, top: objetivoY, behavior: "instant" });
+    }, 500);
   }
 
   if (document.readyState === "complete") {
@@ -1005,8 +1009,11 @@
       campoOrigen.value = origen;
       formulario.appendChild(campoOrigen);
       document.body.appendChild(formulario);
-      // El submit guarda la posición; el cierre del modal va después para que
-      // no reacomodar la fila antes de guardar.
+      // `form.submit()` no dispara el evento submit: se guarda la posición
+      // explícitamente antes de navegar. El cierre va después.
+      if (typeof window.guardarScrollApp === "function") {
+        window.guardarScrollApp();
+      }
       formulario.submit();
       cerrar();
     });

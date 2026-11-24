@@ -1173,3 +1173,35 @@ Intactos: layout de Atajos, cuadrícula 3 × 3, cabeceras de deudas, Optimistic 
 - Usuario QA: `prueba_qa@misfinanzas.local` / `QA_MisFinanzas_2026!`.
 - `scripts/qa_v4_38.py`: **58/58 comprobaciones** en 1280 y 375 px. Suite: **913 pruebas** en verde.
 - Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-100), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.38.
+
+---
+
+## 41. SRS v4.39 — Pie del modal Editar gasto
+
+Versión 4.39. No se rehace v4.38.
+
+### 41.1 Cambios
+
+1. `finanzas/_gasto_fijo.html` retira el botón «Cancelar» del modal Editar gasto; la X de la cabecera (`data-cancelar-edicion`) es el único cierre.
+2. `estilos.css` centra el pie con `.acciones-formulario--gasto`: dos botones juntos y centrados (Actualizar y Abonar) o uno solo centrado. Las grillas de deudas y deducciones quedan intactas.
+3. Auditoría de las plantillas: todos los modales sin «Cancelar» conservan su X en la cabecera.
+
+### 41.2 Cierre
+
+`sw.js` en `olb-finanzas-v126`. Documentación y `MEMORY.md` (ADR-101) sincronizados.
+
+---
+
+## 42. SRS v4.40 — Limpiar checks y scroll exacto
+
+Versión 4.40 y **línea base vigente**. No se rehace v4.39.
+
+### 42.1 Cambios
+
+1. `finanzas/index.html` muestra «Limpiar checks» siempre que haya gastos, en Web y Móvil, desde la primera carga. La acción sigue ocultando los ✔ visibles sin borrar los pagos.
+2. `app.js` guarda la posición con `window.guardarScrollApp()` antes de `form.submit()`, porque ese método no dispara el evento `submit`; el ancla `#quincenas` se retira al restaurar.
+
+### 42.2 Gate QA y cierre documental
+
+- `scripts/qa_v4_40.py`: **16/16 comprobaciones** en 1280 y 375 px. Suite: **918 pruebas** en verde.
+- Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-102), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.40.

@@ -5483,6 +5483,20 @@ details.edicion-gasto--modal[open] > .edicion-gasto__formulario {
   grid-column: 1 / -1;
 }
 
+/* SRS v4.39: en Editar gasto ya no hay «Cancelar»; el pie se centra y
+   «Actualizar» conserva su ancho natural. Las grillas de deudas y deducciones
+   no se tocan. */
+.edicion-gasto__formulario .acciones-formulario--gasto {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.edicion-gasto__formulario .acciones-formulario--gasto > .boton {
+  width: auto;
+  min-width: 120px;
+}
+
 .modal-centrado > * {
   position: relative;
   width: min(440px, 100%);

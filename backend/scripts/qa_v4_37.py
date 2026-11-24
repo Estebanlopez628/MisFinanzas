@@ -157,14 +157,19 @@ def main() -> None:
                     pagina.locator("#modal-omitir-gasto [data-omitir-confirmar]").click()
 
             # Punto 2: Habilitar reemplaza a Abonar y reactiva de inmediato.
-            habilitar = pagina.locator("[data-habilitar-gasto]")
+            # El alcance es la meta del gate: otros datos de prueba pueden tener
+            # ítems omitidos propios.
+            selector_habilitar = (
+                f'li.lista-gastos__item:has-text("{META}") [data-habilitar-gasto]'
+            )
+            habilitar = pagina.locator(selector_habilitar)
             comprobar(f"{prefijo}: botón Habilitar visible", habilitar.count() >= 1)
             if habilitar.count():
                 with pagina.expect_navigation(wait_until="networkidle", timeout=10000):
                     habilitar.first.click()
                 comprobar(
                     f"{prefijo}: meta reactivada",
-                    pagina.locator("[data-habilitar-gasto]").count() == 0,
+                    pagina.locator(selector_habilitar).count() == 0,
                 )
 
             # Punto 3: modal Editar gasto sólido y al frente.

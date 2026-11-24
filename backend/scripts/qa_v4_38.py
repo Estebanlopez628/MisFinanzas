@@ -340,8 +340,19 @@ def main() -> None:
                 comprobar(f"{prefijo}: campos dentro del modal", contenidos)
                 texto = tarjeta.inner_text()
                 comprobar(
-                    f"{prefijo}: botones Actualizar/Abonar/Cancelar",
-                    all(b in texto for b in ("Actualizar", "Abonar", "Cancelar")),
+                    f"{prefijo}: Actualizar y Abonar sin Cancelar",
+                    all(b in texto for b in ("Actualizar", "Abonar"))
+                    and "Cancelar" not in texto,
+                    texto[:160],
+                )
+                pie = tarjeta.locator(".acciones-formulario--gasto").first
+                centrado = pie.evaluate(
+                    "(e) => getComputedStyle(e).justifyContent"
+                )
+                comprobar(
+                    f"{prefijo}: Actualizar centrado",
+                    centrado == "center",
+                    centrado,
                 )
                 tarjeta.locator("[data-cancelar-edicion]").first.click()
                 pagina.wait_for_timeout(250)

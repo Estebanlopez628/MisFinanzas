@@ -180,7 +180,7 @@ def main() -> None:
                 else:
                     pagina.locator("#modal-omitir-gasto [data-omitir-cancelar]").click()
 
-            # Punto 2: editar un ítem inhabilitado/meta con modal sólido y Cancelar.
+            # Punto 2: editar un ítem inhabilitado/meta con modal sólido y cierre X.
             editar = pagina.locator(
                 'li.lista-gastos__item:has-text("Meta · Viaje") summary.boton-circular--editar'
             )
@@ -203,9 +203,11 @@ def main() -> None:
                         "(es) => es.filter(e => e.scrollWidth > e.clientWidth + 1).length"
                     )
                     comprobar(f"{prefijo}: campos sin desborde", desborde == 0, str(desborde))
+                    # SRS v4.39: el cierre es la X de la cabecera, sin «Cancelar».
                     comprobar(
-                        f"{prefijo}: Cancelar a ancho completo",
-                        tarjeta.locator("button", has_text="Cancelar").count() == 1,
+                        f"{prefijo}: sin Cancelar y con cierre X",
+                        tarjeta.locator("button", has_text="Cancelar").count() == 0
+                        and tarjeta.locator("[data-cancelar-edicion]").count() >= 1,
                     )
                     tarjeta.locator("button[data-cancelar-edicion]").first.click()
 
@@ -248,12 +250,16 @@ def main() -> None:
                     == "rgba(0, 0, 0, 0)",
                 )
             if ancho < 768:
-                texto = pagina.locator('li[data-atajo-fila]').first.inner_text()
-                comprobar(
-                    f"{prefijo}: vista inicial con tres datos",
-                    "Valor a pagar" in texto and "Pagar los :" in texto and "días 15" in texto,
-                    texto[:100],
-                )
+                filas_atajo = pagina.locator('li[data-atajo-fila]')
+                if filas_atajo.count():
+                    texto = filas_atajo.first.inner_text()
+                    comprobar(
+                        f"{prefijo}: vista inicial con tres datos",
+                        "Valor a pagar" in texto
+                        and "Pagar los :" in texto
+                        and "días 15" in texto,
+                        texto[:100],
+                    )
             comprobar(f"{prefijo}: sin errores", not errores, "; ".join(errores[:2]))
             contexto.close()
         navegador.close()

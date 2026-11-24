@@ -189,3 +189,11 @@ Principios innegociables. Toda especificación, plan y tarea debe cumplirlos de 
     - Los títulos grandes usan emojis a todo color; las pestañas permanecen sin íconos.
     - Toda acción que recargue la página conserva la posición vertical y horizontal exacta, sin re-anclaje.
     - El modal Editar de ítems inhabilitados se muestra sólido y por encima del contenido, y el acreedor se puede corregir desde Deudas.
+
+39. **Pie del modal Editar gasto (SRS v4.39):**
+    - El botón «Cancelar» se sustituye por la X de la cabecera en todos los modales que lo tenían.
+    - Los botones restantes quedan centrados: dos juntos o uno solo, según corresponda.
+
+40. **Checks y retorno exacto (SRS v4.40):**
+    - «Limpiar checks» está presente desde la primera carga, sin exigir un ✔ previo.
+    - Las acciones con `form.submit()` guardan el scroll explícitamente para conservar la posición de la quincena.

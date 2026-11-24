@@ -2600,6 +2600,18 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v125`; **913 pruebas** en verde. Gate `qa_v4_38.py` **58/58** en 1280 y 375 px: emojis, modal Editar sólido y al frente con campos contenidos, aviso exacto, Habilitar y Eliminar sin salto de scroll. Gates v4.33 (30/30), v4.35 (34/34), v4.37 (32/32), v4.30 (3/3) sin regresiones.
 
+### 2026-11-24 — SRS v4.39: pie del modal Editar gasto (ADR-101)
+
+**Decisión (ADR-101).** Se retira «Cancelar» de `_gasto_fijo.html`; la X de la cabecera (`data-cancelar-edicion`) es el único cierre. El pie usa `acciones-formulario--gasto` con flex centrado, de modo que Actualizar y Abonar quedan juntos y centrados, y Actualizar solo queda centrado. Las grillas de deudas y deducciones no se tocan. Se auditan las demás plantillas: todos los modales sin «Cancelar» ya tenían su X en la cabecera.
+
+**Verificación.** `sw.js` en `olb-finanzas-v126`. `qa_v4_40.py` comprueba en 1280 y 375 px la ausencia de «Cancelar», la X arriba a la derecha y el centrado del botón.
+
+### 2026-11-24 — SRS v4.40: Limpiar checks y scroll exacto (ADR-102)
+
+**Decisión (ADR-102).** `finanzas/index.html` pintaba «Limpiar checks» solo si el servidor ya veía un ✔ pagado, por lo que en móvil aparecía únicamente al cambiar de pestaña y volver. Ahora se muestra siempre que haya gastos; la acción sigue ocultando ✔ sin borrar pagos. Además, `form.submit()` no dispara el evento `submit`, así que Eliminar guarda la posición con `window.guardarScrollApp()` antes de navegar; el ancla `#quincenas` se retira al restaurar.
+
+**Verificación.** `sw.js` en `olb-finanzas-v127`; **918 pruebas** en verde. Gates: `qa_v4_40.py` **16/16**, `qa_v4_38.py` **60/60**, `qa_v4_37.py` **32/32**, `qa_v4_35.py` **31/31**, `qa_v4_33.py` **30/30**. La validación se hizo contra SQLite local porque la URL de Neon devolvió `password authentication failed`; no se versionó ni se imprimió credencial alguna.
+
 
 
 

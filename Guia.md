@@ -257,12 +257,12 @@ Principios que explican el resto del código:
 
 #### `backend/app/static/css/`
 
-- **`estilos.css`** · 6482 líneas — Fondo y superficies
+- **`estilos.css`** · 6496 líneas — Fondo y superficies
 - **`factura-olb.css`** · 711 líneas — Sello de Anulada si aplica
 
 #### `backend/app/static/js/`
 
-- **`app.js`** · 1295 líneas — Mejoras progresivas globales.
+- **`app.js`** · 1302 líneas — Mejoras progresivas globales.
   - Funciones: `restaurarBotonCopiar`, `confirmarCopia`, `copiar`, `seleccionarManual`, `sacarDelContexto`, `devolverAlContexto`, `cerrarEdicion`, `limpiarMensajeError`, `elevarSobreDialogo`, `reposicionarModal`, `cerrarConfirmacion`, `pedirConfirmacion`, `mostrarAvisoApp`, `anclaCercana`, `guardarScroll`, `restaurarScroll`, `cerrarModalAbono`, `abrirModalAbono`, `registrarAbono`, `configurarEliminar`, `cerrar`, `accion`, `cerrar`, `abrir`, `registrar`, `hayModal`, `aplicarEstado`
 - **`ayuda.js`** · 127 líneas — Envío de reportes desde «Ayuda y comentarios» (SRS v2.0, sección 5.3).
   - Funciones: `escapar`, `cargarMisReportes`
@@ -333,7 +333,7 @@ Principios que explican el resto del código:
 - **`_capacidad.html`** · 143 líneas
 - **`_gasto_fijo.html`** · 197 líneas
 - **`_subnav.html`** · 27 líneas — Subnavegación interna del módulo "Mis Finanzas" (SRS v1.3, bloque 1).
-- **`index.html`** · 757 líneas — Plantilla: Mis Finanzas
+- **`index.html`** · 758 líneas — Plantilla: Mis Finanzas
 
 #### `backend/app/templates/gastos/`
 

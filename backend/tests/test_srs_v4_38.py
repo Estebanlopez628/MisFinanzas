@@ -87,5 +87,10 @@ def test_modal_editar_solido_y_campos_contenidos() -> None:
     fila = (RUTA / "templates/finanzas/_gasto_fijo.html").read_text(encoding="utf-8")
     for etiqueta in ("Categoría", "Descripción", "Valor (COP)"):
         assert etiqueta in fila
-    for boton in ("Actualizar", "Abonar", "Cancelar"):
-        assert boton in fila
+    assert "Actualizar" in fila
+    assert "Abonar" in fila
+    # SRS v4.39: el botón «Cancelar» se retira y el pie se centra.
+    assert ">Cancelar<" not in fila
+    assert "acciones-formulario--gasto" in fila
+    assert ".edicion-gasto__formulario .acciones-formulario--gasto {" in css
+    assert "justify-content: center;" in css
