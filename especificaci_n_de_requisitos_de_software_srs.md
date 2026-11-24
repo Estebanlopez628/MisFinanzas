@@ -1205,3 +1205,24 @@ Versión 4.40 y **línea base vigente**. No se rehace v4.39.
 
 - `scripts/qa_v4_40.py`: **16/16 comprobaciones** en 1280 y 375 px. Suite: **918 pruebas** en verde.
 - Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-102), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.40.
+
+---
+
+## 43. SRS v4.41 — Paridad de acciones en Trabajos Extras
+
+Versión 4.41 y **línea base vigente**. No se rehace v4.40.
+
+### 43.1 Diagnóstico
+
+La lista «Gastos fijos de este trabajo» se renderizaba con un `<li>` propio (nombre, valor y eliminar), mientras el pago del periodo sí usaba `fila_gasto`. Por eso faltaban editar, ✔, X/Habilitar y la limpieza de checks.
+
+### 43.2 Cambios
+
+1. `trabajos/index.html` usa `fila_gasto(gasto, hoy, 'trabajos', trabajo.id_trabajo)` para cada gasto del periodo, con las mismas acciones de Mis Finanzas y retorno a `/trabajos-extras`.
+2. Se añade «Limpiar checks de este trabajo» con `origen=trabajos`, `id_trabajo`, año y mes.
+3. `limpiar_checks()` acepta `id_trabajo` opcional; con él consulta directamente los gastos del contrato en el mes, sin usar `gastos.listar_gastos` (que los excluye). `/gastos/limpiar-pagos` reenvía el campo. Mis Finanzas no cambia.
+
+### 43.3 Gate QA y cierre documental
+
+- `scripts/qa_v4_41.py`: **22/22 comprobaciones** en 1280 y 375 px. Suite: **920 pruebas** en verde.
+- Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-103), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.41.

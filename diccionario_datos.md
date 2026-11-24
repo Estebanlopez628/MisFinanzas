@@ -176,7 +176,7 @@ Gastos fijos y variables que afectan el bolsillo del periodo.
 | `fecha` | `DATE` | No | Sí | Fecha del gasto. |
 | `quincena` | `SMALLINT` | Sí | No | `1` o `2`: quincena a la que se imputa el gasto fijo. `NULL` = gasto del mes completo. `CHECK (quincena IN (1,2) OR quincena IS NULL)`. |
 | `id_proyeccion` | `UUID` (FK → `proyecciones_ahorro`) | Sí | No | SRS v1.6: meta que originó el gasto. `ON DELETE CASCADE`. `NULL` para gastos manuales. |
-| `id_trabajo` | `UUID` (FK → `trabajos_extras`) | Sí | No | SRS v1.7: pago generado por un trabajo extra. `ON DELETE CASCADE`. Los gastos con `id_trabajo` no se listan como gastos ni restan del sueldo o las quincenas: su neto va al diagnóstico del mes. |
+| `id_trabajo` | `UUID` (FK → `trabajos_extras`) | Sí | No | SRS v1.7: pago generado por un trabajo extra. `ON DELETE CASCADE`. Los gastos con `id_trabajo` no se listan como gastos ni restan del sueldo o las quincenas: su neto va al diagnóstico del mes. **SRS v4.41:** comparten la fila con check de Mis Finanzas y su limpieza masiva se filtra por este campo para no afectar los checks personales. |
 | `id_deuda` | `UUID` (FK → `deudas`) | Sí | No | SRS v1.9: deuda registrada cuyo pago es este gasto. `ON DELETE SET NULL`. El valor se toma de la cuota de la deuda y la categoría pasa a `Créditos y Obligaciones`. No se suma como gasto propio: su dinero ya está en la categoría 8 de la dona (anti-duplicación). |
 | `pagado` | `BOOLEAN` | No | Sí | SRS v1.6: `DEFAULT false`. Registro permanente del pago (✔). No se revierte con «Limpiar». |
 | `pagado_en` | `DATE` | Sí | No | SRS v1.6: fecha en que se marcó el pago. |

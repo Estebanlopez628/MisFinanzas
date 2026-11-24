@@ -648,6 +648,7 @@ def limpiar_pagos_gastos(
     mes: Annotated[str, Form()] = "",
     quincena: Annotated[str, Form()] = "0",
     origen: Annotated[str, Form()] = "",
+    id_trabajo: Annotated[str, Form()] = "",
 ) -> RedirectResponse:
     """Oculta los checks de una quincena; los pagos registrados se conservan.
 
@@ -657,7 +658,8 @@ def limpiar_pagos_gastos(
         anio: Año del periodo visible.
         mes: Mes del periodo visible.
         quincena: `1` o `2` para una quincena; `0` para limpiar todo el mes.
-        origen: ``finanzas`` para volver al panel de quincenas.
+        origen: ``finanzas`` o ``trabajos`` para volver al panel de origen.
+        id_trabajo: Contrato de Trabajos Extras cuyos checks se ocultan.
 
     Returns:
         Redirección al panel de origen.
@@ -673,7 +675,12 @@ def limpiar_pagos_gastos(
         return _volver(origen)
 
     limpiados = pagos_metas.limpiar_checks(
-        bd, usuario.id_usuario, numero_anio, numero_mes, numero_quincena
+        bd,
+        usuario.id_usuario,
+        numero_anio,
+        numero_mes,
+        numero_quincena,
+        id_trabajo=id_trabajo or None,
     )
     if limpiados:
         auditoria.registrar(

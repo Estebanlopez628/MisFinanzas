@@ -2612,6 +2612,14 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v127`; **918 pruebas** en verde. Gates: `qa_v4_40.py` **16/16**, `qa_v4_38.py` **60/60**, `qa_v4_37.py` **32/32**, `qa_v4_35.py` **31/31**, `qa_v4_33.py` **30/30**. La validación se hizo contra SQLite local porque la URL de Neon devolvió `password authentication failed`; no se versionó ni se imprimió credencial alguna.
 
+### 2026-11-24 — SRS v4.41: paridad de acciones en Trabajos Extras (ADR-103)
+
+**Diagnóstico.** `trabajos/index.html` pintaba «Gastos fijos de este trabajo» con un `<li>` escrito a mano (nombre, valor y un form de eliminar), en lugar de la macro compartida `fila_gasto` que sí se usaba para el pago del periodo. Por eso no había lápiz de edición, ✔ de pago, modal unificado de X/Habilitar ni «Limpiar checks».
+
+**Decisión (ADR-103).** Se sustituye la fila manual por `fila_gasto(gasto, hoy, 'trabajos', trabajo.id_trabajo)`, que ya propaga `origen` e `id_trabajo` en todos sus formularios. Se añade «Limpiar checks de este trabajo». Como `gastos.listar_gastos` excluye los pagos de trabajos para no restarlos del sueldo, `limpiar_checks()` acepta un `id_trabajo` opcional y, cuando llega, consulta esos gastos directamente por mes y contrato; el endpoint `/gastos/limpiar-pagos` reenvía el campo. Mis Finanzas conserva su comportamiento sin cambios.
+
+**Verificación.** `sw.js` en `olb-finanzas-v128`; **920 pruebas** en verde. Gate `qa_v4_41.py` **22/22** en 1280 y 375 px: fila con editar/X/check, modal Editar con Actualizar y sin Cancelar, ✔ optimista, limpieza de checks y permanencia en `/trabajos-extras`. Gates v4.33/35/37/38/40 sin regresiones.
+
 
 
 

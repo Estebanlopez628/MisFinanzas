@@ -534,7 +534,12 @@ def registrar_abono_meta(
 
 
 def limpiar_checks(
-    bd: Session, id_usuario: str, anio: int, mes: int, quincena: int
+    bd: Session,
+    id_usuario: str,
+    anio: int,
+    mes: int,
+    quincena: int,
+    id_trabajo: str | None = None,
 ) -> int:
     """Oculta los checks de una quincena sin borrar los pagos registrados.
 
@@ -545,11 +550,30 @@ def limpiar_checks(
         mes: Mes del periodo (1–12).
         quincena: `1` o `2` para una quincena (la 1 incluye los gastos del mes
             completo); `0` para la modalidad mensual, que limpia todo el mes.
+        id_trabajo: Si se indica, restringe la acción a los gastos de ese
+            contrato de Trabajos Extras, sin tocar los de Mis Finanzas.
 
     Returns:
         Cantidad de checks ocultados.
     """
-    del_mes = gastos.listar_gastos(bd, id_usuario, anio, mes)
+    if id_trabajo:
+        # `gastos.listar_gastos` excluye los pagos de trabajos para que no resten
+        # del sueldo; aquí se consultan directamente para limpiar solo este
+        # contrato, sin tocar los checks de Mis Finanzas.
+        inicio = date(anio, mes, 1)
+        fin = date(anio + 1, 1, 1) if mes == 12 else date(anio, mes + 1, 1)
+        del_mes = list(
+            bd.scalars(
+                select(Gasto).where(
+                    Gasto.id_usuario == id_usuario,
+                    Gasto.id_trabajo == id_trabajo,
+                    Gasto.fecha >= inicio,
+                    Gasto.fecha < fin,
+                )
+            ).all()
+        )
+    else:
+        del_mes = gastos.listar_gastos(bd, id_usuario, anio, mes)
     if quincena == 1:
         seleccion = [gasto for gasto in del_mes if gasto.quincena in (None, 1)]
     elif quincena == 2:

@@ -29,18 +29,26 @@
     <h4 class="bloque-gastos__subtitulo">Gastos fijos de este trabajo</h4>
     {% if periodo.gastos %}
       <ul class="lista-gastos">
+        {# SRS v4.41: misma fila que Mis Finanzas (editar, ✔, X/Habilitar y
+           abonos), con `origen=trabajos` para volver a este módulo. #}
         {% for gasto in periodo.gastos %}
-          <li class="lista-gastos__item">
-            <span class="lista-gastos__nombre">{{ gasto.descripcion }} - {{ gasto.categoria }}</span>
-            <span class="lista-gastos__valor">{{ gasto.valor | cop }}</span>
-            <form method="post" action="{{ url_for('eliminar_gasto', id_gasto=gasto.id_gasto) }}" data-proteccion>
-              <input type="hidden" name="origen" value="trabajos" />
-              <button class="boton boton--peligro boton-circular" type="submit"
-                      aria-label="Eliminar {{ gasto.descripcion }}" title="Eliminar gasto fijo">×</button>
-            </form>
-          </li>
+          {{ fila_gasto(gasto, hoy, 'trabajos', trabajo.id_trabajo) }}
         {% endfor %}
       </ul>
+      {# SRS v4.41: la acción masiva existe aquí también, pero solo oculta los
+         checks de los gastos de este contrato, nunca los de Mis Finanzas. #}
+      <form class="acciones-formulario" method="post"
+            action="{{ url_for('limpiar_pagos_gastos') }}" data-proteccion
+            data-confirmar="Se ocultarán los ✔ de este trabajo. Los pagos ya registrados se conservan. ¿Continuar?">
+        <input type="hidden" name="origen" value="trabajos" />
+        <input type="hidden" name="id_trabajo" value="{{ trabajo.id_trabajo }}" />
+        <input type="hidden" name="anio" value="{{ hoy.year }}" />
+        <input type="hidden" name="mes" value="{{ hoy.month }}" />
+        <input type="hidden" name="quincena" value="{{ periodo.quincena or 0 }}" />
+        <button class="boton boton--advertencia boton--pequeno" type="submit">
+          Limpiar checks de este trabajo
+        </button>
+      </form>
     {% else %}
       <p class="ayuda">Aún no hay gastos fijos en este periodo.</p>
     {% endif %}

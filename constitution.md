@@ -197,3 +197,7 @@ Principios innegociables. Toda especificación, plan y tarea debe cumplirlos de 
 40. **Checks y retorno exacto (SRS v4.40):**
     - «Limpiar checks» está presente desde la primera carga, sin exigir un ✔ previo.
     - Las acciones con `form.submit()` guardan el scroll explícitamente para conservar la posición de la quincena.
+
+41. **Paridad de gastos en Trabajos Extras (SRS v4.41):**
+    - Los gastos fijos de un trabajo usan la misma fila que Mis Finanzas: editar, ✔, X unificada, Habilitar y abonos.
+    - La limpieza masiva de checks está disponible por contrato y nunca afecta los gastos de Mis Finanzas.
