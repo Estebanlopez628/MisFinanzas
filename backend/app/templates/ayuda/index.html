@@ -4,8 +4,8 @@
 {% block contenido %}
   <section class="ayuda-cabecera">
     <img class="ayuda-cabecera__logo" src="{{ url_for('estaticos', path='img/icono-180.png') }}"
-         alt="Logotipo de MisFinanzas" />
-    <h1 class="ayuda-cabecera__nombre">MisFinanzas</h1>
+         alt="Logotipo de Mis Finanzas" />
+    <h1 class="ayuda-cabecera__nombre">Mis Finanzas</h1>
     <p class="ayuda-cabecera__version">Versión {{ version }}</p>
   </section>
 
@@ -62,7 +62,7 @@
       </button>
     </div>
 
-    <p class="ayuda-pie">© 2026 MisFinanzas</p>
+    <p class="ayuda-pie">© 2026 Mis Finanzas</p>
   </section>
 
   {% include "ayuda/_legal.html" %}
@@ -76,15 +76,15 @@
     <div class="dialogo-legal__cuerpo">
       <details class="ayuda-acordeon">
         <summary>GUÍA A — CÓMO INSTALAR MISFINANZAS EN TU CELULAR COMO UNA APP:</summary>
-        <p>• En Android (usando Google Chrome): 1) Abre el enlace de MisFinanzas en Google Chrome. 2) Toca el menú de los tres puntos (⋮) en la esquina superior derecha. 3) Selecciona 'Agregar a la pantalla principal' . 4) Confirma tocando 'Agregar'. El ícono quedará en tu inicio y abrirá en pantalla completa como una app nativa.</p>
-        <p>• En iPhone / iOS (usando Safari- Google Chrome): 1) Abre el enlace de MisFinanzas desde Safari- Google Chrome) 2 Toca el botón Compartir (cuadrado con flecha hacia arriba en la barra inferior). 3) Desliza hacia abajo y selecciona 'Agregar a inicio'. 4) Verifica el nombre y toca 'Agregar' en la esquina superior derecha.</p>
+        <p>• En Android (usando Google Chrome): 1) Abre el enlace de Mis Finanzas en Google Chrome. 2) Toca el menú de los tres puntos (⋮) en la esquina superior derecha. 3) Selecciona 'Agregar a la pantalla principal' . 4) Confirma tocando 'Agregar'. El ícono quedará en tu inicio y abrirá en pantalla completa como una app nativa.</p>
+        <p>• En iPhone / iOS (usando Safari- Google Chrome): 1) Abre el enlace de Mis Finanzas desde Safari- Google Chrome) 2 Toca el botón Compartir (cuadrado con flecha hacia arriba en la barra inferior). 3) Desliza hacia abajo y selecciona 'Agregar a inicio'. 4) Verifica el nombre y toca 'Agregar' en la esquina superior derecha.</p>
       </details>
 
       <details class="ayuda-acordeon">
         <summary>GUÍA B — PREGUNTAS FRECUENTES DE USO:</summary>
-        <p>• 1. ¿Qué son los Gastos Fijos y las Deducciones Fijas, para qué funcionan y qué puedo editar? Qué son y para qué sirven: Son tus compromisos recurrentes de cada mes o quincena (como arriendo, servicios públicos, internet, alimentación, transporte, salud, pensión o suscripciones). Registrarlos permite que MisFinanzas los descuente automáticamente de tus ingresos para calcular cuánto dinero real te queda libre y mostrar su peso en el gráfico de dona. Qué puedes editar: En cualquier gasto fijo o deducción normal puedes editar su nombre/concepto, su categoría, su valor y marcarlo como pagado con su check cada periodo, o eliminarlo cuando ya no aplique. Si el gasto está vinculado a una deuda registrada (categoría 'Créditos y Obligaciones'), podrás editar su nombre, cambiar la deuda vinculada o marcar su check de pago; el valor de la cuota se mantiene sincronizado automáticamente con lo que tengas configurado en Registro y Detalles de deudas (si necesitas cambiar el valor de esa cuota, lo editas allá y se actualiza solo en todas partes).</p>
+        <p>• 1. ¿Qué son los Gastos Fijos y las Deducciones Fijas, para qué funcionan y qué puedo editar? Qué son y para qué sirven: Son tus compromisos recurrentes de cada mes o quincena (como arriendo, servicios públicos, internet, alimentación, transporte, salud, pensión o suscripciones). Registrarlos permite que Mis Finanzas los descuente automáticamente de tus ingresos para calcular cuánto dinero real te queda libre y mostrar su peso en el gráfico de dona. Qué puedes editar: En cualquier gasto fijo o deducción normal puedes editar su nombre/concepto, su categoría, su valor y marcarlo como pagado con su check cada periodo, o eliminarlo cuando ya no aplique. Si el gasto está vinculado a una deuda registrada (categoría 'Créditos y Obligaciones'), podrás editar su nombre, cambiar la deuda vinculada o marcar su check de pago; el valor de la cuota se mantiene sincronizado automáticamente con lo que tengas configurado en Registro y Detalles de deudas (si necesitas cambiar el valor de esa cuota, lo editas allá y se actualiza solo en todas partes).</p>
         <p>• 2. Si uno de mis Gastos Fijos o Deducciones es el pago de una deuda o crédito, ¿cómo lo registro sin que se duplique? Paso 1: Ve al módulo 'Registro y Detalles de deudas' y crea la deuda indicando el Acreedor, Total Adeudado, valor de la Cuota y Número de cuotas pendientes. Paso 2: Ve a 'Gastos Fijos' (en Finanzas o Trabajos Extras) o a 'Deducciones Fijas' (en Gastos y Presupuestos), elige la categoría 'Créditos y Obligaciones', responde SI cuando te pregunte si corresponde a una deuda registrada y selecciónala en la lista. Resultado: El valor de la cuota se cargará automáticamente desde tu deuda y podrás marcarla como pagada cada mes sin que el gráfico de dona ni el Consejero te descuenten el dinero dos veces. (Nota: Si tu gasto fijo no es una deuda, simplemente elige otra categoría como Vivienda, Servicios o Alimentación y digita su valor normalmente).</p>
-        <p>• 3. ¿Por qué el Consejero reserva $300.000 COP de mi dinero disponible? MisFinanzas protege automáticamente una Base mínima de liquidez de $300.000 COP en tu bolsillo para cubrir imprevistos, transporte o emergencias del mes sin dejarte en ceros. Por eso, aunque tengas dinero libre después de pagar tus gastos fijos, el Consejero descuenta primero esos $300.000 COP como colchón de seguridad y únicamente te sugiere hacer abonos extra a tus deudas o metas usando el excedente real que supere esa base.</p>
+        <p>• 3. ¿Por qué el Consejero reserva $300.000 COP de mi dinero disponible? Mis Finanzas protege automáticamente una Base mínima de liquidez de $300.000 COP en tu bolsillo para cubrir imprevistos, transporte o emergencias del mes sin dejarte en ceros. Por eso, aunque tengas dinero libre después de pagar tus gastos fijos, el Consejero descuenta primero esos $300.000 COP como colchón de seguridad y únicamente te sugiere hacer abonos extra a tus deudas o metas usando el excedente real que supere esa base.</p>
         <p>• 4. ¿Cómo funcionan las categorías de gastos y el gráfico de dona? Todos tus gastos fijos y deducciones se organizan en 8 categorías cerradas con colores definidos. La categoría 'Créditos y Obligaciones' se alimenta automáticamente con la suma de las cuotas de tus deudas registradas para darte una visión real de tus compromisos mensuales.</p>
         <p>• 5. ¿Para qué sirven los 'Atajos de Pago' y los recibos? Puedes guardar tus pagos o abonos frecuentes con su monto exacto ('Valor a pagar') para registrarlos con un solo toque y generar un comprobante visual limpio y fácil de leer.</p>
         <p>• 6. ¿Cómo envío un reporte si encuentro un error o tengo una sugerencia? Entra a 'Ayuda y comentarios > Envía comentarios', selecciona el tipo de reporte, el módulo correspondiente y escribe tu mensaje.</p>
@@ -132,10 +132,10 @@
       <button class="dialogo-legal__cerrar" type="button" data-cerrar-dialogo aria-label="Cerrar">×</button>
     </div>
     <div class="dialogo-legal__cuerpo">
-      <p><strong>MisFinanzas</strong> — Versión {{ version }}</p>
+      <p><strong>Mis Finanzas</strong> — Versión {{ version }}</p>
       <p>Créditos: desarrollado para el control de finanzas personales y nómina colombiana.</p>
       <p>Tecnologías: Python, FastAPI, Jinja2, JavaScript mínimo y SQLite/PostgreSQL.</p>
-      <p>© 2026 MisFinanzas</p>
+      <p>© 2026 Mis Finanzas</p>
     </div>
   </dialog>
 {% endblock %}

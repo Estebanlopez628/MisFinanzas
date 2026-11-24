@@ -540,6 +540,48 @@ def registrar_abono_gasto(
     return _volver(origen)
 
 
+@router.post("/api/gastos/{id_gasto}/abono-meta", name="api_abonar_meta")
+def api_abonar_meta(
+    id_gasto: str,
+    usuario: UsuarioSesion = Depends(obtener_usuario_actual),
+    bd: Session = Depends(obtener_bd),
+    valor: Annotated[str, Form()] = "",
+) -> JSONResponse:
+    """Acumula un abono libre a la meta vinculada al gasto.
+
+    Args:
+        id_gasto: Gasto fijo de la meta.
+        usuario: Usuario autenticado.
+        bd: Sesión de base de datos.
+        valor: Monto del abono en COP.
+
+    Returns:
+        JSON con el resultado o un error limpio en `detail`.
+    """
+    try:
+        gasto = pagos_metas.registrar_abono_meta(
+            bd, usuario.id_usuario, id_gasto, valor, date.today()
+        )
+    except ValueError as error:
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={"ok": False, "detail": str(error)},
+        )
+    if gasto is None:
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content={"ok": False, "detail": "El gasto o la meta no existe."},
+        )
+    auditoria.registrar(bd, usuario.id_usuario, "ABONO_META", "gastos", id_gasto)
+    return JSONResponse(
+        content={
+            "ok": True,
+            "id_gasto": id_gasto,
+            "monto_pagado": str(gasto.monto_pagado),
+        }
+    )
+
+
 @router.post("/gastos/limpiar-pagos", name="limpiar_pagos_gastos")
 def limpiar_pagos_gastos(
     usuario: UsuarioSesion = Depends(obtener_usuario_actual),

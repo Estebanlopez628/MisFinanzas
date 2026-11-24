@@ -149,3 +149,8 @@ Principios innegociables. Toda especificación, plan y tarea debe cumplirlos de 
 29. **Abono en la fila inferior (SRS v4.27):**
     - En los modales de deuda y deducción «Abonar» ocupa la fila inferior a ancho completo y «Cancelar» se elimina, porque la X de la cabecera ya cierra.
     - No se introducen librerías de navegación parcial: donas, Consejero, checks y subnavegación se mantienen intactos.
+
+30. **Pulido integral y paridad (SRS v4.28):**
+    - La comparativa de cierre es idéntica para todos los roles; sin deudas se muestra el mismo componente con un mensaje, nunca la gráfica antigua.
+    - Los modales respetan las capas (9000 / 9999) y conservan la posición de scroll; la anulación en OLB_BYTE confirma al pulsar.
+    - Los abonos a metas se acumulan en el mes, y los textos de la interfaz usan lenguaje claro sin roles técnicos ni nombres de algoritmos.

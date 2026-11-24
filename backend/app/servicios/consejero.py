@@ -775,20 +775,55 @@ def _consejo_ahorro(
             "Revisa el diagnóstico cada mes y ajusta la cuota si cambia tu ingreso.",
         ]
 
-    return Consejo(
-        activo=True,
-        alias=alias,
-        excedente=excedente,
-        umbral=UMBRAL_ACTIVACION,
-        modo=MODO_AHORRO,
-        estrategia=estrategia,
-        titulo=f"Hola, {alias}: esto es lo que haría con tu excedente",
-        mensaje=mensaje,
-        pasos=pasos,
-        ahorro_base=serie_base[-1],
-        ahorro_optimizado=serie_optima[-1],
-        serie=serie,
-        maximo=maximo,
+    ahorro_extra = redondear_dinero(serie_optima[-1] - serie_base[-1])
+    # SRS v4.28: el modo ahorro también entrega el bloque de cierre, con el plan
+    # de deudas vacío, para que todos los perfiles vean el mismo componente y
+    # no aparezca la gráfica heredada de doce meses.
+    cierre = {
+        "deuda_inicial": CERO,
+        "saldo_actual": CERO,
+        "saldo_proyectado_excedente": CERO,
+        "cuota_mensual": CERO,
+        "excedente_mensual": excedente,
+        "puntos": [],
+        "mes_libre_index": None,
+        "meses_minimo": 0,
+        "meses_con_excedente": 0,
+        "meses_ahorrados": 0,
+        "reduccion_capital_12m": ahorro_extra,
+        "ahorro_mostrado": ahorro_extra,
+        "fecha_cierre_base": "—",
+        "fecha_cierre_opt": "—",
+        "deudas_detalle": [],
+        "cuotas_liberadas_detalle": [],
+        "barras_deuda": [],
+        "resumen_barras": {
+            "max_base": 1,
+            "meses_objetivo": 0,
+            "porcentaje_global": 0,
+            "meses_base_texto": "0 meses",
+            "meses_objetivo_texto": "0 meses",
+        },
+        "costo_total_base": CERO,
+        "costo_total_opt": CERO,
+    }
+    return replace(
+        Consejo(
+            activo=True,
+            alias=alias,
+            excedente=excedente,
+            umbral=UMBRAL_ACTIVACION,
+            modo=MODO_AHORRO,
+            estrategia=estrategia,
+            titulo=f"Hola, {alias}: esto es lo que haría con tu excedente",
+            mensaje=mensaje,
+            pasos=pasos,
+            ahorro_base=serie_base[-1],
+            ahorro_optimizado=serie_optima[-1],
+            serie=serie,
+            maximo=maximo,
+        ),
+        cierre=cierre,
     )
 
 

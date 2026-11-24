@@ -43,9 +43,6 @@
         <div class="usuario">
           {{ avatar(usuario, "compacto") }}
           <span class="usuario__alias">Hola, {{ usuario.alias }}</span>
-          <span class="badge badge--{{ 'admin' if usuario.es_administrador else 'publico' }}">
-            {{ usuario.rol }}
-          </span>
         </div>
       {% endif %}
     </header>
@@ -157,6 +154,30 @@
         <button class="boton boton--primario boton--pequeno" type="button" data-abono-solo>Registrar abono</button>
         <button class="boton boton--secundario boton--pequeno" type="button" data-abono-cuota>Registrar abono + cuota</button>
         <button class="boton boton--peligro boton--pequeno" type="button" data-abono-cancelar>Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  {# SRS v4.28: abonos libres y acumulables a metas de ahorro. #}
+  <div class="app-modal" id="modal-abono-meta" hidden role="dialog" aria-modal="true"
+       aria-labelledby="modal-abono-meta-titulo">
+    <div class="app-modal__tarjeta">
+      <h2 class="app-modal__titulo" id="modal-abono-meta-titulo">Abonar a mi meta</h2>
+      <p class="app-modal__cuerpo" id="modal-abono-meta-cuerpo">
+        Digita el valor que deseas abonar a tu meta
+        <strong id="modal-abono-meta-nombre"></strong>.
+      </p>
+      <label class="campo">
+        <span class="campo__etiqueta">Valor del abono (COP)</span>
+        <input class="campo__control" id="modal-abono-meta-valor" type="text"
+               inputmode="decimal" placeholder="80.000" required data-moneda />
+      </label>
+      <p class="alerta alerta--error" id="modal-abono-meta-error" role="alert" hidden></p>
+      <div class="app-modal__acciones app-modal__acciones--abono">
+        <button class="boton boton--primario boton--pequeno" type="button"
+                data-abono-meta-confirmar>Registrar abono</button>
+        <button class="boton boton--peligro boton--pequeno" type="button"
+                data-abono-meta-cancelar>Cancelar</button>
       </div>
     </div>
   </div>

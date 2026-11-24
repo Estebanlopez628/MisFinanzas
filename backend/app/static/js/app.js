@@ -745,6 +745,139 @@
   }
 })();
 
+/* SRS v4.28: abonos libres y acumulables a metas de ahorro. */
+(function () {
+  var modal = document.getElementById("modal-abono-meta");
+  if (!modal) return;
+
+  var campo = document.getElementById("modal-abono-meta-valor");
+  var error = document.getElementById("modal-abono-meta-error");
+  var nombre = document.getElementById("modal-abono-meta-nombre");
+  var idGasto = null;
+  var enviando = false;
+
+  function cerrar() {
+    modal.hidden = true;
+    idGasto = null;
+  }
+
+  function abrir(boton) {
+    idGasto = boton.getAttribute("data-id-gasto");
+    if (nombre) {
+      nombre.textContent = boton.getAttribute("data-meta") || "tu meta";
+    }
+    if (campo) {
+      campo.value = "";
+      campo.focus();
+    }
+    if (error) {
+      error.hidden = true;
+      error.textContent = "";
+    }
+    var detalles = boton.closest("details");
+    if (detalles) {
+      detalles.open = false;
+    }
+    modal.hidden = false;
+  }
+
+  function registrar() {
+    if (!idGasto || enviando) return;
+    var valor = campo ? campo.value.trim() : "";
+    if (!valor) {
+      if (error) {
+        error.textContent = "Digita el valor que deseas abonar.";
+        error.hidden = false;
+      }
+      return;
+    }
+    enviando = true;
+    var datos = new FormData();
+    datos.append("valor", valor);
+    fetch("/api/gastos/" + encodeURIComponent(idGasto) + "/abono-meta", {
+      method: "POST",
+      body: datos,
+    })
+      .then(function (respuesta) {
+        return respuesta.json().then(function (cuerpo) {
+          return { ok: respuesta.ok && cuerpo.ok, detalle: cuerpo.detail };
+        });
+      })
+      .then(function (resultado) {
+        if (!resultado.ok) {
+          throw new Error(resultado.detalle || "No se pudo registrar el abono.");
+        }
+        window.location.reload();
+      })
+      .catch(function (errorCapturado) {
+        if (error) {
+          var mensaje = errorCapturado.message;
+          if (typeof window.limpiarMensajeError === "function") {
+            mensaje = window.limpiarMensajeError(mensaje);
+          }
+          error.textContent = mensaje;
+          error.hidden = false;
+        }
+      })
+      .finally(function () {
+        enviando = false;
+      });
+  }
+
+  document.addEventListener("click", function (evento) {
+    var boton = evento.target.closest("[data-abrir-abono-meta]");
+    if (boton) {
+      abrir(boton);
+    }
+  });
+
+  var cancelar = modal.querySelector("[data-abono-meta-cancelar]");
+  if (cancelar) {
+    cancelar.addEventListener("click", cerrar);
+  }
+  var confirmar = modal.querySelector("[data-abono-meta-confirmar]");
+  if (confirmar) {
+    confirmar.addEventListener("click", registrar);
+  }
+  modal.addEventListener("click", function (evento) {
+    if (evento.target === modal) {
+      cerrar();
+    }
+  });
+})();
+
+/* SRS v4.28: conservar la posición vertical al abrir y cerrar cualquier modal
+   o confirmación, sin saltar a lo alto ni abajo del documento. */
+(function () {
+  var guardado = null;
+
+  function hayModal() {
+    return !!document.querySelector(
+      ".edicion-gasto--modal[open], .app-modal:not([hidden]), .modal-centrado[open], dialog[open]"
+    );
+  }
+
+  var observador = new MutationObserver(function () {
+    if (hayModal()) {
+      if (guardado === null) {
+        guardado = window.scrollY;
+      }
+    } else if (guardado !== null) {
+      var destino = guardado;
+      guardado = null;
+      requestAnimationFrame(function () {
+        window.scrollTo({ top: destino, behavior: "instant" });
+      });
+    }
+  });
+
+  observador.observe(document.body, {
+    attributes: true,
+    subtree: true,
+    attributeFilter: ["open", "hidden"]
+  });
+})();
+
 /* SRS v4.26: checks de gastos fijos con actualización optimista. El ✔ cambia
    al instante; el guardado va en segundo plano y solo se revierte si falla. */
 (function () {

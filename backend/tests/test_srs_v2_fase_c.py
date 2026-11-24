@@ -151,14 +151,15 @@ def test_vista_ayuda_textos_literales_y_sin_modulos_privados(
 ) -> None:
     """Las guías, el legal y el selector no mencionan OLB_BYTE ni facturación."""
     html = cliente_usuario.get("/ayuda").text
-    assert "MisFinanzas" in html
+    assert "Mis Finanzas" in html
+    assert "MisFinanzas" not in html
     assert "Centro de ayuda" in html
     assert "Obtén ayuda, guías de uso e instalación" in html
     assert "Envía comentarios" in html
     assert "Reporta problemas técnicos o sugerencias" in html
     assert "Condiciones y Política de privacidad" in html
     assert "Licencias y Acerca de" in html
-    assert "© 2026 MisFinanzas" in html
+    assert "© 2026 Mis Finanzas" in html
     assert "Base mínima de liquidez de $300.000 COP" in html
     assert "Registro y Detalles de deudas" in html
 

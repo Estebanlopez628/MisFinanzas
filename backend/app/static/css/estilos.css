@@ -1352,7 +1352,7 @@ a.tarjeta:focus-visible {
     content: "";
     position: fixed;
     inset: 0;
-    z-index: 55;
+    z-index: 9001;
     background: rgba(15, 23, 42, 0.72);
   }
 
@@ -1362,7 +1362,7 @@ a.tarjeta:focus-visible {
     left: 50%;
     right: auto;
     transform: translate(-50%, -50%);
-    z-index: 60;
+    z-index: 9002;
     width: min(340px, calc(100vw - 32px));
     max-height: calc(100vh - 48px);
     overflow-y: auto;
@@ -5226,7 +5226,9 @@ details.edicion-gasto--modal[open] {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 50;
+  /* SRS v4.28: modales secundarios por encima de la página pero siempre por
+     debajo del overlay de confirmación (z-index 9999). */
+  z-index: 9000;
   padding: 1rem;
 }
 
@@ -5897,6 +5899,17 @@ dialog::backdrop {
   gap: 20px;
 }
 
+.impacto-deudas__vacio {
+  margin: 0;
+  padding: 16px;
+  border: 1px dashed rgba(148, 163, 184, 0.35);
+  border-radius: 12px;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  text-align: center;
+}
+
 .impacto-deuda {
   border-radius: 12px;
   border: 1px solid rgba(148, 163, 184, 0.16);
@@ -6212,6 +6225,29 @@ dialog::backdrop {
 
 .acciones-formulario--grilla .boton--ancho-completo {
   grid-column: 1 / -1;
+}
+
+/* SRS v4.28, sección 6: en escritorio «Nueva deuda» va centrada y estrecha
+   arriba; «Deudas registradas» ocupa todo el ancho debajo. Móvil intacto. */
+@media (min-width: 768px) {
+  .rejilla-paneles--deudas {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 18px;
+  }
+
+  .rejilla-paneles--deudas > .panel:first-child {
+    width: 100%;
+    max-width: 900px;
+    margin-inline: auto;
+  }
+
+  .rejilla-paneles--deudas > .panel--tabla {
+    width: 100%;
+    max-width: none;
+    margin-top: 0;
+  }
 }
 
 .campo__control--bloqueado {

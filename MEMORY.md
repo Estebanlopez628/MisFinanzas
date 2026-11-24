@@ -2476,6 +2476,19 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v114`; **884 pruebas** en verde. Gate QA `scripts/qa_v4_26.py` **25/25** sin cambios: la grilla mide 201/201 px en web y 148,5/148,5 px en móvil, con el botón inferior del doble de ancho; checks a 0,6/0,5 ms. Sin errores de consola.
 
+### 2026-11-23 — SRS v4.28: ocho bloques de pulido (ADR-90)
+
+**Decisión (ADR-90).** El documento recibido se autodenomina v4.19, pero la línea base pusheada es v4.27; se registra como **v4.28**. Se ejecutan los ocho bloques en orden de menor a mayor riesgo: textos, paridad, layout, modales y abonos. No se introduce HTMX; la navegación entre pestañas se deja intacta a petición del propietario.
+
+**Consecuencias aplicadas.**
+- Textos: rol `USER_FINANZAS` retirado de la cabecera, descripción de Seguridad sin algoritmos, «Mis Finanzas» en Ayuda, enlace «Ver todos los gastos fijos →» eliminado.
+- Paridad: `_consejo_ahorro` entrega `cierre` con `barras_deuda=[]`; la plantilla muestra siempre el componente de comparativa y un mensaje cuando no hay deudas. Desaparece la gráfica heredada de 12 meses.
+- Layout web: `.rejilla-paneles--deudas` pasa a columna en ≥768 px, con «Nueva deuda» centrada (máx. 900 px) y la tabla a todo el ancho; móvil intacto.
+- Modales: capas 9000 (secundarios) y 9999 (confirmación), observador de `MutationObserver` que preserva `scrollY`, y confirmación de anulación OLB moves al botón para que salga al instante.
+- Metas: `registrar_abono_meta()` acumula sobre el `AbonoProyeccion` del mes (sin migrar la base), nuevo endpoint JSON, modal propio y botón «Abonar» en el gasto vinculado.
+
+**Verificación.** `sw.js` en `olb-finanzas-v115`; **890 pruebas** en verde. Gate `qa_v4_28.py` **32/32** (administrador y no administrador en 1280 y 375 px) y `qa_v4_28b.py` **10/10** (layout, scroll, abono y móvil). La cuenta QA no está en el allowlist de OLB_BYTE, por lo que la anulación se cubre con prueba unitaria de plantilla.
+
 
 
 

@@ -941,3 +941,30 @@ Intactos: donas, Consejero, velocímetros, checks optimistas, subnavegación, gr
 - Usuarios QA: `prueba_qa@misfinanzas.local` / `QA_MisFinanzas_2026!` y `prueba_qa_admin@misfinanzas.local` / `QA_Admin_2026!`.
 - `scripts/qa_v4_26.py`: **25/25 comprobaciones** en Chromium (1280 px y 375 px), con la grilla y los checks sin cambios. Suite completa: **884 pruebas** en verde.
 - Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-89), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.27.
+
+---
+
+## 30. SRS v4.28 — Ocho bloques de pulido
+
+Versión 4.28 y **línea base vigente**. El documento se autodenomina v4.19, pero la línea base pusheada es v4.27; se registra como v4.28 para no reescribir historial. No se introduce HTMX: la navegación entre pestañas permanece intacta.
+
+### 30.1 No regresión
+
+Intactos: botones de modales de deuda/deducción, checks optimistas, velocímetros, Consejero, 7 factores 2026, donas y WhatsApp.
+
+### 30.2 Cambios
+
+1. Modales, alertas y confirmaciones centrados en el viewport, con capas 9000/9999 y preservación de `window.scrollY`.
+2. Anulación/eliminación en OLB_BYTE confirma al pulsar, sin esperar a salir y volver.
+3. Abonos múltiples a metas: botón en el gasto vinculado, modal libre en COP y acumulación sobre el abono del mes.
+4. Paridad total: ambos roles ven la misma comparativa de cierre; sin deudas se muestra el componente con mensaje, no la gráfica heredada.
+5. Seguridad sin nombres de algoritmos y sin etiqueta de rol junto al nombre.
+6. Web: «Nueva deuda» centrada arriba y «Deudas registradas» a todo el ancho; móvil sin cambios.
+7. Atajos de pago: sin «Ver todos los gastos fijos →» y con la distribución de dos filas en web.
+8. «Mis Finanzas» (separado) en Ayuda y comentarios.
+
+### 30.3 Gate QA y cierre documental
+
+- Usuarios QA: `prueba_qa@misfinanzas.local` / `QA_MisFinanzas_2026!` y `prueba_qa_admin@misfinanzas.local` / `QA_Admin_2026!`.
+- Gates: `qa_v4_28.py` **32/32** (ambos roles en 1280 y 375 px) y `qa_v4_28b.py` **10/10** (layout, scroll, abono y móvil). Suite: **890 pruebas** en verde.
+- Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-90), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.28.

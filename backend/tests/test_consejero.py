@@ -183,7 +183,8 @@ def test_presupuesto_muestra_el_consejero_cuando_hay_excedente(cliente_admin) ->
 
     assert respuesta.status_code == 200
     assert "Consejero financiero" in respuesta.text
-    assert "Base frente a optimizado" in respuesta.text
+    assert "impacto-deudas" in respuesta.text
+    assert "Base frente a optimizado" not in respuesta.text
 
 
 def test_presupuesto_avisa_sin_excedente_suficiente(bd, cliente_admin) -> None:

@@ -152,14 +152,22 @@
           </h3>
 
           {# SRS v4.13: solo cifras reales, sin intereses ficticios. #}
-          <p class="cierre-deuda__pill">
-            ¡Terminas {{ consejo.cierre.meses_ahorrados }} meses antes (en
-            {{ consejo.cierre.fecha_cierre_opt }} en lugar de
-            {{ consejo.cierre.fecha_cierre_base }}) y reduces
-            {{ consejo.cierre.reduccion_capital_12m | cop }} adicionales de capital
-            en los próximos 12 meses aplicando tu excedente de
-            {{ consejo.cierre.excedente_mensual | cop }}/mes!
-          </p>
+          {% if consejo.cierre.barras_deuda %}
+            <p class="cierre-deuda__pill">
+              ¡Terminas {{ consejo.cierre.meses_ahorrados }} meses antes (en
+              {{ consejo.cierre.fecha_cierre_opt }} en lugar de
+              {{ consejo.cierre.fecha_cierre_base }}) y reduces
+              {{ consejo.cierre.reduccion_capital_12m | cop }} adicionales de capital
+              en los próximos 12 meses aplicando tu excedente de
+              {{ consejo.cierre.excedente_mensual | cop }}/mes!
+            </p>
+          {% else %}
+            <p class="cierre-deuda__pill">
+              Con tu excedente de {{ consejo.cierre.excedente_mensual | cop }}/mes
+              acumulas {{ consejo.cierre.reduccion_capital_12m | cop }} adicionales
+              en los próximos 12 meses. Aún no tienes deudas activas que acortar.
+            </p>
+          {% endif %}
 
           <div class="cierre-deuda__velocimetros"
                style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; width: 100%; max-width: 540px; margin: 0 auto 16px auto;">
@@ -262,10 +270,15 @@
                 ¡Tu Excedente Aplasta tus Deudas!
               </h4>
               <p class="impacto-deudas__subtitulo">
-                ¡Con tus abonos extra recortas el tiempo de pago de tus deudas de
-                <span class="impacto-deudas__subrayado">{{ consejo.cierre.resumen_barras.meses_base_texto }}</span>
-                a solo {{ consejo.cierre.resumen_barras.meses_objetivo_texto }}!
-                -{{ consejo.cierre.resumen_barras.porcentaje_global }}% de tiempo
+                {% if consejo.cierre.barras_deuda %}
+                  ¡Con tus abonos extra recortas el tiempo de pago de tus deudas de
+                  <span class="impacto-deudas__subrayado">{{ consejo.cierre.resumen_barras.meses_base_texto }}</span>
+                  a solo {{ consejo.cierre.resumen_barras.meses_objetivo_texto }}!
+                  -{{ consejo.cierre.resumen_barras.porcentaje_global }}% de tiempo
+                {% else %}
+                  Aún no tienes deudas activas. Cuando registres una, verás aquí
+                  cuánto puedes acortar su plazo con tu excedente.
+                {% endif %}
               </p>
             </div>
 
@@ -351,39 +364,15 @@
                     </div>
                   </div>
                 </article>
+              {% else %}
+                <p class="impacto-deudas__vacio">
+                  Registra una deuda en «Registro y Detalles de deudas» para ver
+                  aquí la comparativa de cierre con tus abonos extra.
+                </p>
               {% endfor %}
             </div>
           </section>
         </section>
-      {% else %}
-        <h3 class="capacidad__subtitulo">Base frente a optimizado (12 meses)</h3>
-        <p class="ayuda">Ahorro acumulado: mientras más alta la barra, mejor.</p>
-        <div class="comparativa">
-          <div class="comparativa__grafica" role="img"
-               aria-label="Comparación mes a mes entre el escenario base y el optimizado">
-            {% for fila in consejo.serie %}
-              <div class="comparativa__mes">
-                <div class="comparativa__barras">
-                  <span class="comparativa__barra comparativa__barra--base"
-                        style="height: {{ fila.base_pct }}%"
-                        title="Base: {{ fila.base | cop }}"></span>
-                  <span class="comparativa__barra comparativa__barra--optimizado"
-                        style="height: {{ fila.optimizado_pct }}%"
-                        title="Optimizado: {{ fila.optimizado | cop }}"></span>
-                </div>
-                {% set partes = fila.etiqueta.split(' ', 1) %}
-                <span class="comparativa__etiqueta">
-                  <span class="comparativa__mes-nombre">{{ partes[0] }}</span>
-                  {% if partes|length > 1 %}<span class="comparativa__anio">{{ partes[1] }}</span>{% endif %}
-                </span>
-              </div>
-            {% endfor %}
-          </div>
-          <ul class="comparativa__leyenda">
-            <li><span class="dona__muestra comparativa__muestra--base"></span> Base</li>
-            <li><span class="dona__muestra comparativa__muestra--optimizado"></span> Optimizado</li>
-          </ul>
-        </div>
       {% endif %}
       <p class="ayuda">
         Proyección educativa: supone el mismo ingreso, los mismos gastos fijos y

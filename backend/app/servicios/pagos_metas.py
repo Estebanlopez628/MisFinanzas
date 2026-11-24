@@ -469,6 +469,68 @@ def registrar_abono_manual(
     return gasto
 
 
+def registrar_abono_meta(
+    bd: Session,
+    id_usuario: str,
+    id_gasto: str,
+    monto_texto: str,
+    hoy: date,
+) -> Gasto | None:
+    """Acumula un abono libre a la meta vinculada a un gasto fijo (SRS v4.28).
+
+    Permite varios abonos en el mismo mes: se suman al `AbonoProyeccion` de ese
+    mes —se conserva su restricción de unicidad— y al `monto_pagado` del gasto,
+    de modo que el check refleje lo realmente abonado sin migrar la base.
+
+    Args:
+        bd: Sesión de base de datos.
+        id_usuario: Dueño del gasto.
+        id_gasto: Gasto fijo vinculado a una meta.
+        monto_texto: Monto escrito por el usuario.
+        hoy: Fecha del abono.
+
+    Returns:
+        El gasto actualizado, o `None` si no existe o no es del usuario.
+
+    Raises:
+        ValueError: Si el monto no es positivo.
+    """
+    gasto = bd.get(Gasto, id_gasto)
+    if gasto is None or gasto.id_usuario != id_usuario or not gasto.id_proyeccion:
+        return None
+
+    monto = redondear_dinero(parsear_monto(str(monto_texto)))
+    if monto <= CERO:
+        raise ValueError("El abono debe ser mayor que cero.")
+
+    abono = bd.scalars(
+        select(AbonoProyeccion).where(
+            AbonoProyeccion.id_proyeccion == gasto.id_proyeccion,
+            AbonoProyeccion.anio == hoy.year,
+            AbonoProyeccion.mes == hoy.month,
+        )
+    ).first()
+    if abono is None:
+        abono = AbonoProyeccion(
+            id_proyeccion=gasto.id_proyeccion,
+            anio=hoy.year,
+            mes=hoy.month,
+            valor=CERO,
+        )
+        bd.add(abono)
+    abono.valor = redondear_dinero(abono.valor + monto)
+
+    gasto.pagado = True
+    gasto.check_visible = True
+    gasto.pagado_en = hoy
+    gasto.monto_pagado = redondear_dinero(gasto.monto_pagado or CERO) + monto
+    gasto.inhabilitado_hasta = None
+    bd.commit()
+    sincronizar_gasto(bd, gasto)
+    bd.refresh(gasto)
+    return gasto
+
+
 def limpiar_checks(
     bd: Session, id_usuario: str, anio: int, mes: int, quincena: int
 ) -> int:

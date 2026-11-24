@@ -117,6 +117,14 @@
                 Abonar
               </button>
             {% endif %}
+            {# SRS v4.28: las metas también admiten abonos libres y acumulables. #}
+            {% if gasto.id_proyeccion %}
+              <button class="boton boton--secundario boton--pequeno" type="button"
+                      data-abrir-abono-meta data-id-gasto="{{ gasto.id_gasto }}"
+                      data-meta="{{ gasto.descripcion }}">
+                Abonar
+              </button>
+            {% endif %}
           </div>
         </form>
       </details>

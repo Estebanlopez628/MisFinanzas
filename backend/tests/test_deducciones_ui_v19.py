@@ -34,7 +34,7 @@ def test_las_acciones_de_deducciones_estan_a_la_derecha_y_el_modal_tiene_cierre(
     # El único «Cancelar» queda en el modal global de confirmación (SRS v3.9.1).
     # El «Cancelar» del modal de edición se retiró en v4.27: solo queda el del
     # modal de abonos y el del propio modal de confirmación de la app.
-    assert html.count(">Cancelar</button>") == 2
+    assert html.count(">Cancelar</button>") == 3
     assert html.index(">Actualizar</button>") < html.index(">Eliminar</button>")
     assert 'aria-label="Eliminar Libranza"' in html
     assert "js/deudas.js" in html

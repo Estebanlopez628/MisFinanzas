@@ -37,7 +37,7 @@ def test_todos_los_modales_usan_la_regla_global_de_centrado() -> None:
         "display: flex;",
         "align-items: center;",
         "justify-content: center;",
-        "z-index: 50;",
+        "z-index: 9000;",
         "padding: 1rem;",
     ):
         assert declaracion in bloque
