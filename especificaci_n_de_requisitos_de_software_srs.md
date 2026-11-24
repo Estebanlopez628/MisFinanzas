@@ -968,3 +968,23 @@ Intactos: botones de modales de deuda/deducción, checks optimistas, velocímetr
 - Usuarios QA: `prueba_qa@misfinanzas.local` / `QA_MisFinanzas_2026!` y `prueba_qa_admin@misfinanzas.local` / `QA_Admin_2026!`.
 - Gates: `qa_v4_28.py` **32/32** (ambos roles en 1280 y 375 px) y `qa_v4_28b.py` **10/10** (layout, scroll, abono y móvil). Suite: **890 pruebas** en verde.
 - Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-90), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.28.
+
+---
+
+## 31. SRS v4.29 — Modales centrados en web
+
+Versión 4.29 y **línea base vigente**. No se rehace v4.28.
+
+### 31.1 No regresión
+
+Intactos: modales de edición de deuda/deducción, checks optimistas, paridad de gráficas, abonos a metas, textos y branding, layout de deudas y atajos.
+
+### 31.2 Cambio
+
+Un `@media (max-width: 767px)` abierto desde el ícono de OLB_BYTE engullía la sección de modales propios, de modo que en escritorio `.app-modal` computaba `position: static` y los modales de abono aparecían como bloques al final de la página. Se cierra ese media query después del ícono y se reabre solo para las reglas móviles de Atajos Guardados. Los modales de crédito, meta, confirmación y aviso vuelven a centrarse en el viewport con `z-index: 9999` en web y móvil.
+
+### 31.3 Gate QA y cierre documental
+
+- Usuarios QA: `prueba_qa@misfinanzas.local` / `QA_MisFinanzas_2026!` y `prueba_qa_admin@misfinanzas.local` / `QA_Admin_2026!`.
+- `scripts/qa_v4_29.py`: **18/18 comprobaciones**; en 1280 px los modales de crédito, meta y confirmación miden tarjeta centrada en (640, 450) con `position: fixed` y `z-index: 9999`. Suite: **892 pruebas** en verde.
+- Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-91), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.29.

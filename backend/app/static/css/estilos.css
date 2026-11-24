@@ -4290,6 +4290,10 @@ strong.valor-negativo.recibo__cifra--saldo {
   vertical-align: middle;
 }
 
+/* SRS v4.29: se cierra aquí el media query móvil que estaba abierto desde el
+   ícono de OLB_BYTE y que dejaba los modales sin estilos en escritorio. */
+}
+
 /* SRS v3.9.1, sección 3: modales propios en lugar de diálogos nativos. */
 .app-modal {
   position: fixed;
@@ -4553,6 +4557,8 @@ strong.valor-negativo.recibo__cifra--saldo {
   text-align: center;
 }
 
+/* SRS v4.29: las reglas de atajos que siguen son exclusivas de móvil. */
+@media (max-width: 767px) {
 /* SRS v3.7, sección 1: sin desplazamiento hacia un área vacía a la derecha. */
   .tabla-contenedor--atajos {
     width: 100%;

@@ -2489,6 +2489,17 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v115`; **890 pruebas** en verde. Gate `qa_v4_28.py` **32/32** (administrador y no administrador en 1280 y 375 px) y `qa_v4_28b.py` **10/10** (layout, scroll, abono y móvil). La cuenta QA no está en el allowlist de OLB_BYTE, por lo que la anulación se cubre con prueba unitaria de plantilla.
 
+### 2026-11-23 — SRS v4.29: modales centrados en web (ADR-91)
+
+**Decisión (ADR-91).** El propietario reportó que los modales de abono para créditos y metas seguían saliendo al final de la página en escritorio. La causa real no era el botón sino un `@media (max-width: 767px)` abierto en la línea 4280 del CSS —desde el ícono de OLB_BYTE— que solo se cerraba en la 4677 y engullía toda la sección de modales propios. En web, `.app-modal` computaba `position: static; display: block`.
+
+**Consecuencias aplicadas.**
+- Se cierra el media query justo después de `.olb-interno__icono`, de modo que `.app-modal`, `.cierre-deuda`, `.mf-gauge-card` y las demás reglas quedan a nivel superior y aplican en escritorio.
+- Se reabre un `@media (max-width: 767px)` únicamente antes del bloque de reglas móviles de Atajos Guardados.
+- El balance de llaves del archivo queda en 934/934. Prueba de regresión nueva: `test_app_no_queda_dentro_de_un_media_query` calcula la profundidad de llaves antes de `.app-modal`.
+
+**Verificación.** `sw.js` en `olb-finanzas-v116`; **892 pruebas** en verde. Gate `qa_v4_29.py` **18/18**: en 1280 px los modales de crédito, meta y confirmación tienen `position: fixed`, `z-index: 9999`, `display: flex` y tarjeta centrada exactamente en (640, 450). Los gates anteriores (v4.26, v4.28, v4.28b) siguen en verde sin regresiones.
+
 
 
 

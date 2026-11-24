@@ -62,6 +62,8 @@ En los modales de «Editar deuda» y «Editar deducción fija», el botón «Abo
 
 También puedes hacer varios abonos a una meta en el mismo mes: abre el gasto fijo de la meta, pulsa **Abonar** y digita el valor; cada abono se suma al acumulado y se refleja en el check. Todos los perfiles ven la misma comparativa de cierre: si aún no tienes deudas, verás el mismo panel con un mensaje invitándote a registrar una.
 
+Los cuadros para abonar a un crédito o a una meta, así como las confirmaciones y avisos, aparecen siempre en el centro de la pantalla, tanto en la computadora como en el celular.
+
 ## 6. Atajos de Pago y recibos
 
 Puedes guardar tus pagos o abonos frecuentes con su monto exacto ('Valor a pagar') para registrarlos con un solo toque y generar un comprobante visual limpio y fácil de leer.

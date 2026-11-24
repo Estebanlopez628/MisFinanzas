@@ -154,3 +154,7 @@ Principios innegociables. Toda especificación, plan y tarea debe cumplirlos de 
     - La comparativa de cierre es idéntica para todos los roles; sin deudas se muestra el mismo componente con un mensaje, nunca la gráfica antigua.
     - Los modales respetan las capas (9000 / 9999) y conservan la posición de scroll; la anulación en OLB_BYTE confirma al pulsar.
     - Los abonos a metas se acumulan en el mes, y los textos de la interfaz usan lenguaje claro sin roles técnicos ni nombres de algoritmos.
+
+31. **Modales propios a nivel superior (SRS v4.29):**
+    - Los estilos de `.app-modal` no pueden quedar dentro de un media query móvil: los modales de abono, confirmación y aviso deben centrarse en el viewport también en escritorio.
+    - Las reglas exclusivas de móvil se agrupan en su propio `@media` y la profundidad de llaves antes de `.app-modal` debe ser cero.
