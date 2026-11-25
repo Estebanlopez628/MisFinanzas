@@ -206,3 +206,8 @@ Principios innegociables. Toda especificación, plan y tarea debe cumplirlos de 
     - Se aceptan enlaces web y esquemas nativos de apps de pago; la apertura web usa pestaña nueva y el Deep Link se ejecuta en la ventana actual.
     - En móvil, «Atajos guardados» se desplaza horizontalmente y «Atajos de pago» muestra tarjetas directas con Copiar y Pagar, sin modal intermedio.
     - La vista de escritorio de atajos y las gráficas aprobadas permanecen intactas.
+
+43. **Corrección de «Atajos guardados» (SRS v4.43):**
+    - En móvil solo se muestran Descripción, Valor a pagar y Días de pago; Referencia y Acciones son exclusivas de Web.
+    - El modal de edición se abre sobre `document.body`, centrado y con todos sus campos, sin quedar recortado por el contenedor.
+    - La tabla se desplaza horizontalmente solo cuando el contenido no cabe en el ancho disponible.

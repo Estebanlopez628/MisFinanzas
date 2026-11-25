@@ -86,5 +86,5 @@ def test_cabeceras_atajos_centradas() -> None:
     css = (RUTA / "static/css/estilos.css").read_text(encoding="utf-8")
     assert ".tabla--atajos thead th:nth-child(3)" in css
     assert "text-align: center !important" in css
-    assert "width: 34% !important" in css
-    assert "width: 28% !important" in css
+    assert "width: max-content" in css
+    assert "min-width: 100%" in css

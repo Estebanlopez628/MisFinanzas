@@ -2631,6 +2631,17 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v129`; **933 pruebas** en verde. Gate `qa_v4_42.py` **23/23** en 1280 y 375 px: guardado de Deep Link, tabla desplazable, tarjetas directas, Pagar web en pestaña nueva y Pagar nativo sin pestaña residual. Gates v4.33 (21/21), v4.35 (31/31), v4.38 (60/60), v4.40 (16/16) y v4.41 (22/22) sin regresiones. Gráficas, velocímetros, donas, Consejero, OLB_BYTE y Ayuda intactos.
 
+### 2026-11-24 — SRS v4.43: corrección de columnas y portal del modal (ADR-105)
+
+**Decisión (ADR-105).** El propietario corrigió dos puntos de v4.42: el ancho fijo de 440 px forzaba scroll aunque el texto cupiera, y el modal de edición quedaba atrapado en el contexto de la tarjeta. Las referencias a `hidden md:table-cell` y `ReactDOM.createPortal` del documento son ilustrativas; se implementan con CSS y `document.body.appendChild`, según el stack.
+
+**Consecuencias.**
+1. En móvil (<768px), «Atajos guardados» muestra solo Descripción | Valor a pagar | Días de pago. Las columnas Referencia (4) y Acciones (5) se ocultan en `thead` y `tbody`; en Web siguen visibles y la fila conserva Actualizar/Eliminar. Se retiró el truco de `position: absolute` de la celda 5.
+2. `deudas.js` traslada `details.atajo-modal` a `document.body` al abrirlo y lo devuelve al cerrar mediante un marcador (equivalente al portal). El modal queda centrado en el viewport y muestra Descripción, Referencia, Valor a pagar, Día de pago, Enlace de pago y los botones Actualizar/Eliminar.
+3. La tabla usa `table-layout: auto`, `width: max-content` y `min-width: 100%`: crece con el contenido y solo se desplaza si el texto excede el ancho disponible.
+
+**Verificación.** `sw.js` en `olb-finanzas-v130`; **936 pruebas** en verde. Gate `qa_v4_43.py` **18/18** en 375 y 1280 px: tres columnas en móvil y cinco en Web, modal sobre `body`, centrado y con todos los campos, scroll con texto largo y sin scroll con texto corto. Gates v4.33/35/38/40/41/42 sin regresiones.
+
 
 
 

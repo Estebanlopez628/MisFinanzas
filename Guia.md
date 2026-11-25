@@ -106,7 +106,7 @@ Principios que explican el resto del código:
 ### Resumen del inventario
 
 - **115 archivos** documentados: 56 Python, 40 plantillas Jinja2 y 19 recursos estáticos.
-- **70 clases**, **659 funciones** y **43 métodos** de clase.
+- **70 clases**, **660 funciones** y **43 métodos** de clase.
 
 ### Detalle por archivo
 
@@ -257,7 +257,7 @@ Principios que explican el resto del código:
 
 #### `backend/app/static/css/`
 
-- **`estilos.css`** · 6581 líneas — Fondo y superficies
+- **`estilos.css`** · 6556 líneas — Fondo y superficies
 - **`factura-olb.css`** · 711 líneas — Sello de Anulada si aplica
 
 #### `backend/app/static/js/`
@@ -271,8 +271,8 @@ Principios que explican el resto del código:
 - **`comentarios.js`** · 46 líneas — Cambio de estado en el panel administrativo de reportes (SRS v2.0, 5.5).
 - **`consejero.js`** · 80 líneas — Tooltip táctil de la gráfica «Comparativa de cierre de deuda» (SRS v3.7).
   - Funciones: `mostrar`
-- **`deudas.js`** · 355 líneas — Interacción de filas con modal centrado (SRS v1.9, secciones 2.3 y 3.3).
-  - Funciones: `esMovil`, `sacarDeLaTabla`, `devolverALaTabla`, `vigilarPortabilidad`, `cerrarOtras`, `conectarFilas`, `pendienteDeDeuda`, `numeroDeuda`, `validarPlan`, `numero`, `validarEdicion`
+- **`deudas.js`** · 378 líneas — Interacción de filas con modal centrado (SRS v1.9, secciones 2.3 y 3.3).
+  - Funciones: `esMovil`, `sacarDeLaTabla`, `devolverALaTabla`, `sacarAtajoDelContexto`, `vigilarPortabilidad`, `cerrarOtras`, `conectarFilas`, `pendienteDeDeuda`, `numeroDeuda`, `validarPlan`, `numero`, `validarEdicion`
 - **`dona.js`** · 122 líneas — Interacción de las gráficas tipo dona (capacidad de endeudamiento y cartera).
   - Funciones: `centro`, `mostrar`, `restaurar`, `iniciar`
 - **`factura.js`** · 422 líneas — Factura y recibo de abono de OLB_BYTE como imagen PNG (ADR-50).

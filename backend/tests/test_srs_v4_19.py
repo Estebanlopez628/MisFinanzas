@@ -93,10 +93,9 @@ def test_banner_movil_y_dona_centrada() -> None:
 
 
 def test_atajos_tabla_con_anchos() -> None:
-    """La tabla móvil usa table-fixed con 38/34/28 y padding compartido."""
+    """SRS v4.43: la tabla crece con el contenido y hace scroll solo si hace falta."""
     css = (RUTA / "static/css/estilos.css").read_text(encoding="utf-8")
-    assert "table-layout: fixed !important" in css
-    assert "width: 38% !important" in css
-    assert "width: 34% !important" in css
-    assert "width: 28% !important" in css
+    assert "table-layout: auto !important" in css
+    assert "width: max-content !important" in css
+    assert "min-width: 100% !important" in css
     assert "padding: 10px 8px !important" in css

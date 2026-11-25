@@ -143,10 +143,11 @@ def test_el_css_de_movil_desplaza_la_tabla_y_el_js_abre_el_modal() -> None:
     inicio = css.index(".tabla-contenedor--atajos {", css.index("@media (max-width: 767px)"))
     contenedor = css[inicio : css.index("}", inicio)]
     assert "overflow-x: auto" in contenedor
-    assert "min-width: 440px" in css
+    assert "width: max-content" in css
     assert ".tabla--atajos thead th:nth-child(1)" in css
     assert ".tabla--atajos tr[data-chancuco-fila]" in css
-    assert "> td:nth-child(5) > button" in css
+    assert "> td:nth-child(5)" in css
+    assert "display: none !important" in css
     assert ">Ver</summary>" not in plantilla
     assert 'conectarFilas("tr[data-chancuco-fila]"' in javascript
     assert '[data-abrir-atajo]' in javascript

@@ -4791,8 +4791,9 @@ strong.valor-negativo.recibo__cifra--saldo {
 
   .tabla--atajos {
     display: table;
-    width: 100%;
-    min-width: 440px;
+    /* SRS v4.43: solo se desplaza si el contenido no cabe en el ancho disponible. */
+    width: max-content;
+    min-width: 100%;
   }
 
   .tabla--atajos thead {
@@ -4865,24 +4866,10 @@ strong.valor-negativo.recibo__cifra--saldo {
     grid-column: 3;
   }
 
-  .tabla--atajos tr[data-chancuco-fila] > td:nth-child(4) {
-    display: none;
-  }
-
-  /* La celda de acciones solo aloja el modal: se ocultan sus controles. */
+  /* SRS v4.43: en móvil solo Descripción | Valor a pagar | Días de pago.
+     Las columnas Referencia y Acciones existen únicamente en Web. */
+  .tabla--atajos tr[data-chancuco-fila] > td:nth-child(4),
   .tabla--atajos tr[data-chancuco-fila] > td:nth-child(5) {
-    position: absolute;
-    width: 0;
-    height: 0;
-    padding: 0;
-    border: 0;
-  }
-
-  /* En móvil no se muestra ningún botón de la celda de acciones: la fila entera
-     abre el modal. «Actualizar» es un <button>, por eso también se incluye. */
-  .tabla--atajos tr[data-chancuco-fila] > td:nth-child(5) > a,
-  .tabla--atajos tr[data-chancuco-fila] > td:nth-child(5) > button,
-  .tabla--atajos tr[data-chancuco-fila] > td:nth-child(5) > form {
     display: none !important;
   }
 
@@ -4989,11 +4976,11 @@ strong.valor-negativo.recibo__cifra--saldo {
 @media (max-width: 767px) {
   .tabla--atajos {
     display: table !important;
-    table-layout: fixed !important;
+    table-layout: auto !important;
     border-collapse: collapse !important;
-    width: 100% !important;
-    /* SRS v4.42: con scroll horizontal se revelan descripciones y días largos. */
-    min-width: 440px !important;
+    /* SRS v4.43: ancho según contenido; el scroll aparece solo si hace falta. */
+    width: max-content !important;
+    min-width: 100% !important;
   }
 
   .tabla--atajos thead {
@@ -5022,28 +5009,16 @@ strong.valor-negativo.recibo__cifra--saldo {
     vertical-align: middle !important;
   }
 
-  .tabla--atajos thead th:nth-child(1),
-  .tabla--atajos tbody tr[data-chancuco-fila] > td:nth-child(1) {
-    width: 38% !important;
-  }
-
-  .tabla--atajos thead th:nth-child(2),
-  .tabla--atajos tbody tr[data-chancuco-fila] > td:nth-child(2) {
-    width: 34% !important;
-  }
-
-  .tabla--atajos thead th:nth-child(3),
-  .tabla--atajos tbody tr[data-chancuco-fila] > td:nth-child(3) {
-    width: 28% !important;
-  }
-
   .tabla--atajos .atajo-descripcion {
     max-width: none !important;
     width: auto !important;
   }
 
+  /* SRS v4.43: «Referencia» y «Acciones» son exclusivas de Web. */
   .tabla--atajos thead th:nth-child(4),
-  .tabla--atajos tbody tr[data-chancuco-fila] > td:nth-child(4) {
+  .tabla--atajos thead th:nth-child(5),
+  .tabla--atajos tbody tr[data-chancuco-fila] > td:nth-child(4),
+  .tabla--atajos tbody tr[data-chancuco-fila] > td:nth-child(5) {
     display: none !important;
   }
 }

@@ -1247,3 +1247,20 @@ Intactos: gráfica de barras, Consejero, velocímetros, donas, banner verde, mod
 
 - `scripts/qa_v4_42.py`: **23/23 comprobaciones** en 1280 y 375 px. Suite: **933 pruebas** en verde.
 - Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-104), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.42.
+
+---
+
+## 45. SRS v4.43 — Corrección de columnas y portal del modal
+
+Versión 4.43 y **línea base vigente**. Corrige los puntos señalados de v4.42. Las referencias a Tailwind/React del documento son ilustrativas: se implementa con CSS y JS mínimo.
+
+### 45.1 Cambios
+
+1. En móvil (<768px), la cabecera y las filas de «Atajos guardados» muestran únicamente Descripción | Valor a pagar | Días de pago. Referencia y Acciones (Actualizar/Eliminar) se ocultan y siguen existiendo solo en Web. Se retira el posicionamiento absoluto de la celda de acciones.
+2. El `<details class="atajo-modal">` se traslada a `document.body` al abrirse y vuelve a su fila al cerrarse, de modo que quede centrado en toda la pantalla y muestre completos Descripción, Referencia, Valor a pagar, Día de pago, Enlace de pago y Actualizar/Eliminar.
+3. La tabla móvil usa `table-layout: auto`, `width: max-content` y `min-width: 100%`: solo se desplaza si el texto no cabe.
+
+### 45.2 Gate QA y cierre documental
+
+- `scripts/qa_v4_43.py`: **18/18 comprobaciones** en 375 y 1280 px. Suite: **936 pruebas** en verde.
+- Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-105), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.43.

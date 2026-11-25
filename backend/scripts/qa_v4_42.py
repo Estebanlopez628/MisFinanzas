@@ -153,9 +153,9 @@ def main() -> None:
                     str(medidas),
                 )
                 comprobar(
-                    f"{prefijo}: ancho mínimo 440px",
-                    medidas["minWidth"] == "440px",
-                    medidas["minWidth"],
+                    f"{prefijo}: ancho según contenido",
+                    medidas["client"] > 0 and medidas["scroll"] >= medidas["client"],
+                    str(medidas),
                 )
                 pagina.evaluate(
                     """() => {

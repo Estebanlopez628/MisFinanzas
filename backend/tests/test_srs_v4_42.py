@@ -63,7 +63,8 @@ def test_scroll_horizontal_en_tabla_de_atajos() -> None:
     inicio = css.index(".tabla-contenedor--atajos {", css.index("@media (max-width: 767px)"))
     bloque = css[inicio : css.index("}", inicio)]
     assert "overflow-x: auto" in bloque
-    assert "min-width: 440px" in css
+    assert "width: max-content" in css
+    assert "min-width: 100%" in css
     chancucos = (RUTA / "templates/chancucos/index.html").read_text(encoding="utf-8")
     assert "Valor a<br />Pagar" in chancucos
     assert "Días de<br />Pago" in chancucos

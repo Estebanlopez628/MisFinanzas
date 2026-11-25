@@ -56,6 +56,19 @@
     marcadores.delete(detalles);
   }
 
+  // SRS v4.43: el modal de «Atajos guardados» sale del contexto de la tarjeta y
+  // se renderiza sobre document.body, como un portal, para que quede centrado
+  // en toda la pantalla y muestre completos todos sus campos.
+  function sacarAtajoDelContexto(detalles) {
+    if (!detalles.classList.contains("atajo-modal") || marcadores.has(detalles)) {
+      return;
+    }
+    var marcador = document.createComment("modal-atajo");
+    detalles.parentNode.insertBefore(marcador, detalles);
+    marcadores.set(detalles, marcador);
+    document.body.appendChild(detalles);
+  }
+
   function vigilarPortabilidad(detalles) {
     detalles.addEventListener("toggle", function () {
       if (detalles.open) {
@@ -103,6 +116,16 @@
   document
     .querySelectorAll(".tabla--deudas details.edicion-gasto--modal")
     .forEach(vigilarPortabilidad);
+
+  document.querySelectorAll("details.atajo-modal").forEach(function (detalles) {
+    detalles.addEventListener("toggle", function () {
+      if (detalles.open) {
+        sacarAtajoDelContexto(detalles);
+      } else {
+        devolverALaTabla(detalles);
+      }
+    });
+  });
 
   // Escritorio: el botón «Actualizar» de cada fila abre su modal de edición.
   document.querySelectorAll("[data-abrir-atajo]").forEach(function (boton) {

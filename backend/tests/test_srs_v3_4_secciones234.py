@@ -15,10 +15,8 @@ def test_columnas_compactas_en_atajos_movil() -> None:
     inicio = CSS.index(".tabla-contenedor--atajos {", CSS.index("@media (max-width: 767px)"))
     contenedor = CSS[inicio : CSS.index("}", inicio)]
     assert "overflow-x: auto" in contenedor
-    assert "min-width: 440px" in CSS
-    assert "width: 38% !important" in CSS
-    assert "width: 34% !important" in CSS
-    assert "width: 28% !important" in CSS
+    assert "width: max-content" in CSS
+    assert "min-width: 100%" in CSS
     assert "max-width: none !important" in CSS
 
 
