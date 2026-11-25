@@ -11,14 +11,15 @@ CSS = (RUTA_APP / "static/css/estilos.css").read_text(encoding="utf-8")
 
 
 def test_atajos_sin_scroll_lateral_y_columnas_alineadas() -> None:
-    """El contenedor no se desplaza y cabecera/filas comparten rejilla."""
+    """SRS v4.42: el scroll queda dentro de la tabla, no de la página."""
     html = (RUTA_APP / "templates/chancucos/index.html").read_text(encoding="utf-8")
     assert "tabla-contenedor--atajos" in html
-    bloque = CSS.split("@media (max-width: 767px) {", 1)[1].split(".atajo-modal", 1)[0]
-    assert "overflow-x: hidden" in bloque
-    assert "grid-template-columns: fit-content(160px) max-content max-content" in bloque
-    assert "text-align: right" in bloque
-    assert "white-space: nowrap" in bloque
+    inicio = CSS.index(".tabla-contenedor--atajos {", CSS.index("@media (max-width: 767px)"))
+    bloque = CSS[inicio : CSS.index("}", inicio)]
+    assert "overflow-x: auto" in bloque
+    assert "overscroll-behavior-x: contain" in bloque
+    assert "text-align: right" in CSS
+    assert "white-space: nowrap" in CSS
 
 
 def test_copiado_de_imagen_intacto() -> None:

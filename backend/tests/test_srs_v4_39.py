@@ -27,7 +27,8 @@ def test_todos_los_modales_sin_cancelar_tienen_x() -> None:
     )
     for nombre in plantillas:
         html = (RUTA / "templates" / nombre).read_text(encoding="utf-8")
-        if ">Cancelar<" in html:
+        if ">Cancelar<" in html or "edicion-gasto--modal" not in html:
+            # SRS v4.42: Mis Finanzas ya no abre modal de atajo en móvil.
             continue
         assert "data-cancelar-edicion" in html, nombre
         assert "edicion-gasto__cerrar" in html, nombre

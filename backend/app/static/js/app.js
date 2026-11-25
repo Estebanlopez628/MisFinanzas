@@ -104,6 +104,63 @@
     });
   }
 
+  /* SRS v4.42: Deep Links nativos y apertura inteligente de «Pagar». */
+  (function () {
+    var REGEX_URL_PAGO = /^(https?:\/\/|[a-zA-Z][a-zA-Z0-9+.-]*:\/\/).*/i;
+
+    document.addEventListener("click", function (evento) {
+      var control = evento.target instanceof Element
+        ? evento.target.closest("[data-pagar-atajo]")
+        : null;
+      if (!control) {
+        return;
+      }
+      var url = (
+        control.getAttribute("data-url") || control.getAttribute("href") || ""
+      ).trim();
+      if (!url) {
+        return;
+      }
+      evento.preventDefault();
+      if (/^https?:\/\//i.test(url)) {
+        window.open(url, "_blank", "noopener,noreferrer");
+      } else {
+        // iOS Safari y Android disparan la app nativa sin pestaña residual.
+        window.location.href = url;
+      }
+    });
+
+    // El formulario acepta https:// y esquemas de app (daviplata://, nequi://…).
+    document.addEventListener(
+      "submit",
+      function (evento) {
+        var formulario = evento.target;
+        if (!(formulario instanceof HTMLFormElement)) {
+          return;
+        }
+        var campo = formulario.querySelector("[data-url-pago]");
+        if (!campo) {
+          return;
+        }
+        var valor = (campo.value || "").trim();
+        if (valor && !REGEX_URL_PAGO.test(valor)) {
+          evento.preventDefault();
+          campo.setCustomValidity(
+            "Escribe https://... o un enlace de app como daviplata://."
+          );
+          if (typeof campo.reportValidity === "function") {
+            campo.reportValidity();
+          }
+          campo.addEventListener("input", function limpiar() {
+            campo.setCustomValidity("");
+            campo.removeEventListener("input", limpiar);
+          });
+        }
+      },
+      true
+    );
+  })();
+
   // ------------------- Login, diálogos de detalle ------------------------
 
   // Mostrar u ocultar la contraseña del login sin recargar la página.

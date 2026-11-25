@@ -21,3 +21,10 @@
     </span>
   {%- endif -%}
 {%- endmacro %}
+
+{# SRS v4.42: solo los números, para la píldora «Pagar los días: 15 · 30». #}
+{% macro dias_pago_numeros(item) -%}
+  {%- if item.dia_pago_1 -%}
+    {{ item.dia_pago_1 }}{% if item.dia_pago_2 %} · {{ item.dia_pago_2 }}{% endif %}
+  {%- endif -%}
+{%- endmacro %}

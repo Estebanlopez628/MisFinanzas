@@ -2620,6 +2620,17 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v128`; **920 pruebas** en verde. Gate `qa_v4_41.py` **22/22** en 1280 y 375 px: fila con editar/X/check, modal Editar con Actualizar y sin Cancelar, ✔ optimista, limpieza de checks y permanencia en `/trabajos-extras`. Gates v4.33/35/37/38/40 sin regresiones.
 
+### 2026-11-24 — SRS v4.42: Deep Links y tarjetas directas de atajos (ADR-104)
+
+**Decisión (ADR-104).** El documento se autodenomina v4.22, pero la línea base es v4.41; se registra v4.42. El código de referencia es JSX/Tailwind ilustrativo: se implementa en Jinja2/CSS/JS mínimo, según el stack innegociable del proyecto.
+
+**Consecuencias por sección.**
+1. `chancucos.py` acepta `http(s)://` y esquemas `[esquema]://` (`daviplata://`, `nequi://`, `bancolombia://`), rechazando `javascript:`, `data:` y `file:`. Los dos campos pasan de `type="url"` a `type="text" inputmode="url"` con placeholder común. `app.js` valida con la misma expresión y abre web con `window.open(..., '_blank', 'noopener,noreferrer')` y nativo con `window.location.href`.
+2. En móvil, `.tabla-contenedor--atajos` desplaza horizontalmente y `.tabla--atajos` tiene `min-width: 440px`, conservando las cabeceras «Valor a / Pagar» y «Días de / Pago» y la distribución 38/34/28. La descripción ya no se recorta.
+3. La vista móvil de «Atajos de pago» en Mis Finanzas usa `.atajo-tarjeta-movil`: descripción completa + píldora «Pagar los días: 15 · 30», valor y referencia, y botones Copiar/Pagar. Se retiró `data-atajo-fila`, el modal `atajo-finanzas-modal` y su conexión en `deudas.js`. La vista de escritorio y `.atajo_detalle` no cambian.
+
+**Verificación.** `sw.js` en `olb-finanzas-v129`; **933 pruebas** en verde. Gate `qa_v4_42.py` **23/23** en 1280 y 375 px: guardado de Deep Link, tabla desplazable, tarjetas directas, Pagar web en pestaña nueva y Pagar nativo sin pestaña residual. Gates v4.33 (21/21), v4.35 (31/31), v4.38 (60/60), v4.40 (16/16) y v4.41 (22/22) sin regresiones. Gráficas, velocímetros, donas, Consejero, OLB_BYTE y Ayuda intactos.
+
 
 
 

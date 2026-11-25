@@ -1072,12 +1072,107 @@ a.tarjeta:focus-visible {
   .atajo-web {
     display: block;
   }
+
+  /* SRS v4.42: la tarjeta directa existe solo en móvil. */
+  .atajo-tarjeta-movil {
+    display: none;
+  }
 }
 
 @media (max-width: 560px) {
   .lista-atajos__item[data-atajo-fila] {
     grid-template-columns: minmax(0, 1fr) auto auto;
     justify-items: start;
+  }
+}
+
+/* SRS v4.42: tarjetas directas de «Atajos de pago» en móvil (<768px).
+   Sin modal intermedio: descripción, días, valor, referencia y acciones
+   Copiar/Pagar quedan visibles en un solo toque. */
+@media (max-width: 767px) {
+  .lista-atajos__item {
+    display: block;
+    padding: 0;
+    border: 0;
+    background: none;
+  }
+
+  .atajo-tarjeta-movil {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px;
+    border: 1px solid var(--borde-suave);
+    border-radius: 14px;
+    background: var(--bg-card);
+    box-shadow: var(--sombra-tarjeta);
+  }
+
+  .atajo-tarjeta-movil__cabecera {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .atajo-tarjeta-movil__descripcion {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.9rem;
+    font-weight: 700;
+    line-height: 1.35;
+    color: var(--text-primary);
+    overflow-wrap: anywhere;
+  }
+
+  .atajo-tarjeta-movil__dias {
+    flex-shrink: 0;
+    padding: 3px 10px;
+    border: 1px solid rgba(2, 132, 199, 0.3);
+    border-radius: 999px;
+    background: rgba(2, 132, 199, 0.15);
+    color: #bae6fd;
+    font-size: 0.7rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .atajo-tarjeta-movil__datos {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+
+  .atajo-tarjeta-movil__valor strong {
+    color: var(--accent-green);
+    font-size: 0.85rem;
+  }
+
+  .atajo-tarjeta-movil__ref {
+    padding: 2px 8px;
+    border: 1px solid var(--borde-suave);
+    border-radius: 6px;
+    background: rgba(15, 23, 42, 0.7);
+    color: var(--text-primary);
+    font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+    font-size: 0.7rem;
+  }
+
+  .atajo-tarjeta-movil__acciones {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--borde-suave);
+  }
+
+  .atajo-tarjeta-movil__acciones .boton {
+    width: 100%;
+    min-width: 0;
   }
 }
 
@@ -4353,7 +4448,7 @@ strong.valor-negativo.recibo__cifra--saldo {
 }
 
 /* El enlace puede ser largo: se desplaza dentro del input sin ensanchar el modal. */
-.atajo-modal__tarjeta input[type="url"] {
+.atajo-modal__tarjeta [data-url-pago] {
   min-width: 0;
   max-width: 100%;
   box-sizing: border-box;
@@ -4685,28 +4780,29 @@ strong.valor-negativo.recibo__cifra--saldo {
 /* SRS v4.29: las reglas de atajos que siguen son exclusivas de móvil. */
 @media (max-width: 767px) {
 /* SRS v3.7, sección 1: sin desplazamiento hacia un área vacía a la derecha. */
+  /* SRS v4.42: la tabla se desliza horizontalmente en móvil para que los días
+     múltiples y las descripciones largas no se corten. */
   .tabla-contenedor--atajos {
     width: 100%;
-    overflow-x: hidden;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
   }
 
   .tabla--atajos {
-    display: block;
+    display: table;
     width: 100%;
+    min-width: 440px;
   }
 
-  /* Cabecera compacta: solo las tres columnas que se ven en la fila. */
   .tabla--atajos thead {
-    display: block;
-    margin-bottom: 6px;
+    display: table-header-group;
+    margin-bottom: 0;
   }
 
   .tabla--atajos thead tr {
-    display: grid;
-    grid-template-columns: fit-content(160px) max-content max-content;
-    justify-content: start;
-    gap: 11px;
-    padding: 0 10px;
+    display: table-row;
+    padding: 0;
   }
 
   .tabla--atajos thead th {
@@ -4722,7 +4818,7 @@ strong.valor-negativo.recibo__cifra--saldo {
   .tabla--atajos thead th:nth-child(1),
   .tabla--atajos thead th:nth-child(2),
   .tabla--atajos thead th:nth-child(3) {
-    display: block;
+    display: table-cell;
   }
 
   .tabla--atajos thead th:nth-child(2),
@@ -4734,39 +4830,27 @@ strong.valor-negativo.recibo__cifra--saldo {
   }
 
   .tabla--atajos tbody {
-    display: block;
+    display: table-row-group;
   }
 
-  /* SRS v3.4, sección 2: la descripción abraza su texto (w-fit) y se recorta a
-     160 px solo si es extensa; el hueco hasta el valor es corto (11 px). */
+  /* SRS v4.42: la descripción ya no se recorta; el scroll horizontal revela
+     el texto completo y los días múltiples. */
   .tabla--atajos .atajo-descripcion {
     font-size: 0.74rem;
-    max-width: 160px;
-    width: fit-content;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
 
   .tabla--atajos tr[data-chancuco-fila] {
-    display: grid;
-    grid-template-columns: fit-content(160px) max-content max-content;
-    justify-content: start;
-    align-items: center;
-    gap: 11px;
-    margin-bottom: 8px;
-    padding: 8px 10px;
-    border: 1px solid var(--borde-suave);
-    border-radius: var(--radio-md);
-    background: rgba(15, 23, 42, 0.35);
+    display: table-row;
     cursor: pointer;
   }
 
   .tabla--atajos tr[data-chancuco-fila] > td {
-    display: block;
-    padding: 0;
-    border: 0;
+    display: table-cell;
+    padding: 8px 6px;
+    border-bottom: 1px solid var(--borde-suave);
     min-width: 0;
+    vertical-align: middle;
   }
 
   .tabla--atajos tr[data-chancuco-fila] > td:nth-child(1) {
@@ -4908,7 +4992,8 @@ strong.valor-negativo.recibo__cifra--saldo {
     table-layout: fixed !important;
     border-collapse: collapse !important;
     width: 100% !important;
-    min-width: 0 !important;
+    /* SRS v4.42: con scroll horizontal se revelan descripciones y días largos. */
+    min-width: 440px !important;
   }
 
   .tabla--atajos thead {

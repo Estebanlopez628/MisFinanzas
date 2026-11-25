@@ -82,10 +82,10 @@ def test_la_fila_movil_y_el_modal_muestran_toda_la_informacion(
     assert "font-size: 0.8rem;" in tabla
 
 
-def test_los_atajos_de_mis_finanzas_abren_su_propio_modal(
+def test_los_atajos_de_mis_finanzas_son_tarjetas_directas(
     cliente_admin: TestClient, bd
 ) -> None:
-    """En Mis Finanzas el modal muestra toda la información del atajo."""
+    """SRS v4.42: en móvil la tarjeta muestra todo sin modal intermedio."""
     cuenta = usuarios.buscar_por_correo(bd, "admin@olbbyte.co")
     assert cuenta is not None
     chancuco = chancucos.crear_chancuco(
@@ -100,15 +100,17 @@ def test_los_atajos_de_mis_finanzas_abren_su_propio_modal(
 
     html = cliente_admin.get("/finanzas").text
 
-    assert f'data-atajo-fila data-id-chancuco="{chancuco.id_chancuco}"' in html
-    assert "atajo-finanzas-modal" in html
-    assert "Detalle del atajo" in html
+    assert "atajo-tarjeta-movil__descripcion" in html
+    assert "atajo-tarjeta-movil__dias" in html
+    assert "Pagar los días:" in html
     assert "REF-AGUA" in html
     assert "$95.000" in html
-    assert "Día 8" in html
+    assert "atajo-web" in html
     assert 'data-copiar="REF-AGUA"' in html
+    assert 'data-pagar-atajo data-url=' in html
     assert ">Pagar</a>" in html
-    assert "<dt>Enlace de pago</dt>" not in html
+    assert "atajo-finanzas-modal" not in html
+    assert "data-atajo-fila" not in html
 
     css = (RAIZ_APP / "static" / "css" / "estilos.css").read_text(encoding="utf-8")
     descripcion = css.split(".lista-atajos__descripcion {", 1)[1].split("}", 1)[0]
@@ -118,41 +120,38 @@ def test_los_atajos_de_mis_finanzas_abren_su_propio_modal(
 
     centrado = css.split(".atajo-finanzas-modal .acciones-formulario--edicion {", 1)[1]
     assert "justify-items: center;" in centrado.split("}", 1)[0]
-    movil = css.split("@media (max-width: 640px)", 1)[1]
-    assert ".lista-atajos__item[data-atajo-fila]" in movil
-    assert ".atajo-movil-fecha" in movil
-    assert "> .lista-atajos__referencia" in movil
+    movil = css.split("@media (max-width: 767px)", 1)[1]
+    assert ".atajo-tarjeta-movil {" in movil
+    assert ".atajo-tarjeta-movil__dias" in movil
+    assert ".atajo-tarjeta-movil__acciones" in movil
     assert ">Ver</summary>" not in html
-    assert '<summary class="sr-only" aria-hidden="true">' in html
+    assert '<summary class="sr-only" aria-hidden="true">' not in html
 
     javascript = (RAIZ_APP / "static" / "js" / "deudas.js").read_text(encoding="utf-8")
-    assert 'conectarFilas("li[data-atajo-fila]"' in javascript
+    assert 'conectarFilas("li[data-atajo-fila]"' not in javascript
+    assert 'conectarFilas("tr[data-chancuco-fila]"' in javascript
     plantilla = (RAIZ_APP / "templates" / "finanzas" / "index.html").read_text(encoding="utf-8")
     assert "js/deudas.js" in plantilla
 
 
-def test_el_css_de_movil_oculta_columnas_y_el_js_abre_el_modal() -> None:
-    """Solo descripción, valor y día en la fila; la fila abre el modal."""
+def test_el_css_de_movil_desplaza_la_tabla_y_el_js_abre_el_modal() -> None:
+    """SRS v4.42: la tabla se desliza; la fila sigue abriendo su modal."""
     css = (RAIZ_APP / "static" / "css" / "estilos.css").read_text(encoding="utf-8")
     javascript = (RAIZ_APP / "static" / "js" / "deudas.js").read_text(encoding="utf-8")
     plantilla = (RAIZ_APP / "templates" / "chancucos" / "index.html").read_text(encoding="utf-8")
 
-    movil = css.split("@media (max-width: 640px)", 1)[1]
-    assert ".tabla--atajos thead tr" in movil
-    assert ".tabla--atajos thead th:nth-child(1)" in movil
-    assert "max-content" in movil
-    assert ".tabla--atajos tr[data-chancuco-fila]" in movil
-    assert "> td:nth-child(1)" in movil
-    assert "> td:nth-child(4)" in movil
-    assert "> td:nth-child(5) > a" in movil
-    assert "> td:nth-child(5) > button" in movil
-    descripcion_movil = movil.split(".tabla--atajos .atajo-descripcion {", 1)[1].split("}", 1)[0]
-    assert "font-size: 0.74rem;" in descripcion_movil
+    inicio = css.index(".tabla-contenedor--atajos {", css.index("@media (max-width: 767px)"))
+    contenedor = css[inicio : css.index("}", inicio)]
+    assert "overflow-x: auto" in contenedor
+    assert "min-width: 440px" in css
+    assert ".tabla--atajos thead th:nth-child(1)" in css
+    assert ".tabla--atajos tr[data-chancuco-fila]" in css
+    assert "> td:nth-child(5) > button" in css
     assert ">Ver</summary>" not in plantilla
     assert 'conectarFilas("tr[data-chancuco-fila]"' in javascript
     assert '[data-abrir-atajo]' in javascript
     assert "js/deudas.js" in plantilla
-    assert ".atajo-modal__tarjeta input[type=\"url\"] {" in css
+    assert ".atajo-modal__tarjeta [data-url-pago] {" in css
 
 
 def test_el_copiado_es_unico_y_vuelve_a_copiar_a_los_cinco_segundos() -> None:
@@ -210,4 +209,4 @@ def test_editar_un_atajo_guarda_todos_los_cambios(cliente_admin: TestClient, bd)
         follow_redirects=False,
     )
     assert invalida.status_code == 303
-    assert "http" in invalida.headers["location"]
+    assert "/chancucos?error=" in invalida.headers["location"]

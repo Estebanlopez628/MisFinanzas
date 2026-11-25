@@ -74,6 +74,8 @@ El cuadro **Editar gasto** ya no tiene botón «Cancelar»: se cierra con la **X
 
 En **Trabajos Extras**, los gastos fijos de cada trabajo tienen las mismas acciones que en Mis Finanzas: lápiz para editar, ✔ para marcar el pago, la **X** para omitir/eliminar y **Habilitar** cuando están omitidos. También cuentan con **Limpiar checks de este trabajo**, que solo afecta a ese contrato y no a tus finanzas personales.
 
+Puedes guardar enlaces de pago web (`https://...`) o de apps nativas (`daviplata://`, `nequi://`). En el celular, «Atajos guardados» se desliza hacia los lados para ver días y descripciones completas, y «Atajos de pago» muestra cada atajo como una tarjeta con **Copiar** y **Pagar** a un solo toque, sin necesidad de abrir un cuadro.
+
 ## 6. Atajos de Pago y recibos
 
 Puedes guardar tus pagos o abonos frecuentes con su monto exacto ('Valor a pagar') para registrarlos con un solo toque y generar un comprobante visual limpio y fácil de leer.

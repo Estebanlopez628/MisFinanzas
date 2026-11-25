@@ -156,19 +156,25 @@ def main() -> None:
                 )
                 verificar_detalle(pagina, prefijo, ".atajo-web")
             else:
+                # SRS v4.42: la vista móvil es una tarjeta directa, sin modal.
                 comprobar(
-                    f"{prefijo}: vista primaria intacta",
-                    pagina.locator(".lista-atajos__descripcion").first.is_visible()
-                    and pagina.locator(".atajo-movil-fecha").first.is_visible(),
+                    f"{prefijo}: tarjeta directa visible",
+                    pagina.locator(".atajo-tarjeta-movil").first.is_visible()
+                    and pagina.locator(".atajo-tarjeta-movil__descripcion").first.is_visible(),
                 )
                 comprobar(
                     f"{prefijo}: tarjeta web oculta",
                     not pagina.locator(".atajo-web").first.is_visible(),
                 )
-                fila = pagina.locator('li[data-atajo-fila]').first
-                fila.click()
-                pagina.wait_for_timeout(200)
-                verificar_detalle(pagina, prefijo, ".atajo-detalle--modal")
+                comprobar(
+                    f"{prefijo}: sin modal de atajo",
+                    pagina.locator(".atajo-finanzas-modal").count() == 0,
+                )
+                comprobar(
+                    f"{prefijo}: botones directos",
+                    pagina.locator(".atajo-tarjeta-movil [data-copiar]").count() >= 1
+                    and pagina.locator(".atajo-tarjeta-movil [data-pagar-atajo]").count() >= 1,
+                )
 
             anchos = pagina.evaluate(
                 "() => ({scroll: document.documentElement.scrollWidth, view: innerWidth})"

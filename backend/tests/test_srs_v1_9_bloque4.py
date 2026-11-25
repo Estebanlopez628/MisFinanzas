@@ -77,7 +77,8 @@ def test_el_atajo_guarda_y_muestra_el_valor_a_pagar(
     assert "$185.000" in html
 
     finanzas = cliente_admin.get("/finanzas").text
-    assert "Valor a pagar: $185.000" in finanzas
+    # SRS v4.42: en la tarjeta móvil el monto va dentro de un <strong>.
+    assert "Valor a pagar:" in finanzas and "$185.000" in finanzas
     assert "Pagar" in finanzas
 
 

@@ -12,12 +12,13 @@ def test_atajos_distribucion_v433() -> None:
     html = (RUTA / "templates/finanzas/index.html").read_text(encoding="utf-8")
     css = (RUTA / "static/css/estilos.css").read_text(encoding="utf-8")
 
+    # SRS v4.42: el modal móvil se sustituye por la tarjeta directa.
     for texto in (
         "Fecha pago:", "REF:", "Valor a Pagar:", 'class="atajo-web"',
-        'class="atajo-detalle--modal"',
+        "atajo-tarjeta-movil__cabecera", "Pagar los días:",
     ):
         assert texto in html
-    assert html.count("atajo_detalle(item)") >= 2
+    assert html.count("atajo_detalle(item)") >= 1
     assert "border-bottom: 2px solid var(--accent-blue)" in css
     assert ".atajo-web {" in css
     assert "display: block" in css

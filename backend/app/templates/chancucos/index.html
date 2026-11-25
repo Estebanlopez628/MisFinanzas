@@ -53,8 +53,8 @@
         </label>
         <label class="campo">
           <span class="campo__etiqueta">Link de pago (opcional)</span>
-          <input class="campo__control" type="url" name="url_pago"
-                 placeholder="https://pagos.entidad.com" />
+          <input class="campo__control" type="text" inputmode="url" name="url_pago"
+                 placeholder="https://... o daviplata://" data-url-pago />
           <span class="ayuda">
             Sin link, el atajo sigue sirviendo para copiar la referencia en la
             aplicación del banco.
@@ -96,7 +96,7 @@
       <h2 class="panel__titulo">Cómo funciona</h2>
       <ul class="lista-parametros">
         <li><span>Copiar</span><strong>Copia el número al portapapeles</strong></li>
-        <li><span>Pagar</span><strong>Abre la pasarela en otra pestaña</strong></li>
+        <li><span>Pagar</span><strong>Abre la pasarela web o la app nativa en el celular</strong></li>
       </ul>
       <p class="aviso">
         Los atajos que crees aquí aparecen en modo lectura al pie de la columna
@@ -194,8 +194,9 @@
                       <input type="hidden" name="dia_pago_2" value="{{ item.dia_pago_2 or '' }}" />
                       <label class="campo">
                         <span class="campo__etiqueta">Enlace de pago (opcional)</span>
-                        <input class="campo__control" type="url" name="url_pago"
-                               value="{{ item.url_pago or '' }}" placeholder="https://pagos.entidad.com" />
+                        <input class="campo__control" type="text" inputmode="url" name="url_pago"
+                               value="{{ item.url_pago or '' }}"
+                               placeholder="https://... o daviplata://" data-url-pago />
                       </label>
                       <div class="acciones-formulario acciones-formulario--edicion">
                         <button class="boton boton--primario boton--pequeno atajo-accion" type="submit">Actualizar</button>

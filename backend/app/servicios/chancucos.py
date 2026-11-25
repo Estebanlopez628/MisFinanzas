@@ -13,6 +13,7 @@ los meses; el distintivo «Día 15» se arma en la plantilla.
 
 from __future__ import annotations
 
+import re
 from decimal import Decimal
 from urllib.parse import urlparse
 
@@ -73,23 +74,35 @@ def _normalizar_dias(dia_pago_1, dia_pago_2) -> tuple[int | None, int | None]:
 
 
 def _validar_url(url: str | None) -> str | None:
-    """Valida que una URL de pago use HTTP o HTTPS.
+    """Valida pasarelas web y Deep Links nativos de aplicaciones de pago.
+
+    Acepta `http://`, `https://` y esquemas personalizados (`daviplata://`,
+    `nequi://`, `bancolombia://`, etc.), tal como la SRS v4.42 exige para iOS
+    Safari y Android. Se rechazan esquemas que pueden ejecutar código.
 
     Args:
-        url: Dirección opcional de la pasarela.
+        url: Dirección opcional de la pasarela o Deep Link.
 
     Returns:
         La URL limpia o `None` si viene vacía.
 
     Raises:
-        ValueError: Si la URL no es absoluta o usa otro esquema.
+        ValueError: Si el esquema no es válido o no hay destino.
     """
     if url is None or not url.strip():
         return None
     limpia = url.strip()
     partes = urlparse(limpia)
-    if partes.scheme not in {"http", "https"} or not partes.netloc:
-        raise ValueError("La URL de pago debe empezar por http:// o https://.")
+    esquema = partes.scheme.lower()
+    if esquema in {"javascript", "data", "file"}:
+        raise ValueError("Ese tipo de enlace no está permitido para pagos.")
+    if esquema in {"http", "https"}:
+        if not partes.netloc:
+            raise ValueError("La URL de pago debe incluir un dominio.")
+    elif not re.match(r"^[a-zA-Z][a-zA-Z0-9+.-]*://.+", limpia):
+        raise ValueError(
+            "Escribe https://... o un enlace de app como daviplata://."
+        )
     return limpia[:300]
 
 

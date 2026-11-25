@@ -20,15 +20,17 @@ def test_macro_comparte_tarjeta_y_modal() -> None:
     assert macro.index("Fecha pago:") < macro.index("REF:")
     assert macro.index("REF:") < macro.index("Valor a Pagar:")
     assert macro.index("Valor a Pagar:") < macro.index("Copiar")
-    assert html.count("atajo_detalle(item)") >= 2
+    # SRS v4.42: el fragmento sigue en la tarjeta web; el modal móvil desaparece.
+    assert html.count("atajo_detalle(item)") >= 1
 
 
 def test_vista_primaria_movil_se_mantiene() -> None:
-    """Los elementos de la vista móvil siguen presentes en la fila."""
+    """SRS v4.42: la vista móvil es una tarjeta directa, sin modal."""
     html = (RUTA / "templates/finanzas/index.html").read_text(encoding="utf-8")
-    assert 'class="lista-atajos__texto"' in html
-    assert "lista-atajos__descripcion" in html
-    assert "atajo-finanzas-modal" in html
+    assert 'class="atajo-tarjeta-movil__descripcion"' in html
+    assert "atajo-tarjeta-movil__dias" in html
+    assert "atajo-tarjeta-movil__acciones" in html
+    assert "atajo-finanzas-modal" not in html
 
 
 def test_css_tarjeta_solo_web_y_linea_azul() -> None:

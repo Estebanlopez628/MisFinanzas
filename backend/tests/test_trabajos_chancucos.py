@@ -107,13 +107,13 @@ def test_chancuco_valida_url_y_favorito(bd) -> None:
 
 
 def test_chancuco_rechaza_url_peligrosa(bd) -> None:
-    """Solo se admiten enlaces http o https."""
+    """Se rechazan esquemas que ejecutan código, aunque se admitan Deep Links."""
     try:
         chancucos.crear_chancuco(
             bd, _id_admin(bd), "EPM energía", "123", "javascript:alert(1)"
         )
     except ValueError as error:
-        assert "http" in str(error).lower()
+        assert "permitido" in str(error).lower()
     else:  # pragma: no cover - protección contra regresiones
         raise AssertionError("Se esperaba ValueError")
 

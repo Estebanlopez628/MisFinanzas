@@ -201,3 +201,8 @@ Principios innegociables. Toda especificación, plan y tarea debe cumplirlos de 
 41. **Paridad de gastos en Trabajos Extras (SRS v4.41):**
     - Los gastos fijos de un trabajo usan la misma fila que Mis Finanzas: editar, ✔, X unificada, Habilitar y abonos.
     - La limpieza masiva de checks está disponible por contrato y nunca afecta los gastos de Mis Finanzas.
+
+42. **Atajos y Deep Links (SRS v4.42):**
+    - Se aceptan enlaces web y esquemas nativos de apps de pago; la apertura web usa pestaña nueva y el Deep Link se ejecuta en la ventana actual.
+    - En móvil, «Atajos guardados» se desplaza horizontalmente y «Atajos de pago» muestra tarjetas directas con Copiar y Pagar, sin modal intermedio.
+    - La vista de escritorio de atajos y las gráficas aprobadas permanecen intactas.

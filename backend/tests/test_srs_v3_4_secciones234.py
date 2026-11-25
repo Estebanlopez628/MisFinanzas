@@ -11,14 +11,15 @@ CSS = (RUTA_APP / "static/css/estilos.css").read_text(encoding="utf-8")
 
 
 def test_columnas_compactas_en_atajos_movil() -> None:
-    """La descripción abraza su texto y el hueco hasta el valor es corto."""
-    bloque = CSS.split("@media (max-width: 767px) {", 1)[1].split(".atajo-modal", 1)[0]
-    assert "grid-template-columns: fit-content(160px) max-content max-content" in bloque
-    assert "justify-content: start" in bloque
-    assert "gap: 11px" in bloque
-    assert "max-width: 160px" in bloque
-    assert "width: fit-content" in bloque
-    assert "text-overflow: ellipsis" in bloque
+    """SRS v4.42: la tabla se desliza, con columnas 38/34/28 y sin recortes."""
+    inicio = CSS.index(".tabla-contenedor--atajos {", CSS.index("@media (max-width: 767px)"))
+    contenedor = CSS[inicio : CSS.index("}", inicio)]
+    assert "overflow-x: auto" in contenedor
+    assert "min-width: 440px" in CSS
+    assert "width: 38% !important" in CSS
+    assert "width: 34% !important" in CSS
+    assert "width: 28% !important" in CSS
+    assert "max-width: none !important" in CSS
 
 
 def test_boton_de_factura_usa_la_funcion_maestra(cliente_admin: TestClient) -> None:

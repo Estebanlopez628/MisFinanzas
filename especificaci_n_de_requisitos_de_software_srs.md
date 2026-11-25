@@ -1226,3 +1226,24 @@ La lista «Gastos fijos de este trabajo» se renderizaba con un `<li>` propio (n
 
 - `scripts/qa_v4_41.py`: **22/22 comprobaciones** en 1280 y 375 px. Suite: **920 pruebas** en verde.
 - Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-103), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.41.
+
+---
+
+## 44. SRS v4.42 — Optimización de atajos y Deep Links
+
+Versión 4.42 y **línea base vigente**. El documento se autodenomina v4.22; se registra v4.42. No se rehace v4.41. El código JSX/Tailwind del documento es ilustrativo: se implementa con Jinja2, CSS y JavaScript mínimo.
+
+### 44.1 No regresión
+
+Intactos: gráfica de barras, Consejero, velocímetros, donas, banner verde, modal de abonar, Resultado del periodo, siete factores 2026, Deudas, WhatsApp, OLB_BYTE, Ayuda, cabeceras de «Atajos guardados» y vista de escritorio de Mis Finanzas.
+
+### 44.2 Cambios
+
+1. `_validar_url` acepta `http://`, `https://` y `[esquema]://`, rechazando esquemas de ejecución. Los campos son `type="text" inputmode="url"` con placeholder «https://... o daviplata://». `app.js` abre URLs web con `window.open(..., '_blank', 'noopener,noreferrer')` y Deep Links con `window.location.href`.
+2. En móvil (<768px), `.tabla-contenedor--atajos` tiene `overflow-x: auto`, `overscroll-behavior-x: contain` y la tabla `min-width: 440px`, sin recortar descripciones ni días múltiples.
+3. La vista móvil de «Atajos de pago» usa tarjetas directas (descripción, píldora de días, valor, referencia, Copiar y Pagar) sin modal; se retiraron `data-atajo-fila`, `atajo-finanzas-modal` y su conexión en `deudas.js`.
+
+### 44.3 Gate QA y cierre documental
+
+- `scripts/qa_v4_42.py`: **23/23 comprobaciones** en 1280 y 375 px. Suite: **933 pruebas** en verde.
+- Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-104), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.42.

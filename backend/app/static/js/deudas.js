@@ -98,7 +98,7 @@
   conectarFilas("tr[data-deuda-fila]", "details.edicion-gasto--modal");
   conectarFilas("li[data-deduccion-fila]", "details.edicion-gasto--modal");
   conectarFilas("tr[data-chancuco-fila]", "details.atajo-modal");
-  conectarFilas("li[data-atajo-fila]", "details.atajo-finanzas-modal");
+  // SRS v4.42: Mis Finanzas ya no abre modal de atajo en móvil.
 
   document
     .querySelectorAll(".tabla--deudas details.edicion-gasto--modal")
