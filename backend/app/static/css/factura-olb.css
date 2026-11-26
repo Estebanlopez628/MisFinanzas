@@ -700,6 +700,7 @@
   }
 
   .total-fila:last-child .total-valor {
+    border-bottom: 0;
     border-bottom-right-radius: 8.5px;
   }
 
