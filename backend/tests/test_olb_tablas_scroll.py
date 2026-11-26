@@ -48,6 +48,37 @@ def test_historial_gastos_muestra_cinco_filas_con_cabecera_opaca() -> None:
     assert "ordenes-moviles--gastos" in plantilla
 
 
+def test_analitica_muestra_seis_productos_con_cabecera_opaca() -> None:
+    """Ventas por producto: seis filas y cabecera sin transparencia."""
+    css = _css()
+    bloque = css.split(".tabla-contenedor--productos {", 1)[1].split("}", 1)[0]
+    assert "max-height: 294px" in bloque
+    cabecera = css.split(".tabla-contenedor--productos .tabla thead th {", 1)[1].split("}", 1)[0]
+    assert "background: var(--bg-primary)" in cabecera
+    plantilla = (RUTA / "templates/olb_byte/analitica.html").read_text(encoding="utf-8")
+    assert "tabla-contenedor--productos" in plantilla
+
+
+def test_ventas_muestra_cinco_ordenes_con_cabecera_opaca() -> None:
+    """Órdenes registradas: cinco filas y cabecera sin transparencia."""
+    css = _css()
+    bloque = css.split(".tabla-contenedor--ordenes {", 1)[1].split("}", 1)[0]
+    assert "max-height: 252px" in bloque
+    cabecera = css.split(".tabla-contenedor--ordenes .tabla thead th {", 1)[1].split("}", 1)[0]
+    assert "background: var(--bg-primary)" in cabecera
+    plantilla = plantilla_ventas()
+    assert "tabla-contenedor--ordenes" in plantilla
+
+
+def plantilla_ventas() -> str:
+    """Lee la plantilla de ventas.
+
+    Returns:
+        Contenido de `index.html`.
+    """
+    return (RUTA / "templates/olb_byte/index.html").read_text(encoding="utf-8")
+
+
 def test_modal_de_gasto_en_movil_tiene_guardar_y_x(cliente_admin: TestClient) -> None:
     """El modal solo ofrece Guardar/Eliminar y cierra con la X roja uniforme."""
     with FabricaSesiones() as bd:

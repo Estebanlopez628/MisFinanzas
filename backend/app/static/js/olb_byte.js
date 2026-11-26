@@ -465,7 +465,10 @@
     if (!nota) {
       return;
     }
-    nota.textContent = texto;
+    var textoNota = nota.querySelector("[data-nota-contactos-texto]");
+    if (textoNota) {
+      textoNota.textContent = texto;
+    }
     nota.hidden = !texto;
     if (texto) {
       nota.classList.add("nota-contactos--aviso");
@@ -520,15 +523,15 @@
    * @returns {void}
    */
   function avisarFalloNumero(mensaje) {
-    if (campoTelefono) {
-      campoTelefono.focus();
-    }
+    // No se enfoca el campo: en móvil eso abre el teclado y tapa el aviso.
     mostrarNotaContactos(mensaje);
   }
 
   function agregarNumeroMovil() {
     if (!navigator.contacts || typeof navigator.contacts.select !== "function") {
-      avisarFalloNumero("Este navegador no abre la libreta de contactos. Escribe el celular manualmente.");
+      avisarFalloNumero(
+        "Este navegador no abre la libreta de contactos. Abre WhatsApp, copia el número y toca «Pegar número»."
+      );
       return;
     }
     try {
@@ -550,10 +553,10 @@
           mostrarNotaContactos("");
         })
         .catch(function () {
-          avisarFalloNumero("No se pudo abrir la libreta de contactos. Escribe el celular manualmente.");
+          avisarFalloNumero("No se pudo abrir la libreta de contactos. Abre WhatsApp, copia el número y toca «Pegar número».");
         });
     } catch (error) {
-      avisarFalloNumero("No se pudo abrir la libreta de contactos. Escribe el celular manualmente.");
+      avisarFalloNumero("No se pudo abrir la libreta de contactos. Abre WhatsApp, copia el número y toca «Pegar número».");
     }
   }
 
@@ -598,6 +601,23 @@
 
   if (botonPegar) {
     botonPegar.addEventListener("click", manejarBotonNumero);
+  }
+
+  var botonPegarPortapapeles = formulario.querySelector("[data-pegar-portapapeles]");
+  var botonAbrirWhatsapp = formulario.querySelector("[data-abrir-whatsapp]");
+  if (botonPegarPortapapeles) {
+    botonPegarPortapapeles.addEventListener("click", function (evento) {
+      evento.preventDefault();
+      evento.stopPropagation();
+      pegarNumero();
+    });
+  }
+  if (botonAbrirWhatsapp) {
+    botonAbrirWhatsapp.addEventListener("click", function (evento) {
+      evento.preventDefault();
+      evento.stopPropagation();
+      window.location.href = "whatsapp://";
+    });
   }
 
   // ----------------------------------- Arranque ---------------------------------

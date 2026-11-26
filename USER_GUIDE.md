@@ -192,7 +192,7 @@ También puedes registrar **gastos operativos** (por ejemplo, internet o transpo
 
 Los movimientos con el proveedor muestran ahora Fecha, Tipo, Cliente, Producto, Concepto, Monto y Saldo. En el celular, toca una fila para ver el detalle completo y cierra con la X.
 
-En el celular, al registrar una venta verás el botón **Agregar Numero** (un solo texto, sin «Pegar número») junto al campo del celular: abre tu libreta de contactos, toma el número y lo deja limpio (sin +57 ni espacios). Si tu navegador no permite abrir contactos, verás un aviso rojo junto al campo y podrás escribir sin bloqueos. En la computadora el botón sigue diciendo **Pegar número** y funciona igual que antes.
+En el celular, al registrar una venta verás el botón **Agregar Numero** junto al campo del celular: si tu navegador abre contactos, toma el número y lo deja limpio (sin +57 ni espacios). Si no abre contactos, verás un aviso con **Abrir WhatsApp** y **Pegar número**: abre WhatsApp, copia el número del contacto, vuelve y toca «Pegar número». El campo ya no se enfoca solo, así que no se abre el teclado de golpe. En la computadora el botón sigue diciendo **Pegar número** y funciona igual que antes.
 
 Cuando abras la factura o envíes por WhatsApp desde «Órdenes registradas», al volver quedarás exactamente en el mismo punto de la lista; en el celular, la factura usa «Volver a Ventas» y se reabre el detalle de la orden que estabas viendo.
 

@@ -1511,3 +1511,20 @@ Línea base v4.44. Solo se ajusta el panel de indicadores de Analítica; tablas,
 
 - `scripts/qa_v4_50.py`: **27/27 comprobaciones** en 1280 y 375 px. `sw.js` en `olb-finanzas-v145`.
 - Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-119), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.44.
+
+---
+
+## 60. Seis productos, cinco órdenes y fallback de contactos
+
+Línea base v4.44. Alcance: «Ventas por producto» en Analítica, «Órdenes registradas» en Ventas y el botón del celular en Registrar venta. Los demás módulos no cambian.
+
+### 60.1 Cambios
+
+1. «Ventas por producto» muestra 6 filas visibles (`max-height: 294px`) con scroll vertical y cabecera sticky opaca.
+2. «Órdenes registradas» muestra 5 filas visibles (`max-height: 252px`) con scroll vertical y cabecera sticky opaca.
+3. Si `navigator.contacts.select` no existe, el botón ya no enfoca el campo (evita el teclado): muestra un aviso con «Abrir WhatsApp» (`whatsapp://`) y «Pegar número» (portapapeles). El navegador no puede abrir ni leer la libreta interna de WhatsApp; el usuario copia el número en la app y lo pega con un toque.
+
+### 60.2 Gate QA y cierre documental
+
+- `qa_v4_51.py` **7/7**, `qa_v4_52.py` **9/9** y `qa_v4_53.py` **6/6** en 1280 y 375 px. `sw.js` en `olb-finanzas-v146`.
+- Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-120), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.44.

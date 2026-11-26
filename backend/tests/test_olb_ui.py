@@ -71,8 +71,9 @@ def test_boton_pegar_numero_reemplaza_a_contactos(cliente_admin: TestClient) -> 
     texto = cliente_admin.get("/olb-byte").text
 
     assert "data-pegar-numero" in texto
-    assert "Agregar Numero" in texto
-    assert "Pegar número" not in texto
+    rotulo = texto.split("data-pegar-numero>", 1)[1].split("</button>", 1)[0]
+    assert "Agregar Numero" in rotulo
+    assert "Pegar número" not in rotulo
     assert "Buscar en Contactos" not in texto
 
 

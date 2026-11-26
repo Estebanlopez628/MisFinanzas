@@ -2750,6 +2750,14 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v145`. Gate `qa_v4_50.py` **27/27** en 1280 y 375 px: cuatro KPI en orden, 4/2 columnas, nota ausente, Pago a Proveedor = pasivo + costos y Ganancia global = Pago − Neta.
 
+### 2026-11-26 — Seis productos, cinco órdenes y fallback de contactos (ADR-120)
+
+**Decisión (ADR-120).** El propietario pidió ver solo 6 productos en Analítica y 5 órdenes en Ventas con scroll vertical y cabeceras opacas. También reportó que en móvil el botón «Agregar Numero» abría el teclado en vez de contactos; propuso abrir la libreta de WhatsApp y copiar el número al elegir.
+
+**Consecuencias.** Se crean `.tabla-contenedor--productos` (294 px = cabecera + 6 filas) y `.tabla-contenedor--ordenes` (252 px = cabecera + 5 filas), con `thead th` sticky de fondo sólido `var(--bg-primary)`. En el botón del celular, el fallback ya no enfoca el campo (evita el teclado) y muestra un aviso con dos acciones: «Abrir WhatsApp» (`whatsapp://` vía `location.href`) y «Pegar número» (`navigator.clipboard.readText()`). La libreta interna de WhatsApp no es accesible desde una página web: el usuario copia el número en WhatsApp y lo pega con un toque. El Contact Picker nativo se mantiene cuando existe.
+
+**Verificación.** `sw.js` en `olb-finanzas-v146`. Gates `qa_v4_51.py` 7/7 (aviso sin teclado y acciones), `qa_v4_52.py` 9/9 y `qa_v4_53.py` 6/6 (max-heights 294/252 px y cabeceras `rgb(15,23,42)`).
+
 ### 2026-11-24 — SRS v4.43: corrección de columnas y portal del modal (ADR-105)
 
 **Decisión (ADR-105).** El propietario corrigió dos puntos de v4.42: el ancho fijo de 440 px forzaba scroll aunque el texto cupiera, y el modal de edición quedaba atrapado en el contexto de la tarjeta. Las referencias a `hidden md:table-cell` y `ReactDOM.createPortal` del documento son ilustrativas; se implementan con CSS y `document.body.appendChild`, según el stack.

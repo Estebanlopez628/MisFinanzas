@@ -1297,6 +1297,44 @@ a.tarjeta:focus-visible {
   background: var(--bg-primary);
 }
 
+/* Analítica: seis productos visibles y cabecera opaca. */
+.tabla-contenedor--productos {
+  max-height: 294px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.tabla-contenedor--productos thead th,
+.tabla-contenedor--productos tbody td {
+  height: 42px;
+}
+
+.tabla-contenedor--productos .tabla thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--bg-primary);
+}
+
+/* Ventas: cinco órdenes visibles y cabecera opaca. */
+.tabla-contenedor--ordenes {
+  max-height: 252px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.tabla-contenedor--ordenes thead th,
+.tabla-contenedor--ordenes tbody td {
+  height: 42px;
+}
+
+.tabla-contenedor--ordenes .tabla thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--bg-primary);
+}
+
 /* Historial de gastos operativos: cinco filas visibles y cabecera opaca. */
 .tabla-contenedor--gastos {
   max-height: 252px;
@@ -2965,6 +3003,19 @@ textarea.campo__control {
 .nota-contactos--aviso {
   color: var(--accent-red);
   font-weight: 600;
+}
+
+.nota-contactos__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+@media (min-width: 768px) {
+  .nota-contactos__acciones [data-abrir-whatsapp] {
+    display: none;
+  }
 }
 
 

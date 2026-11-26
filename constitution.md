@@ -261,3 +261,7 @@ Principios innegociables. Toda especificación, plan y tarea debe cumplirlos de 
 54. **Panel KPI de Analítica (ADR-119):**
     - Sin nota explicativa; «Pago a Proveedor» = pasivo antiguo + costos de ventas del periodo.
     - Orden 2 × 2 en móvil y cuatro en fila en web; Ganancia global = Pago a Proveedor − Ganancia neta.
+
+55. **Límites y contactos (ADR-120):**
+    - Analítica: 6 productos; Ventas: 5 órdenes; ambas con scroll vertical y cabeceras opacas.
+    - Sin Contact Picker: aviso con «Abrir WhatsApp» y «Pegar número», sin abrir el teclado ni bloquear.

@@ -158,7 +158,15 @@
               <span data-rotulo-numero>Agregar Numero</span>
             </button>
           </span>
-          <span class="ayuda" data-nota-contactos hidden></span>
+          <div class="nota-contactos" data-nota-contactos hidden>
+            <span data-nota-contactos-texto></span>
+            <div class="nota-contactos__acciones">
+              <button class="boton boton--secundario boton--pequeno" type="button"
+                      data-abrir-whatsapp>Abrir WhatsApp</button>
+              <button class="boton boton--secundario boton--pequeno" type="button"
+                      data-pegar-portapapeles>Pegar número</button>
+            </div>
+          </div>
         </label>
       </div>
 
@@ -350,7 +358,7 @@
       </div>
     </form>
     {% if ventas %}
-      <div class="tabla-contenedor tabla-escritorio">
+      <div class="tabla-contenedor tabla-escritorio tabla-contenedor--ordenes">
         <table class="tabla tabla--tarjetas tabla--compacta">
           <thead>
             <tr>

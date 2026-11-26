@@ -90,12 +90,17 @@ def main() -> None:
         enfocado = campo.evaluate("e => document.activeElement === e")
         aviso = pagina_movil.locator("[data-nota-contactos]")
         comprobar(
-            "375px: sin Contact Picker avisa y enfoca sin errores",
+            "375px: sin Contact Picker avisa sin abrir teclado",
             aviso.is_visible()
-            and "libreta de contactos" in (aviso.text_content() or "")
-            and enfocado
+            and "WhatsApp" in (aviso.text_content() or "")
+            and not enfocado
             and pagina_movil.locator("#modal-aviso:visible").count() == 0,
             (aviso.text_content() or "").strip(),
+        )
+        comprobar(
+            "375px: ofrece Abrir WhatsApp y Pegar número",
+            aviso.locator("[data-abrir-whatsapp]").is_visible()
+            and aviso.locator("[data-pegar-portapapeles]").is_visible(),
         )
         contexto_movil.close()
 
