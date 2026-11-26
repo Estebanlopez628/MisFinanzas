@@ -1821,3 +1821,18 @@ Línea base v4.44. Ajusta la sección 69. Alcance exclusivo: Mis Finanzas (`/fin
 
 - Playwright 1280 px y 390 px sobre Presupuesto, Finanzas y OLB BYTE: campos de 50 px con padding original `12px 14px`, contenedores sin padding añadido, sin desbordes ni errores de consola.
 - Suite completa en verde. `sw.js` en `olb-finanzas-v177`. Documentación sincronizada.
+
+## 79. SRS aparte — Todos los modales y alertas en azul marino (ADR-144)
+
+**Regla suprema.** Login intacto e iconos intactos; sin cambios de lógica, cálculos, flujos, CSV ni scroll.
+
+### 79.1 Ajustes aplicados
+
+1. `body:not(.pagina-acceso) dialog` usa `rgba(6,22,48,.92)` y borde cian; su `::backdrop` usa `rgba(15,23,42,.62)`. El diálogo legal del login conserva sus colores originales.
+2. Alertas `.alerta--error`, `--exito`, `--aviso`, `--critica` y `.aviso-toast` usan fondo azul marino translúcido, conservando el color del texto por severidad.
+3. Se retiró `backdrop-filter` de `.panel`, `.tarjeta` y `.formulario` para restaurar el posicionamiento `fixed` de los modales; se eliminaron las reglas de ancho/padding/borde/sombra sobre `form`.
+
+### 79.2 Verificación y cierre documental
+
+- Playwright 1280 px y 390 px: modales base, OLB BYTE, Ayuda y de deudas/deducciones con el fondo nuevo y botones dentro del recuadro; modal de deducciones centrado; login intacto; sin desbordes ni errores de consola.
+- Suite completa en verde. `sw.js` en `olb-finanzas-v178`. Documentación sincronizada.

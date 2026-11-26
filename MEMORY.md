@@ -2854,6 +2854,16 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v156`. Gate `qa_v4_56.py` **6/6**: separación de 18 px medida entre quincenas y atajos, `clientHeight 325 / scrollHeight 386` en 1280 px, `370 / 439` en 375 px y bordes inferiores iguales en web. Suite completa **1002 pruebas** en verde y 20 gates sin regresiones propias.
 
+### 2026-11-26 — Todos los modales y alertas en azul marino (ADR-144)
+
+**Decisión (ADR-144).** Revisión de todos los modales del programa en Web y Móvil: los `<dialog>` de OLB BYTE y Ayuda seguían con el gris anterior y las alertas visibles tenían tonos propios. Se unifican al azul marino/cian translúcido. Login intacto; iconos y lógica sin cambios.
+
+**Causa del modal de deducciones mal posicionado.** El `backdrop-filter` añadido a `.panel`, `.tarjeta` y `.formulario` crea un contexto de contenimiento: `position: fixed` del modal pasa a ser relativo al panel y no al viewport. Se retiró el desenfoque de esos contenedores (se conserva el fondo translúcido) y el modal vuelve a centrarse. Además se eliminaron las reglas que aplicaban ancho, padding, borde y sombra a todos los `form`/`.formulario`, porque afectaban a los formularios de los modales; ahora solo se cambia color en contenedores internos.
+
+**Consecuencias.** `body:not(.pagina-acceso) dialog` usa `rgba(6,22,48,.92)` con borde cian; su `::backdrop` usa `rgba(15,23,42,.62)`. `.alerta--error`, `--exito`, `--aviso`, `--critica` y `.aviso-toast` usan fondo `rgba(6,22,48,.86/.9)`, conservando el color del texto según severidad. El diálogo legal del login mantiene su estilo original.
+
+**Verificación.** Playwright 1280 px y 390 px: modales base, OLB BYTE y Ayuda con el fondo nuevo; login legal sin cambios; modal de deuda con botones dentro del recuadro en ambos anchos; modal de deducciones centrado (`top: 88` px en 390 px); alertas con el fondo nuevo; sin desbordes ni errores de consola. Suite completa en verde. `sw.js` en `olb-finanzas-v178`.
+
 ### 2026-11-26 — Campos sin ensanchamiento: padding de contenedores revertido (ADR-143)
 
 **Decisión (ADR-143).** El propietario indicó que los campos no debían ensancharse ni verse más gruesos. Se conserva el ancho completo, `box-sizing` y el redondeado de los contenedores internos, pero se elimina el `padding: 12px` que se había añadido en ADR-142 a `form`, `fieldset`, `.formulario`, barras de acciones y grillas. Los campos vuelven a su altura de 50 px y su padding original de `12px 14px`.

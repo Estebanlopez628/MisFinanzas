@@ -305,4 +305,6 @@ Principios innegociables. Toda especificación, plan y tarea debe cumplirlos de 
     - Todas las tarjetas sustituyen la franja superior por un resplandor radial difuso inferior, con el acento de cada tarjeta, y conservan iconos y texto por encima.
     - Atajos un paso más oscuros que el panel; velocímetros y gráfica comparativa en azul marino/cian. Formularios, fieldsets, grillas y barras de botones son transparentes, sin bordes ni sombras; los modales mantienen su superficie densa.
     - Los contenedores internos de los formularios conservan su ancho completo y esquinas redondeadas, sin añadir padding que ensanche los campos; estos mantienen su altura y espaciado originales.
+    - Todos los modales y alertas usan el mismo azul marino/cian translúcido; el login conserva su diálogo legal original.
+    - El desenfoque no se aplica a contenedores que envuelvan modales, para no alterar su posicionamiento.
     - No se modifican iconos, medidas de campos, márgenes, cálculos ni flujos. La factura y el recibo (PDF e imagen) quedan fuera del ámbito.

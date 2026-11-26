@@ -761,7 +761,7 @@ a.tarjeta:focus-visible {
   border: 1px solid rgba(239, 68, 68, 0.55);
   border-left: 4px solid var(--accent-red);
   border-radius: var(--radio-md, 10px);
-  background: rgba(239, 68, 68, 0.12);
+  background: rgba(6, 22, 48, 0.86);
   color: var(--text-primary);
   font-weight: 600;
   line-height: 1.5;
@@ -2278,14 +2278,14 @@ textarea.campo__control {
 }
 
 .alerta--error {
-  background: rgba(239, 68, 68, 0.12);
-  border-color: rgba(239, 68, 68, 0.45);
+  background: rgba(6, 22, 48, 0.86);
+  border-color: rgba(248, 113, 113, 0.45);
   color: #fecaca;
 }
 
 .alerta--exito {
-  background: rgba(16, 185, 129, 0.12);
-  border-color: rgba(16, 185, 129, 0.45);
+  background: rgba(6, 22, 48, 0.86);
+  border-color: rgba(52, 211, 153, 0.45);
   color: #a7f3d0;
   margin-bottom: 18px;
 }
@@ -2831,8 +2831,8 @@ textarea.campo__control {
 }
 
 .alerta--aviso {
-  background: rgba(245, 158, 11, 0.12);
-  border-color: rgba(245, 158, 11, 0.45);
+  background: rgba(6, 22, 48, 0.86);
+  border-color: rgba(251, 191, 36, 0.45);
   color: #fde68a;
   margin-bottom: 18px;
 }
@@ -6467,9 +6467,9 @@ dialog::backdrop {
   z-index: 60;
   max-width: min(520px, calc(100vw - 2rem));
   padding: 10px 16px;
-  border: 1px solid rgba(2, 132, 199, 0.55);
+  border: 1px solid rgba(56, 189, 248, 0.45);
   border-radius: 10px;
-  background: var(--bg-card);
+  background: rgba(6, 22, 48, 0.9);
   color: var(--text-primary);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
   font-size: 0.85rem;
@@ -6972,11 +6972,11 @@ dialog::backdrop {
    iconos, medidas, márgenes ni comportamientos.
    -------------------------------------------------------------------------- */
 
+/* Sin `backdrop-filter` en el panel: crea un contexto de contenimiento que
+   deja a `position: fixed` de los modales relativo al panel y no al viewport. */
 body:not(.pagina-acceso) .panel {
   background: rgba(7, 32, 68, 0.68);
   border-color: rgba(56, 189, 248, 0.22);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
 }
 
 /* Todas las tarjetas: base azul marino translúcida y onda difusa inferior. */
@@ -6985,8 +6985,6 @@ body:not(.pagina-acceso) .tarjeta {
   overflow: hidden;
   background: linear-gradient(160deg, rgba(7, 32, 68, 0.72), rgba(4, 18, 42, 0.6));
   border-color: rgba(56, 189, 248, 0.26);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
 }
 
 /* La franja superior se sustituye por dos resplandores en las esquinas
@@ -7014,8 +7012,6 @@ body:not(.pagina-acceso) .grupo-quincenal,
 body:not(.pagina-acceso) .bloque-tabla-pagos {
   background: rgba(7, 32, 68, 0.68);
   box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.16);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
 }
 
 /* Superficies de edición y modales: azul marino más denso y desenfoque mayor. */
@@ -7201,8 +7197,6 @@ body:not(.pagina-acceso) .cierre-deuda__ahorro {
 
 /* Formularios, fieldsets, grillas y barras de botones: sin recuadros fantasma.
    Los modales conservan su superficie densa definida más arriba. */
-body:not(.pagina-acceso) form,
-body:not(.pagina-acceso) .formulario,
 body:not(.pagina-acceso) fieldset,
 body:not(.pagina-acceso) .grupo-quincenal,
 body:not(.pagina-acceso) .bloque-producto,
@@ -7229,54 +7223,19 @@ body:not(.pagina-acceso) .modal-centrado > * {
   -webkit-backdrop-filter: blur(16px);
 }
 
-/* --------------------------------------------------------------------------
-   SRS aparte — Contenedores internos más anchos y redondeados sin choques.
-   Solo apariencia; login e iconos intactos, medidas de campos sin cambios.
-   -------------------------------------------------------------------------- */
-
-body:not(.pagina-acceso) form:not(.navegacion__salida),
-body:not(.pagina-acceso) fieldset,
-body:not(.pagina-acceso) .formulario,
-body:not(.pagina-acceso) [class*="acciones-formulario"],
-body:not(.pagina-acceso) .fila-campos,
-body:not(.pagina-acceso) .cuadricula-horas,
-body:not(.pagina-acceso) .cuadricula-abonos,
-body:not(.pagina-acceso) .abonos-scroll,
-body:not(.pagina-acceso) .bloque-producto,
-body:not(.pagina-acceso) .bloque-pago,
-body:not(.pagina-acceso) .grupo-quincenal,
-body:not(.pagina-acceso) .bloque-tabla-pagos {
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-  border-radius: var(--radio-md, 14px);
-  padding: 0;
-  background: transparent;
-  border: 0;
-  box-shadow: none;
+/* Todos los <dialog> del programa (salvo el login, que conserva el legal): el
+   mismo azul marino/cian translúcido que el resto de modales. Solo color. */
+body:not(.pagina-acceso) dialog {
+  background: rgba(6, 22, 48, 0.92);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  color: var(--text-primary);
 }
 
-/* Los bloques con padding propio conservan su espaciado original. */
-body:not(.pagina-acceso) .bloque-producto,
-body:not(.pagina-acceso) .bloque-pago {
-  padding: 14px 16px 16px;
+body:not(.pagina-acceso) dialog::backdrop {
+  background: rgba(15, 23, 42, 0.62);
 }
 
-body:not(.pagina-acceso) .grupo-quincenal {
-  padding: 16px;
-}
-
-body:not(.pagina-acceso) .abonos-scroll {
-  padding: 0 6px 0 0;
-}
-
-/* Los modales mantienen su superficie densa, sin heredar el padding anterior. */
-body:not(.pagina-acceso) form.edicion-gasto__formulario,
-body:not(.pagina-acceso) details.edicion-gasto--modal[open] > .edicion-gasto__formulario,
-body:not(.pagina-acceso) .app-modal__tarjeta,
-body:not(.pagina-acceso) .modal-centrado > * {
-  background: rgba(6, 22, 48, 0.86);
-  border-color: rgba(56, 189, 248, 0.3);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-}
+/* Nota: los cambios sobre `form`, `fieldset` y barras de botones se limitan a
+   color/transparencia. No se modifican ancho, padding, borde, sombra, posición
+   ni z-index: los modales de edición (incluidos los que se trasladan al <body>
+   en móvil) conservan su configuración original de posicionamiento. */
