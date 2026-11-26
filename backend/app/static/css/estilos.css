@@ -3303,6 +3303,11 @@ strong.valor-negativo.recibo__cifra--saldo {
   }
 }
 
+/* Cartera frente a deuda: el título va centrado en web y en móvil. */
+.panel--dona-cartera .panel__titulo {
+  text-align: center;
+}
+
 /* Cartera frente a deuda: en móvil la dona y su leyenda van centradas en
    pantalla, y el sub-desglose de la deuda pierde la sangría para quedar
    alineado con el resto de la leyenda. Escritorio no cambia. */
@@ -6361,16 +6366,28 @@ dialog.dialogo-legal {
 
 /* ---------- SRS v3.0, bloque UI/UX ---------- */
 
-/* Punto 4: flechas de <select> en gris claro sobre fondos oscuros. */
+/* Punto 4: flechas de <select> en gris claro sobre fondos oscuros.
+   SRS v4.45: todos los selectores comparten el formato de la «Categoría» de
+   Deducciones fijas: fondo del módulo, borde suave, radio --radio-md y cursor
+   de mano. La altura la fijan las reglas de tamaño (50 px, compacto, etc.). */
 select.campo__control {
   -webkit-appearance: none;
   appearance: none;
+  background-color: var(--bg-primary);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239CA3AF' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 12px center;
   background-size: 14px 14px;
+  border: 1px solid var(--borde-suave);
+  border-radius: var(--radio-md);
   padding-right: 34px;
   color-scheme: dark;
+  cursor: pointer;
+}
+
+select.campo__control option {
+  background: var(--bg-card);
+  color: var(--text-primary);
 }
 
 input[type="date"],
@@ -6782,7 +6799,8 @@ dialog::backdrop {
   }
 
   .panel.capacidad .dona {
-    margin-inline: 0;
+    margin-left: 40px;
+    margin-right: 0;
     flex: 0 0 auto;
   }
 
