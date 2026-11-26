@@ -1137,14 +1137,28 @@ a.tarjeta:focus-visible {
     white-space: nowrap;
   }
 
+  /* SRS v4.44, sección 3: rejilla de dos columnas alineada con los botones
+     Copiar (izquierda) y Pagar (derecha). */
   .atajo-tarjeta-movil__datos {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     align-items: center;
-    justify-content: space-between;
-    gap: 8px;
+    gap: 10px;
     font-size: 0.75rem;
     color: var(--text-muted);
+  }
+
+  .atajo-tarjeta-movil__ref {
+    justify-self: start;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .atajo-tarjeta-movil__valor {
+    justify-self: end;
+    text-align: right;
   }
 
   .atajo-tarjeta-movil__valor strong {

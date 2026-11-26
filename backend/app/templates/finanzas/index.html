@@ -225,11 +225,12 @@ contenido %}
               <span class="atajo-tarjeta-movil__dias">Pagar los días: {{ dias_pago_numeros(item) }}</span>
               {% endif %}
             </div>
+            {# SRS v4.44, sección 3: Ref queda sobre Copiar (izquierda) y Valor sobre Pagar (derecha). #}
             <div class="atajo-tarjeta-movil__datos">
+              <span class="atajo-tarjeta-movil__ref">Ref: {{ item.numero_referencia }}</span>
               <span class="atajo-tarjeta-movil__valor">
                 Valor a pagar: <strong>{{ item.valor_pago | cop if item.valor_pago else 'No definido' }}</strong>
               </span>
-              <span class="atajo-tarjeta-movil__ref">Ref: {{ item.numero_referencia }}</span>
             </div>
             <div class="atajo-tarjeta-movil__acciones">
               <button class="boton boton--secundario boton--pequeno" type="button"

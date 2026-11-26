@@ -2631,6 +2631,18 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v129`; **933 pruebas** en verde. Gate `qa_v4_42.py` **23/23** en 1280 y 375 px: guardado de Deep Link, tabla desplazable, tarjetas directas, Pagar web en pestaña nueva y Pagar nativo sin pestaña residual. Gates v4.33 (21/21), v4.35 (31/31), v4.38 (60/60), v4.40 (16/16) y v4.41 (22/22) sin regresiones. Gráficas, velocímetros, donas, Consejero, OLB_BYTE y Ayuda intactos.
 
+### 2026-11-25 — SRS v4.44: Deep Links, errores en modal, tarjeta móvil y cabecera de factura (ADR-106)
+
+**Decisión (ADR-106).** El documento se titula v4.25 Final; la línea base era v4.43 y se registra v4.44. Se ejecutan las secciones 1 a 4 (directiva del propietario). Las secciones 5 a 10 (tabla de totales de la factura, cartera de OLB_BYTE, gastos operativos y su tabla nueva) quedan pendientes: exigen una tabla nueva (`gastos_operativos`) y cambios de saldo que deben documentarse en `diccionario_datos.md` antes de implementarse, y la sección 4.3 contradice el «único cambio permitido» de la factura.
+
+**Consecuencias por sección.**
+1. `servicios/chancucos.py` añade `normalizar_enlace_pago()`: `daviplata` → `daviplata://`, dominio sin protocolo → `https://`, `daviplata://.` se conserva. `app.js` replica la normalización al enviar el formulario.
+2. El formulario de edición de atajos envía por `fetch`; si el servidor responde con `?error=`, el mensaje aparece en `[data-error-modal]` dentro del modal, el modal sigue abierto y el scroll sube al inicio del formulario. Éxito recarga con scroll preservado. «Eliminar» conserva su flujo con `formaction`.
+3. En la tarjeta móvil, la fila 2 es una rejilla de dos columnas: Ref a la izquierda sobre Copiar, Valor a la derecha sobre Pagar.
+4. `factura-olb.css`: `.marca-contenedor` pasa a columna centrada con un desplazamiento leve a la izquierda; `.marca-eslogan` se centra y, por debajo de 480 px, se reduce para no tocar la curva. `_hoja_factura.html` no cambia, así que Web, PDF y WhatsApp usan el mismo diseño.
+
+**Verificación.** `sw.js` en `olb-finanzas-v131`; **950 pruebas** en verde. Gate `qa_v4_44.py` **12/12** en 375 y 1280 px. Captura de la cabecera revisada en ambos anchos. Ajuste del gate `qa_v4_40.py`: partía de una posición de scroll que no permitía medir el desplazamiento; ahora parte de 400 px. Ajuste de `test_srs_v4_38.py`: el conteo de recargas pasa a cuatro por el guardado de atajos.
+
 ### 2026-11-24 — SRS v4.43: corrección de columnas y portal del modal (ADR-105)
 
 **Decisión (ADR-105).** El propietario corrigió dos puntos de v4.42: el ancho fijo de 440 px forzaba scroll aunque el texto cupiera, y el modal de edición quedaba atrapado en el contexto de la tarjeta. Las referencias a `hidden md:table-cell` y `ReactDOM.createPortal` del documento son ilustrativas; se implementan con CSS y `document.body.appendChild`, según el stack.

@@ -211,3 +211,9 @@ Principios innegociables. Toda especificación, plan y tarea debe cumplirlos de 
     - En móvil solo se muestran Descripción, Valor a pagar y Días de pago; Referencia y Acciones son exclusivas de Web.
     - El modal de edición se abre sobre `document.body`, centrado y con todos sus campos, sin quedar recortado por el contenedor.
     - La tabla se desplaza horizontalmente solo cuando el contenido no cabe en el ancho disponible.
+
+44. **Deep Links, errores en modal y cabecera de factura (SRS v4.44, secciones 1 a 4):**
+    - Un nombre de app como `daviplata` se guarda como `daviplata://`; los enlaces ya completos se conservan.
+    - Los errores de edición de un atajo se muestran dentro de su modal, que permanece abierto.
+    - En la tarjeta móvil, la referencia va a la izquierda sobre Copiar y el valor a la derecha sobre Pagar.
+    - El logo y el eslogan de la factura se centran entre sí; el resto de la factura no cambia.

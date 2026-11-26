@@ -104,9 +104,127 @@
     });
   }
 
+  /* SRS v4.44, sección 2: errores de edición de atajos dentro del modal. */
+  (function () {
+    function mostrarErrorModal(formulario, banner, texto) {
+      if (!banner) return;
+      banner.textContent = typeof window.limpiarMensajeError === "function"
+        ? window.limpiarMensajeError(texto)
+        : texto;
+      banner.hidden = false;
+      formulario.scrollTop = 0;
+    }
+
+    function ocultarErrorModal(banner) {
+      if (!banner) return;
+      banner.hidden = true;
+      banner.textContent = "";
+    }
+
+    function validarAtajo(formulario) {
+      var descripcion = formulario.querySelector('[name="descripcion"]');
+      var referencia = formulario.querySelector('[name="numero_referencia"]');
+      var url = formulario.querySelector("[data-url-pago]");
+      if (descripcion && !descripcion.value.trim()) {
+        return "La descripción del atajo es obligatoria.";
+      }
+      if (referencia && !referencia.value.trim()) {
+        return "El número de referencia es obligatorio.";
+      }
+      if (url) {
+        url.value = normalizarEnlaceModal(url.value);
+        var valor = url.value.trim();
+        if (valor && !/^(https?:\/\/|[a-zA-Z][a-zA-Z0-9+.-]*:\/\/).*/i.test(valor)) {
+          return "Enlace inválido. Usa formato web (https://...) o de app móvil (ej. daviplata://).";
+        }
+      }
+      return "";
+    }
+
+    function normalizarEnlaceModal(texto) {
+      var limpio = (texto || "").trim();
+      if (!limpio || /^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(limpio)) return limpio;
+      if (/^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(\/.*)?$/.test(limpio)) return "https://" + limpio;
+      if (/^[a-zA-Z][a-zA-Z0-9+.-]*$/.test(limpio)) return limpio.toLowerCase() + "://";
+      return limpio;
+    }
+
+    document.querySelectorAll("form[data-atajo-editar]").forEach(function (formulario) {
+      var banner = formulario.querySelector("[data-error-modal]");
+      var detalles = formulario.closest("details");
+
+      formulario.addEventListener("input", function () {
+        ocultarErrorModal(banner);
+      });
+      if (detalles) {
+        detalles.addEventListener("toggle", function () {
+          if (detalles.open) ocultarErrorModal(banner);
+        });
+      }
+
+      formulario.addEventListener("submit", function (evento) {
+        // «Eliminar» usa formaction y sigue su flujo normal con confirmación.
+        if (evento.submitter && evento.submitter.hasAttribute("formaction")) {
+          return;
+        }
+        evento.preventDefault();
+        var error = validarAtajo(formulario);
+        if (error) {
+          mostrarErrorModal(formulario, banner, error);
+          return;
+        }
+        fetch(formulario.action, {
+          method: "POST",
+          body: new FormData(formulario),
+          redirect: "follow",
+        })
+          .then(function (respuesta) {
+            var destino = new URL(respuesta.url, window.location.href);
+            var detalle = destino.searchParams.get("error");
+            if (!respuesta.ok || detalle) {
+              mostrarErrorModal(
+                formulario,
+                banner,
+                detalle || "No se pudo guardar el atajo. Intenta nuevamente."
+              );
+              return;
+            }
+            window.recargarManteniendoScroll();
+          })
+          .catch(function () {
+            mostrarErrorModal(
+              formulario,
+              banner,
+              "No se pudo guardar el atajo. Revisa la conexión e intenta de nuevo."
+            );
+          });
+      });
+    });
+  })();
+
   /* SRS v4.42: Deep Links nativos y apertura inteligente de «Pagar». */
   (function () {
     var REGEX_URL_PAGO = /^(https?:\/\/|[a-zA-Z][a-zA-Z0-9+.-]*:\/\/).*/i;
+
+    /**
+     * Normaliza un enlace de pago antes de validarlo (SRS v4.44, sección 1).
+     *
+     * @param {string} texto Valor escrito por el usuario.
+     * @returns {string} Enlace con esquema, o el texto original si no aplica.
+     */
+    function normalizarEnlace(texto) {
+      var limpio = (texto || "").trim();
+      if (!limpio || REGEX_URL_PAGO.test(limpio)) {
+        return limpio;
+      }
+      if (/^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(\/.*)?$/.test(limpio)) {
+        return "https://" + limpio;
+      }
+      if (/^[a-zA-Z][a-zA-Z0-9+.-]*$/.test(limpio)) {
+        return limpio.toLowerCase() + "://";
+      }
+      return limpio;
+    }
 
     document.addEventListener("click", function (evento) {
       var control = evento.target instanceof Element
@@ -142,7 +260,8 @@
         if (!campo) {
           return;
         }
-        var valor = (campo.value || "").trim();
+        var valor = normalizarEnlace(campo.value);
+        campo.value = valor;
         if (valor && !REGEX_URL_PAGO.test(valor)) {
           evento.preventDefault();
           campo.setCustomValidity(

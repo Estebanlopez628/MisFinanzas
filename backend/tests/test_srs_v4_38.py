@@ -37,7 +37,8 @@ def test_scroll_se_guarda_y_restaura_en_toda_recarga() -> None:
     assert "window.recargarManteniendoScroll = function (yaGuardado) {" in js
     # La única recarga directa queda dentro del ayudante que guarda la posición.
     assert js.count("window.location.reload();") == 1
-    assert js.count("window.recargarManteniendoScroll();") == 3
+    # SRS v4.44 suma el guardado del modal de atajos como cuarta recarga.
+    assert js.count("window.recargarManteniendoScroll();") == 4
     assert js.count("window.recargarManteniendoScroll(true);") == 1
     assert 'window.scrollTo({ left: objetivoX, top: objetivoY, behavior: "instant" });' in js
     assert 'window.addEventListener("load", function () {' in js

@@ -90,6 +90,10 @@ def main() -> None:
             prefijo = f"{ancho}px"
 
             pagina.goto(f"{BASE}/finanzas")
+            # Posición intermedia conocida: si el gasto ya está visible, el lápiz
+            # no desplaza la vista y la prueba de scroll perdería sentido.
+            pagina.evaluate("window.scrollTo({ top: 400, behavior: 'instant' })")
+            pagina.wait_for_timeout(100)
             pagina.wait_for_load_state("networkidle")
 
             # SRS v4.40: «Limpiar checks» visible en la primera carga.

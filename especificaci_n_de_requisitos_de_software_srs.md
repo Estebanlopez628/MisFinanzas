@@ -1264,3 +1264,26 @@ Versión 4.43 y **línea base vigente**. Corrige los puntos señalados de v4.42.
 
 - `scripts/qa_v4_43.py`: **18/18 comprobaciones** en 375 y 1280 px. Suite: **936 pruebas** en verde.
 - Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-105), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.43.
+
+---
+
+## 46. SRS v4.44 — Deep Links, errores en modal, tarjeta móvil y cabecera de factura
+
+Versión 4.44 (documento titulado v4.25 Final, secciones 1 a 4). Línea base vigente. No se rehace v4.43.
+
+### 46.1 Cambios
+
+1. **Deep Links:** `normalizar_enlace_pago()` completa `daviplata` → `daviplata://` y dominios sin protocolo → `https://`; `daviplata://` y `daviplata://.` se aceptan sin error. Frontend y backend aplican la misma regla.
+2. **Errores dentro del modal:** la edición de atajos muestra sus errores en `[data-error-modal]`, dentro del modal, sin cerrarlo ni mostrar el aviso en la página de fondo. Éxito recarga la vista conservando el scroll.
+3. **Tarjeta móvil de Atajos de pago:** Ref sobre Copiar a la izquierda; Valor sobre Pagar a la derecha. La vista de escritorio no cambia.
+4. **Cabecera de la factura:** logo y eslogan centrados entre sí y desplazados leve y ligeramente hacia arriba; por debajo de 480 px el eslogan se reduce. El resto de la factura no cambia.
+
+### 46.2 Pendiente (no implementado en esta versión)
+
+- Sección 4.3 (divisor y fondo del recuadro de totales): contradice el «único cambio permitido» de la factura; requiere confirmación del propietario.
+- Secciones 7 a 9 (cartera de OLB_BYTE: orden de Pago al proveedor, columnas de Movimientos, deudas previas y gastos operativos con tabla nueva): requieren actualizar `diccionario_datos.md` antes de codificarse.
+
+### 46.3 Gate QA y cierre documental
+
+- `scripts/qa_v4_44.py`: **12/12 comprobaciones** en 375 y 1280 px. Suite: **950 pruebas** en verde.
+- Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-106), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.44.

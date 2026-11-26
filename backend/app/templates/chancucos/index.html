@@ -162,12 +162,15 @@
                     <form class="formulario formulario--compacto edicion-gasto__formulario atajo-modal__tarjeta"
                           method="post"
                           action="{{ url_for('editar_chancuco', id_chancuco=item.id_chancuco) }}"
-                          data-proteccion>
+                          data-proteccion data-atajo-editar>
                       <div class="edicion-gasto__cabecera">
                         <h3 class="panel__titulo">Editar atajo</h3>
                         <button class="edicion-gasto__cerrar" type="button" data-cancelar-edicion
                                 aria-label="Cerrar edición" title="Cerrar">×</button>
                       </div>
+                      {# SRS v4.44, sección 2: el error del modal se muestra aquí dentro,
+                         nunca en el módulo de fondo, y el modal permanece abierto. #}
+                      <div class="alerta alerta--error atajo-modal__error" role="alert" data-error-modal hidden></div>
                       <label class="campo">
                         <span class="campo__etiqueta">Descripción</span>
                         <input class="campo__control" type="text" name="descripcion"

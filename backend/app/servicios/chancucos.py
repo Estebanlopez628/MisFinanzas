@@ -73,6 +73,38 @@ def _normalizar_dias(dia_pago_1, dia_pago_2) -> tuple[int | None, int | None]:
     return primero, segundo
 
 
+_RE_CON_ESQUEMA = re.compile(r"^[a-zA-Z][a-zA-Z0-9+.-]*://.*$")
+_RE_DOMINIO = re.compile(r"^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(/.*)?$")
+_RE_NOMBRE_APP = re.compile(r"^[a-zA-Z][a-zA-Z0-9+.-]*$")
+_ESQUEMAS_PROHIBIDOS = {"javascript", "data", "file"}
+
+
+def normalizar_enlace_pago(url: str | None) -> str | None:
+    """Normaliza un enlace de pago antes de validarlo (SRS v4.44, sección 1).
+
+    Un nombre de app suelto (`daviplata`, `nequi`) recibe `://` al final; un
+    dominio sin protocolo (`www.entidad.com`) recibe `https://`. Un enlace que
+    ya trae esquema se conserva tal cual, incluso si termina en `://` o `://.`,
+    para que los registros previos sigan siendo válidos.
+
+    Args:
+        url: Texto escrito por el usuario; puede venir vacío.
+
+    Returns:
+        El enlace normalizado o `None` si el campo está vacío.
+    """
+    if url is None or not url.strip():
+        return None
+    limpia = url.strip()
+    if _RE_CON_ESQUEMA.match(limpia):
+        return limpia
+    if _RE_DOMINIO.match(limpia):
+        return f"https://{limpia}"
+    if _RE_NOMBRE_APP.match(limpia):
+        return f"{limpia.lower()}://"
+    return limpia
+
+
 def _validar_url(url: str | None) -> str | None:
     """Valida pasarelas web y Deep Links nativos de aplicaciones de pago.
 
@@ -89,17 +121,17 @@ def _validar_url(url: str | None) -> str | None:
     Raises:
         ValueError: Si el esquema no es válido o no hay destino.
     """
-    if url is None or not url.strip():
+    limpia = normalizar_enlace_pago(url)
+    if limpia is None:
         return None
-    limpia = url.strip()
     partes = urlparse(limpia)
     esquema = partes.scheme.lower()
-    if esquema in {"javascript", "data", "file"}:
+    if esquema in _ESQUEMAS_PROHIBIDOS:
         raise ValueError("Ese tipo de enlace no está permitido para pagos.")
     if esquema in {"http", "https"}:
         if not partes.netloc:
             raise ValueError("La URL de pago debe incluir un dominio.")
-    elif not re.match(r"^[a-zA-Z][a-zA-Z0-9+.-]*://.+", limpia):
+    elif not _RE_CON_ESQUEMA.match(limpia):
         raise ValueError(
             "Escribe https://... o un enlace de app como daviplata://."
         )
