@@ -307,5 +307,5 @@ Principios innegociables. Toda especificación, plan y tarea debe cumplirlos de 
     - Los contenedores internos de los formularios conservan su ancho completo y esquinas redondeadas, sin añadir padding que ensanche los campos; estos mantienen su altura y espaciado originales.
     - Todos los modales y alertas usan el mismo azul marino/cian translúcido; el login conserva su diálogo legal original.
     - El desenfoque no se aplica a contenedores que envuelvan modales, para no alterar su posicionamiento.
-    - Todas las tarjetas llevan una onda luminosa inferior con su color de acento, sin franjas superiores ni fondos grises.
+    - Todas las tarjetas llevan una silueta de onda SVG real en la base, con trazo luminoso y relleno degradado en su color de acento, sin franjas superiores ni fondos grises.
     - No se modifican iconos, medidas de campos, márgenes, cálculos ni flujos. La factura y el recibo (PDF e imagen) quedan fuera del ámbito.

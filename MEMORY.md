@@ -2854,6 +2854,14 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v156`. Gate `qa_v4_56.py` **6/6**: separación de 18 px medida entre quincenas y atajos, `clientHeight 325 / scrollHeight 386` en 1280 px, `370 / 439` en 375 px y bordes inferiores iguales en web. Suite completa **1002 pruebas** en verde y 20 gates sin regresiones propias.
 
+### 2026-11-26 — Onda real SVG en lugar de mancha difusa (ADR-147)
+
+**Decisión (ADR-147).** El propietario indicó que la onda inferior debía ser la silueta definida del Boceto 2, no una nube radial. Se sustituye la mancha por una onda SVG real a todo el ancho, con relleno degradado y trazo luminoso fino, usando el color de acento propio de cada tarjeta.
+
+**Consecuencias.** En `estilos.css`, bajo `body:not(.pagina-acceso)`, las tarjetas (`.tarjeta`, `.panel--kpis .kpi`, `.impacto-deuda`) mantienen base translúcida, radio 18 px y `blur(14px)`, pero `::after` pinta el relleno con `mask-image` de un `<svg>` con la silueta ondulada y `::before` pinta el trazo superior con otra máscara SVG. Ambas capas usan `inset: auto 0 0 0`, `z-index: 1`, `pointer-events: none` y el color `--card-accent`. Se fija `top: auto` para que la onda no herede el `top: 0` de la franja superior original. El contenido sigue en `z-index: 2`. En móvil la onda mide 50 px con opacidad .45. Los KPI usan cian `#0ea5e9` y los ítems de impacto rojo coral `#f87171`; las tarjetas del Inicio conservan sus acentos (`--acento`).
+
+**Verificación.** Playwright 1280 px y 390 px: máscara SVG presente en relleno y trazo, onda visible en la base de cada tarjeta con su color, sin desbordes ni errores de consola. Suite completa en verde. `sw.js` en `olb-finanzas-v181`.
+
 ### 2026-11-26 — SRS Consolidado Final: onda fluida y simetría (ADR-146)
 
 **Decisión (ADR-146).** SRS consolidado: onda luminosa inferior tipo Boceto 2 en todas las tarjetas con el color propio de cada una, tono azul noche en los resúmenes de Registrar venta, limpieza de envoltorios internos y orden/color de botones en Liquidación del período. Login, iconos, modales, tablas, lógica y scroll intactos.

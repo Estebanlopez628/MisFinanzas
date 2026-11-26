@@ -1866,3 +1866,17 @@ Línea base v4.44. Ajusta la sección 69. Alcance exclusivo: Mis Finanzas (`/fin
 
 - Playwright 1280 px y 390 px: onda inferior por tarjeta con su acento, botones en orden y color correcto, resúmenes oscurecidos, envoltorios transparentes, login intacto, sin desbordes ni errores de consola.
 - Suite completa en verde. `sw.js` en `olb-finanzas-v180`. Documentación sincronizada.
+
+## 82. SRS Consolidado Final — Onda real SVG (ADR-147)
+
+**Regla suprema.** Login, iconos, modales, tablas, lógica y scroll intactos; sin sobreexposición en Web ni Móvil.
+
+### 82.1 Ajuste aplicado
+
+- Se sustituye la mancha radial por una silueta de onda SVG real: `mask-image` con la forma ondulada en `::after` (relleno degradado según `--card-accent`) y en `::before` (trazo fino luminoso), ambas con `inset: auto 0 0 0`, `z-index: 1` y `pointer-events: none`. El contenido queda en `z-index: 2`.
+- Cada tarjeta conserva su acento; KPI en cian `#0ea5e9` e ítems de impacto en rojo coral `#f87171`. En móvil la onda mide 50 px con opacidad .45.
+
+### 82.2 Verificación y cierre documental
+
+- Playwright 1280 px y 390 px: onda definida en la base de las tarjetas con su color, sin desbordes ni errores de consola; botones, resúmenes, envoltorios y login intactos.
+- Suite completa en verde. `sw.js` en `olb-finanzas-v181`. Documentación sincronizada.
