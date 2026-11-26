@@ -2718,6 +2718,14 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v141`. 6 pruebas en `test_olb_analitica_deudas.py` (incluye compra 150.000 + abono 200.000 → pasivo 50.000 y Costos 150.000). Gate `qa_v4_50.py` **19/19** en 1280 y 375 px sin módulo de registro, Costos sin deuda y CSV con la nueva etiqueta.
 
+### 2026-11-26 — Botón de número en Registrar venta, solo móvil (ADR-116)
+
+**Decisión (ADR-116).** En OLB_BYTE → Ventas → Registrar venta, el botón del celular se llama «Agregar Numero» solo en móvil (<768 px) y abre la libreta de contactos; en escritorio se mantiene «Pegar número» con portapapeles.
+
+**Consecuencias.** La plantilla pone dos rótulos en el mismo botón y `estilos.css` alterna su visibilidad en `@media (max-width: 767px)`. En `olb_byte.js` el clic se delega en `manejarBotonNumero()`: si hay `matchMedia("(max-width: 767px)")`, llama a `agregarNumeroMovil()`, que usa `navigator.contacts.select(["tel"], { multiple: false })`, toma el primer teléfono y lo pasa por `normalizarTelefono()` (quita +57/57 y no numéricos; exige 10 dígitos). Sin API, sin número o con error, enfoca el campo y muestra un aviso breve, sin excepciones ni bloqueo. El escritorio sigue ejecutando `pegarNumero()` sin cambios.
+
+**Verificación.** `sw.js` en `olb-finanzas-v142`. 3 pruebas nuevas en `test_olb_contactos_movil.py`. Gate `qa_v4_51.py` **6/6** en 1280 y 375 px: rótulo correcto por ancho, fallback con aviso y foco, y contacto simulado `+57 (300) 123-4567` pegado como `3001234567`.
+
 ### 2026-11-24 — SRS v4.43: corrección de columnas y portal del modal (ADR-105)
 
 **Decisión (ADR-105).** El propietario corrigió dos puntos de v4.42: el ancho fijo de 440 px forzaba scroll aunque el texto cupiera, y el modal de edición quedaba atrapado en el contexto de la tarjeta. Las referencias a `hidden md:table-cell` y `ReactDOM.createPortal` del documento son ilustrativas; se implementan con CSS y `document.body.appendChild`, según el stack.

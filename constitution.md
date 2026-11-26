@@ -245,3 +245,7 @@ Principios innegociables. Toda especificación, plan y tarea debe cumplirlos de 
 50. **Rojo de la X y filas móviles (ADR-114):**
     - La X de los modales de Órdenes, Pendientes y Movimientos usa el rojo del botón destructivo.
     - En móvil se ven cuatro movimientos con scroll; en escritorio se mantienen seis.
+
+51. **Botón de número en Registrar venta (ADR-116):**
+    - En móvil se llama «Agregar Numero» y usa la libreta de contactos con limpieza del número.
+    - En escritorio se mantiene «Pegar número» y el portapapeles, sin cambios.

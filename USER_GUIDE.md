@@ -192,7 +192,9 @@ También puedes registrar **gastos operativos** (por ejemplo, internet o transpo
 
 Los movimientos con el proveedor muestran ahora Fecha, Tipo, Cliente, Producto, Concepto, Monto y Saldo. En el celular, toca una fila para ver el detalle completo y cierra con la X.
 
-Cuando abras la factura o envíes por WhatsApp desde «Órdenes registradas», al volver quedarás exactamente en el mismo punto de la lista; en el celular, la factura se cierra con la X roja de la esquina superior derecha y se reabre el detalle de la orden que estabas viendo.
+En el celular, al registrar una venta verás el botón **Agregar Numero** junto al campo del celular: abre tu libreta de contactos, toma el número y lo deja limpio (sin +57 ni espacios). Si tu navegador no permite abrir contactos, verás un aviso y el campo quedará listo para escribir. En la computadora el botón sigue diciendo **Pegar número** y funciona igual que antes.
+
+Cuando abras la factura o envíes por WhatsApp desde «Órdenes registradas», al volver quedarás exactamente en el mismo punto de la lista; en el celular, la factura usa «Volver a Ventas» y se reabre el detalle de la orden que estabas viendo.
 
 En «Pendientes de pago», el buscador ya no tiene una línea por encima. Al tocar un cliente se abre su detalle con un solo botón, «Registrar Pago», y se cierra con la X roja de la esquina superior derecha; la lista queda exactamente donde estaba.
 

@@ -566,7 +566,7 @@ sus descargas CSV.
 ### 10.10 Índices y reglas transversales
 - Ganancia, cartera y deuda excluyen órdenes `ANULADA`.
 - Montos en `NUMERIC(14,2)` y en `Decimal`; redondeo al persistir (ADR-23 para mostrar sin centavos).
-- Teléfono: 10 dígitos colombianos en el registro. El indicativo `57` se agrega solo al generar el enlace de WhatsApp.
+- Teléfono: 10 dígitos colombianos en el registro. El indicativo `57` se agrega solo al generar el enlace de WhatsApp. En móvil, el botón «Agregar Numero» toma el número de la libreta de contactos (Contact Picker API) y aplica la misma limpieza: quita `+57`/`57`, espacios, guiones y paréntesis antes de guardar; sin soporte de la API, enfoca el campo y avisa. En escritorio se mantiene «Pegar número» desde el portapapeles.
 
 ---
 

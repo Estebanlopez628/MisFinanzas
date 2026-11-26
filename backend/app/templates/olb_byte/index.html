@@ -154,7 +154,10 @@
             <input class="campo__control" type="tel" name="cliente_telefono" inputmode="numeric"
                    placeholder="3001234567" value="{{ borrador.cliente_telefono if borrador else '' }}"
                    data-cliente-telefono />
-            <button class="boton boton--secundario boton--pequeno" type="button" data-pegar-numero>Pegar número</button>
+            <button class="boton boton--secundario boton--pequeno" type="button" data-pegar-numero>
+              <span class="texto-escritorio">Pegar número</span>
+              <span class="texto-movil">Agregar Numero</span>
+            </button>
           </span>
           <span class="ayuda" data-nota-contactos hidden></span>
         </label>

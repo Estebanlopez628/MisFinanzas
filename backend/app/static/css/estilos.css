@@ -2915,6 +2915,21 @@ textarea.campo__control {
   min-width: 0;
 }
 
+/* SRS v4.44: en escritorio se lee «Pegar número»; en móvil, «Agregar Numero». */
+.texto-movil {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .texto-escritorio {
+    display: none;
+  }
+
+  .texto-movil {
+    display: inline;
+  }
+}
+
 .insignia {
   display: inline-block;
   padding: 2px 10px;

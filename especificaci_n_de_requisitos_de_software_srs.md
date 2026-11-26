@@ -1440,3 +1440,20 @@ Línea base v4.44. Se retira lo implementado en §§51 y 53 referido a registro 
 
 - `scripts/qa_v4_50.py`: **19/19 comprobaciones** en 1280 y 375 px. 6 pruebas en `test_olb_analitica_deudas.py`, incluido el caso compra 150.000 + abono 200.000 ⇒ deuda corriente 0 y PASIVO ANTIGUO 50.000. `sw.js` en `olb-finanzas-v141`.
 - Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-115), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.44.
+
+---
+
+## 56. Botón de número en Registrar venta — solo móvil
+
+Línea base v4.44. Alcance: únicamente el botón del campo «Celular (WhatsApp)» en OLB_BYTE → Ventas → Registrar venta, en pantallas <768 px.
+
+### 56.1 Cambios
+
+1. En móvil (<768 px) el botón dice **Agregar Numero**; en escritorio (≥768 px) sigue diciendo **Pegar número** y usa el portapapeles sin cambios.
+2. En móvil se intenta `navigator.contacts.select(["tel"], { multiple: false })`; el número elegido se limpia con `normalizarTelefono()` (sin +57/57, sin espacios, guiones ni paréntesis) y se deja en el campo solo si tiene 10 dígitos.
+3. Si la API no existe, el contacto no trae número o falla: se enfoca el campo y se muestra un aviso breve, sin errores ni pantallas bloqueadas.
+
+### 56.2 Gate QA y cierre documental
+
+- `scripts/qa_v4_51.py`: **6/6 comprobaciones** en 1280 y 375 px (rótulo por ancho, fallback y contacto simulado `+57 (300) 123-4567` → `3001234567`). 3 pruebas nuevas. `sw.js` en `olb-finanzas-v142`.
+- Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-116), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.44.

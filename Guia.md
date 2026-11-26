@@ -106,7 +106,7 @@ Principios que explican el resto del código:
 ### Resumen del inventario
 
 - **115 archivos** documentados: 56 Python, 40 plantillas Jinja2 y 19 recursos estáticos.
-- **71 clases**, **687 funciones** y **43 métodos** de clase.
+- **71 clases**, **689 funciones** y **43 métodos** de clase.
 
 ### Detalle por archivo
 
@@ -257,7 +257,7 @@ Principios que explican el resto del código:
 
 #### `backend/app/static/css/`
 
-- **`estilos.css`** · 6741 líneas — Fondo y superficies
+- **`estilos.css`** · 6756 líneas — Fondo y superficies
 - **`factura-olb.css`** · 755 líneas — SRS v4.44: el retorno de la factura es «Volver a Ventas» en todos los
 
 #### `backend/app/static/js/`
@@ -283,8 +283,8 @@ Principios que explican el resto del código:
   - Funciones: `fechasListas`, `reemplazar`, `actualizar`, `programar`
 - **`moneda.js`** · 77 líneas — Formato de los campos de pesos mientras se escriben (SRS v1.9).
   - Funciones: `formatear`, `cuantosDigitos`, `posicionCursor`, `alEscribir`, `iniciar`
-- **`olb_byte.js`** · 521 líneas — Formulario de venta de OLB_BYTE: forma de pago, productos guardados y totales.
-  - Funciones: `numero`, `pesos`, `normalizarTelefono`, `leerCampos`, `escribirPanel`, `escribirEdicion`, `validarProducto`, `mostrarError`, `actualizarSubtotalPanel`, `hayDatosEnPanel`, `leerFila`, `escribirFila`, `actualizarVacia`, `recalcular`, `agregarFila`, `guardarProducto`, `habilitarPanel`, `sincronizarPago`, `mostrarNotaContactos`, `pegarNumero`
+- **`olb_byte.js`** · 582 líneas — Formulario de venta de OLB_BYTE: forma de pago, productos guardados y totales.
+  - Funciones: `numero`, `pesos`, `normalizarTelefono`, `leerCampos`, `escribirPanel`, `escribirEdicion`, `validarProducto`, `mostrarError`, `actualizarSubtotalPanel`, `hayDatosEnPanel`, `leerFila`, `escribirFila`, `actualizarVacia`, `recalcular`, `agregarFila`, `guardarProducto`, `habilitarPanel`, `sincronizarPago`, `mostrarNotaContactos`, `pegarNumero`, `agregarNumeroMovil`, `manejarBotonNumero`
 - **`perfil.js`** · 138 líneas — Mejora progresiva del perfil financiero (SRS v1.2).
   - Funciones: `alternarSubgrupo`, `conocePorcentajes`, `actualizar`, `leerPorcentaje`, `escribirPorcentaje`
 - **`presupuesto.js`** · 170 líneas — Mejora progresiva de "Gastos y Presupuesto" (SRS v1.3, bloque 3).
@@ -360,7 +360,7 @@ Principios que explican el resto del código:
 - **`cobro.html`** · 93 líneas — Plantilla: Gestionar cobro
 - **`factura.html`** · 42 líneas — Plantilla: Factura No.
 - **`garantias.html`** · 148 líneas — Plantilla: Garantías
-- **`index.html`** · 474 líneas — Plantilla: OLB_BYTE
+- **`index.html`** · 477 líneas — Plantilla: OLB_BYTE
 - **`pendientes.html`** · 119 líneas — Plantilla: Pendientes de pago
 - **`recibo.html`** · 23 líneas — Plantilla: Recibo de abono · No.
 

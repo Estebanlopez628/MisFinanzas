@@ -502,8 +502,69 @@
       });
   }
 
+  /**
+   * Abre la libreta de contactos en móvil y deja el número limpio en el campo.
+   * Si la API no está disponible, enfoca el campo y avisa sin bloquear la vista.
+   *
+   * @returns {void}
+   */
+  function agregarNumeroMovil() {
+    if (!navigator.contacts || typeof navigator.contacts.select !== "function") {
+      if (campoTelefono) {
+        campoTelefono.focus();
+      }
+      mostrarNotaContactos(
+        "Este navegador no abre la libreta de contactos. Escribe el celular manualmente."
+      );
+      return;
+    }
+    navigator.contacts
+      .select(["tel"], { multiple: false })
+      .then(function (contactos) {
+        var numeroContacto = contactos && contactos[0] && contactos[0].tel && contactos[0].tel[0];
+        if (!numeroContacto) {
+          if (campoTelefono) {
+            campoTelefono.focus();
+          }
+          mostrarNotaContactos("El contacto no tiene número. Escribe el celular manualmente.");
+          return;
+        }
+        var numero = normalizarTelefono(numeroContacto);
+        if (numero.length !== 10) {
+          if (campoTelefono) {
+            campoTelefono.focus();
+          }
+          mostrarNotaContactos("El número del contacto no tiene 10 dígitos. Revísalo e inténtalo otra vez.");
+          return;
+        }
+        if (campoTelefono) {
+          campoTelefono.value = numero;
+        }
+        mostrarNotaContactos("");
+      })
+      .catch(function () {
+        if (campoTelefono) {
+          campoTelefono.focus();
+        }
+        mostrarNotaContactos("No se pudo abrir la libreta de contactos. Escribe el celular manualmente.");
+      });
+  }
+
+  /**
+   * En móvil abre contactos; en escritorio conserva el portapapeles sin cambios.
+   *
+   * @returns {void}
+   */
+  function manejarBotonNumero() {
+    if (window.matchMedia && window.matchMedia("(max-width: 767px)").matches) {
+      agregarNumeroMovil();
+      return;
+    }
+    pegarNumero();
+  }
+
   if (botonPegar) {
-    botonPegar.addEventListener("click", pegarNumero);
+    botonPegar.addEventListener("click", manejarBotonNumero);
   }
 
   // ----------------------------------- Arranque ---------------------------------
