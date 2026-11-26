@@ -2854,6 +2854,14 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v156`. Gate `qa_v4_56.py` **6/6**: separación de 18 px medida entre quincenas y atajos, `clientHeight 325 / scrollHeight 386` en 1280 px, `370 / 439` en 375 px y bordes inferiores iguales en web. Suite completa **1002 pruebas** en verde y 20 gates sin regresiones propias.
 
+### 2026-11-26 — Estética translúcida de OLB BYTE (ADR-136)
+
+**Decisión (ADR-136).** SRS aparte: acabado translúcido oscuro con desenfoque suave en formularios, campos, botones, pestañas y tarjetas de OLB BYTE, en Web y Móvil. El fondo de ondas azules (ADR anterior) se ve ahora a través de esos componentes. Alcance quirúrgico: solo estilos visuales; no se tocan iconos, cálculos, flujos, tablas, CSV, modales, scroll ni Mis Finanzas.
+
+**Consecuencias.** Seis plantillas de OLB BYTE (index, pendientes, cartera, garantías, analítica y cobro) definen `{% block clase_cuerpo %}olb-translucido{% endblock %}`. Factura y recibo quedan fuera para no alterar el PDF ni la imagen compartida. En `estilos.css` se añaden reglas con prefijo `body.olb-translucido`: `.panel`, `.formulario`, `.campo__control` (excepto `--bloqueado`), `.boton--secundario`, `.boton--primario`, `.subnav-finanzas__enlace` y `.panel--kpis .kpi`. Los campos bloqueados y los iconos conservan su aspecto. No cambia ningún valor numérico ni medida.
+
+**Verificación.** Recorrido con Playwright en 1280 px y 390 px sobre Ventas, Cartera y Analítica: clase presente en OLB BYTE y ausente en `/finanzas`, fondos `rgba` y `backdrop-filter` aplicados, pestaña activa en azul luminoso, sin desbordamiento horizontal (`scrollWidth === innerWidth`) e iconos intactos. Suite completa en verde (1003 pruebas). `sw.js` en `olb-finanzas-v169`.
+
 ### 2026-11-26 — Punto en todas las opciones de los select (ADR-135)
 
 **Decisión (ADR-135).** El propietario pidió que todos los `<select>` del proyecto lleven «•» delante de cada opción, no solo los de categoría. Se excluyen los `<datalist>` (no son select) y los placeholders con `value=""` («Elige una…», «Mes completo» conserva punto por ser una elección real). El valor enviado no cambia.

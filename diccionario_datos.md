@@ -850,3 +850,9 @@ Las reglas CSS viven fuera de `@media (max-width: 767px)` para aplicar en ambos 
 - `_palabra_plazo(cantidad, singular, plural)` elimina el sufijo `(s)`: «1 cuota» / «N cuotas», «1 mes» / «N meses».
 - Textos exactos: «en la deuda que tienes con …», «realizando el pago mínimo de la cuota», «Al cerrar las deudas que te acabo de recomendar (…) podrás liberar $X de cuota mensual para tus próximas metas a pagar» y «Realizando el pago mínimo, cerrarías todas tus deudas recomendadas en …; con los abonos las cerrarías en …».
 - Cabeceras 2 y 3 de atajos: `Valor a<br />Pagar` y `Días de<br />Pago`. El wrapper `.cierre-deuda__proyeccion` se oculta bajo 768 px. El banner de comparativa va `text-align: center` en móvil. `.consejero__liquidez` usa 14 px en móvil y 16 px en escritorio.
+
+## 48. SRS aparte — Estética translúcida de OLB BYTE (sin cambios de esquema)
+
+- Este requerimiento es exclusivamente visual: no crea, renombra ni elimina tablas, columnas, índices ni relaciones. El diccionario de datos sigue siendo la fuente única de la base de datos.
+- El acabado translúcido se limita a las pantallas de OLB BYTE que llevan `class="olb-translucido"` en el `<body>`. La factura y el recibo no llevan esa clase; sus documentos PDF e imágenes no cambian.
+- Las reglas viven en `estilos.css` con el prefijo `body.olb-translucido`. No se modifica ningún campo de `usuarios`, `ventas`, `venta_detalle`, `movimientos_proveedor`, `gastos_operativos` ni de Mis Finanzas.

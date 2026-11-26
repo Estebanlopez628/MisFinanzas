@@ -6954,3 +6954,92 @@ dialog::backdrop {
   background-size: 15px 15px;
   padding-right: 34px;
 }
+
+/* --------------------------------------------------------------------------
+   SRS aparte — Estética translúcida de OLB BYTE (Web y Móvil).
+   Solo se aplica a las pantallas del módulo: el <body> lleva la clase
+   `olb-translucido`. Mis Finanzas, Deudas, Trabajos Extras, Ayuda y los
+   documentos de factura/recibo no la llevan, así que conservan su estilo.
+   No se tocan iconos, tamaños, márgenes ni comportamientos.
+   -------------------------------------------------------------------------- */
+
+body.olb-translucido .panel {
+  background: rgba(15, 23, 42, 0.58);
+  border-color: rgba(148, 163, 184, 0.24);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* El contenedor lleva un velo muy sutil: no se añade padding ni borde para no
+   desplazar ningún campo ni romper las rejillas de los formularios. */
+body.olb-translucido .formulario {
+  background: rgba(15, 23, 42, 0.24);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+body.olb-translucido .campo__control:not(.campo__control--bloqueado),
+body.olb-translucido select.campo__control:not(.campo__control--bloqueado) {
+  background-color: rgba(15, 23, 42, 0.62);
+  border-color: rgba(148, 163, 184, 0.3);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+body.olb-translucido .boton--secundario {
+  background: rgba(15, 23, 42, 0.55);
+  border-color: rgba(148, 163, 184, 0.34);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+body.olb-translucido .boton--secundario:hover {
+  background: rgba(2, 132, 199, 0.28);
+  border-color: rgba(56, 189, 248, 0.5);
+}
+
+/* Pestaña activa y botón principal: azul intenso/luminoso, sin tocar iconos. */
+body.olb-translucido .boton--primario {
+  background: linear-gradient(135deg, #0284c7 0%, #38bdf8 100%);
+  color: #f8fcff;
+  border-color: rgba(125, 211, 252, 0.6);
+}
+
+body.olb-translucido .subnav-finanzas__enlace {
+  background: rgba(15, 23, 42, 0.55);
+  border-color: rgba(148, 163, 184, 0.26);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+body.olb-translucido .subnav-finanzas__enlace:hover,
+body.olb-translucido .subnav-finanzas__enlace:focus-visible {
+  background: rgba(2, 132, 199, 0.3);
+  border-color: rgba(56, 189, 248, 0.55);
+}
+
+body.olb-translucido .subnav-finanzas__enlace--activo,
+body.olb-translucido .subnav-finanzas__enlace--activo:hover,
+body.olb-translucido .subnav-finanzas__enlace--activo:focus-visible {
+  background: linear-gradient(135deg, #0284c7 0%, #38bdf8 100%);
+  border-color: rgba(125, 211, 252, 0.75);
+  color: #ffffff;
+}
+
+/* Tarjetas de resumen/métricas: acento cromático suave en el borde. */
+body.olb-translucido .panel--kpis .kpi {
+  background: rgba(15, 23, 42, 0.42);
+  border: 1px solid rgba(56, 189, 248, 0.18);
+  border-radius: var(--radio-md);
+  padding: 12px;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+
+/* Las tarjetas de balance usan `tarjeta`: mismo acabado, sin cambiar iconos. */
+body.olb-translucido .panel--balance-cartera .tarjeta {
+  background: linear-gradient(160deg, rgba(30, 41, 59, 0.6), rgba(15, 23, 42, 0.5));
+  border-color: rgba(56, 189, 248, 0.2);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}

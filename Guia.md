@@ -257,8 +257,8 @@ Principios que explican el resto del código:
 
 #### `backend/app/static/css/`
 
-- **`estilos.css`** · 6954 líneas — Fondo y superficies
-- **`factura-olb.css`** · 755 líneas — SRS v4.44: el retorno de la factura es «Volver a Ventas» en todos los
+- **`estilos.css`** · 7046 líneas — Fondo y superficies
+- **`factura-olb.css`** · 764 líneas — SRS v4.44: el retorno de la factura es «Volver a Ventas» en todos los
 
 #### `backend/app/static/js/`
 
@@ -355,13 +355,13 @@ Principios que explican el resto del código:
 - **`_hoja_factura.html`** · 270 líneas
 - **`_recibo.html`** · 47 líneas
 - **`_subnav.html`** · 30 líneas — Subnavegación de OLB_BYTE con el mismo componente que Mis Finanzas (subnav-finanzas).
-- **`analitica.html`** · 367 líneas — Plantilla: Gestión y control de ventas
-- **`cartera.html`** · 384 líneas — Plantilla: Cartera y pagos a proveedores
-- **`cobro.html`** · 93 líneas — Plantilla: Gestionar cobro
+- **`analitica.html`** · 368 líneas — Plantilla: Gestión y control de ventas
+- **`cartera.html`** · 385 líneas — Plantilla: Cartera y pagos a proveedores
+- **`cobro.html`** · 94 líneas — Plantilla: Gestionar cobro
 - **`factura.html`** · 42 líneas — Plantilla: Factura No.
-- **`garantias.html`** · 154 líneas — Plantilla: Soporte y garantías
-- **`index.html`** · 505 líneas — Plantilla: OLB BYTE
-- **`pendientes.html`** · 119 líneas — Plantilla: Cuentas por cobrar
+- **`garantias.html`** · 155 líneas — Plantilla: Soporte y garantías
+- **`index.html`** · 506 líneas — Plantilla: OLB BYTE
+- **`pendientes.html`** · 120 líneas — Plantilla: Cuentas por cobrar
 - **`recibo.html`** · 23 líneas — Plantilla: Recibo de abono · No.
 
 #### `backend/app/templates/perfil/`

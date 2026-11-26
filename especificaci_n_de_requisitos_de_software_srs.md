@@ -1704,3 +1704,19 @@ Línea base v4.44. Ajusta la sección 69. Alcance exclusivo: Mis Finanzas (`/fin
 
 - `qa_v4_56.py` **6/6**: separación de 18 px en 1280 px, `clientHeight 325 / scrollHeight 386` en web y `370 / 439` en móvil, pies alineados. `sw.js` en `olb-finanzas-v156`.
 - Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-132), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.44.
+
+## 71. SRS aparte — Estética translúcida en OLB BYTE (Web y Móvil)
+
+**Regla suprema.** Alcance quirúrgico exclusivo sobre estilos visuales de OLB BYTE. Prohibido modificar iconos, cálculos, validaciones, flujos de ventas, cobros, cartera, garantías, analítica, CSV, modales, scroll ni Mis Finanzas.
+
+### 71.1 Lineamientos aplicados
+
+1. Formularios y campos: tonos azul marino translúcidos (`rgba`) con borde sutil y `backdrop-filter` suave, con alto contraste en texto, etiquetas y *placeholders*. Los campos bloqueados conservan su aspecto.
+2. Botones y pestañas: estilo translúcido oscuro con borde fino en los secundarios; azul intenso y luminoso en el primario y en la pestaña activa. Iconos y comportamientos de clic intactos.
+3. Tarjetas: acabado translúcido oscuro con borde sutil y acento azul suave en KPI y tarjetas de balance, sin alterar iconos ni valores numéricos.
+
+### 71.2 Ámbito y cierre documental
+
+- Las seis pantallas de OLB BYTE definen `clase_cuerpo = olb-translucido`. Factura y recibo quedan fuera para no tocar el PDF ni la imagen compartida.
+- Verificado en Web (1280 px) y Móvil (390 px): translucidez aplicada, sin desbordamiento horizontal e iconos intactos. Suite completa en verde (1003 pruebas).
+- `sw.js` en `olb-finanzas-v169`. Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-136), `AGENTS.md` y esta SRS quedan sincronizados.
