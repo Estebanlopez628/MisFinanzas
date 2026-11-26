@@ -511,6 +511,12 @@ movimientos no se editan ni se borran: una corrección se registra como un movim
 nuevo. `DEUDA_INICIAL` se usa solo para deudas anteriores al sistema (SRS v4.44, §8.1),
 no lleva orden (`id_venta = NULL`) y en el libro muestra Cliente y Producto como «—».
 
+Analítica (SRS v4.44, §53) suma los movimientos `DEUDA_INICIAL` de cada mes/año a la
+columna **Costos** de «Mes a mes» y «Año tras año» y los detalla en una columna propia.
+Las exportaciones CSV mensual y anual incluyen la columna **Deudas al proveedor
+anteriores al sistema**. No se crea tabla nueva ni se modifica `ganancia`,
+`rentabilidad` ni el módulo de Mis Finanzas.
+
 ### 10.7 `garantias_proveedor` — *Garantías en trámite (RF-05)*
 | Campo | Tipo | Nulo | Descripción |
 | --- | --- | --- | --- |

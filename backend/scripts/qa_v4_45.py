@@ -110,6 +110,15 @@ def main() -> None:
                         flush=True,
                     )
             else:
+                # Móvil: cuatro filas visibles en la lista con scroll vertical.
+                lista = pagina.locator(".ordenes-moviles--movimientos")
+                fila_alto = lista.locator("button.orden-movil").first.bounding_box()["height"]
+                visibles = lista.bounding_box()["height"] / fila_alto
+                comprobar(
+                    f"{prefijo}: cuatro movimientos visibles con scroll",
+                    3.5 <= visibles <= 4.6,
+                    f"filas visibles≈{visibles:.1f}",
+                )
                 # §7.3: detalle móvil con X arriba a la derecha y orden de campos.
                 abrir = pagina.locator("[data-abrir-dialogo]").first
                 if abrir.count():

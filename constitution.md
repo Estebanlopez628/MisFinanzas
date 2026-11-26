@@ -236,3 +236,11 @@ Principios innegociables. Toda especificación, plan y tarea debe cumplirlos de 
 48. **X uniforme y pasivos en Analítica (ADR-111):**
     - Cartera, Pendientes y Órdenes registradas usan la misma X roja; la factura usa «Volver a Ventas» y restaura la posición.
     - Analítica muestra deudas a proveedores en bloque propio, sin sumarlas a ventas ni mezclarlas con Mis Finanzas, y sin nueva tabla.
+
+49. **Deudas en Costos y CSV (ADR-113):**
+    - En Mes a mes y Año tras año, los Costos incluyen las deudas anteriores al sistema y se detalla una columna propia.
+    - El CSV usa la denominación exacta «Deudas al proveedor anteriores al sistema», conservando BOM, separador y tildes.
+
+50. **Rojo de la X y filas móviles (ADR-114):**
+    - La X de los modales de Órdenes, Pendientes y Movimientos usa el rojo del botón destructivo.
+    - En móvil se ven cuatro movimientos con scroll; en escritorio se mantienen seis.

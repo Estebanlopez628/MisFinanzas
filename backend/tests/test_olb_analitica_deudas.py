@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
+from datetime import date, datetime
 from decimal import Decimal
 from pathlib import Path
 
 from fastapi.testclient import TestClient
 
 from app.core.base_datos import FabricaSesiones
-from app.servicios import comercial
+from app.servicios import analitica, comercial
 
 RUTA = Path(__file__).resolve().parent.parent / "app"
 
@@ -25,8 +26,9 @@ def test_x_uniforme_en_los_modales_de_olb_byte() -> None:
     """Cartera, pendientes y órdenes comparten la misma X roja."""
     css = (RUTA / "static/css/estilos.css").read_text(encoding="utf-8")
     selector = css.split(".detalle-orden__cerrar,\n.pendiente-cerrar {", 1)[1].split("}", 1)[0]
-    assert "background: rgba(127, 29, 29, 0.94)" in selector
-    assert "box-shadow: 0 4px 14px rgba(239, 68, 68, 0.55)" in selector
+    assert "background: rgba(239, 68, 68, 0.14)" in selector
+    assert "border: 1px solid rgba(239, 68, 68, 0.5)" in selector
+    assert "color: #fecaca" in selector
     index = (RUTA / "templates/olb_byte/index.html").read_text(encoding="utf-8")
     assert "detalle-orden__volver" not in index
     assert 'class="detalle-orden__cerrar" data-cerrar-dialogo' in index
@@ -63,6 +65,54 @@ def test_registro_de_deuda_desde_analitica(cliente_admin: TestClient, bd) -> Non
         f["etiqueta"] == "Deuda inicial" and f["concepto"] == "Proveedor QA"
         for f in movimientos
     )
+
+
+def test_deudas_se_suman_a_los_costos_en_mensual_y_anual(bd) -> None:
+    """Costos incluye la deuda del periodo; ganancia sigue siendo de ventas."""
+    hoy = datetime.now(comercial.ZONA_TIENDA)
+    comercial.registrar_venta(
+        bd,
+        "Cliente Costos",
+        "3002221111",
+        [
+            comercial.LineaVenta(
+                nombre="Producto con costo",
+                cantidad=1,
+                precio_unitario="50000",
+                costo_unitario="30000",
+            )
+        ],
+        hoy,
+    )
+    comercial.registrar_deuda_inicial(bd, "25000", "Deuda del mes")
+
+    mensual = analitica.reporte_mensual(bd, hoy.year)
+    fila = mensual[hoy.month - 1]
+    assert fila["deudas_proveedor"] == Decimal("25000")
+    assert fila["costos"] == Decimal("55000")  # 30000 de venta + 25000 de deuda
+    assert fila["ganancia"] == Decimal("20000")  # métrica de ventas intacta
+
+    anual = {f["anio"]: f for f in analitica.reporte_anual(bd)}
+    assert anual[hoy.year]["deudas_proveedor"] == Decimal("25000")
+    assert anual[hoy.year]["costos"] == Decimal("55000")
+
+
+def test_csv_incluye_la_denominacion_exacta(cliente_admin: TestClient, bd) -> None:
+    """Los CSV mensual y anual conservan BOM, tildes y la etiqueta exacta."""
+    encabezados, filas = analitica.tabla_csv(bd, "mensual", analitica.Filtro(), date.today())
+    assert analitica.DEUDAS_PROVEEDOR_LABEL in encabezados
+    assert all(len(fila) == len(encabezados) for fila in filas)
+    encabezados, filas = analitica.tabla_csv(bd, "anual", analitica.Filtro(), date.today())
+    assert analitica.DEUDAS_PROVEEDOR_LABEL in encabezados
+    assert all(len(fila) == len(encabezados) for fila in filas)
+
+    for tabla in ("mensual", "anual"):
+        respuesta = cliente_admin.get(f"/olb-byte/analitica/exportar/{tabla}.csv")
+        assert respuesta.status_code == 200
+        texto = respuesta.text
+        assert texto.startswith("\ufeff")
+        assert analitica.DEUDAS_PROVEEDOR_LABEL in texto
+        assert "Variación" in texto  # tildes conservadas
 
 
 def test_registro_de_deuda_rechaza_monto_invalido(cliente_admin: TestClient) -> None:

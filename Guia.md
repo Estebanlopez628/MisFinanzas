@@ -106,7 +106,7 @@ Principios que explican el resto del código:
 ### Resumen del inventario
 
 - **115 archivos** documentados: 56 Python, 40 plantillas Jinja2 y 19 recursos estáticos.
-- **71 clases**, **686 funciones** y **43 métodos** de clase.
+- **71 clases**, **688 funciones** y **43 métodos** de clase.
 
 ### Detalle por archivo
 
@@ -195,9 +195,9 @@ Principios que explican el resto del código:
 - **`ahorro.py`** · 863 líneas — Planificador de ahorro y metas del usuario (SRS v1.3, bloque 3).
   - Clases: `MesMeta`, `MetaResumen`
   - Funciones: `etiqueta_quincena`, `valor_por_pago`, `_normalizar_modo_ambas`, `valor_mensual_efectivo`, `_mover_mes`, `_etiqueta_mes`, `_validar_duracion`, `crear_proyeccion`, `listar_proyecciones`, `_posicion`, `eliminar_proyeccion`, `extender_proyeccion`, `historial_metas`, `_detalle_pagos`, `meses_de_la_meta`, `_estado_mes`, `resumen_metas`, `saldo_libre_total`, `diagnostico`
-- **`analitica.py`** · 834 líneas — Analítica de OLB_BYTE: reportes, clientes VIP, costos y tablas exportables.
+- **`analitica.py`** · 901 líneas — Analítica de OLB_BYTE: reportes, clientes VIP, costos y tablas exportables.
   - Clases: `Filtro`, `Linea`, `_Acumulado`
-  - Funciones: `_acumular`, `_repartir`, `_lineas`, `_gastos_operativos_por_mes`, `_gastos_operativos_por_anio`, `_variacion`, `_ordenes_activas`, `anios_con_ventas`, `reporte_mensual`, `reporte_anual`, `ranking_vip`, `alertas_costos`, `estado_garantia_fila`, `tabla_ventas`, `_csv_dinero`, `_csv_numero`, `_csv_fecha`, `serializar_csv`, `tabla_csv`
+  - Funciones: `_acumular`, `_repartir`, `_lineas`, `_gastos_operativos_por_mes`, `_deudas_proveedor_por_mes`, `_deudas_proveedor_por_anio`, `_gastos_operativos_por_anio`, `_variacion`, `_ordenes_activas`, `anios_con_ventas`, `reporte_mensual`, `reporte_anual`, `ranking_vip`, `alertas_costos`, `estado_garantia_fila`, `tabla_ventas`, `_csv_dinero`, `_csv_numero`, `_csv_fecha`, `serializar_csv`, `tabla_csv`
 - **`auditoria.py`** · 61 líneas — Bitácora de auditoría de acciones sensibles.
   - Funciones: `registrar`, `listar_eventos`
 - **`auxilio.py`** · 146 líneas — Evaluación del derecho al auxilio de transporte (SRS RF-07).
@@ -257,7 +257,7 @@ Principios que explican el resto del código:
 
 #### `backend/app/static/css/`
 
-- **`estilos.css`** · 6731 líneas — Fondo y superficies
+- **`estilos.css`** · 6741 líneas — Fondo y superficies
 - **`factura-olb.css`** · 755 líneas — SRS v4.44: el retorno de la factura es «Volver a Ventas» en todos los
 
 #### `backend/app/static/js/`
@@ -355,8 +355,8 @@ Principios que explican el resto del código:
 - **`_hoja_factura.html`** · 270 líneas
 - **`_recibo.html`** · 47 líneas
 - **`_subnav.html`** · 30 líneas — Subnavegación de OLB_BYTE con el mismo componente que Mis Finanzas (subnav-finanzas).
-- **`analitica.html`** · 422 líneas — Plantilla: Analítica
-- **`cartera.html`** · 370 líneas — Plantilla: Cartera y liquidez
+- **`analitica.html`** · 433 líneas — Plantilla: Analítica
+- **`cartera.html`** · 371 líneas — Plantilla: Cartera y liquidez
 - **`cobro.html`** · 93 líneas — Plantilla: Gestionar cobro
 - **`factura.html`** · 42 líneas — Plantilla: Factura No.
 - **`garantias.html`** · 148 líneas — Plantilla: Garantías

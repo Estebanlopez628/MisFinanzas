@@ -27,7 +27,8 @@ def test_modal_de_pendientes_solo_ofrece_registrar_pago() -> None:
     css = (RUTA / "static/css/estilos.css").read_text(encoding="utf-8")
     cierre = css.split(".pendiente-cerrar {", 1)[1].split("}", 1)[0]
     assert "position: absolute" in cierre
-    assert "rgba(127, 29, 29, 0.94)" in cierre
+    assert "rgba(239, 68, 68, 0.14)" in cierre
+    assert "color: #fecaca" in cierre
 
 
 def test_vista_de_pendientes_con_orden_pendiente(cliente_admin) -> None:

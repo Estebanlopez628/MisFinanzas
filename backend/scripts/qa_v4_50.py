@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+from datetime import date
+
 from playwright.sync_api import sync_playwright
 
 from app.core.base_datos import FabricaSesiones
-from app.servicios import comercial
+from app.servicios import analitica, comercial
 
 BASE = "http://127.0.0.1:8000"
 CORREO = "prueba_qa_admin@misfinanzas.local"
@@ -84,6 +86,50 @@ def main() -> None:
                 f"{prefijo}: el concepto aparece en el historial",
                 "Proveedor QA Analítica" in pagina.content(),
             )
+
+            # Las deudas aparecen como columna propia en Mes a mes y Año tras año.
+            cabeceras = [
+                texto.strip().title()
+                for texto in pagina.locator(".panel--tabla thead th").all_inner_texts()
+            ]
+            comprobar(
+                f"{prefijo}: columna de deudas en ambas tablas",
+                cabeceras.count("Deudas Proveedor") >= 2,
+                str(cabeceras[:12]),
+            )
+
+            meses = (
+                "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+                "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
+            )
+            fila_mes = pagina.locator(
+                f".panel--tabla tbody tr:has-text('{meses[date.today().month - 1]}')"
+            ).first
+            if fila_mes.count():
+                celdas = [c.strip() for c in fila_mes.locator("td").all_inner_texts()]
+                deuda_tabla = int("".join(c for c in celdas[5] if c.isdigit()) or "0")
+                with FabricaSesiones() as bd:
+                    deuda_bd = analitica._deudas_proveedor_por_mes(bd, date.today().year)[
+                        date.today().month
+                    ]
+                comprobar(
+                    f"{prefijo}: deuda del mes reflejada en la tabla",
+                    deuda_tabla == int(deuda_bd),
+                    f"tabla={deuda_tabla} bd={deuda_bd}",
+                )
+
+            for tabla in ("mensual", "anual"):
+                csv_respuesta = contexto.request.get(
+                    f"{BASE}/olb-byte/analitica/exportar/{tabla}.csv"
+                )
+                cuerpo = csv_respuesta.body()
+                comprobar(
+                    f"{prefijo}: CSV {tabla} con etiqueta exacta, BOM y tildes",
+                    analitica.DEUDAS_PROVEEDOR_LABEL.encode("utf-8") in cuerpo
+                    and cuerpo.startswith(b"\xef\xbb\xbf")
+                    and "Variación".encode("utf-8") in cuerpo,
+                )
+
             pagina.goto(f"{BASE}/olb-byte")
             pagina.wait_for_load_state("networkidle")
             comprobar(
@@ -105,7 +151,7 @@ def main() -> None:
             )
             comprobar(
                 f"{prefijo}: X de cartera y pendientes del mismo color",
-                color_cartera == color_pendientes == "rgba(127, 29, 29, 0.94)",
+                color_cartera == color_pendientes == "rgba(239, 68, 68, 0.14)",
                 f"{color_cartera} / {color_pendientes}",
             )
             if ancho < 768:

@@ -2694,6 +2694,22 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v138`. 2 pruebas nuevas en `test_olb_movimientos_seis.py`. Gate `qa_v4_45.py` actualizado a seis filas y con comprobación de cabecera opaca.
 
+### 2026-11-25 — Deudas en Costos y CSV de Analítica (ADR-113)
+
+**Decisión (ADR-113).** El propietario pidió reflejar las deudas a proveedores dentro de las tablas de Analítica, sumarlas a Costos y exportarlas con la denominación exacta «Deudas al proveedor anteriores al sistema». No se crea ni se mueve ningún módulo de deudas: el registro sigue en Cartera y liquidez y en el bloque ya existente de Analítica.
+
+**Consecuencias.** Nuevos helpers `_deudas_proveedor_por_mes()` y `_deudas_proveedor_por_anio()` suman solo movimientos `DEUDA_INICIAL` por fecha. `reporte_mensual` y `reporte_anual` devuelven `deudas_proveedor` y sus `costos` los incluyen; `ganancia`, `rentabilidad` y `ganancia_neta` permanecen calculados como antes (utilidad de ventas). La plantilla añade la columna «Deudas proveedor» (con `title` con la etiqueta completa) en Mes a mes y Año tras año. `tabla_csv` añade en ambos CSV la columna con `DEUDAS_PROVEEDOR_LABEL`, conservando separador `;`, BOM UTF-8 y tildes.
+
+**Verificación.** `sw.js` en `olb-finanzas-v139`. 2 pruebas nuevas en `test_olb_analitica_deudas.py` (costos 30.000 + 25.000 = 55.000, ganancia 20.000 intacta; CSV con BOM y etiqueta exacta). Gate `qa_v4_50.py` **25/25** en 1280 y 375 px: columna en ambas tablas, valor de deuda del mes idéntico a la BD y CSV mensual/anual con etiqueta, BOM y «Variación».
+
+### 2026-11-25 — Rojo de X uniforme y cuatro movimientos en móvil (ADR-114)
+
+**Decisión (ADR-114).** El propietario pidió que la X de los tres modales de OLB_BYTE use el mismo rojo que el botón destructivo del modal de Órdenes registradas, y que en móvil «Movimientos con el proveedor» muestre cuatro registros con scroll vertical (el escritorio conserva seis).
+
+**Consecuencias.** La regla compartida de `.detalle-orden__cerrar` y `.pendiente-cerrar` pasa a fondo `rgba(239,68,68,.14)`, borde `rgba(239,68,68,.5)` y texto `#fecaca`, idénticos a `.boton--peligro`; se retira el fondo rojo oscuro y las sombras. En `cartera.html`, la lista móvil lleva `ordenes-moviles--movimientos` y en `@media (max-width: 640px)` se limita a `max-height: 168px` (cuatro filas de ≈42 px) con `overflow-y: auto`; la tabla de escritorio sigue en 296 px (seis filas).
+
+**Verificación.** `sw.js` en `olb-finanzas-v140`. Gate `qa_v4_45.py` **9/9** (4,0 filas móviles y cabecera opaca en escritorio), `qa_v4_49.py` **7/7** y `qa_v4_50.py` **25/25** con el color computado `rgba(239, 68, 68, 0.14)` en los tres módulos. 1 prueba nueva en `test_olb_movimientos_seis.py`.
+
 ### 2026-11-24 — SRS v4.43: corrección de columnas y portal del modal (ADR-105)
 
 **Decisión (ADR-105).** El propietario corrigió dos puntos de v4.42: el ancho fijo de 440 px forzaba scroll aunque el texto cupiera, y el modal de edición quedaba atrapado en el contexto de la tarjeta. Las referencias a `hidden md:table-cell` y `ReactDOM.createPortal` del documento son ilustrativas; se implementan con CSS y `document.body.appendChild`, según el stack.

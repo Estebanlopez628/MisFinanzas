@@ -22,3 +22,14 @@ def test_cabecera_de_movimientos_es_opaca() -> None:
     assert "position: sticky" in bloque
     plantilla = (RUTA / "templates/olb_byte/cartera.html").read_text(encoding="utf-8")
     assert "seis filas visibles" in plantilla
+
+
+def test_movimientos_en_movil_muestran_cuatro_filas() -> None:
+    """La lista móvil se limita a cuatro filas con scroll vertical."""
+    css = (RUTA / "static/css/estilos.css").read_text(encoding="utf-8")
+    media = css.split("@media (max-width: 640px) {", 1)[1]
+    bloque = media.split(".ordenes-moviles--movimientos {", 1)[1].split("}", 1)[0]
+    assert "max-height: 168px" in bloque
+    assert "overflow-y: auto" in bloque
+    plantilla = (RUTA / "templates/olb_byte/cartera.html").read_text(encoding="utf-8")
+    assert "ordenes-moviles--movimientos" in plantilla

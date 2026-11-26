@@ -69,14 +69,14 @@ def main() -> None:
                 )
                 x = dialogo.locator(".pendiente-cerrar")
                 estilo = x.evaluate(
-                    "e => ({ fondo: getComputedStyle(e).backgroundColor, sombra: getComputedStyle(e).boxShadow })"
+                    "e => ({ fondo: getComputedStyle(e).backgroundColor, texto: getComputedStyle(e).color })"
                 )
                 caja = x.bounding_box()
                 dialogo_caja = dialogo.bounding_box()
                 comprobar(
                     f"{prefijo}: X rojisa arriba a la derecha",
-                    "127, 29, 29" in estilo["fondo"]
-                    and "239, 68, 68" in estilo["sombra"]
+                    estilo["fondo"] == "rgba(239, 68, 68, 0.14)"
+                    and estilo["texto"] == "rgb(254, 202, 202)"
                     and caja["x"] > dialogo_caja["x"] + dialogo_caja["width"] * 0.7
                     and caja["y"] < dialogo_caja["y"] + 60,
                     str(estilo),

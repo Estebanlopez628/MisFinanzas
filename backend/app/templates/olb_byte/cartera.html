@@ -193,7 +193,8 @@
         </div>
 
         {# Celular: fecha sin hora, concepto, monto y saldo; el detalle completo se abre al tocar la fila. #}
-        <ul class="ordenes-moviles" aria-label="Movimientos con el proveedor">
+        {# SRS v4.44: en móvil se ven cuatro movimientos y el resto con scroll. #}
+      <ul class="ordenes-moviles ordenes-moviles--movimientos" aria-label="Movimientos con el proveedor">
           <li class="orden-movil orden-movil--cabecera orden-movil--movimiento" aria-hidden="true">
             <span>Fecha</span><span>Concepto</span><span>Monto</span><span>Saldo</span>
           </li>

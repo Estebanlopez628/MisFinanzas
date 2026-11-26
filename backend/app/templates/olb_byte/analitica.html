@@ -180,6 +180,7 @@
             <th scope="col">Ingresos</th>
             <th scope="col">Costos</th>
             <th scope="col">Ganancia</th>
+            <th scope="col" title="Deudas al proveedor anteriores al sistema">Deudas proveedor</th>
             <th scope="col">Gastos op.</th>
             <th scope="col">Ganancia neta</th>
             <th scope="col">Var. ganancia</th>
@@ -194,6 +195,7 @@
               <td class="tabla__numero">{{ fila.ingresos | cop }}</td>
               <td class="tabla__numero">{{ fila.costos | cop }}</td>
               <td class="tabla__numero">{{ fila.ganancia | cop }}</td>
+              <td class="tabla__numero">{{ fila.deudas_proveedor | cop }}</td>
               <td class="tabla__numero">{{ fila.gastos_operativos | cop }}</td>
               <td class="tabla__numero">{{ fila.ganancia_neta | cop }}</td>
               <td class="tabla__numero">{{ fila.variacion ~ ' %' if fila.variacion is not none else '—' }}</td>
@@ -205,6 +207,10 @@
         </tbody>
       </table>
     </div>
+    <p class="ayuda">
+      Los Costos incluyen las Deudas al proveedor anteriores al sistema registradas
+      en cada mes; ese valor se detalla en la columna «Deudas proveedor».
+    </p>
   </section>
 
   <section class="panel panel--tabla">
@@ -271,6 +277,7 @@
               <th scope="col">Ingresos</th>
               <th scope="col">Costos</th>
               <th scope="col">Ganancia</th>
+              <th scope="col" title="Deudas al proveedor anteriores al sistema">Deudas proveedor</th>
               <th scope="col">Gastos op.</th>
               <th scope="col">Ganancia neta</th>
               <th scope="col">Rentabilidad</th>
@@ -285,6 +292,7 @@
                 <td class="tabla__numero">{{ fila.ingresos | cop }}</td>
                 <td class="tabla__numero">{{ fila.costos | cop }}</td>
                 <td class="tabla__numero">{{ fila.ganancia | cop }}</td>
+                <td class="tabla__numero">{{ fila.deudas_proveedor | cop }}</td>
                 <td class="tabla__numero">{{ fila.gastos_operativos | cop }}</td>
                 <td class="tabla__numero">{{ fila.ganancia_neta | cop }}</td>
                 <td class="tabla__numero">{{ fila.rentabilidad ~ ' %' if fila.rentabilidad is not none else '—' }}</td>
@@ -294,7 +302,10 @@
           </tbody>
         </table>
       </div>
-      <p class="ayuda">Rentabilidad = ganancia del año ÷ costo del año × 100.</p>
+      <p class="ayuda">
+        Rentabilidad = ganancia del año ÷ costo del año × 100. Los Costos incluyen
+        las Deudas al proveedor anteriores al sistema del periodo.
+      </p>
     {% else %}
       <p class="tabla__vacia">Aún no hay ventas activas para resumir por año.</p>
     {% endif %}

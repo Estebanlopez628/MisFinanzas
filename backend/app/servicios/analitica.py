@@ -38,8 +38,16 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.numeros import redondear_dinero
-from app.modelos import GastoOperativo, Venta, VentaDetalle
-from app.servicios.comercial import CERO, ESTADO_ACTIVA, etiqueta_producto
+from app.modelos import GastoOperativo, MovimientoProveedor, Venta, VentaDetalle
+from app.servicios.comercial import (
+    CERO,
+    ESTADO_ACTIVA,
+    TIPO_DEUDA_INICIAL,
+    etiqueta_producto,
+)
+
+# Denominación exacta exigida en la exportación CSV.
+DEUDAS_PROVEEDOR_LABEL = "Deudas al proveedor anteriores al sistema"
 
 MESES = (
     "Enero",
@@ -314,6 +322,49 @@ def _gastos_operativos_por_mes(bd: Session, anio: int) -> dict[int, Decimal]:
     return totales
 
 
+def _deudas_proveedor_por_mes(bd: Session, anio: int) -> dict[int, Decimal]:
+    """Suma las deudas anteriores al sistema por mes (SRS v4.44).
+
+    Solo se consideran los movimientos `DEUDA_INICIAL` del libro que ya usa
+    Cartera y liquidez; no se crea ningún registro nuevo aquí.
+
+    Args:
+        bd: Sesión de base de datos.
+        anio: Año consultado.
+
+    Returns:
+        Diccionario con los doce meses; cero donde no hay deuda.
+    """
+    totales = {mes: CERO for mes in range(1, 13)}
+    consulta = select(MovimientoProveedor.fecha, MovimientoProveedor.monto).where(
+        MovimientoProveedor.tipo == TIPO_DEUDA_INICIAL
+    )
+    for fecha, monto in bd.execute(consulta):
+        if fecha.year == anio:
+            totales[fecha.month] += monto
+    return totales
+
+
+def _deudas_proveedor_por_anio(bd: Session, mes: int | None = None) -> dict[int, Decimal]:
+    """Suma las deudas anteriores al sistema por año, opcionalmente por mes.
+
+    Args:
+        bd: Sesión de base de datos.
+        mes: Mes a considerar; `None` suma el año completo.
+
+    Returns:
+        Diccionario `{año: total}`; los años sin deuda no aparecen.
+    """
+    totales: dict[int, Decimal] = {}
+    consulta = select(MovimientoProveedor.fecha, MovimientoProveedor.monto).where(
+        MovimientoProveedor.tipo == TIPO_DEUDA_INICIAL
+    )
+    for fecha, monto in bd.execute(consulta):
+        if mes is None or fecha.month == mes:
+            totales[fecha.year] = totales.get(fecha.year, CERO) + monto
+    return totales
+
+
 def _gastos_operativos_por_anio(bd: Session, mes: int | None = None) -> dict[int, Decimal]:
     """Suma los gastos operativos de cada año, opcionalmente de un solo mes.
 
@@ -396,6 +447,7 @@ def reporte_mensual(bd: Session, anio: int, filtro: Filtro | None = None) -> lis
 
     maximo = max((p.ingresos for p in periodos.values()), default=CERO)
     gastos_mes = _gastos_operativos_por_mes(bd, anio)
+    deudas_mes = _deudas_proveedor_por_mes(bd, anio)
     filas: list[dict[str, object]] = []
     previo: _Acumulado | None = None
     for mes in range(1, 13):
@@ -403,13 +455,17 @@ def reporte_mensual(bd: Session, anio: int, filtro: Filtro | None = None) -> lis
         variacion = None if previo is None else _variacion(datos.ganancia, previo.ganancia)
         barra = 0 if maximo == CERO else int((datos.ingresos / maximo * 100).to_integral_value())
         gastos = redondear_dinero(gastos_mes[mes])
+        deudas = redondear_dinero(deudas_mes[mes])
         filas.append(
             {
                 "mes": MESES[mes - 1],
                 "numero_mes": mes,
                 "ventas": datos.ventas,
                 "ingresos": redondear_dinero(datos.ingresos),
-                "costos": redondear_dinero(datos.costos),
+                # SRS v4.44: Costos incluye las deudas a proveedores anteriores al
+                # sistema; `ganancia` se mantiene como utilidad de las ventas.
+                "costos": redondear_dinero(datos.costos + deudas),
+                "deudas_proveedor": deudas,
                 "ganancia": redondear_dinero(datos.ganancia),
                 # SRS v4.44, §8.3: gasto operativo del mes y ganancia real (neta).
                 "gastos_operativos": gastos,
@@ -450,8 +506,12 @@ def reporte_anual(bd: Session, filtro: Filtro | None = None) -> list[dict[str, o
     filas: list[dict[str, object]] = []
     previo: _Acumulado | None = None
     gastos_anio = _gastos_operativos_por_anio(bd, seleccion.mes)
+    deudas_anio = _deudas_proveedor_por_anio(bd, seleccion.mes)
     for anio in sorted(periodos):
         datos = _acumular(periodos[anio])
+        deudas = redondear_dinero(deudas_anio.get(anio, CERO))
+        costos = redondear_dinero(datos.costos + deudas)
+        # La rentabilidad sigue midiendo solo la operación de ventas.
         rentabilidad = (
             (datos.ganancia / datos.costos * 100).quantize(UNO) if datos.costos > CERO else None
         )
@@ -462,7 +522,10 @@ def reporte_anual(bd: Session, filtro: Filtro | None = None) -> list[dict[str, o
                 "anio": anio,
                 "ventas": datos.ventas,
                 "ingresos": redondear_dinero(datos.ingresos),
-                "costos": redondear_dinero(datos.costos),
+                # SRS v4.44: Costos incluye las deudas a proveedores anteriores al
+                # sistema; `ganancia` se mantiene como utilidad de las ventas.
+                "costos": costos,
+                "deudas_proveedor": deudas,
                 "ganancia": redondear_dinero(datos.ganancia),
                 # SRS v4.44, §8.3: gasto operativo del año y ganancia real (neta).
                 "gastos_operativos": gastos,
@@ -733,6 +796,7 @@ def tabla_csv(
     if nombre == "mensual":
         encabezados = [
             "Mes", "Ventas", "Ingresos", "Costos", "Ganancia",
+            DEUDAS_PROVEEDOR_LABEL,
             "Gastos operativos", "Ganancia neta", "Variación ganancia (%)",
         ]
         filas = [
@@ -742,6 +806,7 @@ def tabla_csv(
                 _csv_dinero(fila["ingresos"]),
                 _csv_dinero(fila["costos"]),
                 _csv_dinero(fila["ganancia"]),
+                _csv_dinero(fila["deudas_proveedor"]),
                 _csv_dinero(fila["gastos_operativos"]),
                 _csv_dinero(fila["ganancia_neta"]),
                 _csv_numero(fila["variacion"]),
@@ -751,6 +816,7 @@ def tabla_csv(
     elif nombre == "anual":
         encabezados = [
             "Año", "Ventas", "Ingresos", "Costos", "Ganancia",
+            DEUDAS_PROVEEDOR_LABEL,
             "Gastos operativos", "Ganancia neta", "Rentabilidad (%)",
             "Variación ganancia (%)",
         ]
@@ -761,6 +827,7 @@ def tabla_csv(
                 _csv_dinero(fila["ingresos"]),
                 _csv_dinero(fila["costos"]),
                 _csv_dinero(fila["ganancia"]),
+                _csv_dinero(fila["deudas_proveedor"]),
                 _csv_dinero(fila["gastos_operativos"]),
                 _csv_dinero(fila["ganancia_neta"]),
                 _csv_numero(fila["rentabilidad"]),

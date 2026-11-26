@@ -1388,3 +1388,37 @@ Línea base v4.44. Solo se ajusta la tabla de «Cartera y liquidez → Movimient
 
 - `scripts/qa_v4_45.py` comprueba seis filas visibles y cabecera sin transparencia. 2 pruebas nuevas en `test_olb_movimientos_seis.py`. `sw.js` en `olb-finanzas-v138`.
 - Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-112), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.44.
+
+---
+
+## 53. Deudas en Costos y CSV de Analítica
+
+Línea base v4.44. Alcance exclusivo: tablas y exportación de Analítica. No se crea ni se mueve un módulo de deudas; el alta sigue en Cartera y liquidez.
+
+### 53.1 Cambios
+
+1. `reporte_mensual` y `reporte_anual` consultan los movimientos `DEUDA_INICIAL` por fecha y exponen `deudas_proveedor`; la columna **Costos** incluye ese valor.
+2. La plantilla añade «Deudas proveedor» en Mes a mes y Año tras año, con nota indicando que Costos ya las incluye.
+3. Los CSV mensual y anual incorporan la columna con la denominación exacta **Deudas al proveedor anteriores al sistema**, manteniendo `;`, BOM UTF-8 y tildes.
+4. Ganancia, rentabilidad, ganancia neta, KPI y las demás tablas no se modifican.
+
+### 53.2 Gate QA y cierre documental
+
+- `scripts/qa_v4_50.py`: **25/25 comprobaciones** en 1280 y 375 px. 2 pruebas nuevas en `test_olb_analitica_deudas.py`. `sw.js` en `olb-finanzas-v139`.
+- Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-113), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.44.
+
+---
+
+## 54. Rojo de la X y cuatro movimientos en móvil
+
+Línea base v4.44. Solo se ajusta el color de las X y el número de filas visibles en móvil.
+
+### 54.1 Cambios
+
+1. La X de Órdenes registradas, Pendientes de pago y Movimientos con el proveedor usa el mismo rojo del botón destructivo del modal: fondo `rgba(239,68,68,.14)`, borde `rgba(239,68,68,.5)`, texto `#fecaca` y hover `rgba(239,68,68,.24)`. Se retiran el rojo oscuro y las sombras anteriores.
+2. En móvil, la lista de Movimientos con el proveedor muestra cuatro registros (`max-height: 168px`) con desplazamiento vertical; en escritorio la tabla conserva seis filas (296 px).
+
+### 54.2 Gate QA y cierre documental
+
+- `scripts/qa_v4_45.py`: **9/9**, `qa_v4_49.py`: **7/7** y `qa_v4_50.py`: **25/25**, con color computado verificado en los tres módulos. 1 prueba nueva. `sw.js` en `olb-finanzas-v140`.
+- Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-114), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.44.

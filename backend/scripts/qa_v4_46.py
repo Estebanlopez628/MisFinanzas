@@ -177,11 +177,13 @@ def main() -> None:
                     """
                     return int(re.sub(r"[^0-9]", "", texto) or "0")
 
+                # SRS v4.44 ADR-113 añadió la columna «Deudas proveedor» en la
+                # posición 5: gasto=6, neta=7.
                 comrobar_neta = (
-                    a_pesos(celdas[6]) == a_pesos(celdas[4]) - a_pesos(celdas[5])
-                    and a_pesos(celdas[5]) == 30000
+                    a_pesos(celdas[7]) == a_pesos(celdas[4]) - a_pesos(celdas[6])
+                    and a_pesos(celdas[6]) == 30000
                 )
-                detalle_neta = f"ganancia={celdas[4]} gasto={celdas[5]} neta={celdas[6]}"
+                detalle_neta = f"ganancia={celdas[4]} gasto={celdas[6]} neta={celdas[7]}"
             else:
                 detalle_neta = neta_kpi
             comprobar(
