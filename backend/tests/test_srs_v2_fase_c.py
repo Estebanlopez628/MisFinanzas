@@ -113,7 +113,7 @@ def test_inicio_usuario_muestra_ayuda_e_invitar_no_tarjeta_admin(
     assert "Comentarios y Reportes" not in html
     # La marca global vive en el <head>; lo que no debe aparecer es la tarjeta
     # del módulo privado en la rejilla.
-    assert ">OLB_BYTE</h3>" not in html
+    assert ">OLB BYTE</h3>" not in html
 
 
 def test_inicio_admin_ve_tarjeta_con_contador_y_no_fila_de_ayuda(
@@ -172,6 +172,7 @@ def test_vista_ayuda_textos_literales_y_sin_modulos_privados(
     inicio = html.find('id="dialogo-comentarios"')
     fin = html.find("</dialog>", inicio)
     comentarios = html[inicio:fin]
+    assert "OLB BYTE" not in comentarios
     assert "OLB_BYTE" not in comentarios
     assert "Facturación" not in comentarios
 

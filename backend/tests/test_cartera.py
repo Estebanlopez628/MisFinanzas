@@ -127,6 +127,47 @@ def test_segmentos_dona_marcan_cartera_en_verde_y_deuda_en_rojo() -> None:
     assert arcos[1]["clase"] == "valor-negativo"
 
 
+def test_desglose_de_deuda_separa_pasivo_anterior_de_ventas_del_sistema(bd) -> None:
+    """El abono paga primero la deuda de ventas y solo luego el pasivo viejo."""
+    comercial.registrar_deuda_inicial(bd, "100000", "Pasivo viejo")
+    _venta(bd, precio="200000", costo="150000")
+    comercial.registrar_abono_proveedor(bd, "50000")
+
+    desglose = comercial.desglose_deuda_proveedor(bd)
+    assert desglose["anteriores_valor"] == Decimal("100000")
+    assert desglose["ventas_valor"] == Decimal("100000")
+    assert desglose["total"] == Decimal("200000")
+    assert desglose["total"] == comercial.deuda_proveedor(bd)
+    assert desglose["anteriores_porcentaje"] == 50.0
+    assert desglose["ventas_porcentaje"] == 50.0
+
+
+def test_desglose_con_abono_excedente_reduce_el_pasivo(bd) -> None:
+    """Si el abono supera la deuda de ventas, el sobrante baja el pasivo antiguo."""
+    comercial.registrar_deuda_inicial(bd, "100000", "Pasivo viejo")
+    _venta(bd, precio="200000", costo="50000")
+    comercial.registrar_abono_proveedor(bd, "70000")
+
+    desglose = comercial.desglose_deuda_proveedor(bd)
+    assert desglose["ventas_valor"] == Decimal("0")
+    assert desglose["anteriores_valor"] == Decimal("80000")
+    assert desglose["total"] == Decimal("80000")
+    assert desglose["ventas_porcentaje"] == 0.0
+    assert desglose["anteriores_porcentaje"] == 100.0
+
+
+def test_leyenda_de_la_dona_muestra_el_desglose(cliente_admin: TestClient, bd) -> None:
+    """La leyenda de «Deuda con proveedor» incluye las dos partes con su porcentaje."""
+    comercial.registrar_deuda_inicial(bd, "100000", "Pasivo viejo")
+    _venta(bd, precio="200000", costo="50000")
+
+    html = cliente_admin.get("/olb-byte/cartera").text
+    assert "Deudas anteriores al sistema" in html
+    assert "Deuda de ventas actuales" in html
+    assert "% de la deuda" in html
+    assert "dona__desglose" in html
+
+
 def test_panel_de_cartera_muestra_balance_y_dona(cliente_admin: TestClient, bd) -> None:
     """La vista presenta el balance, la gráfica y el libro del proveedor."""
     _venta(bd, precio="50000", costo="20000")

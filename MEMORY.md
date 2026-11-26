@@ -2798,6 +2798,30 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v151`. Gate `qa_v4_52.py` **15/15** en 375, 700 y 1280 px: encabezado, fila sin prefijos ni recorte, monto `rgb(16, 185, 129)`, modal Actualizar/Eliminar y capa 9999. `qa_v4_46.py` ajustado al nuevo rótulo (**27/27**).
 
+### 2026-11-26 — Desglose de deuda en la dona de cartera (ADR-126)
+
+**Decisión (ADR-126).** El propietario pidió que, en la leyenda de «Cartera frente a deuda», la entrada «Deuda con proveedor» conservara su valor y porcentaje total y mostrara debajo dos líneas: cuánto corresponde a deudas anteriores al sistema y cuánto a las ventas a crédito registradas desde que se implementó la app, cada una con valor y porcentaje. Confirmó que esos dos porcentajes son **sobre la deuda total** (suman 100 %), mientras el de la fila principal sigue siendo sobre la dona.
+
+**Consecuencias.** Nuevo `comercial.desglose_deuda_proveedor()` recorre `MovimientoProveedor` en orden cronológico y aplica la imputación de ADR-115: cada abono paga primero la deuda corriente (`COMPRA_CREDITO`) y el remanente baja el pasivo antiguo (`DEUDA_INICIAL`). La suma de ambas partes coincide con `deuda_proveedor()`. `_contexto_cartera` expone `desglose_deuda` y la plantilla añade un `<ul class="dona__desglose">` bajo la entrada de deuda. Los arcos y el centro de la dona no cambian; las demás donas tampoco.
+
+**Verificación.** `sw.js` en `olb-finanzas-v152`. Gate `qa_v4_55.py` **12/12** en 1280 y 375 px: fila principal con valor y %, dos sub-líneas etiquetadas con valor y «% de la deuda», porcentajes que suman 100. Pruebas nuevas en `test_cartera.py` para el reparto con abono parcial y excedente. Suite completa en verde.
+
+### 2026-11-26 — Columna VALOR alineada y encabezados acordes (ADR-127)
+
+**Decisión (ADR-127).** El propietario corrigió dos puntos: en el historial de gastos del celular el encabezado debe decir FECHA | VALOR (no MONTO) y la cifra debe quedar justo debajo de «Valor», alineada con su etiqueta; y al entrar a cada pestaña el encabezado con emoji debe repetir el nombre de la pestaña (antes mostraba los rótulos viejos). La quinta pestaña pasa de «Analítica comercial» a «Gestión y control de ventas», con `<h1>` 📈 acorde. «Registro de ventas» conserva su PNG y su título originales.
+
+**Consecuencias.** La regla de la lista se volvió más específica (`.ordenes-moviles--gastos .orden-movil`) para imponer dos columnas reales: antes `.orden-movil`, definida más abajo, ganaba por orden y dejaba cuatro columnas, desalineando cabecera y filas. El valor usa `text-align: left` con verde esmeralda. Se actualizan los `<h1>` y los `titulo_pagina` de pendientes, cartera, garantías y analítica; «Volver a Ventas» intacto.
+
+**Verificación.** `sw.js` en `olb-finanzas-v153`. Gate `qa_v4_52.py` **16/16** (cabecera FECHA | VALOR y `x` de la cifra igual al de la etiqueta en 375 px); `qa_v4_54.py` **12/12** (pestañas y encabezados en 1280 y 375 px). Suite completa en verde.
+
+### 2026-11-26 — Marca visible OLB BYTE (ADR-128)
+
+**Decisión (ADR-128).** El propietario pidió quitar el guion bajo de la marca: debe leerse «OLB BYTE» en los textos visibles de la aplicación. El alcance confirmado es solo la interfaz; los identificadores internos (rutas `/olb-byte`, módulos, tablas, nombres de archivo y mensajes compartidos) no se modifican.
+
+**Consecuencias.** Se actualizan `<title>` y meta descripción de `base.html`, tarjeta del Inicio y su `alt`, textos de registro y privado, encabezado y block `titulo` del módulo, recibo, `aria-label` del submenú, `titulo_pagina` de las cinco vistas, configuración base, manifiesto PWA y el mensaje de acceso restringido.
+
+**Verificación.** Suite completa en verde y 19 gates QA sin regresiones. Las pruebas que comparaban la marca visible se ajustaron al texto sin guion bajo.
+
 ### 2026-11-24 — SRS v4.43: corrección de columnas y portal del modal (ADR-105)
 
 **Decisión (ADR-105).** El propietario corrigió dos puntos de v4.42: el ancho fijo de 440 px forzaba scroll aunque el texto cupiera, y el modal de edición quedaba atrapado en el contexto de la tarjeta. Las referencias a `hidden md:table-cell` y `ReactDOM.createPortal` del documento son ilustrativas; se implementan con CSS y `document.body.appendChild`, según el stack.

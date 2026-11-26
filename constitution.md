@@ -274,14 +274,24 @@ Principios innegociables. Toda especificación, plan y tarea debe cumplirlos de 
     - Safari iOS no expone Contact Picker ni permite abrir la libreta interna de WhatsApp.
     - Sustituida por ADR-124: el botón abre WhatsApp directamente y el campo limpia el número pegado.
 
-58. **Nomenclatura de OLB_BYTE (ADR-123):**
-    - Pestañas: «Registro de ventas», «Cuentas por cobrar», «Cartera y pagos a proveedores», «Soporte y garantías», «Analítica comercial».
-    - Encabezado de Analítica: «📈 Gestión de ventas y control»; «Volver a Ventas» se conserva. Sin tocar cálculos, tablas, CSV ni Mis Finanzas.
+58. **Nomenclatura de OLB BYTE (ADR-123, ajustada en ADR-127):**
+    - Pestañas: «Registro de ventas», «Cuentas por cobrar», «Cartera y pagos a proveedores», «Soporte y garantías», «Gestión y control de ventas».
+    - Los encabezados con emoji repiten esos nombres; «Registro de ventas» conserva su PNG. «Volver a Ventas» se conserva. Sin tocar cálculos, tablas, CSV ni Mis Finanzas.
 
 59. **Botón móvil abre WhatsApp (ADR-124):**
     - «Agregar Numero» abre `whatsapp://` en <768 px sin enfocar el campo; el número pegado se limpia a 10 dígitos en `input`.
     - Web mantiene «Pegar número» con portapapeles; se retiraron los tres botones del aviso.
 
-60. **Tabla limpia de gastos operativos (ADR-125):**
-    - Móvil (<768 px): FECHA | MONTO, fecha `MM/DD/YYYY` y monto verde esmeralda, sin `truncate` ni prefijos. Web: Fecha | Monto | Acciones.
+60. **Tabla limpia de gastos operativos (ADR-125, ajustada en ADR-127):**
+    - Móvil (<768 px): FECHA | VALOR, fecha `MM/DD/YYYY` y valor verde esmeralda alineados bajo su etiqueta, sin `truncate` ni prefijos. Web: Fecha | Monto | Acciones.
     - Modal con X, Actualizar y Eliminar a `z-index: 9999`; no alterar Movimientos con el proveedor.
+
+61. **Desglose de deuda en la dona (ADR-126):**
+    - «Deuda con proveedor» conserva su valor y % de la dona y añade «Deudas anteriores al sistema» y «Deuda de ventas actuales» con valor y % de la deuda total.
+    - El reparto aplica ADR-115: abono → deuda corriente primero, sobrante al pasivo antiguo. Arcos y centro intactos.
+
+62. **Encabezados acordes (ADR-127):**
+    - Al entrar a cada pestaña, el `<h1>` con emoji muestra el mismo nombre; la quinta pasa a «Gestión y control de ventas».
+
+63. **Marca visible sin guion bajo (ADR-128):**
+    - Los textos visibles dicen «OLB BYTE». No se cambian rutas, módulos, tablas, nombres de archivo ni mensajes compartidos.

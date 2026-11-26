@@ -1,7 +1,7 @@
 {
-  "name": "Finanzas y OLB_BYTE",
+  "name": "Finanzas y OLB BYTE",
   "short_name": "OLB Finanzas",
-  "description": "Finanzas personales, nómina colombiana y administración OLB_BYTE.",
+  "description": "Finanzas personales, nómina colombiana y administración OLB BYTE.",
   "lang": "es-CO",
   "dir": "ltr",
   "start_url": "/",

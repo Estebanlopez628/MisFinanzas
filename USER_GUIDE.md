@@ -1,6 +1,6 @@
 # Manual de Usuario — MisFinanzas
 
-> Guía para usuarios del módulo público. Los temas de OLB_BYTE, ventas y facturación pertenecen al panel administrativo y no se describen aquí.
+> Guía para usuarios del módulo público. Los temas de OLB BYTE, ventas y facturación pertenecen al panel administrativo y no se describen aquí.
 
 ## 1. Instalar MisFinanzas en tu celular como una app
 
@@ -108,7 +108,7 @@ Las donas usan diez colores distintos: la base mínima de liquidez es verde esme
 
 Al ir a «Registro y Detalles de deudas» desde un gasto o deducción, la página baja sola hasta el formulario «Nueva deuda». Si guardas la deuda, al volver se marca SI y se carga su cuota; si vuelves sin registrar nada, el formulario conserva lo que escribiste pero permanece en NO y no se puede guardar hasta que registres la deuda. Mientras la categoría sea «Créditos y Obligaciones», el valor queda bloqueado con el valor de la cuota; al elegir otra categoría se desbloquea y puedes digitar un monto libre.
 
-En «Atajos de Pago» en el celular, la descripción se ajusta a su texto y el espacio hasta el valor es corto. Para registrar un abono en OLB_BYTE usa el botón «Registrar Pago».
+En «Atajos de Pago» en el celular, la descripción se ajusta a su texto y el espacio hasta el valor es corto. Para registrar un abono en OLB BYTE usa el botón «Registrar Pago».
 
 ### Nueva comparativa de cierre de deuda
 
@@ -120,7 +120,7 @@ Los campos de fecha muestran un ícono de calendario en gris claro. En la comput
 
 Cuando una acción pide confirmación —por ejemplo, limpiar los ✔ de una quincena o eliminar un registro— aparece una ventana oscura de MisFinanzas con el mensaje y los botones «Cancelar» y «Confirmar» (o «Eliminar»). Ya no se muestran las ventanas blancas del navegador. Para avisos informativos se usa el mismo estilo con un botón «Entendido».
 
-La tarjeta de OLB_BYTE en el inicio del administrador muestra el ícono oficial `icono_OLBBYTE.png`, del mismo tamaño que los íconos de los demás módulos. La gráfica del Consejero comparte el mismo fondo y borde que las gráficas de OLB_BYTE; en escritorio los dos velocímetros quedan compactos y uno al lado del otro.
+La tarjeta de OLB BYTE en el inicio del administrador muestra el ícono oficial `icono_OLBBYTE.png`, del mismo tamaño que los íconos de los demás módulos. La gráfica del Consejero comparte el mismo fondo y borde que las gráficas de OLB BYTE; en escritorio los dos velocímetros quedan compactos y uno al lado del otro.
 
 ### Cambios de la versión 4.4
 
@@ -186,13 +186,13 @@ En el celular, la gráfica de 6 meses ya no aparece y el banner verde sobre los 
 
 ### Cambios de la versión 4.44 (cartera y gastos operativos)
 
-En **OLB_BYTE → Cartera y liquidez** ya puedes registrar deudas que tenías antes de usar el sistema: escribe el concepto y el valor adeudado; la deuda se suma a tu saldo con el proveedor y aparece en los movimientos como «Deuda inicial», sin cliente ni producto asociados.
+En **OLB BYTE → Cartera y liquidez** ya puedes registrar deudas que tenías antes de usar el sistema: escribe el concepto y el valor adeudado; la deuda se suma a tu saldo con el proveedor y aparece en los movimientos como «Deuda inicial», sin cliente ni producto asociados.
 
 También puedes registrar **gastos operativos** (por ejemplo, internet o transporte de la tienda). La fecha del día queda fija y solo escribes el valor. Estos gastos **no cambian** lo que debes al proveedor ni el dinero en caja, pero se descuentan de inmediato de tu **ganancia real (neta)**: la ves en el historial de gastos, en los indicadores de Analítica y en las tablas y descargas CSV. Puedes editar la fecha y el valor, o eliminar el gasto; las estadísticas se recalculan al instante.
 
-En el celular, el historial de gastos es una tabla limpia de dos columnas: **FECHA | MONTO**. La fecha aparece completa a la izquierda (`11/26/2026`) y el monto en verde a la derecha (`$10.000`), sin puntos suspensivos ni etiquetas largas. Al tocar una fila se abre la edición con la X arriba, los campos de Fecha y Valor y los botones **Actualizar** y **Eliminar**. En la computadora se mantiene la tabla de Fecha | Monto | Acciones.
+En el celular, el historial de gastos es una tabla limpia de dos columnas: **FECHA | VALOR**. La fecha aparece completa bajo «Fecha» (`11/26/2026`) y el valor en verde justo debajo de «Valor» (`$10.000`), sin puntos suspensivos ni etiquetas largas. Al tocar una fila se abre la edición con la X arriba, los campos de Fecha y Valor y los botones **Actualizar** y **Eliminar**. En la computadora se mantiene la tabla de Fecha | Monto | Acciones.
 
-Dentro de OLB_BYTE, las secciones se llaman **Registro de ventas**, **Cuentas por cobrar**, **Cartera y pagos a proveedores**, **Soporte y garantías** y **Analítica comercial**. La pantalla de análisis se titula **Gestión de ventas y control**.
+Dentro de OLB BYTE, las secciones se llaman **Registro de ventas**, **Cuentas por cobrar**, **Cartera y pagos a proveedores**, **Soporte y garantías** y **Gestión y control de ventas**. Al entrar a cada una, el encabezado con emoji muestra el mismo nombre.
 
 Los movimientos con el proveedor muestran ahora Fecha, Tipo, Cliente, Producto, Concepto, Monto y Saldo. En el celular, toca una fila para ver el detalle completo y cierra con la X.
 
@@ -200,11 +200,11 @@ En el celular, al registrar una venta verás el botón **Agregar Numero** junto 
 
 Cuando abras la factura o envíes por WhatsApp desde «Órdenes registradas», al volver quedarás exactamente en el mismo punto de la lista; en el celular, la factura usa «Volver a Ventas» y se reabre el detalle de la orden que estabas viendo.
 
-En «Pendientes de pago», el buscador ya no tiene una línea por encima. Al tocar un cliente se abre su detalle con un solo botón, «Registrar Pago», y se cierra con la X roja de la esquina superior derecha; la lista queda exactamente donde estaba.
+En «Cuentas por cobrar», el buscador ya no tiene una línea por encima. Al tocar un cliente se abre su detalle con un solo botón, «Registrar Pago», y se cierra con la X roja de la esquina superior derecha; la lista queda exactamente donde estaba.
 
 La X roja es la misma en Cartera, Pendientes y Órdenes registradas. En la factura no hay X: usas «Volver a Ventas» y vuelves al punto exacto de la lista de órdenes.
 
-En Analítica ya no hay línea sobre el selector de año, ni un formulario para registrar deudas: el alta y los abonos se hacen en «Cartera y liquidez → Pago al proveedor».
+En «Gestión y control de ventas» ya no hay línea sobre el selector de año, ni un formulario para registrar deudas: el alta y los abonos se hacen en «Cartera y pagos a proveedores → Pago al proveedor».
 
 En las tablas «Mes a mes» y «Año tras año» verás la columna **PASIVO ANTIGUO**: es el saldo pendiente de las deudas viejas con proveedores y **no está incluido en Costos**. Cuando abonas, primero se paga la deuda de las compras recientes y el sobrante baja ese pasivo; por eso el número va disminuyendo. La ganancia y la rentabilidad siguen midiendo solo las ventas. Al descargar el CSV aparece la columna **PASIVO ANTIGUO**, con tildes y formato Excel.
 

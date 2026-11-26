@@ -45,7 +45,7 @@ def test_submenu_de_olb_byte_queda_arriba(cliente_admin: TestClient) -> None:
         "Cuentas por cobrar",
         "Cartera y pagos a proveedores",
         "Soporte y garantías",
-        "Analítica comercial",
+        "Gestión y control de ventas",
     ):
         assert etiqueta in texto
     assert "Ver pendientes de pago (" not in texto
@@ -70,17 +70,31 @@ def _pestana_activa(html: str) -> str:
 def test_submenu_marca_la_seccion_activa_en_cada_vista(cliente_admin: TestClient) -> None:
     """Cada vista resalta su propia pestaña del submenú."""
     assert _pestana_activa(cliente_admin.get("/olb-byte/pendientes").text) == "Cuentas por cobrar"
-    assert _pestana_activa(cliente_admin.get("/olb-byte/analitica").text) == "Analítica comercial"
+    assert _pestana_activa(cliente_admin.get("/olb-byte/analitica").text) == "Gestión y control de ventas"
     assert _pestana_activa(cliente_admin.get("/olb-byte").text) == "Registro de ventas"
 
 
-def test_titulo_principal_de_analitica_es_gestion_de_ventas(cliente_admin: TestClient) -> None:
-    """El encabezado y el título del navegador de Analítica usan la nueva nomenclatura."""
+def test_titulo_principal_de_analitica_es_gestion_y_control(cliente_admin: TestClient) -> None:
+    """El encabezado de Analítica y su título del navegador coinciden con la pestaña."""
     texto = cliente_admin.get("/olb-byte/analitica").text
 
-    assert "📈 Gestión de ventas y control" in texto
-    assert "Gestión de ventas y control · OLB_BYTE</title>" in texto
-    assert "<h1 class=\"heroe__titulo\">📈 Analítica</h1>" not in texto
+    assert "📈 Gestión y control de ventas" in texto
+    assert "Gestión y control de ventas · OLB BYTE</title>" in texto
+    assert "📈 Gestión de ventas y control" not in texto
+
+
+def test_encabezados_de_las_pestanas_coinciden_con_sus_nombres(cliente_admin: TestClient) -> None:
+    """Cada vista muestra el nombre de su pestaña en el encabezado con emoji."""
+    esperados = {
+        "/olb-byte/pendientes": ("⏳", "Cuentas por cobrar"),
+        "/olb-byte/cartera": ("📊", "Cartera y pagos a proveedores"),
+        "/olb-byte/garantias": ("🛡️", "Soporte y garantías"),
+        "/olb-byte/analitica": ("📈", "Gestión y control de ventas"),
+    }
+    for ruta, (emoji, nombre) in esperados.items():
+        html = cliente_admin.get(ruta).text
+        assert f'<h1 class="heroe__titulo">{emoji} {nombre}</h1>' in html
+        assert f"{nombre} · OLB BYTE</title>" in html
 
 
 def test_boton_pegar_numero_reemplaza_a_contactos(cliente_admin: TestClient) -> None:

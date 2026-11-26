@@ -58,7 +58,7 @@ def test_pendientes_muestra_saldo_y_enlace_de_cobro(cliente_admin: TestClient, b
     respuesta = cliente_admin.get("/olb-byte/pendientes")
 
     assert respuesta.status_code == 200
-    assert "Pendientes de pago" in respuesta.text
+    assert "Cuentas por cobrar" in respuesta.text
     assert "Ana Pérez" in respuesta.text
     assert "Añadir pago o gestionar cobro" in respuesta.text
     assert "https://wa.me/" not in respuesta.text

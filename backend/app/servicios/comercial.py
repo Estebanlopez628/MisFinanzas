@@ -287,6 +287,53 @@ def deuda_proveedor(bd: Session) -> Decimal:
     return redondear_dinero(max(compras - abonos, CERO))
 
 
+def desglose_deuda_proveedor(bd: Session) -> dict[str, object]:
+    """Separa la deuda del proveedor en pasivo anterior y deuda de ventas del sistema.
+
+    Regla de imputación (SRS v4.44, ADR-115): los abonos pagan primero la deuda
+    corriente de las compras a crédito hechas desde que se implementó el sistema;
+    solo el remanente reduce las deudas anteriores (`DEUDA_INICIAL`). Las dos
+    partes suman la deuda total que muestra `deuda_proveedor()`. El desglose
+    alimenta la leyenda de la dona «Cartera frente a deuda».
+
+    Args:
+        bd: Sesión de base de datos.
+
+    Returns:
+        Diccionario con importes, texto y porcentajes (sobre la deuda total) de
+        cada parte, más el total. Los porcentajes se redondean a un decimal.
+    """
+    corriente = CERO
+    antiguo = CERO
+    consulta = select(MovimientoProveedor).order_by(MovimientoProveedor.fecha)
+    for movimiento in bd.scalars(consulta):
+        monto = movimiento.monto
+        if movimiento.tipo == TIPO_COMPRA:
+            corriente += monto
+        elif movimiento.tipo == TIPO_DEUDA_INICIAL:
+            antiguo += monto
+        elif movimiento.tipo == TIPO_ABONO_PROVEEDOR:
+            pago_corriente = min(monto, corriente)
+            corriente -= pago_corriente
+            antiguo = max(CERO, antiguo - (monto - pago_corriente))
+    total = redondear_dinero(antiguo + corriente)
+    if total <= CERO:
+        porcentaje_antiguo = 0.0
+        porcentaje_ventas = 0.0
+    else:
+        porcentaje_antiguo = round(float(antiguo / total * 100), 1)
+        porcentaje_ventas = round(float(corriente / total * 100), 1)
+    return {
+        "anteriores_valor": redondear_dinero(antiguo),
+        "anteriores_texto": formatear_pesos(antiguo),
+        "anteriores_porcentaje": porcentaje_antiguo,
+        "ventas_valor": redondear_dinero(corriente),
+        "ventas_texto": formatear_pesos(corriente),
+        "ventas_porcentaje": porcentaje_ventas,
+        "total": total,
+    }
+
+
 def _registrar_movimiento_proveedor(
     bd: Session,
     tipo: str,

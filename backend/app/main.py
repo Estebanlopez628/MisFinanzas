@@ -174,7 +174,7 @@ def crear_aplicacion() -> FastAPI:
         version=configuracion.version,
         description=(
             "Plataforma de finanzas personales, liquidación de nómina colombiana "
-            "y administración comercial OLB_BYTE."
+            "y administración comercial OLB BYTE."
         ),
         docs_url="/docs" if configuracion.documentacion_habilitada else None,
         redoc_url=None,

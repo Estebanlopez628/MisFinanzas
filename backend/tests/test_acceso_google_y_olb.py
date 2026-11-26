@@ -56,7 +56,7 @@ def test_olb_byte_bloqueado_para_otros_usuarios(cliente_usuario) -> None:
 def test_tarjeta_olb_byte_solo_para_correos_autorizados(cliente_usuario, bd) -> None:
     """La tarjeta no aparece para quien no está autorizado."""
     html = cliente_usuario.get("/").text
-    assert 'tarjeta__titulo">OLB_BYTE' not in html
+    assert 'tarjeta__titulo">OLB BYTE' not in html
 
 
 def test_olb_byte_visible_para_correo_autorizado(bd) -> None:
@@ -65,7 +65,7 @@ def test_olb_byte_visible_para_correo_autorizado(bd) -> None:
     cliente = _cliente_de(bd, CORREO_AUTORIZADO)
 
     assert cliente.get("/olb-byte").status_code == 200
-    assert 'tarjeta__titulo">OLB_BYTE' in cliente.get("/").text
+    assert 'tarjeta__titulo">OLB BYTE' in cliente.get("/").text
 
 
 def test_google_inactivo_redirige_al_login(cliente, monkeypatch) -> None:

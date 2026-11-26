@@ -10,7 +10,7 @@ from __future__ import annotations
 from fastapi.testclient import TestClient
 
 # Tarjetas y enlaces esperados tras la limpieza del bloque 2.
-TARJETAS_ADMIN = ("Mis Finanzas", "OLB_BYTE", "Registro y Detalles de deudas", "Trabajos Extras")
+TARJETAS_ADMIN = ("Mis Finanzas", "OLB BYTE", "Registro y Detalles de deudas", "Trabajos Extras")
 TARJETAS_PUBLICAS = ("Mis Finanzas", "Registro y Detalles de deudas", "Trabajos Extras")
 
 
@@ -37,7 +37,7 @@ def test_dashboard_oculta_modulos_privados_al_usuario_publico(
     assert respuesta.status_code == 200
     for titulo in TARJETAS_PUBLICAS:
         assert f">{titulo}</h3>" in respuesta.text
-    assert ">OLB_BYTE</h3>" not in respuesta.text
+    assert ">OLB BYTE</h3>" not in respuesta.text
     assert ">Chancucos</h3>" not in respuesta.text
     assert "Invítame un café" in respuesta.text
 

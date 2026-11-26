@@ -66,7 +66,7 @@ TARJETAS_DASHBOARD: list[dict[str, Any]] = [
     },
     {
         "clave": "olb-byte",
-        "titulo": "OLB_BYTE",
+        "titulo": "OLB BYTE",
         "descripcion": "Ventas, cartera y abonos de la tienda.",
         # SRS v3.9.5: PNG oficial del módulo, con las mismas dimensiones que
         # los íconos de los demás módulos. El ícono PWA no se modifica.

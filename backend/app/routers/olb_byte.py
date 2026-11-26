@@ -202,7 +202,7 @@ def _contexto(
     contexto = contexto_base(usuario)
     contexto.update(
         {
-            "titulo_pagina": "OLB_BYTE",
+            "titulo_pagina": "OLB BYTE",
             "clientes": clientes,
             "ventas": ventas_info,
             "busqueda": busqueda or "",
@@ -252,7 +252,7 @@ def _contexto_pendientes(
     contexto = contexto_base(usuario)
     contexto.update(
         {
-            "titulo_pagina": "Pendientes de pago · OLB_BYTE",
+            "titulo_pagina": "Cuentas por cobrar · OLB BYTE",
             "pendientes": pendientes,
             "q": q,
             "metodos_pago": comercial.METODOS_PAGO,
@@ -783,9 +783,12 @@ def _contexto_cartera(usuario: UsuarioSesion, bd: Session, *, error: str | None 
     contexto = contexto_base(usuario)
     contexto.update(
         {
-            "titulo_pagina": "Cartera y liquidez · OLB_BYTE",
+            "titulo_pagina": "Cartera y pagos a proveedores · OLB BYTE",
             "barras": comercial.barras_balance(resumen),
             "segmentos": comercial.segmentos_dona(resumen["cartera_clientes"], resumen["deuda_proveedor"]),
+            # Desglose de la deuda para la leyenda de la dona: deudas anteriores
+            # al sistema frente a compras a crédito registradas en la app.
+            "desglose_deuda": comercial.desglose_deuda_proveedor(bd),
             # SRS v2.0, sección 4: datos del panel de tres bloques. Las claves
             # `barras` y `segmentos` se conservan para no romper otras vistas.
             "balance_bloques": comercial.balance_tres_bloques(resumen),
@@ -1274,7 +1277,7 @@ def ver_analitica(
     contexto = contexto_base(usuario)
     contexto.update(
         {
-            "titulo_pagina": "Gestión de ventas y control · OLB_BYTE",
+            "titulo_pagina": "Gestión y control de ventas · OLB BYTE",
             "anio": filtro.anio,
             "mes": filtro.mes,
             "nombre_mes": analitica.MESES[filtro.mes - 1] if filtro.mes else None,
@@ -1379,7 +1382,7 @@ def _contexto_garantias(usuario: UsuarioSesion, bd: Session, *, error: str | Non
     contexto = contexto_base(usuario)
     contexto.update(
         {
-            "titulo_pagina": "Garantías · OLB_BYTE",
+            "titulo_pagina": "Soporte y garantías · OLB BYTE",
             "reclamos": reclamos,
             "opciones": comercial.opciones_garantia(bd),
             "ranking": comercial.ranking_fallas(bd),

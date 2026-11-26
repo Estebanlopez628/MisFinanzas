@@ -1,9 +1,9 @@
 {% extends "base.html" %}
-{% block titulo %}Cartera y liquidez{% endblock %}
+{% block titulo %}Cartera y pagos a proveedores{% endblock %}
 
 {% block contenido %}
   <section class="heroe heroe--compacto">
-    <h1 class="heroe__titulo">📊 Cartera y liquidez</h1>
+    <h1 class="heroe__titulo">📊 Cartera y pagos a proveedores</h1>
     <p class="heroe__subtitulo">Cuánto te deben, cuánto debes y el efectivo libre.</p>
   </section>
 
@@ -123,6 +123,13 @@
             <li data-leyenda-etiqueta="{{ arco.etiqueta }}">
               <span class="dona__muestra" style="background: {{ arco.color }}"></span>
               {{ arco.etiqueta }}: <strong class="{{ arco.clase }}">{{ arco.valor }}</strong> ({{ arco.porcentaje }} %)
+              {# Los porcentajes del desglose son sobre la deuda total, no sobre la dona. #}
+              {% if arco.etiqueta == 'Deuda con proveedor' and desglose_deuda.total > 0 %}
+                <ul class="dona__desglose">
+                  <li>Deudas anteriores al sistema: <strong class="valor-negativo">{{ desglose_deuda.anteriores_texto }}</strong> ({{ desglose_deuda.anteriores_porcentaje }} % de la deuda)</li>
+                  <li>Deuda de ventas actuales: <strong class="valor-negativo">{{ desglose_deuda.ventas_texto }}</strong> ({{ desglose_deuda.ventas_porcentaje }} % de la deuda)</li>
+                </ul>
+              {% endif %}
             </li>
           {% endfor %}
         </ul>
@@ -323,14 +330,14 @@
 
       <ul class="ordenes-moviles ordenes-moviles--gastos" aria-label="Historial de gastos operativos">
         <li class="orden-movil orden-movil--cabecera orden-movil--gasto" aria-hidden="true">
-          <span>Fecha</span><span>Monto</span>
+          <span>Fecha</span><span>Valor</span>
         </li>
         {% for gasto in gastos_operativos %}
           <li>
             <button type="button" class="orden-movil orden-movil--gasto"
                     data-abrir-dialogo="gasto-{{ gasto.id_gasto_operativo }}">
               <span class="orden-movil__fecha">{{ gasto.fecha.strftime('%m/%d/%Y') }}</span>
-              <span class="orden-movil__monto">{{ gasto.monto | cop }}</span>
+              <span class="orden-movil__valor">{{ gasto.monto | cop }}</span>
             </button>
           </li>
         {% endfor %}

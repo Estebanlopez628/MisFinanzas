@@ -13,7 +13,7 @@ PESTANAS = (
     "Cuentas por cobrar",
     "Cartera y pagos a proveedores",
     "Soporte y garantías",
-    "Analítica comercial",
+    "Gestión y control de ventas",
 )
 
 resultados: list[tuple[str, bool, str]] = []
@@ -60,15 +60,27 @@ def main() -> None:
             )
             titulo = pagina.locator(".heroe__titulo").first.inner_text()
             comprobar(
-                f"{etiqueta}: encabezado «Gestión de ventas y control»",
-                titulo.strip() == "📈 Gestión de ventas y control",
+                f"{etiqueta}: encabezado «Gestión y control de ventas»",
+                titulo.strip() == "📈 Gestión y control de ventas",
                 titulo.strip(),
             )
             comprobar(
                 f"{etiqueta}: título del navegador actualizado",
-                "Gestión de ventas y control" in pagina.title(),
+                "Gestión y control de ventas · OLB BYTE" in pagina.title(),
                 pagina.title(),
             )
+            for ruta, esperado in (
+                ("/olb-byte/pendientes", "⏳ Cuentas por cobrar"),
+                ("/olb-byte/cartera", "📊 Cartera y pagos a proveedores"),
+                ("/olb-byte/garantias", "🛡️ Soporte y garantías"),
+            ):
+                pagina.goto(f"{BASE}{ruta}")
+                pagina.wait_for_load_state("networkidle")
+                comprobar(
+                    f"{etiqueta}: encabezado de {ruta}",
+                    pagina.locator(".heroe__titulo").first.inner_text().strip() == esperado,
+                    pagina.locator(".heroe__titulo").first.inner_text().strip(),
+                )
             contexto.close()
         navegador.close()
 

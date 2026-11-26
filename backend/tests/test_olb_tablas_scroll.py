@@ -80,21 +80,23 @@ def plantilla_ventas() -> str:
 
 
 def test_historial_movil_es_tabla_limpia_de_dos_columnas() -> None:
-    """La fila móvil lleva FECHA | MONTO sin prefijos ni recorte."""
+    """La fila móvil lleva FECHA | VALOR, alineados y sin prefijos ni recorte."""
     css = _css()
+    rejilla = css.split(".ordenes-moviles--gastos .orden-movil {", 1)[1].split("}", 1)[0]
+    assert "grid-template-columns: 1fr 1fr" in rejilla
     limpio = css.split(".ordenes-moviles--gastos .orden-movil span {", 1)[1].split("}", 1)[0]
     assert "overflow: visible" in limpio
     assert "text-overflow: clip" in limpio
     assert "white-space: normal" in limpio
-    monto = css.split(".ordenes-moviles--gastos .orden-movil__monto {", 1)[1].split("}", 1)[0]
-    assert "var(--accent-green)" in monto
-    assert "text-align: right" in monto
+    valor = css.split(".ordenes-moviles--gastos .orden-movil__valor {", 1)[1].split("}", 1)[0]
+    assert "var(--accent-green)" in valor
+    assert "text-align: left" in valor
     corte = css.split("@media (min-width: 641px) and (max-width: 767px) {", 1)[1][:300]
     assert ".tabla-contenedor--gastos" in corte and "display: none" in corte
     plantilla = (RUTA / "templates/olb_byte/cartera.html").read_text(encoding="utf-8")
     lista = plantilla.split('<ul class="ordenes-moviles ordenes-moviles--gastos"', 1)[1].split("</ul>", 1)[0]
-    assert "<span>Fecha</span><span>Monto</span>" in lista
-    assert "orden-movil__fecha" in lista and "orden-movil__monto" in lista
+    assert "<span>Fecha</span><span>Valor</span>" in lista
+    assert "orden-movil__fecha" in lista and "orden-movil__valor" in lista
     assert "Fecha:" not in lista and "Valor del gasto:" not in lista
 
 

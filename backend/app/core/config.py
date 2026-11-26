@@ -154,7 +154,7 @@ class ConfiguracionApp:
             venir siempre de una variable de entorno.
     """
 
-    nombre: str = "Finanzas y OLB_BYTE"
+    nombre: str = "Finanzas y OLB BYTE"
     version: str = "1.0.0"
     # Se leen al construir la instancia (y no al importar el módulo) para que un
     # proceso que define el entorno antes de arrancar obtenga los valores

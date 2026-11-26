@@ -1,6 +1,6 @@
 {# Subnavegación de OLB_BYTE con el mismo componente que Mis Finanzas (subnav-finanzas).
    `seccion` indica la pestaña activa: ventas, pendientes, cartera, garantias o analitica. #}
-<nav class="subnav-finanzas" aria-label="Secciones de OLB_BYTE">
+<nav class="subnav-finanzas" aria-label="Secciones de OLB BYTE">
   <a class="subnav-finanzas__enlace {% if seccion|default('') == 'ventas' %}subnav-finanzas__enlace--activo{% endif %}"
      href="{{ url_for('ver_olb_byte') }}"
      {% if seccion|default('') == 'ventas' %}aria-current="page"{% endif %}>
@@ -24,6 +24,6 @@
   <a class="subnav-finanzas__enlace {% if seccion|default('') == 'analitica' %}subnav-finanzas__enlace--activo{% endif %}"
      href="{{ url_for('ver_analitica') }}"
      {% if seccion|default('') == 'analitica' %}aria-current="page"{% endif %}>
-    Analítica comercial
+    Gestión y control de ventas
   </a>
 </nav>

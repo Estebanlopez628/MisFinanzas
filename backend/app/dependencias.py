@@ -201,7 +201,7 @@ def exigir_administrador(usuario: UsuarioSesion) -> None:
     if not usuario.es_administrador:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Acceso restringido al administrador OLB_BYTE.",
+            detail="Acceso restringido al administrador OLB BYTE.",
         )
 
 

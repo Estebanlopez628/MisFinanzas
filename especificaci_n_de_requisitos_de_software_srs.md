@@ -1619,4 +1619,54 @@ Línea base v4.44. Sustituye el formato de fila móvil descrito en la sección 6
 ### 65.2 Gate QA y cierre documental
 
 - `qa_v4_52.py` **15/15** en 375, 700 y 1280 px; `qa_v4_46.py` **27/27** con el rótulo «Actualizar». `sw.js` en `olb-finanzas-v151`.
-- Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-125), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.44.
+- Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-125), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.44. Sección ajustada en la 67.
+
+---
+
+## 66. Desglose de la deuda en la dona de cartera
+
+Línea base v4.44. Solo afecta a la leyenda de «Cartera frente a deuda»; los arcos y el centro no cambian.
+
+### 66.1 Cambios
+
+1. La entrada «Deuda con proveedor» mantiene su valor y su porcentaje sobre la dona (cartera + deuda).
+2. Debajo se añaden dos líneas: **Deudas anteriores al sistema** y **Deuda de ventas actuales**, cada una con valor y porcentaje **sobre la deuda total** (ambos suman 100 %).
+3. El reparto aplica la imputación de ADR-115: cada abono paga primero la deuda corriente de las compras a crédito y el remanente reduce el pasivo `DEUDA_INICIAL`. Lo implementa `comercial.desglose_deuda_proveedor()`.
+
+### 66.2 Gate QA y cierre documental
+
+- `qa_v4_55.py` **12/12** en 1280 y 375 px. `sw.js` en `olb-finanzas-v152`.
+- Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-126), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.44.
+
+---
+
+## 67. Encabezados acordes y columna VALOR
+
+Línea base v4.44. Ajusta las secciones 63 y 65.
+
+### 67.1 Cambios
+
+1. En móvil el encabezado del historial de gastos pasa a **FECHA | VALOR**; la cifra se alinea justo debajo de «Valor» con dos columnas reales y `text-align: left`, en verde esmeralda.
+2. Al entrar a cada pestaña, el `<h1>` con emoji muestra el mismo nombre que la pestaña: ⏳ Cuentas por cobrar, 📊 Cartera y pagos a proveedores, 🛡️ Soporte y garantías y 📈 Gestión y control de ventas.
+3. La quinta pestaña pasa de «Analítica comercial» a **Gestión y control de ventas**, con título del navegador acorde.
+4. «Registro de ventas» conserva su PNG y su título originales. «Volver a Ventas» se conserva.
+
+### 67.2 Gate QA y cierre documental
+
+- `qa_v4_52.py` **16/16** (alineación de la columna en 375 px), `qa_v4_54.py` **12/12** (pestañas y encabezados). `sw.js` en `olb-finanzas-v153`.
+- Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-127), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.44.
+
+---
+
+## 68. Marca visible OLB BYTE
+
+Línea base v4.44. Alcance: solo texto visible en la aplicación.
+
+### 68.1 Cambios
+
+1. «OLB_BYTE» pasa a **OLB BYTE** en títulos del navegador, encabezados, tarjeta del Inicio y su texto alternativo, recibo, manifiesto PWA y mensajes visibles.
+2. No se modifican rutas, módulos, tablas, nombres de archivo ni el mensaje compartido de la factura.
+
+### 68.2 Cierre documental
+
+Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-128), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.44.

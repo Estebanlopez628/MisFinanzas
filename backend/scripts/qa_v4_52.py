@@ -99,8 +99,8 @@ def main() -> None:
         lista = pagina.locator(".ordenes-moviles--gastos")
         cabecera = lista.locator("li.orden-movil--cabecera").first.inner_text()
         comprobar(
-            "375px: encabezado FECHA | MONTO",
-            [parte.strip().upper() for parte in cabecera.split()] == ["FECHA", "MONTO"],
+            "375px: encabezado FECHA | VALOR",
+            [parte.strip().upper() for parte in cabecera.split()] == ["FECHA", "VALOR"],
             cabecera,
         )
         fila = lista.locator("button.orden-movil").first
@@ -113,10 +113,19 @@ def main() -> None:
             and "$" in texto_fila,
             texto_fila,
         )
-        color = fila.locator(".orden-movil__monto").evaluate("e => getComputedStyle(e).color")
-        comprobar("375px: monto en verde esmeralda", color == "rgb(16, 185, 129)", color)
+        valor_span = fila.locator(".orden-movil__valor")
+        color = valor_span.evaluate("e => getComputedStyle(e).color")
+        comprobar("375px: valor en verde esmeralda", color == "rgb(16, 185, 129)", color)
         recorte = fila.locator("span").first.evaluate("e => getComputedStyle(e).textOverflow")
         comprobar("375px: sin truncate en la fila", recorte == "clip", recorte)
+        cabecera_valor = lista.locator("li.orden-movil--cabecera span").nth(1)
+        x_cabecera = cabecera_valor.bounding_box()["x"]
+        x_valor = valor_span.bounding_box()["x"]
+        comprobar(
+            "375px: valor alineado bajo «Valor»",
+            abs(x_cabecera - x_valor) <= 1,
+            f"cabecera={x_cabecera} valor={x_valor}",
+        )
         tope = lista.evaluate("e => getComputedStyle(e).maxHeight")
         comprobar(
             "375px: historial con cinco filas visibles",

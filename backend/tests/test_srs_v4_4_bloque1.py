@@ -62,11 +62,11 @@ def test_saldo_libre_descuenta_creditos_vinculados(bd) -> None:
 def test_iconos_olb_byte_24_y_28(cliente_admin: TestClient) -> None:
     """Navegación a 24 px y encabezado interno a 28 px."""
     inicio = cliente_admin.get("/").text
-    assert 'alt="OLB_BYTE" width="26" height="26"' in inicio
+    assert 'alt="OLB BYTE" width="26" height="26"' in inicio
 
     modulo = cliente_admin.get("/olb-byte").text
     assert 'class="olb-interno__icono"' in modulo
-    assert 'alt="OLB_BYTE" width="30" height="30"' in modulo
+    assert 'alt="OLB BYTE" width="30" height="30"' in modulo
     assert "🛠" not in modulo
 
     css = (RUTA_APP / "static/css/estilos.css").read_text(encoding="utf-8")
