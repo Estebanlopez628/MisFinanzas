@@ -454,7 +454,6 @@
 /* Cierre de la última celda: el blanco nunca toca el borde redondeado, tanto
    en el bloque de dos filas (TOTAL) como en el de tres (ABONADO / SALDO). */
 .total-fila:last-child .total-valor {
-  border-bottom: 1px solid #b8d6f5;
   border-bottom-right-radius: 8px;
 }
 
@@ -700,7 +699,6 @@
   }
 
   .total-fila:last-child .total-valor {
-    border-bottom: 0;
     border-bottom-right-radius: 8.5px;
   }
 
