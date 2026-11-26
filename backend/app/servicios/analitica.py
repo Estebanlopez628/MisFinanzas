@@ -38,7 +38,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.numeros import redondear_dinero
-from app.modelos import Venta, VentaDetalle
+from app.modelos import GastoOperativo, Venta, VentaDetalle
 from app.servicios.comercial import CERO, ESTADO_ACTIVA, etiqueta_producto
 
 MESES = (
@@ -294,6 +294,43 @@ def _lineas(bd: Session, *, incluir_anuladas: bool = False) -> list[Linea]:
     return lineas
 
 
+def _gastos_operativos_por_mes(bd: Session, anio: int) -> dict[int, Decimal]:
+    """Suma los gastos operativos de cada mes de un año (SRS v4.44, §8.3).
+
+    Se recorre la tabla en Python porque es pequeña y así el cálculo es idéntico
+    en SQLite y PostgreSQL, sin depender de `EXTRACT`.
+
+    Args:
+        bd: Sesión de base de datos.
+        anio: Año consultado.
+
+    Returns:
+        Diccionario `{mes: total}` con los doce meses; cero donde no hay gastos.
+    """
+    totales = {mes: CERO for mes in range(1, 13)}
+    for fecha, monto in bd.execute(select(GastoOperativo.fecha, GastoOperativo.monto)):
+        if fecha.year == anio:
+            totales[fecha.month] += monto
+    return totales
+
+
+def _gastos_operativos_por_anio(bd: Session, mes: int | None = None) -> dict[int, Decimal]:
+    """Suma los gastos operativos de cada año, opcionalmente de un solo mes.
+
+    Args:
+        bd: Sesión de base de datos.
+        mes: Mes a considerar (1 a 12); `None` suma el año completo.
+
+    Returns:
+        Diccionario `{año: total}`; los años sin gastos no aparecen.
+    """
+    totales: dict[int, Decimal] = {}
+    for fecha, monto in bd.execute(select(GastoOperativo.fecha, GastoOperativo.monto)):
+        if mes is None or fecha.month == mes:
+            totales[fecha.year] = totales.get(fecha.year, CERO) + monto
+    return totales
+
+
 def _variacion(actual: Decimal, anterior: Decimal) -> Decimal | None:
     """Calcula la variación porcentual de un valor frente al anterior.
 
@@ -347,8 +384,8 @@ def reporte_mensual(bd: Session, anio: int, filtro: Filtro | None = None) -> lis
 
     Returns:
         Doce filas, de enero a diciembre, con cantidad, ingresos, costos, ganancia,
-        variación de la ganancia frente al mes previo y el ancho relativo de la barra
-        de ingresos (0 a 100).
+        gastos operativos del mes, ganancia neta, variación de la ganancia frente
+        al mes previo y el ancho relativo de la barra de ingresos (0 a 100).
     """
     seleccion = filtro or Filtro()
     lineas = [linea for linea in _lineas(bd) if seleccion.de_cliente_y_producto(linea)]
@@ -358,12 +395,14 @@ def reporte_mensual(bd: Session, anio: int, filtro: Filtro | None = None) -> lis
     }
 
     maximo = max((p.ingresos for p in periodos.values()), default=CERO)
+    gastos_mes = _gastos_operativos_por_mes(bd, anio)
     filas: list[dict[str, object]] = []
     previo: _Acumulado | None = None
     for mes in range(1, 13):
         datos = periodos[mes]
         variacion = None if previo is None else _variacion(datos.ganancia, previo.ganancia)
         barra = 0 if maximo == CERO else int((datos.ingresos / maximo * 100).to_integral_value())
+        gastos = redondear_dinero(gastos_mes[mes])
         filas.append(
             {
                 "mes": MESES[mes - 1],
@@ -372,6 +411,9 @@ def reporte_mensual(bd: Session, anio: int, filtro: Filtro | None = None) -> lis
                 "ingresos": redondear_dinero(datos.ingresos),
                 "costos": redondear_dinero(datos.costos),
                 "ganancia": redondear_dinero(datos.ganancia),
+                # SRS v4.44, §8.3: gasto operativo del mes y ganancia real (neta).
+                "gastos_operativos": gastos,
+                "ganancia_neta": redondear_dinero(datos.ganancia - gastos),
                 "variacion": variacion,
                 "barra": barra,
             }
@@ -391,8 +433,9 @@ def reporte_anual(bd: Session, filtro: Filtro | None = None) -> list[dict[str, o
         filtro: Selección compartida; `None` no filtra.
 
     Returns:
-        Una fila por año con ventas, ingresos, costos, ganancia, rentabilidad y
-        variación de la ganancia frente al año anterior, del más antiguo al más reciente.
+        Una fila por año con ventas, ingresos, costos, ganancia, gastos
+        operativos, ganancia neta, rentabilidad y variación de la ganancia frente
+        al año anterior, del más antiguo al más reciente.
     """
     seleccion = filtro or Filtro()
     lineas = [
@@ -406,12 +449,14 @@ def reporte_anual(bd: Session, filtro: Filtro | None = None) -> list[dict[str, o
 
     filas: list[dict[str, object]] = []
     previo: _Acumulado | None = None
+    gastos_anio = _gastos_operativos_por_anio(bd, seleccion.mes)
     for anio in sorted(periodos):
         datos = _acumular(periodos[anio])
         rentabilidad = (
             (datos.ganancia / datos.costos * 100).quantize(UNO) if datos.costos > CERO else None
         )
         variacion = None if previo is None else _variacion(datos.ganancia, previo.ganancia)
+        gastos = redondear_dinero(gastos_anio.get(anio, CERO))
         filas.append(
             {
                 "anio": anio,
@@ -419,6 +464,9 @@ def reporte_anual(bd: Session, filtro: Filtro | None = None) -> list[dict[str, o
                 "ingresos": redondear_dinero(datos.ingresos),
                 "costos": redondear_dinero(datos.costos),
                 "ganancia": redondear_dinero(datos.ganancia),
+                # SRS v4.44, §8.3: gasto operativo del año y ganancia real (neta).
+                "gastos_operativos": gastos,
+                "ganancia_neta": redondear_dinero(datos.ganancia - gastos),
                 "rentabilidad": rentabilidad,
                 "variacion": variacion,
             }
@@ -683,7 +731,10 @@ def tabla_csv(
         return None
 
     if nombre == "mensual":
-        encabezados = ["Mes", "Ventas", "Ingresos", "Costos", "Ganancia", "Variación ganancia (%)"]
+        encabezados = [
+            "Mes", "Ventas", "Ingresos", "Costos", "Ganancia",
+            "Gastos operativos", "Ganancia neta", "Variación ganancia (%)",
+        ]
         filas = [
             [
                 str(fila["mes"]),
@@ -691,13 +742,17 @@ def tabla_csv(
                 _csv_dinero(fila["ingresos"]),
                 _csv_dinero(fila["costos"]),
                 _csv_dinero(fila["ganancia"]),
+                _csv_dinero(fila["gastos_operativos"]),
+                _csv_dinero(fila["ganancia_neta"]),
                 _csv_numero(fila["variacion"]),
             ]
             for fila in reporte_mensual(bd, filtro.anio or hoy.year, filtro)
         ]
     elif nombre == "anual":
         encabezados = [
-            "Año", "Ventas", "Ingresos", "Costos", "Ganancia", "Rentabilidad (%)", "Variación ganancia (%)",
+            "Año", "Ventas", "Ingresos", "Costos", "Ganancia",
+            "Gastos operativos", "Ganancia neta", "Rentabilidad (%)",
+            "Variación ganancia (%)",
         ]
         filas = [
             [
@@ -706,6 +761,8 @@ def tabla_csv(
                 _csv_dinero(fila["ingresos"]),
                 _csv_dinero(fila["costos"]),
                 _csv_dinero(fila["ganancia"]),
+                _csv_dinero(fila["gastos_operativos"]),
+                _csv_dinero(fila["ganancia_neta"]),
                 _csv_numero(fila["rentabilidad"]),
                 _csv_numero(fila["variacion"]),
             ]

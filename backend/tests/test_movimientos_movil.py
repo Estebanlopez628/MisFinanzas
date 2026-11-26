@@ -41,8 +41,12 @@ def test_movimientos_en_movil_muestran_fecha_concepto_monto_y_saldo(
     assert "orden-movil--movimiento" in html
     assert 'data-abrir-dialogo="movimiento-' in html
     assert 'class="detalle-orden" id="movimiento-' in html
-    assert "Fecha y hora" in html
-    assert "Saldo después" in html
+    # SRS v4.44, §7.3: el detalle móvil usa Fecha, Tipo, Cliente, Producto, Concepto, Monto, Saldo.
+    orden = ["<dt>Fecha</dt>", "<dt>Tipo</dt>", "<dt>Cliente</dt>", "<dt>Producto</dt>",
+             "<dt>Concepto</dt>", "<dt>Monto</dt>", "<dt>Saldo</dt>"]
+    posiciones = [html.index(etiqueta) for etiqueta in orden]
+    assert posiciones == sorted(posiciones)
+    assert 'class="detalle-orden__cerrar"' in html
 
 
 def test_la_tabla_de_escritorio_de_movimientos_se_conserva(

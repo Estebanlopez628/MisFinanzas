@@ -14,7 +14,11 @@
   {% set seccion = 'cartera' %}
   {% include "olb_byte/_subnav.html" with context %}
 
-  {% if guardado %}
+  {% if guardado == 'deuda' %}
+    <div class="alerta alerta--exito" role="status">Deuda anterior al sistema registrada.</div>
+  {% elif guardado == 'gasto' %}
+    <div class="alerta alerta--exito" role="status">Gasto operativo guardado.</div>
+  {% elif guardado %}
     <div class="alerta alerta--exito" role="status">Pago al proveedor registrado.</div>
   {% endif %}
   {% if error %}
@@ -133,20 +137,22 @@
     </div>
   </section>
 
-  <div class="rejilla-paneles">
+  {# SRS v4.44, §7.2: ambas tarjetas miden lo mismo en escritorio (50 % / 50 %). #}
+  <div class="rejilla-paneles rejilla-paneles--proveedor">
     <section class="panel">
       <h2 class="panel__titulo">Pago al proveedor</h2>
       <p class="panel__descripcion">
         Deuda actual: <strong>{{ deuda | cop }}</strong>. El pago no puede superarla.
       </p>
+      {# SRS v4.44, §7.1: primero el concepto y después el monto, justo antes del botón. #}
       <form class="formulario" method="post" action="{{ url_for('registrar_abono_proveedor') }}">
-        <label class="campo">
-          <span class="campo__etiqueta">Monto pagado (COP)</span>
-          <input class="campo__control" type="text" name="monto" inputmode="decimal" placeholder="100.000" required data-moneda />
-        </label>
         <label class="campo">
           <span class="campo__etiqueta">Concepto</span>
           <input class="campo__control" type="text" name="concepto" placeholder="Abono al proveedor" />
+        </label>
+        <label class="campo">
+          <span class="campo__etiqueta">Monto pagado (COP)</span>
+          <input class="campo__control" type="text" name="monto" inputmode="decimal" placeholder="100.000" required data-moneda />
         </label>
         <button class="boton boton--primario" type="submit">Registrar Pago</button>
       </form>
@@ -155,12 +161,16 @@
     <section class="panel panel--tabla">
       <h2 class="panel__titulo">Movimientos con el proveedor</h2>
       {% if movimientos %}
-        <div class="tabla-contenedor tabla-escritorio">
+        {# SRS v4.44, §7.3: cuatro filas visibles y desplazamiento vertical; el
+           encabezado queda fijo. Columnas: Fecha | Tipo | Cliente | Producto | Concepto | Monto | Saldo. #}
+        <div class="tabla-contenedor tabla-escritorio tabla-contenedor--movimientos">
           <table class="tabla tabla--tarjetas">
             <thead>
               <tr>
                 <th scope="col">Fecha</th>
                 <th scope="col">Tipo</th>
+                <th scope="col">Cliente</th>
+                <th scope="col">Producto</th>
                 <th scope="col">Concepto</th>
                 <th scope="col">Monto</th>
                 <th scope="col">Saldo</th>
@@ -170,7 +180,9 @@
               {% for movimiento in movimientos %}
                 <tr>
                   <td data-etiqueta="Fecha">{{ movimiento.fecha.strftime('%d/%m/%Y %H:%M') }}</td>
-                  <td data-etiqueta="Tipo">{{ 'Compra a crédito' if movimiento.tipo == 'COMPRA_CREDITO' else 'Pago' }}</td>
+                  <td data-etiqueta="Tipo">{{ movimiento.etiqueta }}</td>
+                  <td data-etiqueta="Cliente">{{ movimiento.cliente }}</td>
+                  <td data-etiqueta="Producto">{{ movimiento.producto }}</td>
                   <td data-etiqueta="Concepto">{{ movimiento.concepto }}</td>
                   <td class="tabla__numero" data-etiqueta="Monto">{{ movimiento.monto | cop }}</td>
                   <td class="tabla__numero" data-etiqueta="Saldo">{{ movimiento.saldo_resultante | cop }}</td>
@@ -202,13 +214,18 @@
           <dialog class="detalle-orden" id="movimiento-{{ movimiento.id_movimiento }}"
                   aria-label="Detalle del movimiento del {{ movimiento.fecha.strftime('%d-%m-%Y') }}">
             <div class="detalle-orden__cuerpo">
+              <button type="button" class="detalle-orden__cerrar" data-cerrar-dialogo
+                      aria-label="Cerrar detalle" title="Cerrar">×</button>
               <h3 class="detalle-orden__titulo">Movimiento con el proveedor</h3>
+              {# SRS v4.44, §7.3: mismo orden que la tabla de escritorio. #}
               <dl class="detalle-orden__lista">
-                <div><dt>Fecha y hora</dt><dd>{{ movimiento.fecha.strftime('%d/%m/%Y %H:%M') }}</dd></div>
-                <div><dt>Tipo</dt><dd>{{ 'Compra a crédito' if movimiento.tipo == 'COMPRA_CREDITO' else 'Pago' }}</dd></div>
+                <div><dt>Fecha</dt><dd>{{ movimiento.fecha.strftime('%d/%m/%Y %H:%M') }}</dd></div>
+                <div><dt>Tipo</dt><dd>{{ movimiento.etiqueta }}</dd></div>
+                <div><dt>Cliente</dt><dd>{{ movimiento.cliente }}</dd></div>
+                <div><dt>Producto</dt><dd>{{ movimiento.producto }}</dd></div>
                 <div><dt>Concepto</dt><dd>{{ movimiento.concepto }}</dd></div>
                 <div><dt>Monto</dt><dd>{{ movimiento.monto | cop }}</dd></div>
-                <div><dt>Saldo después</dt><dd>{{ movimiento.saldo_resultante | cop }}</dd></div>
+                <div><dt>Saldo</dt><dd>{{ movimiento.saldo_resultante | cop }}</dd></div>
               </dl>
               <button type="button" class="boton boton--primario boton--pequeno detalle-orden__volver" data-cerrar-dialogo>Volver a movimientos</button>
             </div>
@@ -219,4 +236,134 @@
       {% endif %}
     </section>
   </div>
+
+  {# SRS v4.44, §8.1: dos tarjetas gemelas, mismo ancho y misma altura. #}
+  <div class="rejilla-paneles rejilla-paneles--proveedor">
+    <section class="panel">
+      <h2 class="panel__titulo">Deudas al proveedor anteriores al sistema</h2>
+      <p class="panel__descripcion">
+        Suman al saldo total adeudado y quedan en el libro como «Deuda inicial».
+      </p>
+      <form class="formulario" method="post" action="{{ url_for('registrar_deuda_inicial') }}">
+        <label class="campo">
+          <span class="campo__etiqueta">Concepto</span>
+          <input class="campo__control" type="text" name="concepto" maxlength="200"
+                 placeholder="Deuda anterior al sistema" required />
+        </label>
+        <label class="campo">
+          <span class="campo__etiqueta">Valor adeudado (COP)</span>
+          <input class="campo__control" type="text" name="monto" inputmode="decimal"
+                 placeholder="100.000" required data-moneda />
+        </label>
+        <button class="boton boton--primario" type="submit">Registrar deuda</button>
+      </form>
+    </section>
+
+    <section class="panel">
+      <h2 class="panel__titulo">Gastos operativos</h2>
+      <p class="panel__descripcion">
+        Se descuentan de la ganancia de inmediato. No afectan la deuda con el proveedor.
+      </p>
+      <form class="formulario" method="post" action="{{ url_for('registrar_gasto_operativo') }}">
+        <label class="campo">
+          <span class="campo__etiqueta">Fecha</span>
+          {# SRS v4.44, §8.1: fecha bloqueada, visible como MM/DD/AAAA. #}
+          <input class="campo__control" type="text" value="{{ hoy_texto }}" readonly
+                 aria-readonly="true" />
+          <input type="hidden" name="fecha" value="{{ hoy_iso }}" />
+        </label>
+        <label class="campo">
+          <span class="campo__etiqueta">Valor del gasto (COP)</span>
+          <input class="campo__control" type="text" name="monto" inputmode="decimal"
+                 placeholder="50.000" required data-moneda />
+        </label>
+        <button class="boton boton--primario" type="submit">Registrar gasto</button>
+      </form>
+    </section>
+  </div>
+
+  {# SRS v4.44, §8.2: historial de gastos operativos con edición y borrado. #}
+  <section class="panel panel--tabla">
+    <div class="panel__cabecera">
+      <h2 class="panel__titulo">Historial de gastos operativos</h2>
+      <span class="panel__total">
+        Total: <strong>{{ total_gastos_operativos | cop }}</strong>
+      </span>
+    </div>
+    {% if gastos_operativos %}
+      <div class="tabla-contenedor tabla-escritorio">
+        <table class="tabla">
+          <thead>
+            <tr>
+              <th scope="col">Fecha</th>
+              <th scope="col">Monto</th>
+              <th scope="col">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for gasto in gastos_operativos %}
+              <tr>
+                <td>{{ gasto.fecha.strftime('%m/%d/%Y') }}</td>
+                <td class="tabla__numero">{{ gasto.monto | cop }}</td>
+                <td class="tabla-gastos__acciones">
+                  <button type="button" class="boton boton--secundario boton--pequeno"
+                          data-abrir-dialogo="gasto-{{ gasto.id_gasto_operativo }}">Editar</button>
+                  <form method="post"
+                        action="{{ url_for('eliminar_gasto_operativo', id_gasto=gasto.id_gasto_operativo) }}">
+                    <button type="submit" class="boton boton--peligro boton--pequeno"
+                            data-confirmar="¿Eliminar este gasto operativo?">Eliminar</button>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <ul class="ordenes-moviles" aria-label="Historial de gastos operativos">
+        {% for gasto in gastos_operativos %}
+          <li>
+            <button type="button" class="orden-movil orden-movil--gasto"
+                    data-abrir-dialogo="gasto-{{ gasto.id_gasto_operativo }}">
+              <span class="orden-movil__fecha">{{ gasto.fecha.strftime('%m/%d/%Y') }}</span>
+              <span>{{ gasto.monto | cop }}</span>
+            </button>
+          </li>
+        {% endfor %}
+      </ul>
+
+      {% for gasto in gastos_operativos %}
+        <dialog class="detalle-orden" id="gasto-{{ gasto.id_gasto_operativo }}"
+                aria-label="Editar gasto operativo del {{ gasto.fecha.strftime('%m/%d/%Y') }}">
+          <div class="detalle-orden__cuerpo">
+            <button type="button" class="detalle-orden__cerrar" data-cerrar-dialogo
+                    aria-label="Cerrar" title="Cerrar">×</button>
+            <h3 class="detalle-orden__titulo">Editar gasto operativo</h3>
+            <form class="formulario"
+                  action="{{ url_for('editar_gasto_operativo', id_gasto=gasto.id_gasto_operativo) }}"
+                  method="post">
+              <label class="campo">
+                <span class="campo__etiqueta">Fecha</span>
+                <input class="campo__control" type="date" name="fecha"
+                       value="{{ gasto.fecha.isoformat() }}" required />
+              </label>
+              <label class="campo">
+                <span class="campo__etiqueta">Valor (COP)</span>
+                <input class="campo__control" type="text" name="monto" inputmode="decimal"
+                       value="{{ gasto.monto | cop }}" required data-moneda />
+              </label>
+              <div class="gasto-operativo__acciones">
+                <button class="boton boton--primario boton--pequeno" type="submit">Actualizar</button>
+                <button class="boton boton--peligro boton--pequeno" type="submit"
+                        formaction="{{ url_for('eliminar_gasto_operativo', id_gasto=gasto.id_gasto_operativo) }}"
+                        data-confirmar="¿Eliminar este gasto operativo?">Eliminar</button>
+              </div>
+            </form>
+          </div>
+        </dialog>
+      {% endfor %}
+    {% else %}
+      <p class="tabla__vacia">Aún no hay gastos operativos registrados.</p>
+    {% endif %}
+  </section>
 {% endblock %}

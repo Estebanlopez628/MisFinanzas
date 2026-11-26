@@ -688,7 +688,8 @@ class MovimientoProveedor(Base):
     __table_args__ = (
         CheckConstraint("monto > 0", name="ck_movimiento_monto"),
         CheckConstraint(
-            "tipo IN ('COMPRA_CREDITO', 'ABONO')", name="ck_movimiento_tipo"
+            "tipo IN ('COMPRA_CREDITO', 'ABONO', 'DEUDA_INICIAL')",
+            name="ck_movimiento_tipo",
         ),
     )
 
@@ -703,6 +704,26 @@ class MovimientoProveedor(Base):
     concepto: Mapped[str] = mapped_column(String(200), nullable=False)
     monto: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False)
     saldo_resultante: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False)
+
+
+class GastoOperativo(Base):
+    """Gasto operativo de la tienda (§10.10, SRS v4.44, sección 8).
+
+    Se resta de la ganancia de inmediato, sin importar la fecha ni si las ventas
+    están pagadas o a crédito. Es independiente de la deuda con el proveedor.
+    """
+
+    __tablename__ = "gastos_operativos"
+    __table_args__ = (CheckConstraint("monto > 0", name="ck_gasto_operativo_monto"),)
+
+    id_gasto_operativo: Mapped[str] = mapped_column(
+        String(32), primary_key=True, default=nuevo_id
+    )
+    fecha: Mapped[date] = mapped_column(Date, nullable=False, index=True)
+    monto: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False)
+    creado_en: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
 
 
 class GarantiaProveedor(Base):

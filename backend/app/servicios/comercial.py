@@ -34,6 +34,7 @@ from app.modelos import (
     Abono,
     Cliente,
     DevolucionCliente,
+    GastoOperativo,
     GarantiaProveedor,
     MovimientoProveedor,
     Venta,
@@ -58,6 +59,27 @@ METODOS_PAGO = ("EFECTIVO", "TRANSFERENCIA")
 GARANTIA_MESES_DEFECTO = 3
 TIPO_COMPRA = "COMPRA_CREDITO"
 TIPO_ABONO_PROVEEDOR = "ABONO"
+# SRS v4.44, §8.1: deuda que existía antes de usar el sistema. Suma al saldo con
+# el proveedor y se registra en el libro como «Deuda inicial».
+TIPO_DEUDA_INICIAL = "DEUDA_INICIAL"
+
+ETIQUETAS_MOVIMIENTO = {
+    TIPO_COMPRA: "Compra a crédito",
+    TIPO_ABONO_PROVEEDOR: "Pago",
+    TIPO_DEUDA_INICIAL: "Deuda inicial",
+}
+
+
+def etiqueta_tipo_movimiento(tipo: str) -> str:
+    """Traduce el tipo técnico del movimiento a su etiqueta visible.
+
+    Args:
+        tipo: `COMPRA_CREDITO`, `ABONO` o `DEUDA_INICIAL`.
+
+    Returns:
+        El texto que ve el usuario; el tipo original si no está en el catálogo.
+    """
+    return ETIQUETAS_MOVIMIENTO.get(tipo, tipo)
 
 
 @dataclass(frozen=True)
@@ -253,7 +275,14 @@ def deuda_proveedor(bd: Session) -> Decimal:
         Saldo adeudado, nunca negativo.
     """
     movimientos = bd.scalars(select(MovimientoProveedor)).all()
-    compras = sum((m.monto for m in movimientos if m.tipo == TIPO_COMPRA), start=CERO)
+    compras = sum(
+        (
+            m.monto
+            for m in movimientos
+            if m.tipo in (TIPO_COMPRA, TIPO_DEUDA_INICIAL)
+        ),
+        start=CERO,
+    )
     abonos = sum((m.monto for m in movimientos if m.tipo == TIPO_ABONO_PROVEEDOR), start=CERO)
     return redondear_dinero(max(compras - abonos, CERO))
 
@@ -269,7 +298,7 @@ def _registrar_movimiento_proveedor(
 
     Args:
         bd: Sesión de base de datos.
-        tipo: `COMPRA_CREDITO` o `ABONO`.
+        tipo: `COMPRA_CREDITO`, `DEUDA_INICIAL` o `ABONO`.
         monto: Valor positivo del movimiento.
         concepto: Descripción legible para el historial.
         id_venta: Orden asociada, si la hay.
@@ -278,7 +307,7 @@ def _registrar_movimiento_proveedor(
         El movimiento agregado, con el saldo tras aplicarlo.
     """
     saldo_anterior = deuda_proveedor(bd)
-    if tipo == TIPO_COMPRA:
+    if tipo in (TIPO_COMPRA, TIPO_DEUDA_INICIAL):
         saldo_nuevo = saldo_anterior + monto
     else:
         saldo_nuevo = saldo_anterior - monto
@@ -875,6 +904,42 @@ def registrar_abono_proveedor(
     return movimiento
 
 
+def registrar_deuda_inicial(
+    bd: Session,
+    monto: Decimal | str | int | float,
+    concepto: str,
+) -> MovimientoProveedor:
+    """Registra una deuda con el proveedor anterior al sistema (SRS v4.44, §8.1).
+
+    Suma de inmediato al saldo adeudado y queda en el libro como `DEUDA_INICIAL`,
+    sin orden asociada. Es la única forma de crear un movimiento sin venta que
+    aumenta la deuda.
+
+    Args:
+        bd: Sesión de base de datos.
+        monto: Valor adeudado; debe ser mayor que cero.
+        concepto: Descripción escrita por el administrador.
+
+    Returns:
+        El movimiento persistido.
+
+    Raises:
+        ValueError: Si el monto no es positivo o el concepto está vacío.
+    """
+    descripcion = (concepto or "").strip()
+    if not descripcion:
+        raise ValueError("Escribe el concepto de la deuda anterior al sistema.")
+    valor = _dinero(monto)
+    if valor <= CERO:
+        raise ValueError("El valor adeudado debe ser mayor que cero.")
+    movimiento = _registrar_movimiento_proveedor(
+        bd, TIPO_DEUDA_INICIAL, valor, descripcion
+    )
+    bd.commit()
+    bd.refresh(movimiento)
+    return movimiento
+
+
 def listar_movimientos_proveedor(bd: Session) -> list[MovimientoProveedor]:
     """Lista el libro de la cuenta por pagar, del más reciente al más antiguo.
 
@@ -886,6 +951,200 @@ def listar_movimientos_proveedor(bd: Session) -> list[MovimientoProveedor]:
     """
     consulta = select(MovimientoProveedor).order_by(MovimientoProveedor.fecha.desc())
     return list(bd.scalars(consulta))
+
+
+def listar_movimientos_con_orden(bd: Session) -> list[dict[str, object]]:
+    """Movimientos del proveedor con cliente y producto de su orden (SRS v4.44, §7.3).
+
+    Un movimiento sin orden vinculada (abono o deuda inicial) muestra «—» en
+    cliente y producto. Para una compra a crédito se toma el cliente de la orden y
+    los nombres de sus líneas de detalle, separados por coma.
+
+    Args:
+        bd: Sesión de base de datos.
+
+    Returns:
+        Lista de diccionarios ordenada del más reciente al más antiguo, con las
+        claves `id_movimiento`, `fecha`, `tipo`, `cliente`, `producto`,
+        `concepto`, `monto` y `saldo_resultante`.
+    """
+    movimientos = listar_movimientos_proveedor(bd)
+    ids_venta = {movimiento.id_venta for movimiento in movimientos if movimiento.id_venta}
+    clientes: dict[str, str] = {}
+    productos: dict[str, list[str]] = {}
+    if ids_venta:
+        for venta in bd.scalars(select(Venta).where(Venta.id_venta.in_(ids_venta))):
+            clientes[venta.id_venta] = venta.cliente_nombre
+        detalles = bd.scalars(
+            select(VentaDetalle)
+            .where(VentaDetalle.id_venta.in_(ids_venta))
+            .order_by(VentaDetalle.id_venta)
+        )
+        for detalle in detalles:
+            productos.setdefault(detalle.id_venta, []).append(detalle.producto_nombre)
+
+    filas: list[dict[str, object]] = []
+    for movimiento in movimientos:
+        orden = movimiento.id_venta
+        filas.append(
+            {
+                "id_movimiento": movimiento.id_movimiento,
+                "fecha": movimiento.fecha,
+                "tipo": movimiento.tipo,
+                "etiqueta": etiqueta_tipo_movimiento(movimiento.tipo),
+                "cliente": clientes.get(orden, "—") if orden else "—",
+                "producto": (", ".join(productos.get(orden, [])) or "—") if orden else "—",
+                "concepto": movimiento.concepto,
+                "monto": movimiento.monto,
+                "saldo_resultante": movimiento.saldo_resultante,
+            }
+        )
+    return filas
+
+
+def _fecha_gasto(texto: str | date | None) -> date:
+    """Convierte la fecha de un gasto operativo; vacía usa el día de la tienda.
+
+    Args:
+        texto: Fecha en formato `AAAA-MM-DD`, un `date`, o vacío.
+
+    Returns:
+        La fecha normalizada.
+
+    Raises:
+        ValueError: Si el texto no es una fecha válida.
+    """
+    if isinstance(texto, date):
+        return texto
+    limpio = (texto or "").strip()
+    if not limpio:
+        return datetime.now(ZONA_TIENDA).date()
+    try:
+        return date.fromisoformat(limpio)
+    except ValueError as error:
+        raise ValueError("La fecha del gasto operativo no es válida.") from error
+
+
+def registrar_gasto_operativo(
+    bd: Session,
+    monto: Decimal | str | int | float,
+    fecha: str | date | None = None,
+) -> GastoOperativo:
+    """Registra un gasto operativo de la tienda (SRS v4.44, §8.2).
+
+    No toca la deuda con el proveedor: solo se descuenta de la ganancia.
+
+    Args:
+        bd: Sesión de base de datos.
+        monto: Valor del gasto; debe ser mayor que cero.
+        fecha: Fecha del gasto; vacía usa hoy en hora de la tienda.
+
+    Returns:
+        El gasto persistido.
+
+    Raises:
+        ValueError: Si el monto no es positivo o la fecha no es válida.
+    """
+    valor = _dinero(monto)
+    if valor <= CERO:
+        raise ValueError("El valor del gasto operativo debe ser mayor que cero.")
+    gasto = GastoOperativo(fecha=_fecha_gasto(fecha), monto=valor)
+    bd.add(gasto)
+    bd.commit()
+    bd.refresh(gasto)
+    return gasto
+
+
+def actualizar_gasto_operativo(
+    bd: Session,
+    id_gasto: str,
+    monto: Decimal | str | int | float,
+    fecha: str | date | None = None,
+) -> GastoOperativo:
+    """Corrige la fecha y el valor de un gasto operativo.
+
+    Args:
+        bd: Sesión de base de datos.
+        id_gasto: Gasto a modificar.
+        monto: Nuevo valor; debe ser mayor que cero.
+        fecha: Nueva fecha; vacía conserva la actual.
+
+    Returns:
+        El gasto actualizado.
+
+    Raises:
+        ValueError: Si el gasto no existe, el monto no es positivo o la fecha
+            no es válida.
+    """
+    gasto = bd.get(GastoOperativo, id_gasto)
+    if gasto is None:
+        raise ValueError("El gasto operativo ya no existe.")
+    valor = _dinero(monto)
+    if valor <= CERO:
+        raise ValueError("El valor del gasto operativo debe ser mayor que cero.")
+    gasto.monto = valor
+    if fecha not in (None, ""):
+        gasto.fecha = _fecha_gasto(fecha)
+    bd.commit()
+    bd.refresh(gasto)
+    return gasto
+
+
+def eliminar_gasto_operativo(bd: Session, id_gasto: str) -> None:
+    """Borra un gasto operativo y deja que las estadísticas se recalculen.
+
+    Args:
+        bd: Sesión de base de datos.
+        id_gasto: Gasto a eliminar.
+
+    Raises:
+        ValueError: Si el gasto no existe.
+    """
+    gasto = bd.get(GastoOperativo, id_gasto)
+    if gasto is None:
+        raise ValueError("El gasto operativo ya no existe.")
+    bd.delete(gasto)
+    bd.commit()
+
+
+def listar_gastos_operativos(bd: Session) -> list[GastoOperativo]:
+    """Lista los gastos operativos del más reciente al más antiguo.
+
+    Args:
+        bd: Sesión de base de datos.
+
+    Returns:
+        Gastos ordenados por fecha y luego por creación, ambos descendentes.
+    """
+    consulta = select(GastoOperativo).order_by(
+        GastoOperativo.fecha.desc(), GastoOperativo.creado_en.desc()
+    )
+    return list(bd.scalars(consulta))
+
+
+def total_gastos_operativos(
+    bd: Session, anio: int | None = None, mes: int | None = None
+) -> Decimal:
+    """Suma los gastos operativos de un periodo.
+
+    Args:
+        bd: Sesión de base de datos.
+        anio: Año a sumar; `None` suma todo el histórico.
+        mes: Mes a sumar (1 a 12); `None` suma el año completo.
+
+    Returns:
+        Total redondeado; cero si no hay gastos.
+    """
+    consulta = select(GastoOperativo)
+    if anio is not None:
+        inicio = date(anio, mes or 1, 1)
+        if mes is None or mes == 12:
+            fin = date(anio + 1, 1, 1)
+        else:
+            fin = date(anio, mes + 1, 1)
+        consulta = consulta.where(GastoOperativo.fecha >= inicio, GastoOperativo.fecha < fin)
+    total = sum((gasto.monto for gasto in bd.scalars(consulta)), start=CERO)
+    return redondear_dinero(total)
 
 
 def _texto_busqueda(texto: str) -> str:

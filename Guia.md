@@ -106,7 +106,7 @@ Principios que explican el resto del código:
 ### Resumen del inventario
 
 - **115 archivos** documentados: 56 Python, 40 plantillas Jinja2 y 19 recursos estáticos.
-- **70 clases**, **666 funciones** y **43 métodos** de clase.
+- **71 clases**, **682 funciones** y **43 métodos** de clase.
 
 ### Detalle por archivo
 
@@ -121,16 +121,16 @@ Principios que explican el resto del código:
   - Funciones: `_categoria_cerrada`, `_exigir_deuda_si_es_credito`, `validar_formulario`
 - **`main.py`** · 224 líneas — Punto de entrada de la aplicación **Finanzas y OLB_BYTE**.
   - Funciones: `_pide_json`, `_manejar_sesion_requerida`, `_manejar_onboarding`, `_pagina_dato_invalido`, `_manejar_dato_invalido`, `crear_aplicacion`
-- **`modelos.py`** · 854 líneas — Modelos SQLAlchemy derivados de `diccionario_datos.md`.
-  - Clases: `Usuario`, `PerfilFinanciero`, `PeriodoNomina`, `RegistroHorasExtra`, `Incapacidad`, `SaldoIncapacidad`, `Gasto`, `Deuda`, `PagoDeuda`, `AbonoDeuda`, `Chancuco`, `ProyeccionAhorro`, `AbonoProyeccion`, `DeduccionFija`, `Cliente`, `Producto`, `Venta`, `VentaDetalle`, `Abono`, `DevolucionCliente`, `MovimientoProveedor`, `GarantiaProveedor`, `TrabajoExtra`, `Auditoria`, `FeedbackUsuario`
+- **`modelos.py`** · 875 líneas — Modelos SQLAlchemy derivados de `diccionario_datos.md`.
+  - Clases: `Usuario`, `PerfilFinanciero`, `PeriodoNomina`, `RegistroHorasExtra`, `Incapacidad`, `SaldoIncapacidad`, `Gasto`, `Deuda`, `PagoDeuda`, `AbonoDeuda`, `Chancuco`, `ProyeccionAhorro`, `AbonoProyeccion`, `DeduccionFija`, `Cliente`, `Producto`, `Venta`, `VentaDetalle`, `Abono`, `DevolucionCliente`, `MovimientoProveedor`, `GastoOperativo`, `GarantiaProveedor`, `TrabajoExtra`, `Auditoria`, `FeedbackUsuario`
   - Funciones: `nuevo_id`
 
 #### `backend/app/core/`
 
 - **`__init__.py`** · 11 líneas — Núcleo de la aplicación: parámetros de negocio y utilidades transversales.
-- **`base_datos.py`** · 948 líneas — Conexión a la base de datos y sesión por petición.
+- **`base_datos.py`** · 1017 líneas — Conexión a la base de datos y sesión por petición.
   - Clases: `Base`
-  - Funciones: `_cargar_archivo_entorno`, `_url_con_driver`, `obtener_bd`, `crear_esquema`, `_renombrar_referencia_a_categoria`, `_reconstruir_comercial_sin_stock`, `_migrar_columnas_trabajos`, `_migrar_columnas_chancucos`, `_migrar_columnas_metas`, `_migrar_dias_quincena_postgres`, `_migrar_columnas_perfil`, `_migrar_columnas_gastos`, `_migrar_chancucos`, `_migrar_columnas_deudas`, `_migrar_proyeccion_quincena`, `_migrar_saldos_incapacidad`, `_migrar_columnas_usuarios`, `_migrar_garantia_detalle`, `_migrar_deduccion_vinculada`, `_migrar_categorias_y_vinculos`, `_migrar_valor_atajo`, `_migrar_feedback_resolucion`, `_migrar_tipos_hora_2026`, `aplicar_migraciones`, `inicializar_base_datos`
+  - Funciones: `_cargar_archivo_entorno`, `_url_con_driver`, `obtener_bd`, `crear_esquema`, `_renombrar_referencia_a_categoria`, `_reconstruir_comercial_sin_stock`, `_migrar_columnas_trabajos`, `_migrar_columnas_chancucos`, `_migrar_columnas_metas`, `_migrar_dias_quincena_postgres`, `_migrar_columnas_perfil`, `_migrar_columnas_gastos`, `_migrar_chancucos`, `_migrar_columnas_deudas`, `_migrar_proyeccion_quincena`, `_migrar_saldos_incapacidad`, `_migrar_columnas_usuarios`, `_migrar_garantia_detalle`, `_migrar_deduccion_vinculada`, `_migrar_categorias_y_vinculos`, `_migrar_valor_atajo`, `_migrar_feedback_resolucion`, `_migrar_tipo_deuda_inicial`, `_migrar_tipos_hora_2026`, `aplicar_migraciones`, `inicializar_base_datos`
 - **`categorias.py`** · 240 líneas — Catálogo cerrado de categorías de egresos y colores de la dona.
   - Clases: `Categoria`
   - Funciones: `_clave`, `normalizar_categoria`, `es_categoria_valida`, `color_de_categoria`, `es_credito`, `paleta_es_unica`, `lista_categorias`
@@ -172,9 +172,9 @@ Principios que explican el resto del código:
   - Funciones: `_etiquetas_quincena`, `_parsear_fecha`, `ver_gastos`, `api_gastos_fijos`, `crear_gasto`, `editar_gasto`, `_volver`, `eliminar_gasto`, `marcar_pagado_gasto`, `desmarcar_pagado_gasto`, `api_marcar_pagado_gasto`, `api_desmarcar_pagado_gasto`, `registrar_abono_gasto`, `api_omitir_gasto`, `api_habilitar_gasto`, `api_abonar_meta`, `limpiar_pagos_gastos`
 - **`incapacidades.py`** · 310 líneas — Rutas del módulo de incapacidades.
   - Funciones: `_valores_del_formulario`, `_parsear_fecha`, `_validar`, `_contexto`, `ver_incapacidades`, `calcular_incapacidad_formulario`, `guardar_incapacidad`, `eliminar_incapacidad`
-- **`olb_byte.py`** · 1271 líneas — Módulo comercial OLB_BYTE: ventas a crédito, cobros, anulaciones y factura.
+- **`olb_byte.py`** · 1474 líneas — Módulo comercial OLB_BYTE: ventas a crédito, cobros, anulaciones y factura.
   - Clases: `DetalleVenta`
-  - Funciones: `_detalle_de_venta`, `_filas_del_formulario`, `_lineas_desde_filas`, `_contexto`, `_contexto_pendientes`, `_pagina_con_error`, `ver_olb_byte`, `_datos_pago`, `_pago_desde_datos`, `registrar_venta`, `registrar_abono`, `_contexto_cobro`, `ver_cobro`, `ver_pendientes`, `ver_recibo`, `anular_venta`, `registrar_devolucion`, `ver_factura_hoja`, `ver_recibo_hoja`, `ver_factura`, `_contexto_cartera`, `ver_cartera`, `registrar_abono_proveedor`, `_pagina_error_pdf`, `_entero_opcional`, `_filtro_desde_url`, `_parametros_filtro`, `_url_analitica`, `ver_analitica`, `exportar_analitica_csv`, `_contexto_garantias`, `ver_garantias`, `registrar_garantia`, `actualizar_garantia`
+  - Funciones: `_detalle_de_venta`, `_filas_del_formulario`, `_lineas_desde_filas`, `_contexto`, `_contexto_pendientes`, `_pagina_con_error`, `ver_olb_byte`, `_datos_pago`, `_pago_desde_datos`, `registrar_venta`, `registrar_abono`, `_contexto_cobro`, `ver_cobro`, `ver_pendientes`, `ver_recibo`, `anular_venta`, `registrar_devolucion`, `ver_factura_hoja`, `ver_recibo_hoja`, `ver_factura`, `_contexto_cartera`, `ver_cartera`, `registrar_abono_proveedor`, `registrar_deuda_inicial`, `registrar_gasto_operativo`, `editar_gasto_operativo`, `eliminar_gasto_operativo`, `_pagina_error_pdf`, `_entero_opcional`, `_filtro_desde_url`, `_parametros_filtro`, `_url_analitica`, `ver_analitica`, `exportar_analitica_csv`, `_contexto_garantias`, `ver_garantias`, `registrar_garantia`, `actualizar_garantia`
 - **`perfil.py`** · 310 líneas — Rutas del perfil financiero y del cambio de contraseña.
   - Funciones: `_formatear_porcentaje`, `_contexto_perfil`, `ver_perfil`, `guardar_perfil`, `cambiar_contrasena`
 - **`presupuesto.py`** · 468 líneas — Rutas del planificador de ahorro y metas (SRS v1.3, bloque 3).
@@ -195,9 +195,9 @@ Principios que explican el resto del código:
 - **`ahorro.py`** · 863 líneas — Planificador de ahorro y metas del usuario (SRS v1.3, bloque 3).
   - Clases: `MesMeta`, `MetaResumen`
   - Funciones: `etiqueta_quincena`, `valor_por_pago`, `_normalizar_modo_ambas`, `valor_mensual_efectivo`, `_mover_mes`, `_etiqueta_mes`, `_validar_duracion`, `crear_proyeccion`, `listar_proyecciones`, `_posicion`, `eliminar_proyeccion`, `extender_proyeccion`, `historial_metas`, `_detalle_pagos`, `meses_de_la_meta`, `_estado_mes`, `resumen_metas`, `saldo_libre_total`, `diagnostico`
-- **`analitica.py`** · 777 líneas — Analítica de OLB_BYTE: reportes, clientes VIP, costos y tablas exportables.
+- **`analitica.py`** · 834 líneas — Analítica de OLB_BYTE: reportes, clientes VIP, costos y tablas exportables.
   - Clases: `Filtro`, `Linea`, `_Acumulado`
-  - Funciones: `_acumular`, `_repartir`, `_lineas`, `_variacion`, `_ordenes_activas`, `anios_con_ventas`, `reporte_mensual`, `reporte_anual`, `ranking_vip`, `alertas_costos`, `estado_garantia_fila`, `tabla_ventas`, `_csv_dinero`, `_csv_numero`, `_csv_fecha`, `serializar_csv`, `tabla_csv`
+  - Funciones: `_acumular`, `_repartir`, `_lineas`, `_gastos_operativos_por_mes`, `_gastos_operativos_por_anio`, `_variacion`, `_ordenes_activas`, `anios_con_ventas`, `reporte_mensual`, `reporte_anual`, `ranking_vip`, `alertas_costos`, `estado_garantia_fila`, `tabla_ventas`, `_csv_dinero`, `_csv_numero`, `_csv_fecha`, `serializar_csv`, `tabla_csv`
 - **`auditoria.py`** · 61 líneas — Bitácora de auditoría de acciones sensibles.
   - Funciones: `registrar`, `listar_eventos`
 - **`auxilio.py`** · 146 líneas — Evaluación del derecho al auxilio de transporte (SRS RF-07).
@@ -208,9 +208,9 @@ Principios que explican el resto del código:
   - Funciones: `repartir_libre`, `es_credito`, `_porcentaje`, `agrupar_por_categoria`, `resumen_categorias`, `_arcos_categoria`, `_arcos_categoria_global`, `_repartir_arcos`, `_meses_equivalentes`, `_etiqueta_mes`, `_mover_mes`, `meses_siguientes`, `deudas_por_terminar`, `proyeccion_capacidad`, `_mensaje_semaforo`, `capacidad_trabajos`, `capacidad_endeudamiento`
 - **`chancucos.py`** · 321 líneas — Referencias de pago rápido ("Chancucos").
   - Funciones: `_normalizar_dia`, `_normalizar_dias`, `normalizar_enlace_pago`, `_validar_url`, `crear_chancuco`, `actualizar_chancuco`, `listar_chancucos`, `alternar_favorito`, `eliminar_chancuco`
-- **`comercial.py`** · 1587 líneas — Operación comercial de OLB_BYTE: ventas a crédito, cartera y deuda con proveedor.
+- **`comercial.py`** · 1846 líneas — Operación comercial de OLB_BYTE: ventas a crédito, cartera y deuda con proveedor.
   - Clases: `LineaVenta`, `PagoInicial`
-  - Funciones: `ahora_tienda`, `normalizar_telefono`, `_dinero`, `_sumar_meses`, `_texto_garantia`, `_validar_linea`, `_cliente_para_venta`, `_siguiente_numero_orden`, `deuda_proveedor`, `_registrar_movimiento_proveedor`, `registrar_cliente`, `listar_clientes`, `buscar_clientes`, `registrar_venta`, `obtener_venta`, `_venta_activa`, `_recalcular_estado_pago`, `_validar_metodo`, `registrar_abono`, `_devuelto`, `_registrar_devolucion`, `anular_venta`, `registrar_devolucion`, `pendiente_devolver`, `obtener_abono`, `abonos_de_venta`, `buscar_cartera`, `registrar_abono_proveedor`, `listar_movimientos_proveedor`, `_texto_busqueda`, `filtrar_ventas`, `listar_ventas`, `cartera`, `resumen_cartera`, `estado_garantia`, `clasificar_saldo`, `_barra_divergente`, `balance_tres_bloques`, `barras_balance`, `segmentos_dona`, `etiqueta_producto`, `opciones_garantia`, `registrar_garantia`, `actualizar_estado_garantia`, `listar_garantias`, `garantia_vigente_al_reclamo`, `ranking_fallas`, `formatear_pesos`, `texto_compartir_factura`, `enlace_whatsapp_factura`, `enlace_whatsapp_recibo`, `enlace_whatsapp_cobro`, `_enlace_wa`
+  - Funciones: `etiqueta_tipo_movimiento`, `ahora_tienda`, `normalizar_telefono`, `_dinero`, `_sumar_meses`, `_texto_garantia`, `_validar_linea`, `_cliente_para_venta`, `_siguiente_numero_orden`, `deuda_proveedor`, `_registrar_movimiento_proveedor`, `registrar_cliente`, `listar_clientes`, `buscar_clientes`, `registrar_venta`, `obtener_venta`, `_venta_activa`, `_recalcular_estado_pago`, `_validar_metodo`, `registrar_abono`, `_devuelto`, `_registrar_devolucion`, `anular_venta`, `registrar_devolucion`, `pendiente_devolver`, `obtener_abono`, `abonos_de_venta`, `buscar_cartera`, `registrar_abono_proveedor`, `registrar_deuda_inicial`, `listar_movimientos_proveedor`, `listar_movimientos_con_orden`, `_fecha_gasto`, `registrar_gasto_operativo`, `actualizar_gasto_operativo`, `eliminar_gasto_operativo`, `listar_gastos_operativos`, `total_gastos_operativos`, `_texto_busqueda`, `filtrar_ventas`, `listar_ventas`, `cartera`, `resumen_cartera`, `estado_garantia`, `clasificar_saldo`, `_barra_divergente`, `balance_tres_bloques`, `barras_balance`, `segmentos_dona`, `etiqueta_producto`, `opciones_garantia`, `registrar_garantia`, `actualizar_estado_garantia`, `listar_garantias`, `garantia_vigente_al_reclamo`, `ranking_fallas`, `formatear_pesos`, `texto_compartir_factura`, `enlace_whatsapp_factura`, `enlace_whatsapp_recibo`, `enlace_whatsapp_cobro`, `_enlace_wa`
 - **`consejero.py`** · 878 líneas — Consejero financiero del excedente mensual (SRS v1.8).
   - Clases: `Consejo`, `_EstadoDeuda`
   - Funciones: `_cuotas_mensuales`, `_estados`, `_ordenar`, `_simular`, `_altura`, `_serie_comparada`, `_fecha_cierre`, `_fecha_cierre_corta`, `_palabra_plazo`, `_datos_cierre`, `_consejo_deuda`, `_consejo_ahorro`, `consejo_financiero`
@@ -257,7 +257,7 @@ Principios que explican el resto del código:
 
 #### `backend/app/static/css/`
 
-- **`estilos.css`** · 6570 líneas — Fondo y superficies
+- **`estilos.css`** · 6700 líneas — Fondo y superficies
 - **`factura-olb.css`** · 731 líneas — Sello de Anulada si aplica
 
 #### `backend/app/static/js/`
@@ -355,8 +355,8 @@ Principios que explican el resto del código:
 - **`_hoja_factura.html`** · 268 líneas
 - **`_recibo.html`** · 47 líneas
 - **`_subnav.html`** · 30 líneas — Subnavegación de OLB_BYTE con el mismo componente que Mis Finanzas (subnav-finanzas).
-- **`analitica.html`** · 315 líneas — Plantilla: Analítica
-- **`cartera.html`** · 223 líneas — Plantilla: Cartera y liquidez
+- **`analitica.html`** · 345 líneas — Plantilla: Analítica
+- **`cartera.html`** · 370 líneas — Plantilla: Cartera y liquidez
 - **`cobro.html`** · 93 líneas — Plantilla: Gestionar cobro
 - **`factura.html`** · 39 líneas — Plantilla: Factura No.
 - **`garantias.html`** · 148 líneas — Plantilla: Garantías

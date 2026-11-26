@@ -67,6 +67,28 @@
     {% endif %}
   </section>
 
+  {# SRS v4.44, §8.3: gastos operativos y ganancia real (neta) del periodo. #}
+  <section class="panel panel--kpis" aria-label="Gastos operativos y ganancia neta">
+    <div class="kpi">
+      <span class="kpi__etiqueta">
+        Gastos operativos{% if nombre_mes %} · {{ nombre_mes }}{% endif %} {{ anio }}
+      </span>
+      <strong class="kpi__valor kpi__valor--gasto">{{ gastos_operativos_periodo | cop }}</strong>
+    </div>
+    <div class="kpi">
+      <span class="kpi__etiqueta">
+        Ganancia neta{% if nombre_mes %} · {{ nombre_mes }}{% endif %} {{ anio }}
+      </span>
+      <strong class="kpi__valor {{ 'kpi__valor--negativo' if ganancia_neta_periodo < 0 else 'kpi__valor--positivo' }}">
+        {{ ganancia_neta_periodo | cop }}
+      </strong>
+    </div>
+    <p class="ayuda kpi__nota">
+      Ganancia real (neta) = ganancia bruta de ventas − gastos operativos. Se descuenta
+      de inmediato, sin importar la fecha ni si la venta está pagada o a crédito.
+    </p>
+  </section>
+
   <section class="panel panel--tabla">
     <div class="panel__cabecera">
       <h2 class="panel__titulo">Mes a mes · {{ anio }}</h2>
@@ -81,6 +103,8 @@
             <th scope="col">Ingresos</th>
             <th scope="col">Costos</th>
             <th scope="col">Ganancia</th>
+            <th scope="col">Gastos op.</th>
+            <th scope="col">Ganancia neta</th>
             <th scope="col">Var. ganancia</th>
             <th scope="col">Ingresos del mes</th>
           </tr>
@@ -93,6 +117,8 @@
               <td class="tabla__numero">{{ fila.ingresos | cop }}</td>
               <td class="tabla__numero">{{ fila.costos | cop }}</td>
               <td class="tabla__numero">{{ fila.ganancia | cop }}</td>
+              <td class="tabla__numero">{{ fila.gastos_operativos | cop }}</td>
+              <td class="tabla__numero">{{ fila.ganancia_neta | cop }}</td>
               <td class="tabla__numero">{{ fila.variacion ~ ' %' if fila.variacion is not none else '—' }}</td>
               <td>
                 <div class="barra" aria-hidden="true"><span style="width: {{ fila.barra }}%"></span></div>
@@ -168,6 +194,8 @@
               <th scope="col">Ingresos</th>
               <th scope="col">Costos</th>
               <th scope="col">Ganancia</th>
+              <th scope="col">Gastos op.</th>
+              <th scope="col">Ganancia neta</th>
               <th scope="col">Rentabilidad</th>
               <th scope="col">Var. ganancia</th>
             </tr>
@@ -180,6 +208,8 @@
                 <td class="tabla__numero">{{ fila.ingresos | cop }}</td>
                 <td class="tabla__numero">{{ fila.costos | cop }}</td>
                 <td class="tabla__numero">{{ fila.ganancia | cop }}</td>
+                <td class="tabla__numero">{{ fila.gastos_operativos | cop }}</td>
+                <td class="tabla__numero">{{ fila.ganancia_neta | cop }}</td>
                 <td class="tabla__numero">{{ fila.rentabilidad ~ ' %' if fila.rentabilidad is not none else '—' }}</td>
                 <td class="tabla__numero">{{ fila.variacion ~ ' %' if fila.variacion is not none else '—' }}</td>
               </tr>

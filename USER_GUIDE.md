@@ -184,4 +184,12 @@ El Consejero ahora calcula cuándo terminas de pagar usando **solo las deudas qu
 
 En el celular, la gráfica de 6 meses ya no aparece y el banner verde sobre los velocímetros va centrado. En «Atajos guardados», las cabeceras «VALOR A PAGAR» y «DÍAS DE PAGO» van en dos líneas sin mover las columnas. El dinero libre disponible se lee un poco más grande.
 
+### Cambios de la versión 4.44 (cartera y gastos operativos)
+
+En **OLB_BYTE → Cartera y liquidez** ya puedes registrar deudas que tenías antes de usar el sistema: escribe el concepto y el valor adeudado; la deuda se suma a tu saldo con el proveedor y aparece en los movimientos como «Deuda inicial», sin cliente ni producto asociados.
+
+También puedes registrar **gastos operativos** (por ejemplo, internet o transporte de la tienda). La fecha del día queda fija y solo escribes el valor. Estos gastos **no cambian** lo que debes al proveedor ni el dinero en caja, pero se descuentan de inmediato de tu **ganancia real (neta)**: la ves en el historial de gastos, en los indicadores de Analítica y en las tablas y descargas CSV. Puedes editar la fecha y el valor, o eliminar el gasto; las estadísticas se recalculan al instante.
+
+Los movimientos con el proveedor muestran ahora Fecha, Tipo, Cliente, Producto, Concepto, Monto y Saldo. En el celular, toca una fila para ver el detalle completo y cierra con la X.
+
 © 2026 MisFinanzas

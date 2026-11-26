@@ -500,14 +500,16 @@ en `devoluciones_clientes` (§10.8); los abonos originales se conservan como his
 | --- | --- | --- | --- |
 | `id_movimiento` | `UUID` (PK) | No | Identificador. |
 | `fecha` | `TIMESTAMPTZ` | No | Momento del movimiento. |
-| `tipo` | `VARCHAR(20)` | No | `COMPRA_CREDITO` (sube la deuda) o `ABONO` (la baja). |
+| `tipo` | `VARCHAR(20)` | No | `COMPRA_CREDITO` o `DEUDA_INICIAL` (suben la deuda), `ABONO` (la baja). |
 | `id_venta` | `UUID` (FK) | Sí | Orden que origina la compra. `ON DELETE RESTRICT`. `NULL` en abonos generales. |
 | `concepto` | `VARCHAR(200)` | No | Descripción legible. |
 | `monto` | `NUMERIC(14,2)` | No | `CHECK (monto > 0)`. |
 | `saldo_resultante` | `NUMERIC(14,2)` | No | Deuda con el proveedor después del movimiento. |
 
-Deuda con el proveedor = Σ `COMPRA_CREDITO` − Σ `ABONO`. Los movimientos no se editan
-ni se borran: una corrección se registra como un movimiento nuevo.
+Deuda con el proveedor = Σ `COMPRA_CREDITO` + Σ `DEUDA_INICIAL` − Σ `ABONO`. Los
+movimientos no se editan ni se borran: una corrección se registra como un movimiento
+nuevo. `DEUDA_INICIAL` se usa solo para deudas anteriores al sistema (SRS v4.44, §8.1),
+no lleva orden (`id_venta = NULL`) y en el libro muestra Cliente y Producto como «—».
 
 ### 10.7 `garantias_proveedor` — *Garantías en trámite (RF-05)*
 | Campo | Tipo | Nulo | Descripción |
@@ -535,7 +537,21 @@ Se registra cuando una orden anulada devuelve al cliente lo que ya había abonad
 
 Dinero abonado pendiente de devolver = Σ `abonos` − Σ `devoluciones_clientes` de la orden.
 
-### 10.9 Índices y reglas transversales
+### 10.9 `gastos_operativos` — *Gastos operativos de la tienda (SRS v4.44, §8)*
+| Campo | Tipo | Nulo | Descripción |
+| --- | --- | --- | --- |
+| `id_gasto_operativo` | `UUID` (PK) | No | Identificador. |
+| `fecha` | `DATE` | No | Fecha del gasto; por defecto el día del registro en hora de la tienda. |
+| `monto` | `NUMERIC(14,2)` | No | `CHECK (monto > 0)`. Se descuenta de la ganancia al registrar, editar o borrar. |
+| `creado_en` | `TIMESTAMPTZ` | No | Momento en que se registró; ordena los desempates de `fecha`. |
+
+A diferencia de `movimientos_proveedor`, estos registros **sí se editan y se borran** desde
+«Cartera y liquidez». No afectan la deuda con el proveedor ni la caja: solo la ganancia.
+Ganancia real (neta) = ganancia bruta de ventas − Σ `gastos_operativos`, sin importar la
+fecha ni el estado de pago de las órdenes. Se muestra en los reportes mensual y anual y en
+sus descargas CSV.
+
+### 10.10 Índices y reglas transversales
 - Ganancia, cartera y deuda excluyen órdenes `ANULADA`.
 - Montos en `NUMERIC(14,2)` y en `Decimal`; redondeo al persistir (ADR-23 para mostrar sin centavos).
 - Teléfono: 10 dígitos colombianos en el registro. El indicativo `57` se agrega solo al generar el enlace de WhatsApp.

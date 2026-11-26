@@ -217,3 +217,9 @@ Principios innegociables. Toda especificación, plan y tarea debe cumplirlos de 
     - Los errores de edición de un atajo se muestran dentro de su modal, que permanece abierto.
     - En la tarjeta móvil, la referencia va a la izquierda sobre Copiar y el valor a la derecha sobre Pagar.
     - El logo y el eslogan de la factura se centran entre sí; el resto de la factura no cambia.
+
+45. **Cartera y gastos operativos (SRS v4.44, secciones 7 a 9):**
+    - En «Pago al proveedor» el concepto precede al monto; las tarjetas de una fila comparten ancho y altura en escritorio.
+    - Los movimientos del proveedor muestran Fecha | Tipo | Cliente | Producto | Concepto | Monto | Saldo, cuatro filas visibles y el mismo orden en el modal móvil con X arriba.
+    - Las deudas anteriores al sistema usan `DEUDA_INICIAL`, suman al saldo del proveedor y no se editan ni se borran.
+    - Los gastos operativos sí se editan y se borran; no afectan la deuda ni la caja y se descuentan de inmediato de la ganancia real (neta) en reportes y CSV.

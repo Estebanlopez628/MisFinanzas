@@ -778,6 +778,7 @@ def _contexto_cartera(usuario: UsuarioSesion, bd: Session, *, error: str | None 
     """
     resumen = comercial.resumen_cartera(bd)
     balance_texto, balance_clase = comercial.clasificar_saldo(resumen["balance"])
+    hoy = datetime.now(comercial.ZONA_TIENDA).date()
     contexto = contexto_base(usuario)
     contexto.update(
         {
@@ -789,8 +790,13 @@ def _contexto_cartera(usuario: UsuarioSesion, bd: Session, *, error: str | None 
             "balance_bloques": comercial.balance_tres_bloques(resumen),
             "balance_texto": balance_texto,
             "balance_clase": balance_clase,
-            "movimientos": comercial.listar_movimientos_proveedor(bd),
+            "movimientos": comercial.listar_movimientos_con_orden(bd),
             "deuda": resumen["deuda_proveedor"],
+            # SRS v4.44, §8: deudas anteriores al sistema y gastos operativos.
+            "gastos_operativos": comercial.listar_gastos_operativos(bd),
+            "total_gastos_operativos": comercial.total_gastos_operativos(bd),
+            "hoy_texto": hoy.strftime("%m/%d/%Y"),
+            "hoy_iso": hoy.isoformat(),
             "error": error,
         }
     )
@@ -802,7 +808,7 @@ def ver_cartera(
     request: Request,
     usuario: UsuarioSesion = Depends(obtener_usuario_actual),
     bd: Session = Depends(obtener_bd),
-    guardado: int = 0,
+    guardado: str = "",
 ) -> HTMLResponse:
     """Muestra el balance de cartera, la gráfica y el libro del proveedor.
 
@@ -810,7 +816,8 @@ def ver_cartera(
         request: Petición HTTP.
         usuario: Administrador autenticado.
         bd: Sesión de base de datos.
-        guardado: Bandera de éxito tras registrar un pago.
+        guardado: Bandera de éxito tras registrar un pago, una deuda inicial o un
+            gasto operativo.
 
     Returns:
         HTML de la vista de cartera.
@@ -858,6 +865,186 @@ def registrar_abono_proveedor(
             status_code=status.HTTP_400_BAD_REQUEST,
         )
     return RedirectResponse(url="/olb-byte/cartera?guardado=1", status_code=status.HTTP_303_SEE_OTHER)
+
+
+@router.post(
+    "/olb-byte/proveedor/deudas-iniciales",
+    name="registrar_deuda_inicial",
+    response_model=None,
+)
+def registrar_deuda_inicial(
+    request: Request,
+    usuario: UsuarioSesion = Depends(obtener_usuario_actual),
+    bd: Session = Depends(obtener_bd),
+    concepto: Annotated[str, Form()] = "",
+    monto: Annotated[str, Form()] = "",
+) -> HTMLResponse | RedirectResponse:
+    """Registra una deuda con el proveedor anterior al sistema (SRS v4.44, §8.1).
+
+    Args:
+        request: Petición HTTP.
+        usuario: Administrador autenticado.
+        bd: Sesión de base de datos.
+        concepto: Descripción de la deuda.
+        monto: Valor adeudado.
+
+    Returns:
+        Redirección a la cartera o la misma vista con el error.
+    """
+    exigir_olb_byte(usuario)
+    try:
+        movimiento = comercial.registrar_deuda_inicial(bd, monto, concepto)
+        auditoria.registrar(
+            bd,
+            usuario.id_usuario,
+            "DEUDA_INICIAL_PROVEEDOR",
+            "movimientos_proveedor",
+            movimiento.id_movimiento,
+        )
+    except (ValueError, ArithmeticError) as error:
+        bd.rollback()
+        return plantillas.TemplateResponse(
+            request,
+            "olb_byte/cartera.html",
+            _contexto_cartera(usuario, bd, error=str(error)),
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+    return RedirectResponse(
+        url="/olb-byte/cartera?guardado=deuda", status_code=status.HTTP_303_SEE_OTHER
+    )
+
+
+@router.post(
+    "/olb-byte/cartera/gastos-operativos",
+    name="registrar_gasto_operativo",
+    response_model=None,
+)
+def registrar_gasto_operativo(
+    request: Request,
+    usuario: UsuarioSesion = Depends(obtener_usuario_actual),
+    bd: Session = Depends(obtener_bd),
+    monto: Annotated[str, Form()] = "",
+    fecha: Annotated[str, Form()] = "",
+) -> HTMLResponse | RedirectResponse:
+    """Registra un gasto operativo que se descuenta de la ganancia (SRS v4.44, §8.2).
+
+    Args:
+        request: Petición HTTP.
+        usuario: Administrador autenticado.
+        bd: Sesión de base de datos.
+        monto: Valor del gasto.
+        fecha: Fecha en formato ISO; vacía usa hoy.
+
+    Returns:
+        Redirección a la cartera o la misma vista con el error.
+    """
+    exigir_olb_byte(usuario)
+    try:
+        gasto = comercial.registrar_gasto_operativo(bd, monto, fecha)
+        auditoria.registrar(
+            bd,
+            usuario.id_usuario,
+            "GASTO_OPERATIVO",
+            "gastos_operativos",
+            gasto.id_gasto_operativo,
+        )
+    except (ValueError, ArithmeticError) as error:
+        bd.rollback()
+        return plantillas.TemplateResponse(
+            request,
+            "olb_byte/cartera.html",
+            _contexto_cartera(usuario, bd, error=str(error)),
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+    return RedirectResponse(
+        url="/olb-byte/cartera?guardado=gasto", status_code=status.HTTP_303_SEE_OTHER
+    )
+
+
+@router.post(
+    "/olb-byte/cartera/gastos-operativos/{id_gasto}/editar",
+    name="editar_gasto_operativo",
+    response_model=None,
+)
+def editar_gasto_operativo(
+    request: Request,
+    id_gasto: str,
+    usuario: UsuarioSesion = Depends(obtener_usuario_actual),
+    bd: Session = Depends(obtener_bd),
+    monto: Annotated[str, Form()] = "",
+    fecha: Annotated[str, Form()] = "",
+) -> HTMLResponse | RedirectResponse:
+    """Corrige la fecha y el valor de un gasto operativo (SRS v4.44, §8.2).
+
+    Args:
+        request: Petición HTTP.
+        id_gasto: Gasto a modificar.
+        usuario: Administrador autenticado.
+        bd: Sesión de base de datos.
+        monto: Nuevo valor.
+        fecha: Nueva fecha en formato ISO.
+
+    Returns:
+        Redirección a la cartera o la misma vista con el error.
+    """
+    exigir_olb_byte(usuario)
+    try:
+        comercial.actualizar_gasto_operativo(bd, id_gasto, monto, fecha)
+        auditoria.registrar(
+            bd, usuario.id_usuario, "GASTO_OPERATIVO_EDITADO", "gastos_operativos", id_gasto
+        )
+    except (ValueError, ArithmeticError) as error:
+        bd.rollback()
+        return plantillas.TemplateResponse(
+            request,
+            "olb_byte/cartera.html",
+            _contexto_cartera(usuario, bd, error=str(error)),
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+    return RedirectResponse(
+        url="/olb-byte/cartera?guardado=gasto", status_code=status.HTTP_303_SEE_OTHER
+    )
+
+
+@router.post(
+    "/olb-byte/cartera/gastos-operativos/{id_gasto}/eliminar",
+    name="eliminar_gasto_operativo",
+    response_model=None,
+)
+def eliminar_gasto_operativo(
+    request: Request,
+    id_gasto: str,
+    usuario: UsuarioSesion = Depends(obtener_usuario_actual),
+    bd: Session = Depends(obtener_bd),
+) -> HTMLResponse | RedirectResponse:
+    """Borra un gasto operativo y recalcula las estadísticas (SRS v4.44, §8.2).
+
+    Args:
+        request: Petición HTTP.
+        id_gasto: Gasto a eliminar.
+        usuario: Administrador autenticado.
+        bd: Sesión de base de datos.
+
+    Returns:
+        Redirección a la cartera o la misma vista con el error.
+    """
+    exigir_olb_byte(usuario)
+    try:
+        comercial.eliminar_gasto_operativo(bd, id_gasto)
+        auditoria.registrar(
+            bd, usuario.id_usuario, "GASTO_OPERATIVO_ELIMINADO", "gastos_operativos", id_gasto
+        )
+    except ValueError as error:
+        bd.rollback()
+        return plantillas.TemplateResponse(
+            request,
+            "olb_byte/cartera.html",
+            _contexto_cartera(usuario, bd, error=str(error)),
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+    return RedirectResponse(
+        url="/olb-byte/cartera?guardado=gasto", status_code=status.HTTP_303_SEE_OTHER
+    )
 
 
 def _pagina_error_pdf(id_venta: str, mensaje: str, codigo: int) -> HTMLResponse:
@@ -1058,6 +1245,20 @@ def ver_analitica(
         for nombre in analitica.TABLAS_CSV
     }
 
+    # SRS v4.44, §8.3: gastos operativos y ganancia real (neta) del periodo
+    # elegido. Si el año no tiene ventas, el gasto se muestra igual.
+    anual = analitica.reporte_anual(bd, filtro)
+    if filtro.mes:
+        fila_periodo = mensual[filtro.mes - 1]
+    else:
+        fila_periodo = next((fila for fila in anual if fila["anio"] == filtro.anio), None)
+    if fila_periodo is not None:
+        gastos_periodo = fila_periodo["gastos_operativos"]
+        ganancia_neta_periodo = fila_periodo["ganancia_neta"]
+    else:
+        gastos_periodo = comercial.total_gastos_operativos(bd, filtro.anio, filtro.mes)
+        ganancia_neta_periodo = -gastos_periodo
+
     contexto = contexto_base(usuario)
     contexto.update(
         {
@@ -1079,7 +1280,9 @@ def ver_analitica(
             ],
             "url_limpiar": _url_analitica(request, analitica.Filtro(anio=filtro.anio)),
             "mensual": mensual,
-            "anual": analitica.reporte_anual(bd, filtro),
+            "anual": anual,
+            "gastos_operativos_periodo": gastos_periodo,
+            "ganancia_neta_periodo": ganancia_neta_periodo,
             "vip": vip,
             "alertas": alertas,
             "ventas": ventas,

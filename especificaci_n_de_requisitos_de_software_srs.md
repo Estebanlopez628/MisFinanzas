@@ -1287,3 +1287,21 @@ Versión 4.44 (documento titulado v4.25 Final, secciones 1 a 4). Línea base vig
 
 - `scripts/qa_v4_44.py`: **12/12 comprobaciones** en 375 y 1280 px. Suite: **950 pruebas** en verde.
 - Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-106), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.44.
+
+---
+
+## 47. SRS v4.44, secciones 7 a 9 — Cartera del proveedor y gastos operativos
+
+Misma línea base v4.44. No se rehacen las secciones 1 a 4. Las secciones 5 y 6 del documento (recuadro de totales de la factura) siguen pendientes de decisión.
+
+### 47.1 Cambios
+
+1. **Pago y movimientos con el proveedor:** el formulario muestra Concepto antes que Monto; ambas tarjetas tienen el mismo ancho y altura en escritorio. La tabla muestra siete columnas en orden (Fecha | Tipo | Cliente | Producto | Concepto | Monto | Saldo), cuatro filas visibles con cabecera fija y scroll. El modal móvil replica el orden en sus siete campos y añade X arriba a la derecha.
+2. **Deudas anteriores al sistema:** nueva tarjeta gemela con Concepto y Valor adeudado. Se registra como `DEUDA_INICIAL`, suma al saldo del proveedor y aparece en el libro con «—» en Cliente y Producto. La migración reconstruye la tabla en SQLite y reemplaza el `CHECK` en PostgreSQL, de forma idempotente.
+3. **Gastos operativos:** tabla `gastos_operativos` documentada en `diccionario_datos.md` §10.9. Tarjeta gemela con fecha bloqueada en `MM/DD/AAAA` y valor; historial con tabla y acciones en escritorio, y filas con `<dialog>` (X, Fecha, Valor, Actualizar y Eliminar) en móvil. No afectan la deuda ni la caja.
+4. **Ganancia real (neta):** `ganancia bruta − gastos operativos`, recalculada al registrar, editar o borrar. Se muestra en dos KPI, en dos columnas de los reportes mensual y anual y en sus CSV.
+
+### 47.2 Gate QA y cierre documental
+
+- `scripts/qa_v4_46.py`: **27/27 comprobaciones** en 375 y 1280 px, incluida la igualdad `neta = ganancia − gasto` en la fila del mes. Suite: **963 pruebas** en verde. `sw.js` en `olb-finanzas-v132`.
+- Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-107), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.44.

@@ -880,6 +880,74 @@ def _migrar_feedback_resolucion() -> None:
             )
 
 
+def _migrar_tipo_deuda_inicial() -> None:
+    """Permite el tipo `DEUDA_INICIAL` en `movimientos_proveedor` (SRS v4.44, §8.1).
+
+    SQLite no puede cambiar un `CHECK` con `ALTER TABLE`, así que la tabla se
+    reconstruye conservando todas sus filas y su índice. En PostgreSQL se
+    reemplaza la restricción. Es idempotente: si el tipo ya está permitido, no
+    hace nada.
+    """
+    if _conexion_sqlite:
+        with motor.begin() as conexion:
+            definicion = conexion.exec_driver_sql(
+                "SELECT sql FROM sqlite_master "
+                "WHERE type = 'table' AND name = 'movimientos_proveedor'"
+            ).scalar()
+            if not definicion or "DEUDA_INICIAL" in definicion:
+                return
+            conexion.exec_driver_sql(
+                """
+                CREATE TABLE movimientos_proveedor_v444 (
+                    id_movimiento VARCHAR(32) NOT NULL,
+                    fecha DATETIME NOT NULL,
+                    tipo VARCHAR(20) NOT NULL,
+                    id_venta VARCHAR(32),
+                    concepto VARCHAR(200) NOT NULL,
+                    monto NUMERIC(14, 2) NOT NULL,
+                    saldo_resultante NUMERIC(14, 2) NOT NULL,
+                    PRIMARY KEY (id_movimiento),
+                    CONSTRAINT ck_movimiento_monto CHECK (monto > 0),
+                    CONSTRAINT ck_movimiento_tipo CHECK (
+                        tipo IN ('COMPRA_CREDITO', 'ABONO', 'DEUDA_INICIAL')
+                    ),
+                    FOREIGN KEY(id_venta) REFERENCES ventas (id_venta)
+                        ON DELETE RESTRICT
+                )
+                """
+            )
+            conexion.exec_driver_sql(
+                "INSERT INTO movimientos_proveedor_v444 "
+                "(id_movimiento, fecha, tipo, id_venta, concepto, monto, saldo_resultante) "
+                "SELECT id_movimiento, fecha, tipo, id_venta, concepto, monto, "
+                "saldo_resultante FROM movimientos_proveedor"
+            )
+            conexion.exec_driver_sql("DROP TABLE movimientos_proveedor")
+            conexion.exec_driver_sql(
+                "ALTER TABLE movimientos_proveedor_v444 RENAME TO movimientos_proveedor"
+            )
+            conexion.exec_driver_sql(
+                "CREATE INDEX IF NOT EXISTS ix_movimientos_proveedor_id_venta "
+                "ON movimientos_proveedor (id_venta)"
+            )
+    elif _conexion_postgres:
+        with motor.begin() as conexion:
+            conexion.exec_driver_sql(
+                """
+                DO $$
+                BEGIN
+                    IF to_regclass('movimientos_proveedor') IS NOT NULL THEN
+                        ALTER TABLE movimientos_proveedor
+                            DROP CONSTRAINT IF EXISTS ck_movimiento_tipo;
+                        ALTER TABLE movimientos_proveedor
+                            ADD CONSTRAINT ck_movimiento_tipo
+                            CHECK (tipo IN ('COMPRA_CREDITO', 'ABONO', 'DEUDA_INICIAL'));
+                    END IF;
+                END $$;
+                """
+            )
+
+
 def _migrar_tipos_hora_2026() -> None:
     """Mapea el concepto histórico de recargo dominical al catálogo de 2026.
 
@@ -931,6 +999,7 @@ def aplicar_migraciones() -> None:
     _migrar_deduccion_vinculada()
     _migrar_categorias_y_vinculos()
     _migrar_feedback_resolucion()
+    _migrar_tipo_deuda_inicial()
     _migrar_tipos_hora_2026()
 
 

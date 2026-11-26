@@ -1190,6 +1190,142 @@ a.tarjeta:focus-visible {
   }
 }
 
+/* SRS v4.44, §7.2: en escritorio «Pago al proveedor» y «Movimientos» miden lo
+   mismo: columnas iguales y tarjetas de la misma altura. */
+@media (min-width: 768px) {
+  .rejilla-paneles--proveedor {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+  }
+
+  .rejilla-paneles--proveedor > .panel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    margin-top: 0;
+  }
+}
+
+/* SRS v4.44, §8.2: historial de gastos operativos en escritorio y móvil. */
+.tabla-gastos__acciones {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.tabla-gastos__acciones > form {
+  margin: 0;
+}
+
+.orden-movil--gasto {
+  grid-template-columns: 1fr 1fr;
+}
+
+.gasto-operativo__acciones {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.panel__total {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.panel__total strong {
+  color: var(--accent-green);
+}
+
+/* SRS v4.44, §8.3: KPI de gastos operativos y ganancia real (neta). */
+.panel--kpis {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: stretch;
+}
+
+.panel--kpis .kpi {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+.kpi__etiqueta {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.kpi__valor {
+  display: block;
+  margin-top: 4px;
+  font-size: 1.4rem;
+  line-height: 1.2;
+}
+
+.kpi__valor--gasto,
+.kpi__valor--negativo {
+  color: var(--accent-red);
+}
+
+.kpi__valor--positivo {
+  color: var(--accent-green);
+}
+
+.kpi__nota {
+  flex: 1 1 100%;
+  margin: 0;
+}
+
+/* SRS v4.44, §7.3: cuatro filas visibles con desplazamiento y encabezado fijo.
+   Cada fila mide 42 px; el contenedor admite el encabezado más cuatro filas. */
+.tabla-contenedor--movimientos {
+  max-height: 210px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.tabla-contenedor--movimientos thead th,
+.tabla-contenedor--movimientos tbody td {
+  height: 42px;
+}
+
+.tabla-contenedor--movimientos thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--bg-primary);
+}
+
+/* SRS v4.44, §7.3: cierre con X arriba a la derecha en el detalle móvil. */
+.detalle-orden__cuerpo {
+  position: relative;
+}
+
+.detalle-orden__cerrar {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(148, 163, 184, 0.12);
+  color: var(--text-muted);
+  font-size: 1.15rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.detalle-orden__cerrar:hover,
+.detalle-orden__cerrar:focus-visible {
+  background: rgba(239, 68, 68, 0.16);
+  color: var(--accent-red);
+  outline: none;
+}
+
+
 /* --------------------- Edición en línea de gastos fijos ------------------ */
 
 .lista-gastos__acciones {

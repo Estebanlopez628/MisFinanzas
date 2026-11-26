@@ -2643,6 +2643,17 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v131`; **950 pruebas** en verde. Gate `qa_v4_44.py` **12/12** en 375 y 1280 px. Captura de la cabecera revisada en ambos anchos. Ajuste del gate `qa_v4_40.py`: partía de una posición de scroll que no permitía medir el desplazamiento; ahora parte de 400 px. Ajuste de `test_srs_v4_38.py`: el conteo de recargas pasa a cuatro por el guardado de atajos.
 
+### 2026-11-25 — SRS v4.44, secciones 7 a 9: cartera del proveedor y gastos operativos (ADR-107)
+
+**Decisión (ADR-107).** El mismo documento llega con secciones 7 a 9 que no estaban en el ciclo anterior. Se ejecutan ahora, con la condición de documentar la tabla nueva antes de codificarla: `diccionario_datos.md` §10.9 describe `gastos_operativos` y §10.6 incorpora el tipo `DEUDA_INICIAL`. La sección 6 del SRS sigue sin aprobarse; aquí se registran 7, 8 y 9.
+
+**Consecuencias.**
+1. **§7:** el formulario de pago al proveedor invierte Concepto → Monto; las dos tarjetas comparten ancho y altura en escritorio; los movimientos muestran siete columnas (Fecha | Tipo | Cliente | Producto | Concepto | Monto | Saldo), cuatro filas visibles con cabecera fija y el mismo orden en el modal móvil, que ahora tiene X arriba a la derecha. `listar_movimientos_con_orden()` enriquece cada movimiento con cliente y productos de su orden.
+2. **§8:** la tabla `gastos_operativos` y su servicio (alta, edición, borrado, totales por mes/año). La deuda anterior al sistema se registra como `DEUDA_INICIAL`, suma al saldo del proveedor y no lleva orden. La migración reconstruye `movimientos_proveedor` en SQLite y reemplaza el `CHECK` en PostgreSQL, de forma idempotente. El historial de gastos usa tabla en escritorio y filas con `<dialog>` en móvil; la fecha del alta va bloqueada en `MM/DD/AAAA`.
+3. **§9:** `reporte_mensual` y `reporte_anual` exponen `gastos_operativos` y `ganancia_neta`; la analítica muestra dos KPI y dos columnas nuevas, y los CSV incluyen ambas cifras. El descuento es inmediato al registrar, editar o borrar, sin depender del estado de cartera.
+
+**Verificación.** `sw.js` en `olb-finanzas-v132`; **963 pruebas** en verde (13 nuevas en `test_srs_v4_45.py`). Gate `qa_v4_46.py` **27/27** en 375 y 1280 px, incluida la comprobación real `neta = ganancia − gasto` en la fila del mes. Se corrigió `qa_v4_40.py` en el ciclo anterior para fijar una posición de scroll inicial medible.
+
 ### 2026-11-24 — SRS v4.43: corrección de columnas y portal del modal (ADR-105)
 
 **Decisión (ADR-105).** El propietario corrigió dos puntos de v4.42: el ancho fijo de 440 px forzaba scroll aunque el texto cupiera, y el modal de edición quedaba atrapado en el contexto de la tarjeta. Las referencias a `hidden md:table-cell` y `ReactDOM.createPortal` del documento son ilustrativas; se implementan con CSS y `document.body.appendChild`, según el stack.
