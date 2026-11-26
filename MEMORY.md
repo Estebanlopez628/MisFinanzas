@@ -2822,6 +2822,14 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** Suite completa en verde y 19 gates QA sin regresiones. Las pruebas que comparaban la marca visible se ajustaron al texto sin guion bajo.
 
+### 2026-11-26 — Dos atajos visibles y pie alineado (ADR-129)
+
+**Decisión (ADR-129).** El propietario pidió, solo en el panel «🔗 Atajos de pago» de Mis Finanzas, que se vean **dos atajos** y que el resto se alcance desplazándose en vertical, tanto en web como en móvil. En web además el borde inferior del recuadro de atajos debe coincidir con el del recuadro «Resultado del periodo», sin quedar más abajo. Confirmó que la página «Configurar Atajos de Pago» (/chancucos) no se toca.
+
+**Consecuencias.** `.lista-atajos` conserva todos los `<li>` y gana `max-height` (254 px en web para dos filas de 122 px + 10 px de separación; 290 px en móvil para dos tarjetas de 140 px), `overflow-y: auto` y `overscroll-behavior: contain`. `.rejilla-finanzas` pasa de `align-items: start` a `stretch` y los últimos paneles (`.panel--atajos` y `.panel--resultado`) reciben `margin-top: auto` desde 901 px, con especificidad suficiente para vencer el `margin-top: 0` previo. El apilado móvil (≤900 px) y la tabla de /chancucos no cambian.
+
+**Verificación.** `sw.js` en `olb-finanzas-v154`. Gate `qa_v4_56.py` **5/5**: 1280 px con `clientHeight=254`, `scrollHeight=386`, bordes inferiores iguales (3150.7 px) y sin scroll horizontal; 375 px con `clientHeight=290`, `scrollHeight=439`. Suite completa en verde y 20 gates sin regresiones.
+
 ### 2026-11-24 — SRS v4.43: corrección de columnas y portal del modal (ADR-105)
 
 **Decisión (ADR-105).** El propietario corrigió dos puntos de v4.42: el ancho fijo de 440 px forzaba scroll aunque el texto cupiera, y el modal de edición quedaba atrapado en el contexto de la tarjeta. Las referencias a `hidden md:table-cell` y `ReactDOM.createPortal` del documento son ilustrativas; se implementan con CSS y `document.body.appendChild`, según el stack.

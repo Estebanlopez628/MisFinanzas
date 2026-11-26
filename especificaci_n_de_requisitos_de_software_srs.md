@@ -1670,3 +1670,20 @@ Línea base v4.44. Alcance: solo texto visible en la aplicación.
 ### 68.2 Cierre documental
 
 Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-128), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.44.
+
+---
+
+## 69. Dos atajos visibles y pie alineado en Mis Finanzas
+
+Línea base v4.44. Alcance exclusivo: el panel «🔗 Atajos de pago» dentro de `/finanzas`. La página «Configurar Atajos de Pago» (/chancucos) no se modifica.
+
+### 69.1 Cambios
+
+1. En web y móvil se visualizan **dos atajos**; los restantes permanecen en el DOM y se alcanzan con desplazamiento vertical dentro de `.lista-atajos` (`max-height` 254 px en web, 290 px en móvil; `overflow-y: auto`).
+2. En web (≥901 px), `.rejilla-finanzas` estira ambas columnas y los últimos paneles (`.panel--atajos` y `.panel--resultado`) usan `margin-top: auto` para que sus bordes inferiores coincidan. El panel de atajos nunca queda más abajo que el de resultado.
+3. En móvil (≤900 px) las columnas siguen apiladas y no se aplica la alineación. No se alteran cálculos, botones de copiar/pagar ni modales.
+
+### 69.2 Gate QA y cierre documental
+
+- `qa_v4_56.py` **5/5** en 1280 y 375 px: dos atajos visibles con scroll y bordes inferiores iguales en web. `sw.js` en `olb-finanzas-v154`.
+- Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-129), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.44.

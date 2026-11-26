@@ -458,7 +458,9 @@ a.tarjeta:focus-visible {
   display: grid;
   grid-template-columns: minmax(300px, 0.85fr) minmax(360px, 1.15fr);
   gap: 18px;
-  align-items: start;
+  /* Las dos columnas se estiran para que sus últimos paneles puedan quedar
+     alineados por abajo en escritorio. */
+  align-items: stretch;
 }
 
 /* SRS v1.3: la vista principal de Mis Finanzas exige dos columnas
@@ -479,6 +481,17 @@ a.tarjeta:focus-visible {
    lea como un contenedor independiente sin añadir otra tarjeta. */
 .columna-finanzas--quincenas > .panel + .panel {
   margin-top: 0;
+}
+
+/* En escritorio el último panel de cada columna baja hasta el fondo de la
+   rejilla: así «Atajos de pago» termina a la misma altura que «Resultado del
+   periodo». El selector de la izquierda iguala la especificidad de la regla
+   anterior para poder vencer su `margin-top: 0`. */
+@media (min-width: 901px) {
+  .columna-finanzas--quincenas > .panel + .panel--atajos,
+  .columna-finanzas--liquidacion > .panel--resultado {
+    margin-top: auto;
+  }
 }
 
 .bloque-gastos-quincena {
@@ -930,6 +943,18 @@ a.tarjeta:focus-visible {
   margin: 0;
   padding: 0;
   list-style: none;
+  /* Solo se ven dos atajos; los demás se alcanzan con desplazamiento vertical.
+     Medido sobre filas web de 122 px + 10 px de separación. */
+  max-height: 254px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+@media (max-width: 767px) {
+  /* En móvil la tarjeta de cada atajo mide ~140 px. */
+  .lista-atajos {
+    max-height: 290px;
+  }
 }
 
 /* Cada atajo se lee como una fila: descripción, referencia copiable y pago. */
