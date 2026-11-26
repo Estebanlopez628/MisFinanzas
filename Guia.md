@@ -1173,14 +1173,18 @@ ni color, porque el signo de RF-10 aplica solo al módulo de cartera.
 Cartera y liquidez (RF-08 a RF-11). Balance de cartera en barras horizontales: cada
 barra muestra su valor en pesos; los déficits salen a la izquierda del cero, en rojo, con
 signo menos (`barras_balance`). La dona compara cartera y deuda con el proveedor. Incluye
-el pago al proveedor y el libro de movimientos.
+el pago al proveedor y el libro de movimientos. En «Pago al proveedor» el campo
+«Concepto» es un selector cerrado con dos opciones: «Compra de inventario» y
+«Deudas al proveedor anteriores al sistema».
 
 ### `backend/app/templates/olb_byte/garantias.html`
 
 Garantías en trámite y ranking de fallas (RF-05). Incluye el formulario para abrir un
 reclamo sobre una línea de una orden activa, el ranking con la tasa de fallas y la
-lista de reclamos con su vigencia y su avance con el proveedor. Un reclamo cerrado
-muestra su resultado sin formulario.
+lista de reclamos con su vigencia y su avance con el proveedor. En «Registrar falla»
+la «Descripción de la falla» va primero y ofrece cuatro opciones cerradas
+(Rendimiento irregular, Inconveniente de carga, Defecto de fábrica y Otros); debajo
+aparece «Producto con falla». Un reclamo cerrado muestra su resultado sin formulario.
 
 ### `backend/app/templates/olb_byte/cobro.html`
 
@@ -1204,12 +1208,15 @@ Formulario de venta de OLB_BYTE. El bloque de pago muestra u oculta los campos s
 la forma de pago y el anticipo, y deshabilita los ocultos para que no se envíen
 (`sincronizarPago`). «Guardar» valida el producto del panel, lo agrega a la tabla y
 bloquea el panel (`guardarProducto`); «+ Agregar otro producto» lo desbloquea con los
-campos en blanco (`habilitarPanel`). Si queda un producto escrito y sin guardar al
-registrar la venta, se guarda antes. Cada fila guarda sus datos en campos ocultos
-(`leerFila`, `escribirFila`). «Actualizar» abre el cuadro de edición y «Cancelar» lo
-cierra sin cambios. `recalcular` actualiza total, costo y ganancia. «Pegar número» lee el
-número copiado (desde Contactos del celular) y lo pone en el campo de celular; si no tiene
-10 dígitos, o el navegador no permite leer el portapapeles, muestra una nota.
+campos en blanco (`habilitarPanel`). La categoría es un `<select>` con las 12 opciones
+estándar; `fijarValorSelect` conserva una categoría histórica que no esté en el
+catálogo agregándola solo mientras se edita esa fila. Si queda un producto escrito y
+sin guardar al registrar la venta, se guarda antes. Cada fila guarda sus datos en
+campos ocultos (`leerFila`, `escribirFila`). «Actualizar» abre el cuadro de edición y
+«Cancelar» lo cierra sin cambios. `recalcular` actualiza total, costo y ganancia.
+«Pegar número» lee el número copiado (desde Contactos del celular) y lo pone en el
+campo de celular; si no tiene 10 dígitos, o el navegador no permite leer el
+portapapeles, muestra una nota.
 
 ### `backend/app/templates/olb_byte/_subnav.html`
 
@@ -1451,7 +1458,11 @@ Configuración de atajos: formulario con descripción, referencia, «Valor a pag
 ### `backend/app/templates/olb_byte/index.html`
 
 Panel comercial: inventario, clientes, venta multipartida, cartera y ventas
-recientes con acceso a la factura.
+recientes con acceso a la factura. El campo «Categoría» del producto es un
+selector cerrado con las 12 categorías estándar (Smartwatches, Audífonos,
+Parlantes, Energía y carga, Cables y adaptadores, Accesorios celular,
+Almacenamiento, Periféricos PC, Hogar y LED, Gaming, Combos y Otros); el mismo
+catálogo se repite en el cuadro de edición.
 
 ### `backend/app/templates/olb_byte/factura.html`
 

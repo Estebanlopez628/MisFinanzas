@@ -1,6 +1,22 @@
 ﻿{% extends "base.html" %}
 {% block titulo %}OLB BYTE{% endblock %}
 
+{# Catálogo estándar de categorías de producto (12 opciones exactas). #}
+{% set categorias_producto = [
+  "Smartwatches",
+  "Audífonos",
+  "Parlantes",
+  "Energía y carga",
+  "Cables y adaptadores",
+  "Accesorios celular",
+  "Almacenamiento",
+  "Periféricos PC",
+  "Hogar y LED",
+  "Gaming",
+  "Combos",
+  "Otros"
+] %}
+
 {% macro fila_producto(fila) -%}
   <tr class="fila-producto" data-fila-producto>
     <td data-etiqueta="Producto">
@@ -221,7 +237,12 @@
         <div class="fila-campos">
           <label class="campo">
             <span class="campo__etiqueta">Categoría</span>
-            <input class="campo__control" type="text" placeholder="Audio" data-campo-panel="categoria" />
+            <select class="campo__control" data-campo-panel="categoria">
+              <option value="">Elige una categoría…</option>
+              {% for categoria in categorias_producto %}
+                <option value="{{ categoria }}">{{ categoria }}</option>
+              {% endfor %}
+            </select>
           </label>
           <label class="campo">
             <span class="campo__etiqueta">Nombre del producto</span>
@@ -304,7 +325,12 @@
       <div class="fila-campos">
         <label class="campo">
           <span class="campo__etiqueta">Categoría</span>
-          <input class="campo__control" type="text" data-campo-edicion="categoria" />
+          <select class="campo__control" data-campo-edicion="categoria">
+            <option value="">Elige una categoría…</option>
+            {% for categoria in categorias_producto %}
+              <option value="{{ categoria }}">{{ categoria }}</option>
+            {% endfor %}
+          </select>
         </label>
         <label class="campo">
           <span class="campo__etiqueta">Nombre del producto</span>

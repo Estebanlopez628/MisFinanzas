@@ -27,6 +27,16 @@
       {% if opciones %}
         <form class="formulario" method="post" action="{{ url_for('registrar_garantia') }}">
           <label class="campo">
+            <span class="campo__etiqueta">Descripción de la falla</span>
+            <select class="campo__control" name="observacion" required>
+              <option value="">Elige una opción…</option>
+              <option value="Rendimiento irregular">Rendimiento irregular</option>
+              <option value="Inconveniente de carga">Inconveniente de carga</option>
+              <option value="Defecto de fábrica">Defecto de fábrica</option>
+              <option value="Otros">Otros</option>
+            </select>
+          </label>
+          <label class="campo">
             <span class="campo__etiqueta">Producto con falla</span>
             <select class="campo__control" name="id_detalle" required>
               <option value="">Elige un producto…</option>
@@ -34,10 +44,6 @@
                 <option value="{{ opcion.id_detalle }}">{{ opcion.texto }}</option>
               {% endfor %}
             </select>
-          </label>
-          <label class="campo">
-            <span class="campo__etiqueta">Descripción de la falla</span>
-            <input class="campo__control" type="text" name="observacion" maxlength="300" />
           </label>
           <button class="boton boton--primario" type="submit">Abrir reclamo</button>
         </form>

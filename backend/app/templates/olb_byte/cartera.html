@@ -155,7 +155,10 @@
       <form class="formulario" method="post" action="{{ url_for('registrar_abono_proveedor') }}">
         <label class="campo">
           <span class="campo__etiqueta">Concepto</span>
-          <input class="campo__control" type="text" name="concepto" placeholder="Abono al proveedor" />
+          <select class="campo__control" name="concepto" required>
+            <option value="Compra de inventario">Compra de inventario</option>
+            <option value="Deudas al proveedor anteriores al sistema">Deudas al proveedor anteriores al sistema</option>
+          </select>
         </label>
         <label class="campo">
           <span class="campo__etiqueta">Monto pagado (COP)</span>

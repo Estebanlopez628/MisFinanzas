@@ -2830,6 +2830,14 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v154`. Gate `qa_v4_56.py` **5/5**: 1280 px con `clientHeight=254`, `scrollHeight=386`, bordes inferiores iguales (3150.7 px) y sin scroll horizontal; 375 px con `clientHeight=290`, `scrollHeight=439`. Suite completa en verde y 20 gates sin regresiones.
 
+### 2026-11-26 — Catálogos estándar de OLB BYTE (ADR-130)
+
+**Decisión (ADR-130).** El propietario pidió tres catálogos cerrados y quirúrgicos: (1) las 12 categorías de producto en «Registro de ventas → Registrar venta»; (2) dos conceptos en «Cartera y pagos a proveedores → Pago al proveedor» («Compra de inventario» y «Deudas al proveedor anteriores al sistema»); y (3) en «Soporte y garantías → Registrar falla», poner «Descripción de la falla» antes de «Producto con falla» y limitar la descripción a cuatro opciones (Rendimiento irregular, Inconveniente de carga, Defecto de fábrica y Otros). Confirmó expresamente que **no** se toca Analítica comercial ni el CSV: ADR-115 sigue vigente y «Deudas al proveedor anteriores al sistema» no se suma a Costos.
+
+**Consecuencias.** Los catálogos viven en las plantillas (`index.html`, `cartera.html`, `garantias.html`); no hay cambios en routers, servicios, modelos ni base de datos. `fijarValorSelect()` en `olb_byte.js` conserva una categoría histórica fuera del catálogo agregándola como opción temporal al editar esa fila. Los movimientos y reclamos antiguos mantienen su texto y solo se muestran. No se modifica ningún cálculo de cartera, costos, analítica, CSV ni Mis Finanzas.
+
+**Verificación.** Suite completa **1002 pruebas** en verde; `node --check` de `olb_byte.js` correcto y `generar_guia.py --verificar` sin pendientes (115 fichas). `sw.js` sube a `olb-finanzas-v155` para que los clientes descarguen el JavaScript con el nuevo catálogo.
+
 ### 2026-11-24 — SRS v4.43: corrección de columnas y portal del modal (ADR-105)
 
 **Decisión (ADR-105).** El propietario corrigió dos puntos de v4.42: el ancho fijo de 440 px forzaba scroll aunque el texto cupiera, y el modal de edición quedaba atrapado en el contexto de la tarjeta. Las referencias a `hidden md:table-cell` y `ReactDOM.createPortal` del documento son ilustrativas; se implementan con CSS y `document.body.appendChild`, según el stack.

@@ -99,6 +99,42 @@
   }
 
   /**
+   * Asigna un valor a un `<select>`, conservando los valores históricos.
+   *
+   * Si el valor guardado no está entre las opciones estándar (por ejemplo, una
+   * categoría escrita antes de este catálogo), se agrega como opción temporal
+   * para no perder el dato al editar la fila.
+   *
+   * @param {HTMLSelectElement} campo Selector a escribir.
+   * @param {string} valor Valor guardado.
+   */
+  function fijarValorSelect(campo, valor) {
+    var texto = valor === undefined || valor === null ? "" : String(valor);
+    var previas = campo.querySelectorAll("option[data-historico]");
+    for (var i = 0; i < previas.length; i += 1) {
+      previas[i].parentNode.removeChild(previas[i]);
+    }
+    var existe = false;
+    for (var j = 0; j < campo.options.length; j += 1) {
+      if (campo.options[j].value === texto) {
+        existe = true;
+        break;
+      }
+    }
+    if (!existe && texto) {
+      var opcion = document.createElement("option");
+      opcion.value = texto;
+      opcion.textContent = texto;
+      opcion.setAttribute("data-historico", "1");
+      campo.appendChild(opcion);
+    }
+    campo.value = texto;
+    if (!texto) {
+      campo.selectedIndex = 0;
+    }
+  }
+
+  /**
    * Escribe los valores en el panel de producto; los faltantes vuelven a su valor por defecto.
    *
    * @param {Object} valores Valores a mostrar.
@@ -107,7 +143,11 @@
     var campos = panel.querySelectorAll("[data-campo-panel]");
     for (var i = 0; i < campos.length; i += 1) {
       var nombre = campos[i].getAttribute("data-campo-panel");
-      campos[i].value = valores[nombre] !== undefined ? valores[nombre] : campos[i].defaultValue;
+      if (campos[i].tagName === "SELECT") {
+        fijarValorSelect(campos[i], valores[nombre] || "");
+      } else {
+        campos[i].value = valores[nombre] !== undefined ? valores[nombre] : campos[i].defaultValue;
+      }
     }
   }
 
@@ -119,7 +159,12 @@
   function escribirEdicion(valores) {
     var campos = dialogo.querySelectorAll("[data-campo-edicion]");
     for (var i = 0; i < campos.length; i += 1) {
-      campos[i].value = valores[campos[i].getAttribute("data-campo-edicion")] || "";
+      var valor = valores[campos[i].getAttribute("data-campo-edicion")] || "";
+      if (campos[i].tagName === "SELECT") {
+        fijarValorSelect(campos[i], valor);
+      } else {
+        campos[i].value = valor;
+      }
     }
   }
 

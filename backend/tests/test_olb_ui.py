@@ -17,7 +17,7 @@ RAIZ_ESTATICOS = Path(__file__).resolve().parent.parent / "app" / "static"
 
 
 def _etiquetas_con(html: str, atributo: str) -> list[str]:
-    """Devuelve las etiquetas <input> que contienen un atributo dado.
+    """Devuelve las etiquetas <input> y <select> que contienen un atributo dado.
 
     Args:
         html: Documento HTML.
@@ -28,7 +28,7 @@ def _etiquetas_con(html: str, atributo: str) -> list[str]:
     """
     return [
         etiqueta
-        for etiqueta in re.findall(r"<input[^>]*>", html)
+        for etiqueta in re.findall(r"<(?:input|select)[^>]*>", html)
         if f" {atributo}=" in etiqueta
     ]
 
