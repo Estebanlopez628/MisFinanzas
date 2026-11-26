@@ -2854,6 +2854,14 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v156`. Gate `qa_v4_56.py` **6/6**: separación de 18 px medida entre quincenas y atajos, `clientHeight 325 / scrollHeight 386` en 1280 px, `370 / 439` en 375 px y bordes inferiores iguales en web. Suite completa **1002 pruebas** en verde y 20 gates sin regresiones propias.
 
+### 2026-11-26 — Textos más cortos en la vinculación con deudas (ADR-145)
+
+**Decisión (ADR-145).** El propietario pidió acortar los dos textos largos de `_categorias.html` sin romper el enlace ni el flujo de vinculación.
+
+**Consecuencias.** El texto bajo «Deuda que paga este gasto» queda «Valor y categoría se toman de la deuda. El importe cuenta una sola vez.». La nota sincronizada queda «Cuota sincronizada con <strong data-nota-acreedor></strong>. Edítala en <a href="/deudas">Registro y Detalles de deudas</a>.». Se conservan el elemento que inyecta el acreedor desde `categorias.js`, el `href="/deudas"` y la lógica SI/NO. Se actualiza la aserción de `test_srs_v2_fase_b.py`.
+
+**Verificación.** Playwright sobre `/gastos`: texto corto visible y nota «Cuota sincronizada con Banco Prueba. Edítala en Registro y Detalles de deudas.» con enlace a `/deudas`. Suite completa en verde. `sw.js` en `olb-finanzas-v179`.
+
 ### 2026-11-26 — Todos los modales y alertas en azul marino (ADR-144)
 
 **Decisión (ADR-144).** Revisión de todos los modales del programa en Web y Móvil: los `<dialog>` de OLB BYTE y Ayuda seguían con el gris anterior y las alertas visibles tenían tonos propios. Se unifican al azul marino/cian translúcido. Login intacto; iconos y lógica sin cambios.

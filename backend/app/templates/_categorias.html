@@ -98,15 +98,12 @@
         {% endfor %}
       </select>
       <span class="ayuda">
-        Al vincularla, el valor y la categoría serán los de la cuota y el dinero
-        se cuenta una sola vez dentro de «Créditos y Obligaciones».
+        Valor y categoría se toman de la deuda. El importe cuenta una sola vez.
       </span>
     </label>
     {# SRS v2.0, sección 3.2: la cuota se edita en el módulo de deudas, nunca aquí. #}
     <p class="ayuda vinculo-deuda__nota" data-nota-sincronizada hidden>
-      El valor de este gasto está sincronizado con tu deuda
-      <strong data-nota-acreedor></strong>. Para modificar el monto de la cuota,
-      edítalo directamente en
+      Cuota sincronizada con <strong data-nota-acreedor></strong>. Edítala en
       <a class="enlace" href="/deudas">Registro y Detalles de deudas</a>.
     </p>
     {% if not deudas %}

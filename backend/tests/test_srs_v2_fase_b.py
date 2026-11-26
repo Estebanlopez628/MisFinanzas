@@ -104,7 +104,7 @@ def test_cuota_se_autocompleta_y_bloquea() -> None:
     """Al elegir deuda se copia la cuota y el valor queda de solo lectura."""
     plantilla = (RUTA_APP / "templates/_categorias.html").read_text(encoding="utf-8")
     assert 'data-cuota="{{ (deuda.cuota_mensual or 0) | cop(false) }}"' in plantilla
-    assert "El valor de este gasto está sincronizado con tu deuda" in plantilla
+    assert "Cuota sincronizada con <strong data-nota-acreedor></strong>." in plantilla
     assert 'href="/deudas"' in plantilla
 
     js = (RUTA_APP / "static/js/categorias.js").read_text(encoding="utf-8")

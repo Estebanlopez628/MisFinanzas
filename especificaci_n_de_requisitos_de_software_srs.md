@@ -1836,3 +1836,17 @@ Línea base v4.44. Ajusta la sección 69. Alcance exclusivo: Mis Finanzas (`/fin
 
 - Playwright 1280 px y 390 px: modales base, OLB BYTE, Ayuda y de deudas/deducciones con el fondo nuevo y botones dentro del recuadro; modal de deducciones centrado; login intacto; sin desbordes ni errores de consola.
 - Suite completa en verde. `sw.js` en `olb-finanzas-v178`. Documentación sincronizada.
+
+## 80. SRS aparte — Textos más cortos en la vinculación con deudas (ADR-145)
+
+**Regla suprema.** Solo se acorta el texto visible; se conservan el enlace a `/deudas`, el nombre del acreedor inyectado por JS, el autocompletado de la cuota y el bloqueo del valor.
+
+### 80.1 Textos aplicados
+
+1. Bajo «Deuda que paga este gasto»: «Valor y categoría se toman de la deuda. El importe cuenta una sola vez.»
+2. Nota sincronizada: «Cuota sincronizada con [acreedor]. Edítala en Registro y Detalles de deudas.», con `<strong data-nota-acreedor>` y `<a href="/deudas">`.
+
+### 80.2 Verificación y cierre documental
+
+- Playwright sobre `/gastos`: texto corto visible y nota con el acreedor y el enlace correcto; sin cambios en la lógica de vinculación.
+- Suite completa en verde. `sw.js` en `olb-finanzas-v179`. Documentación sincronizada.

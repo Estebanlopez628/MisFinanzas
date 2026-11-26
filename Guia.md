@@ -297,7 +297,7 @@ Principios que explican el resto del código:
 
 #### `backend/app/templates/`
 
-- **`_categorias.html`** · 117 líneas
+- **`_categorias.html`** · 114 líneas
 - **`base.html`** · 214 líneas — Vista previa al compartir el enlace (WhatsApp, redes). La URL pública sale de APP_URL;
 - **`dashboard.html`** · 96 líneas — Plantilla: Panel principal
 - **`login.html`** · 95 líneas — Plantilla: Iniciar sesión
