@@ -1735,3 +1735,19 @@ Línea base v4.44. Ajusta la sección 69. Alcance exclusivo: Mis Finanzas (`/fin
 
 - Playwright 1280 px y 390 px: login sin fondo de ondas y campo sin desenfoque; Mis Finanzas y OLB BYTE con superficies translúcidas y modales con desenfoque; resplandor inferior visible en las tres tarjetas de OLB BYTE; iconos presentes y sin desbordamiento horizontal.
 - Suite completa en verde (1003 pruebas). `sw.js` en `olb-finanzas-v171`. Guías, Diccionario de Datos, Constitución, `MEMORY.md`, `AGENTS.md` y esta SRS sincronizados.
+
+## 73. SRS aparte — Efecto agua en todas las tarjetas y azul marino en formularios (ADR-138)
+
+**Regla suprema.** Login e iconos intactos. Solo apariencia: todas las tarjetas, formularios, subsecciones, campos, botones y modales en Web y Móvil. Sin cambios de cálculos, validaciones, OLB BYTE, Trabajos Extras, deudas, reportes, analítica, CSV, scroll ni Mis Finanzas.
+
+### 73.1 Ajustes aplicados
+
+1. Tarjetas: base azul marino translúcida con `overflow: hidden` y `::before` con dos `radial-gradient` en las esquinas inferiores; el contenido y los iconos quedan por encima con `z-index: 1`.
+2. Formularios y subsecciones: `rgba(7, 32, 68, 0.68)` + `blur(8px)` + borde cian con `box-shadow: inset`, sin añadir píxeles que desplacen campos.
+3. Campos `input`/`select`/`textarea`: `rgba(4, 18, 42, 0.68)` con borde cian; se modifica `background-color` para conservar la flecha SVG de los selects.
+4. Modales: `rgba(6, 22, 48, 0.86)` + `backdrop-filter: blur(16px)`. KPI con la misma onda inferior.
+
+### 73.2 Verificación y cierre documental
+
+- Playwright 1280 px y 390 px sobre Login, Inicio, Mis Finanzas, Deudas, Trabajos Extras, OLB BYTE y Comentarios: onda inferior en todas las tarjetas, colores solicitados en formularios/campos/modales, iconos intactos, sin desbordes ni errores de consola.
+- Suite completa en verde. `sw.js` en `olb-finanzas-v172`. Documentación sincronizada.

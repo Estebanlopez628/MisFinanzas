@@ -2854,6 +2854,14 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v156`. Gate `qa_v4_56.py` **6/6**: separación de 18 px medida entre quincenas y atajos, `clientHeight 325 / scrollHeight 386` en 1280 px, `370 / 439` en 375 px y bordes inferiores iguales en web. Suite completa **1002 pruebas** en verde y 20 gates sin regresiones propias.
 
+### 2026-11-26 — Efecto agua en todas las tarjetas y azul marino en formularios (ADR-138)
+
+**Decisión (ADR-138).** SRS aparte: extender el resplandor difuso inferior a **todas** las tarjetas del sistema y ajustar formularios, subsecciones, campos y modales al azul marino/cian translúcido de las imágenes de referencia. Login e iconos intactos; sin cambios de lógica ni flujos.
+
+**Consecuencias.** En `estilos.css`, bajo `body:not(.pagina-acceso)`: `.tarjeta` lleva `position: relative`, `overflow: hidden`, degradado `rgba(7,32,68,.72)` → `rgba(4,18,42,.6)` y `::before` con dos `radial-gradient` en las esquinas inferiores (`--acento` y cian), con `> * { z-index: 1 }` para que iconos y texto queden por encima. `.formulario`, `.bloque-producto`, `.bloque-pago`, `.grupo-quincenal` y `.bloque-tabla-pagos` usan `rgba(7,32,68,.68)` + `blur(8px)` y borde cian con `box-shadow: inset` (sin añadir píxeles que desplacen campos). Campos: `rgba(4,18,42,.68)` + borde cian, cambiando `background-color` para preservar la flecha SVG de los selects. Modales: `rgba(6,22,48,.86)` + `blur(16px)`. Los KPI reciben el mismo tratamiento con onda inferior.
+
+**Verificación.** Playwright 1280 px y 390 px sobre Login, Inicio, Mis Finanzas, Deudas, Trabajos Extras, OLB BYTE y Comentarios: login sin fondo de ondas y campo sin desenfoque; todas las tarjetas con `::before` radial en `bottom: 0`, formularios/campos/modales con los `rgba` solicitados; iconos presentes, sin desbordamiento horizontal y sin errores de consola. Suite completa en verde. `sw.js` en `olb-finanzas-v172`.
+
 ### 2026-11-26 — Corrección real de translucidez y resplandor inferior (ADR-137)
 
 **Decisión (ADR-137).** Dos SRS aparte: (1) hacer efectiva la estética translúcida en tarjetas, formularios, campos, botones y modales de Mis Finanzas y OLB BYTE, venciendo las reglas opacas/grises previas; (2) sustituir la franja superior de las tarjetas de resumen de OLB BYTE por un resplandor difuso inferior con el color de acento de cada tarjeta. Login e iconos intactos; sin cambios de lógica, cálculos, flujos, CSV, scroll ni Mis Finanzas.

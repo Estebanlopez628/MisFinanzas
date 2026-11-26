@@ -6965,61 +6965,87 @@ dialog::backdrop {
 }
 
 /* --------------------------------------------------------------------------
-   SRS aparte — Corrección real de estética translúcida (Web y Móvil).
-   Aplica a todas las pantallas autenticadas: Mis Finanzas y OLB BYTE.
-   El login lleva `pagina-acceso` y conserva sus estilos originales.
-   Selectores con suficiente especificidad para vencer las reglas opacas
-   previas. No se tocan iconos, medidas, márgenes ni comportamientos.
+   SRS aparte — Efecto agua/resplandor difuso en todas las tarjetas y tono
+   azul marino/cian en formularios, subsecciones, campos, botones y modales.
+   Aplica a pantallas autenticadas (Mis Finanzas, OLB BYTE, etc.). El login
+   lleva `pagina-acceso` y conserva sus estilos originales. No se tocan
+   iconos, medidas, márgenes ni comportamientos.
    -------------------------------------------------------------------------- */
 
 body:not(.pagina-acceso) .panel {
-  background: rgba(15, 23, 42, 0.58);
+  background: rgba(7, 32, 68, 0.68);
   border-color: rgba(56, 189, 248, 0.22);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
 }
 
+/* Todas las tarjetas: base azul marino translúcida y onda difusa inferior. */
 body:not(.pagina-acceso) .tarjeta {
-  background: linear-gradient(160deg, rgba(30, 41, 59, 0.62), rgba(15, 23, 42, 0.55));
-  border-color: rgba(56, 189, 248, 0.24);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(160deg, rgba(7, 32, 68, 0.72), rgba(4, 18, 42, 0.6));
+  border-color: rgba(56, 189, 248, 0.26);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
-/* Formularios: velo sutil, sin padding ni borde nuevos para no mover campos. */
-body:not(.pagina-acceso) .formulario {
-  background: rgba(15, 23, 42, 0.24);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+/* La franja superior se sustituye por dos resplandores en las esquinas
+   inferiores; el contenido y los iconos quedan por encima de la onda. */
+body:not(.pagina-acceso) .tarjeta::before {
+  inset: auto 0 0 0;
+  height: 60%;
+  background:
+    radial-gradient(ellipse 70% 65% at 12% 100%,
+      color-mix(in srgb, var(--acento, var(--accent-blue)) 30%, transparent) 0%, transparent 72%),
+    radial-gradient(ellipse 65% 60% at 88% 100%, rgba(34, 211, 238, 0.2) 0%, transparent 74%);
+  opacity: 0.95;
 }
 
-/* Superficies de edición y modales: antes eran `var(--bg-card)` opaco. */
+body:not(.pagina-acceso) .tarjeta > * {
+  z-index: 1;
+}
+
+/* Formularios y subsecciones: azul marino translúcido de referencia. El borde
+   se hace con `inset` para no añadir 2 px que desplacen los campos. */
+body:not(.pagina-acceso) .formulario,
+body:not(.pagina-acceso) .bloque-producto,
+body:not(.pagina-acceso) .bloque-pago,
+body:not(.pagina-acceso) .grupo-quincenal,
+body:not(.pagina-acceso) .bloque-tabla-pagos {
+  background: rgba(7, 32, 68, 0.68);
+  box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.16);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* Superficies de edición y modales: azul marino más denso y desenfoque mayor. */
 body:not(.pagina-acceso) .edicion-gasto__formulario,
 body:not(.pagina-acceso) details.edicion-gasto--modal[open] > .edicion-gasto__formulario,
 body:not(.pagina-acceso) .app-modal__tarjeta,
 body:not(.pagina-acceso) .modal-centrado > * {
-  background: rgba(15, 23, 42, 0.82);
+  background: rgba(6, 22, 48, 0.86);
   border-color: rgba(56, 189, 248, 0.3);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
 
-/* Campos: `background-color` no borra la flecha SVG de los selects. */
+/* Campos: azul muy oscuro translúcido. Se cambia `background-color` para no
+   borrar la flecha SVG de los `select`. */
 body:not(.pagina-acceso) .campo__control,
 body:not(.pagina-acceso) select.campo__control {
-  background-color: rgba(15, 23, 42, 0.62);
-  border-color: rgba(56, 189, 248, 0.28);
+  background-color: rgba(4, 18, 42, 0.68);
+  border-color: rgba(56, 189, 248, 0.3);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
 }
 
 body:not(.pagina-acceso) .campo__control--bloqueado {
-  background-color: rgba(15, 23, 42, 0.7);
+  background-color: rgba(4, 18, 42, 0.72);
   border-color: rgba(100, 116, 139, 0.6);
 }
 
 body:not(.pagina-acceso) .boton--secundario {
-  background: rgba(15, 23, 42, 0.55);
+  background: rgba(7, 32, 68, 0.62);
   border-color: rgba(56, 189, 248, 0.3);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
@@ -7037,7 +7063,7 @@ body:not(.pagina-acceso) .boton--primario {
 }
 
 body:not(.pagina-acceso) .subnav-finanzas__enlace {
-  background: rgba(15, 23, 42, 0.55);
+  background: rgba(7, 32, 68, 0.62);
   border-color: rgba(56, 189, 248, 0.24);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
@@ -7058,23 +7084,21 @@ body:not(.pagina-acceso) .subnav-finanzas__enlace--activo:focus-visible {
 }
 
 body:not(.pagina-acceso) .panel--kpis .kpi {
-  background: rgba(15, 23, 42, 0.42);
-  border: 1px solid rgba(56, 189, 248, 0.18);
+  position: relative;
+  overflow: hidden;
+  background: rgba(7, 32, 68, 0.68);
+  border: 1px solid rgba(56, 189, 248, 0.2);
   border-radius: var(--radio-md);
   padding: 12px;
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 }
 
-/* SRS aparte OLB BYTE: la franja superior se sustituye por un resplandor
-   difuso en la esquina inferior, con el color de acento de cada tarjeta. */
-body.olb-translucido .tarjeta::before {
+body:not(.pagina-acceso) .panel--kpis .kpi::before {
+  content: "";
+  position: absolute;
   inset: auto 0 0 0;
-  height: 55%;
-  background: radial-gradient(
-    ellipse at 50% 100%,
-    color-mix(in srgb, var(--acento, var(--accent-blue)) 32%, transparent) 0%,
-    transparent 72%
-  );
-  opacity: 0.95;
+  height: 45%;
+  background: radial-gradient(ellipse at 50% 100%, rgba(34, 211, 238, 0.18) 0%, transparent 72%);
+  pointer-events: none;
 }
