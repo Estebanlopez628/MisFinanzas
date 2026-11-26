@@ -2854,6 +2854,14 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v156`. Gate `qa_v4_56.py` **6/6**: separación de 18 px medida entre quincenas y atajos, `clientHeight 325 / scrollHeight 386` en 1280 px, `370 / 439` en 375 px y bordes inferiores iguales en web. Suite completa **1002 pruebas** en verde y 20 gates sin regresiones propias.
 
+### 2026-11-26 — Select nativo con punto en Deducciones y Trabajos Extras (ADR-134)
+
+**Decisión (ADR-134).** En iPhone la lista de un `<select>` la dibuja iOS y no admite estilo, así que el selector personalizado se mantiene en todos los dispositivos para Gastos fijos de Mis Finanzas (sin cambios). En Deducciones fijas y en el alta de gastos fijos de Trabajos Extras la categoría pasa a `<select>` nativo, con «•» en el texto de cada opción.
+
+**Consecuencias.** Nueva macro `selector_categoria_select` en `_categorias.html`: el `value` de cada opción es el nombre limpio (el punto no llega al backend) y conserva `data-categoria-entrada`, `name="categoria"` y `required`. Una categoría histórica fuera del catálogo se añade como opción extra para no cambiarla al editar. `categorias.js` no requiere cambios: la vinculación con deudas (SI/NO, bloqueo del valor y `sessionStorage`) lee el mismo `value` y el mismo evento `change`. La macro `selector_categoria` original sigue en uso en Gastos, Mis Finanzas y el modal de edición de gastos fijos.
+
+**Verificación.** Pruebas `test_selector_categoria_ui.py` actualizadas: deducciones y trabajos muestran el `<select>` con punto y valor limpio; gastos fijos conserva el selector personalizado. Las categorías de producto de OLB BYTE (Registrar venta y Editar venta) también llevan «•» en el texto de cada opción; el valor no cambia y `olb_byte.js` sigue leyendo `value`. Por instrucción posterior del propietario, Gastos fijos de Mis Finanzas (alta en `finanzas/index.html`, edición en `_gasto_fijo.html`, que también usa Trabajos Extras, y registro en `gastos/index.html`) pasa a `selector_categoria_select`. Con eso la macro personalizada `selector_categoria` queda sin uso y se retira de `_categorias.html`; `categorias.js` y el CSS `.selector-categoria*` quedan inertes y pendientes de limpieza. `sw.js` en `olb-finanzas-v162`. Suite completa en verde (1003 pruebas) y `generar_guia.py --verificar` correcto.
+
 ### 2026-11-26 — Leyendas de dona: cartera y capacidad (ADR-133)
 
 **Decisión (ADR-133).** El propietario pidió dos ajustes de presentación: (1) en «Cartera frente a deuda», quitar el texto «de la deuda» de las sub-líneas del desglose y centrar la dona y la leyenda en móvil; (2) en «Capacidad de endeudamiento» (Gastos y Presupuesto y Trabajos Extras), mantener el centrado en móvil pero en escritorio alinear el bloque a la izquierda con las leyendas al lado derecho de la dona.

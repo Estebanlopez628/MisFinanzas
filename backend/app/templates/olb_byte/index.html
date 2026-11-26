@@ -240,7 +240,7 @@
             <select class="campo__control" data-campo-panel="categoria">
               <option value="">Elige una categoría…</option>
               {% for categoria in categorias_producto %}
-                <option value="{{ categoria }}">{{ categoria }}</option>
+                <option value="{{ categoria }}">• {{ categoria }}</option>
               {% endfor %}
             </select>
           </label>
@@ -328,7 +328,7 @@
           <select class="campo__control" data-campo-edicion="categoria">
             <option value="">Elige una categoría…</option>
             {% for categoria in categorias_producto %}
-              <option value="{{ categoria }}">{{ categoria }}</option>
+              <option value="{{ categoria }}">• {{ categoria }}</option>
             {% endfor %}
           </select>
         </label>

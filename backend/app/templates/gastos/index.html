@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_categorias.html" import selector_categoria, vinculo_deuda with context %}
+{% from "_categorias.html" import selector_categoria_select, vinculo_deuda with context %}
 {% block titulo %}Gastos{% endblock %}
 
 {% block contenido %}
@@ -32,7 +32,7 @@
         data-guardar-formulario="crear-gasto-general">
         <label class="campo">
           <span class="campo__etiqueta">Categoría</span>
-          {{ selector_categoria() }}
+          {{ selector_categoria_select() }}
         </label>
         <label class="campo">
           <span class="campo__etiqueta">Descripción</span>

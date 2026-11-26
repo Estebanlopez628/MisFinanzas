@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% from "finanzas/_gasto_fijo.html" import fila_gasto with context %}
-{% from "_categorias.html" import selector_categoria, vinculo_deuda, vinculo_condicional with context %}
+{% from "_categorias.html" import selector_categoria_select, vinculo_deuda, vinculo_condicional with context %}
 {% from "finanzas/_capacidad.html" import panel_capacidad with context %}
 {% block titulo %}Trabajos Extras{% endblock %}
 
@@ -67,7 +67,7 @@
         </label>
         <label class="campo">
           <span class="campo__etiqueta">Categoría</span>
-          {{ selector_categoria() }}
+          {{ selector_categoria_select() }}
         </label>
         <label class="campo">
           <span class="campo__etiqueta">Valor (COP)</span>

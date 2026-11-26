@@ -34,29 +34,38 @@ def _id_admin(bd) -> str:
     return cuenta.id_usuario
 
 
-@pytest.mark.parametrize("ruta", ["/finanzas", "/gastos", "/trabajos-extras"])
-def test_los_formularios_de_gastos_ofrecen_el_catalogo_cerrado(
+@pytest.mark.parametrize("ruta", ["/finanzas", "/gastos"])
+def test_gastos_fijos_usan_select_nativo_con_punto(
     cliente_admin: TestClient, bd, ruta: str
 ) -> None:
-    """Los tres formularios muestran las ocho categorías con sus colores exactos."""
-    if ruta == "/trabajos-extras":
-        # El formulario vive dentro de cada periodo de pago del contrato.
-        trabajo = trabajos.crear_trabajo(
-            bd, _id_admin(bd), "Diseño", "600.000", date.today()
-        )
-        trabajos.asegurar_pagos_trabajos(bd, _id_admin(bd), date.today().year, date.today().month)
-        assert trabajo is not None
+    """Los formularios de gastos fijos usan el mismo <select> con punto."""
     html = cliente_admin.get(ruta).text
 
-    assert "data-selector-categoria" in html
     assert 'name="categoria"' in html
-    assert "readonly" in html
+    assert "data-categoria-entrada" in html
     for categoria in catalogo.CATEGORIAS:
-        assert f'data-categoria-opcion="{categoria.nombre}"' in html
+        assert f'value="{categoria.nombre}"' in html
+        assert f">• {categoria.nombre}</option>" in html
         # El selector ya no pinta el cuadrito de color: usa un punto neutro.
         assert categoria.color not in html
-    assert html.count("data-categoria-opcion=") >= 8
-    assert html.count("selector-categoria__punto") >= 8
+
+
+@pytest.mark.parametrize("ruta", ["/presupuesto", "/trabajos-extras"])
+def test_deducciones_y_trabajos_usan_select_nativo_con_punto(
+    cliente_admin: TestClient, bd, ruta: str
+) -> None:
+    """Deducciones y Trabajos Extras usan un <select> con punto y valor limpio."""
+    if ruta == "/trabajos-extras":
+        trabajos.crear_trabajo(bd, _id_admin(bd), "Diseño", "600.000", date.today())
+        trabajos.asegurar_pagos_trabajos(bd, _id_admin(bd), date.today().year, date.today().month)
+    html = cliente_admin.get(ruta).text
+
+    assert 'name="categoria"' in html
+    assert "data-categoria-entrada" in html
+    for categoria in catalogo.CATEGORIAS:
+        assert f'value="{categoria.nombre}"' in html
+        assert f">• {categoria.nombre}</option>" in html
+        assert f'value="• {categoria.nombre}"' not in html
 
 
 def test_el_formulario_de_deducciones_tiene_categoria_y_vinculo(
@@ -65,7 +74,7 @@ def test_el_formulario_de_deducciones_tiene_categoria_y_vinculo(
     """Deducciones Fijas captura categoría cerrada y puede vincular una deuda."""
     html = cliente_admin.get("/presupuesto").text
 
-    assert "data-selector-categoria" in html
+    assert "data-categoria-entrada" in html
     assert 'data-guardar-formulario="crear-deduccion-fija"' in html
     assert "data-vinculo-condicional" in html
     assert 'name="id_deuda"' in html
@@ -109,7 +118,7 @@ def test_la_edicion_de_un_gasto_incluye_categoria_y_vinculo(
 
     html = cliente_admin.get("/finanzas").text
 
-    assert "data-selector-categoria" in html
+    assert "data-categoria-entrada" in html
     assert f'data-guardar-formulario="editar-gasto-{gasto.id_gasto}"' in html
     assert f'value="{gasto.categoria}"' in html
     assert "data-vincular-deuda" in html

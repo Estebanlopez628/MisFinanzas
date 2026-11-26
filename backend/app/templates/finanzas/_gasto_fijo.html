@@ -8,7 +8,7 @@
   negocio: solo pinta el estado que ya calculó el servidor.
 #}
 
-{% from "_categorias.html" import selector_categoria, vinculo_deuda with context %}
+{% from "_categorias.html" import selector_categoria_select, vinculo_deuda with context %}
 
 {% macro boton_editar(etiqueta) -%}
   {# SRS v1.7: «Editar» pasa a un lápiz del mismo tamaño que el check. #}
@@ -84,7 +84,7 @@
           </div>
           <label class="campo">
             <span class="campo__etiqueta">Categoría</span>
-            {{ selector_categoria(gasto.categoria) }}
+            {{ selector_categoria_select(gasto.categoria) }}
           </label>
           {{ vinculo_deuda(deudas_activas, gasto.id_deuda or '') }}
           <label class="campo">

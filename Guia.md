@@ -257,7 +257,7 @@ Principios que explican el resto del código:
 
 #### `backend/app/static/css/`
 
-- **`estilos.css`** · 6936 líneas — Fondo y superficies
+- **`estilos.css`** · 6954 líneas — Fondo y superficies
 - **`factura-olb.css`** · 755 líneas — SRS v4.44: el retorno de la factura es «Volver a Ventas» en todos los
 
 #### `backend/app/static/js/`
@@ -297,7 +297,7 @@ Principios que explican el resto del código:
 
 #### `backend/app/templates/`
 
-- **`_categorias.html`** · 126 líneas
+- **`_categorias.html`** · 117 líneas
 - **`base.html`** · 214 líneas — Vista previa al compartir el enlace (WhatsApp, redes). La URL pública sale de APP_URL;
 - **`dashboard.html`** · 96 líneas — Plantilla: Panel principal
 - **`login.html`** · 95 líneas — Plantilla: Iniciar sesión

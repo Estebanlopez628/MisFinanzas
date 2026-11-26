@@ -12,39 +12,30 @@
   La vinculación con deuda lista todas las deudas activas registradas.
 #}
 
-{% macro selector_categoria(valor='', nombre='categoria') -%}
-  <div class="selector-categoria" data-selector-categoria>
-    <input
-      class="campo__control selector-categoria__entrada"
-      type="text"
-      name="{{ nombre }}"
-      value="{{ valor or 'Vivienda y Servicios' }}"
-      readonly
-      required
-      data-categoria-entrada
-      aria-label="Categoría"
-    />
-    <button
-      class="selector-categoria__boton"
-      type="button"
-      data-categoria-boton
-      aria-label="Desplegar las ocho categorías"
-      aria-expanded="false"
-    >▾</button>
-    <ul class="selector-categoria__lista" data-categoria-lista hidden>
-      {% for categoria in categorias %}
-        <li>
-          <button
-            class="selector-categoria__opcion"
-            type="button"
-            data-categoria-opcion="{{ categoria.nombre }}"
-          >
-            <span class="selector-categoria__punto" aria-hidden="true">•</span>{{ categoria.nombre }}
-          </button>
-        </li>
-      {% endfor %}
-    </ul>
-  </div>
+{#
+  Variante nativa para Deducciones fijas y Trabajos Extras. El punto «•» va en
+  el texto de cada opción, pero el valor enviado es el nombre limpio, así el
+  backend sigue validando el catálogo. Mantiene `data-categoria-entrada`, que
+  es el gancho que usa `categorias.js` para la vinculación con deudas.
+  Una categoría histórica fuera del catálogo se conserva como opción extra.
+#}
+{% macro selector_categoria_select(valor='', nombre='categoria') -%}
+  {% set actual = valor or 'Vivienda y Servicios' %}
+  {% set nombres = categorias | map(attribute='nombre') | list %}
+  <select
+    class="campo__control"
+    name="{{ nombre }}"
+    required
+    data-categoria-entrada
+    aria-label="Categoría"
+  >
+    {% for categoria in categorias %}
+      <option value="{{ categoria.nombre }}" {% if categoria.nombre == actual %}selected{% endif %}>• {{ categoria.nombre }}</option>
+    {% endfor %}
+    {% if actual not in nombres %}
+      <option value="{{ actual }}" selected>{{ actual }}</option>
+    {% endif %}
+  </select>
 {%- endmacro %}
 
 
