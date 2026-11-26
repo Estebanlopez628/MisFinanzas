@@ -59,8 +59,6 @@ def test_la_factura_mantiene_el_enlace_de_regreso(cliente_admin: TestClient) -> 
     assert respuesta.status_code == 200
     assert "← Volver a Ventas" in respuesta.text
     assert "volver-ventas-factura" in respuesta.text
-    assert 'class="factura-cerrar"' in respuesta.text
+    assert "factura-cerrar" not in respuesta.text
     css = (RUTA / "static/css/factura-olb.css").read_text(encoding="utf-8")
-    movil = css.split("@media (max-width: 767px) {", 1)[1].split("@media print", 1)[0]
-    assert ".factura-cerrar" in movil
-    assert "box-shadow: 0 4px 14px rgba(239, 68, 68, 0.55)" in movil
+    assert "factura-cerrar" not in css

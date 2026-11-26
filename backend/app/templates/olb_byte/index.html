@@ -454,7 +454,9 @@
               <p class="detalle-orden__subtitulo">Acciones</p>
               {{ acciones_orden(venta, fila, anulada) }}
             </div>
-            <button type="button" class="boton boton--primario boton--pequeno detalle-orden__volver" data-cerrar-dialogo>Volver a todas las órdenes</button>
+            {# SRS v4.44: cierre uniforme con X roja; se retira «Volver a todas las órdenes». #}
+            <button type="button" class="detalle-orden__cerrar" data-cerrar-dialogo
+                    aria-label="Cerrar detalle de la orden" title="Cerrar">×</button>
           </div>
         </dialog>
       {% endfor %}

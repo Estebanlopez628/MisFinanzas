@@ -56,4 +56,5 @@ def test_ordenes_tienen_lista_movil_y_detalle(cliente_admin, bd) -> None:
     assert 'class="ordenes-moviles"' in html
     assert f'data-abrir-dialogo="orden-{venta.id_venta}"' in html
     assert f'id="orden-{venta.id_venta}"' in html
-    assert "Volver a todas las órdenes" in html
+    # SRS v4.44: el regreso se hace con la X roja uniforme.
+    assert 'class="detalle-orden__cerrar" data-cerrar-dialogo' in html

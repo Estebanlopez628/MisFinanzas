@@ -1303,29 +1303,9 @@ a.tarjeta:focus-visible {
   position: relative;
 }
 
-.detalle-orden__cerrar {
-  position: absolute;
-  top: 6px;
-  right: 8px;
-  width: 30px;
-  height: 30px;
-  border: 0;
-  border-radius: 50%;
-  background: rgba(148, 163, 184, 0.12);
-  color: var(--text-muted);
-  font-size: 1.15rem;
-  line-height: 1;
-  cursor: pointer;
-}
-
-.detalle-orden__cerrar:hover,
-.detalle-orden__cerrar:focus-visible {
-  background: rgba(239, 68, 68, 0.16);
-  color: var(--accent-red);
-  outline: none;
-}
-
-/* SRS v4.44: X rojisa del modal de pendientes de pago. */
+/* SRS v4.44: una sola X roja para todos los modales de OLB_BYTE (cartera,
+   pendientes y órdenes registradas). Misma forma, color y sombra. */
+.detalle-orden__cerrar,
 .pendiente-cerrar {
   position: absolute;
   top: 6px;
@@ -1345,11 +1325,15 @@ a.tarjeta:focus-visible {
   cursor: pointer;
 }
 
+.detalle-orden__cerrar:hover,
+.detalle-orden__cerrar:focus-visible,
 .pendiente-cerrar:hover,
 .pendiente-cerrar:focus-visible {
   background: rgba(153, 27, 27, 0.98);
   outline: none;
 }
+
+/* `.pendiente-cerrar` comparte la definición anterior con `.detalle-orden__cerrar`. */
 
 
 /* --------------------- Edición en línea de gastos fijos ------------------ */
@@ -4098,6 +4082,12 @@ strong.valor-negativo.recibo__cifra--saldo {
   padding-top: 0;
 }
 
+/* SRS v4.44: sin línea sobre el selector de Año de Analítica. */
+.formulario--filtros-analitica {
+  border-top: 0;
+  padding-top: 0;
+}
+
 /* Factura, WhatsApp y Anular de la misma medida en la tabla de órdenes */
 .acciones-orden > a,
 .acciones-orden > button,
@@ -4482,6 +4472,10 @@ strong.valor-negativo.recibo__cifra--saldo {
 /* La fecha de las filas va un poco más pequeña que el resto de la fila. */
 .orden-movil__fecha {
   font-size: 0.7rem;
+}
+
+.orden-movil--solo-lectura {
+  cursor: default;
 }
 
 .orden-movil--cabecera {

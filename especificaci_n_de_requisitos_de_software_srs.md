@@ -1355,3 +1355,20 @@ Requisito del propietario sobre «OLB_BYTE → Pendientes de pago», válido en 
 
 - `scripts/qa_v4_49.py`: **7/7 comprobaciones** en 1280 y 375 px (borde 0 px, un solo botón, X rojisa, cierre y scroll 55 → 55). Suite: **971 pruebas** en verde. `sw.js` en `olb-finanzas-v136`.
 - Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-110), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.44.
+
+---
+
+## 51. X uniforme y deudas a proveedores en Analítica
+
+Linea base v4.44. Alcance quirúrgico: solo OLB_BYTE; Mis Finanzas, los cálculos de ventas/liquidez, los CSV y los KPI existentes no se tocan.
+
+### 51.1 Cambios
+
+1. **X uniforme:** `.detalle-orden__cerrar` y `.pendiente-cerrar` comparten una regla (34 px, fondo `rgba(127,29,29,.94)`, sombras rojas). Se usa en Cartera, Pendientes y Órdenes registradas; en estas últimas desaparece «Volver a todas las órdenes».
+2. **Factura:** se retira la X móvil y vuelve «Volver a Ventas» en todos los tamaños, conservando la restauración exacta del scroll.
+3. **Analítica:** sin divisor sobre «Año». Nuevo bloque «Deudas con proveedores» con total adeudado, abonos y movimientos, más un formulario de alta (proveedor/concepto y saldo) que reutiliza `movimientos_proveedor` y `registrar_deuda_inicial`. No crea tablas ni modifica métricas: las deudas se muestran en su propio indicador, sin sumarse a ventas, ganancia ni gastos personales.
+
+### 51.2 Gate QA y cierre documental
+
+- `scripts/qa_v4_50.py`: **17/17 comprobaciones** en 1280 y 375 px. Línea 0 px, bloque presente, métricas existentes intactas, deuda persistida y X del mismo color en los tres módulos. `qa_v4_48.py`: **16/16** con «Volver a Ventas» y scroll 1400 → 1400. Suite: **976 pruebas** en verde. `sw.js` en `olb-finanzas-v137`.
+- Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-111), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.44.

@@ -8,11 +8,10 @@
 {% block contenido %}
   <div class="barra-herramientas-factura no-imprimir">
     <div class="acciones-formulario">
+      {# SRS v4.44: en móvil y escritorio el retorno es «Volver a Ventas» y
+         restaura la posición de «Órdenes registradas». No lleva X. #}
       <a class="boton boton--primario boton--pequeno volver-ventas-factura"
          href="{{ url_for('ver_olb_byte') }}">← Volver a Ventas</a>
-      {# SRS v4.44: en móvil el retorno es una X rojiza fija arriba a la derecha. #}
-      <a class="factura-cerrar" href="{{ url_for('ver_olb_byte') }}"
-         aria-label="Cerrar factura y volver a Ventas" title="Cerrar">×</a>
       <button class="boton boton--primario boton--pequeno" type="button"
               data-descargar-imagen
               data-fragmento="{{ url_for('ver_factura_hoja', id_venta=venta.id_venta) }}"

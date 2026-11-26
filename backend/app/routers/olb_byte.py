@@ -1154,6 +1154,8 @@ def ver_analitica(
     mes: str = "",
     cliente: str = "",
     producto: str = "",
+    guardado: str = "",
+    error_deuda: str = "",
 ) -> HTMLResponse:
     """Muestra los reportes, los clientes VIP, las alertas y las ventas por producto.
 
@@ -1168,6 +1170,8 @@ def ver_analitica(
         mes: Mes elegido (1 a 12); vacío usa todo el histórico.
         cliente: Identificador del cliente elegido.
         producto: Etiqueta del producto elegido.
+        guardado: Bandera de éxito al registrar una deuda con proveedor.
+        error_deuda: Bandera de error al registrar una deuda con proveedor.
 
     Returns:
         HTML de la vista de analítica.
@@ -1287,9 +1291,65 @@ def ver_analitica(
             "alertas": alertas,
             "ventas": ventas,
             "url_csv": url_csv,
+            # SRS v4.44: pasivos con proveedores en su propio bloque. No se
+            # suman a las ventas ni a la ganancia; solo se consultan y se registran.
+            "deuda_proveedor_analitica": comercial.deuda_proveedor(bd),
+            "abonos_proveedor_analitica": comercial.resumen_cartera(bd)["abonos_proveedor"],
+            "movimientos_proveedor_analitica": comercial.listar_movimientos_con_orden(bd),
+            "guardado_deuda": guardado == "deuda",
+            "error_deuda": error_deuda == "1",
         }
     )
     return plantillas.TemplateResponse(request, "olb_byte/analitica.html", contexto)
+
+
+@router.post(
+    "/olb-byte/analitica/deudas-proveedor",
+    name="registrar_deuda_proveedor_analitica",
+    response_model=None,
+)
+def registrar_deuda_proveedor_analitica(
+    request: Request,
+    usuario: UsuarioSesion = Depends(obtener_usuario_actual),
+    bd: Session = Depends(obtener_bd),
+    proveedor: Annotated[str, Form()] = "",
+    monto: Annotated[str, Form()] = "",
+) -> HTMLResponse | RedirectResponse:
+    """Registra un pasivo con proveedor desde Analítica (SRS v4.44).
+
+    Reutiliza `registrar_deuda_inicial`: el libro de movimientos sigue siendo
+    la única fuente de la deuda, sin crear tablas ni tocar las métricas de ventas.
+
+    Args:
+        request: Petición HTTP.
+        usuario: Administrador autenticado.
+        bd: Sesión de base de datos.
+        proveedor: Nombre del proveedor o concepto de la deuda.
+        monto: Saldo pendiente a registrar.
+
+    Returns:
+        Redirección a Analítica con aviso de éxito o error.
+    """
+    exigir_olb_byte(usuario)
+    try:
+        movimiento = comercial.registrar_deuda_inicial(
+            bd, monto, proveedor.strip() or "Deuda con proveedor"
+        )
+        auditoria.registrar(
+            bd,
+            usuario.id_usuario,
+            "DEUDA_PROVEEDOR_ANALITICA",
+            "movimientos_proveedor",
+            movimiento.id_movimiento,
+        )
+    except (ValueError, ArithmeticError):
+        bd.rollback()
+        return RedirectResponse(
+            url="/olb-byte/analitica?error_deuda=1", status_code=status.HTTP_303_SEE_OTHER
+        )
+    return RedirectResponse(
+        url="/olb-byte/analitica?guardado=deuda", status_code=status.HTTP_303_SEE_OTHER
+    )
 
 
 @router.get(

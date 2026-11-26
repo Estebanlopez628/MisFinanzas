@@ -232,3 +232,7 @@ Principios innegociables. Toda especificación, plan y tarea debe cumplirlos de 
 47. **Pendientes de pago (ADR-110):**
     - El buscador no muestra el divisor superior del formato compacto, en web ni en móvil.
     - El modal del cliente ofrece solo «Registrar Pago»; se cierra con una X rojiza y deja la lista en la misma posición.
+
+48. **X uniforme y pasivos en Analítica (ADR-111):**
+    - Cartera, Pendientes y Órdenes registradas usan la misma X roja; la factura usa «Volver a Ventas» y restaura la posición.
+    - Analítica muestra deudas a proveedores en bloque propio, sin sumarlas a ventas ni mezclarlas con Mis Finanzas, y sin nueva tabla.

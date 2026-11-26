@@ -10,42 +10,8 @@
   justify-content: flex-end;
 }
 
-/* Retorno de la factura: X rojiza en móvil, enlace en escritorio. */
-.factura-cerrar {
-  display: none;
-}
-
-@media (max-width: 767px) {
-  .volver-ventas-factura {
-    display: none;
-  }
-
-  .factura-cerrar {
-    display: inline-flex;
-    position: fixed;
-    top: 10px;
-    right: 12px;
-    z-index: 1000;
-    width: 38px;
-    height: 38px;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid rgba(254, 202, 202, 0.4);
-    border-radius: 50%;
-    background: rgba(127, 29, 29, 0.94);
-    box-shadow: 0 4px 14px rgba(239, 68, 68, 0.55), 0 0 10px rgba(239, 68, 68, 0.35);
-    color: #fee2e2;
-    font-size: 1.5rem;
-    line-height: 1;
-    text-decoration: none;
-  }
-}
-
-@media print {
-  .factura-cerrar {
-    display: none !important;
-  }
-}
+/* SRS v4.44: el retorno de la factura es «Volver a Ventas» en todos los
+   tamaños; restaura la posición de Órdenes registradas. Sin X. */
 
 .hoja-factura {
   position: relative;

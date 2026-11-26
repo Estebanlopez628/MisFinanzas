@@ -196,4 +196,8 @@ Cuando abras la factura o envíes por WhatsApp desde «Órdenes registradas», a
 
 En «Pendientes de pago», el buscador ya no tiene una línea por encima. Al tocar un cliente se abre su detalle con un solo botón, «Registrar Pago», y se cierra con la X roja de la esquina superior derecha; la lista queda exactamente donde estaba.
 
+La X roja es la misma en Cartera, Pendientes y Órdenes registradas. En la factura no hay X: usas «Volver a Ventas» y vuelves al punto exacto de la lista de órdenes.
+
+En Analítica ya no hay línea sobre el selector de año. Allí encontrarás un bloque propio de **Deudas con proveedores** con el total adeudado, los abonos y el historial; puedes registrar una deuda escribiendo el proveedor y el saldo. Ese bloque es independiente: no cambia las ventas, la ganancia ni tus finanzas personales. Para abonar o liquidar, ve a «Cartera y liquidez → Pago al proveedor».
+
 © 2026 MisFinanzas

@@ -80,16 +80,16 @@ def main() -> None:
                 pagina.url,
             )
 
-            cerrar = pagina.locator(".factura-cerrar")
             volver = pagina.locator(".volver-ventas-factura")
             comprobar(
-                f"{prefijo}: retorno visible del tamaño correcto",
-                cerrar.is_visible() if ancho < 768 else volver.is_visible(),
-                "X" if ancho < 768 else "enlace",
+                f"{prefijo}: «Volver a Ventas» visible en la factura",
+                volver.is_visible(),
             )
-            if ancho < 768:
-                comprobar(f"{prefijo}: X arriba a la derecha", cerrar.bounding_box()["x"] > ancho - 60)
-            (cerrar if ancho < 768 else volver).click()
+            comprobar(
+                f"{prefijo}: sin X en la factura",
+                pagina.locator(".factura-cerrar").count() == 0,
+            )
+            volver.click()
             pagina.wait_for_load_state("networkidle")
             pagina.wait_for_timeout(700)
             despues = pagina.evaluate("window.scrollY")

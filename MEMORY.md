@@ -2678,6 +2678,14 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v136`; **971 pruebas** en verde (3 nuevas en `test_olb_pendientes_ui.py`). Gate `qa_v4_49.py` **7/7** en 1280 y 375 px: borde superior 0 px, modal con un solo botón, X rojisa arriba a la derecha, cierre correcto y scroll 55 → 55.
 
+### 2026-11-25 — X uniforme y deudas a proveedores en Analítica (ADR-111)
+
+**Decisión (ADR-111).** El propietario corrigió dos puntos y pidió uno nuevo: (a) la X roja debe ser la misma en Cartera, Pendientes y Órdenes registradas; (b) en la factura móvil debe volver «Volver a Ventas», sin X, y seguir restaurando la posición; (c) Analítica lleva su propio bloque de deudas a proveedores y pierde la línea sobre «Año». Se mantiene intacto todo lo demás.
+
+**Consecuencias.** `.detalle-orden__cerrar` y `.pendiente-cerrar` comparten una sola regla (34 px, fondo `rgba(127,29,29,.94)`, sombras `rgba(239,68,68,…)`); el botón «Volver a todas las órdenes» se sustituye por esa X. De `factura.html` y `factura-olb.css` se retira `.factura-cerrar` y se conserva `.volver-ventas-factura` en todos los anchos, con el guardado de scroll existente. En Analítica, `.formulario--filtros-analitica` anula `border-top`/`padding-top`; el nuevo panel consulta `deuda_proveedor()` y `listar_movimientos_con_orden()` y registra con `POST /olb-byte/analitica/deudas-proveedor`, reutilizando `registrar_deuda_inicial` y `movimientos_proveedor`: **no hay tabla nueva ni cambio en reportes, CSV, KPI ni Mis Finanzas**.
+
+**Verificación.** `sw.js` en `olb-finanzas-v137`; **976 pruebas** en verde (5 nuevas en `test_olb_analitica_deudas.py`). Gate `qa_v4_50.py` **17/17** en 1280 y 375 px: línea 0 px, bloque presente, métricas intactas, deuda persistida (1400000 → 1445000 → 1490000) y X del mismo color en los tres módulos. Gate `qa_v4_48.py` **16/16** con «Volver a Ventas» y scroll 1400 → 1400.
+
 ### 2026-11-24 — SRS v4.43: corrección de columnas y portal del modal (ADR-105)
 
 **Decisión (ADR-105).** El propietario corrigió dos puntos de v4.42: el ancho fijo de 440 px forzaba scroll aunque el texto cupiera, y el modal de edición quedaba atrapado en el contexto de la tarjeta. Las referencias a `hidden md:table-cell` y `ReactDOM.createPortal` del documento son ilustrativas; se implementan con CSS y `document.body.appendChild`, según el stack.
