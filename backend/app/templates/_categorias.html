@@ -33,7 +33,7 @@
       <option value="{{ categoria.nombre }}" {% if categoria.nombre == actual %}selected{% endif %}>• {{ categoria.nombre }}</option>
     {% endfor %}
     {% if actual not in nombres %}
-      <option value="{{ actual }}" selected>{{ actual }}</option>
+      <option value="{{ actual }}" selected>• {{ actual }}</option>
     {% endif %}
   </select>
 {%- endmacro %}
@@ -61,7 +61,7 @@
         {% for deuda in deudas %}
           <option value="{{ deuda.id_deuda }}" data-cuota="{{ (deuda.cuota_mensual or 0) | cop(false) }}"
                   {% if deuda.id_deuda == seleccionada %}selected{% endif %}>
-            {{ deuda.acreedor }} · cuota {{ (deuda.cuota_mensual or 0) | cop }} · {{ deuda.cuotas_pendientes }} cuota(s)
+            • {{ deuda.acreedor }} · cuota {{ (deuda.cuota_mensual or 0) | cop }} · {{ deuda.cuotas_pendientes }} cuota(s)
           </option>
         {% endfor %}
       </select>
@@ -93,7 +93,7 @@
         {% for deuda in deudas %}
           <option value="{{ deuda.id_deuda }}" data-cuota="{{ (deuda.cuota_mensual or 0) | cop(false) }}"
                   {% if deuda.id_deuda == seleccionada %}selected{% endif %}>
-            {{ deuda.acreedor }} · cuota {{ (deuda.cuota_mensual or 0) | cop }} · {{ deuda.cuotas_pendientes }} cuota(s)
+            • {{ deuda.acreedor }} · cuota {{ (deuda.cuota_mensual or 0) | cop }} · {{ deuda.cuotas_pendientes }} cuota(s)
           </option>
         {% endfor %}
       </select>

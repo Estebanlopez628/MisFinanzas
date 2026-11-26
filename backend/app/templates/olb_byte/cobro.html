@@ -46,7 +46,7 @@
             <span class="campo__etiqueta">Método de pago</span>
             <select class="campo__control" name="metodo_pago">
               {% for opcion in metodos %}
-                <option value="{{ opcion }}"{% if opcion == metodo %} selected{% endif %}>{{ opcion | capitalize }}</option>
+                <option value="{{ opcion }}"{% if opcion == metodo %} selected{% endif %}>• {{ opcion | capitalize }}</option>
               {% endfor %}
             </select>
           </label>

@@ -39,7 +39,7 @@
                   <select class="campo__control campo__control--compacto" name="rol"
                           {% if cuenta.id_usuario == usuario.id_usuario %}disabled{% endif %}>
                     {% for opcion in roles %}
-                      <option value="{{ opcion }}" {% if cuenta.rol == opcion %}selected{% endif %}>{{ opcion }}</option>
+                      <option value="{{ opcion }}" {% if cuenta.rol == opcion %}selected{% endif %}>• {{ opcion }}</option>
                     {% endfor %}
                   </select>
                   <button class="boton boton--secundario boton--pequeno" type="submit"

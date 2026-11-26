@@ -687,10 +687,20 @@
 
   .totales-caja {
     width: 100%;
+    /* Móvil: el contenedor no pinta fondo; el radio interior del borde de 1.5 px
+       (10 px exteriores) evita que el blanco de la celda de valor asome bajo la
+       curva inferior. */
+    background: transparent;
+    border-radius: 10px;
+    overflow: hidden;
   }
 
   .totales-wrapper {
     justify-content: stretch;
+  }
+
+  .total-fila:last-child .total-valor {
+    border-bottom-right-radius: 8.5px;
   }
 
   .medios-pago-seccion {

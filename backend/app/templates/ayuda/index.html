@@ -103,7 +103,7 @@
         <span class="campo__etiqueta">Tipo de reporte</span>
         <select class="campo__control" name="tipo_reporte" required>
           {% for tipo in tipos_reporte %}
-            <option value="{{ tipo.clave }}">{{ tipo.etiqueta }}</option>
+            <option value="{{ tipo.clave }}">• {{ tipo.etiqueta }}</option>
           {% endfor %}
         </select>
       </label>
@@ -111,7 +111,7 @@
         <span class="campo__etiqueta">Módulo (opcional)</span>
         <select class="campo__control" name="modulo">
           {% for modulo in modulos %}
-            <option value="{{ modulo }}">{{ modulo }}</option>
+            <option value="{{ modulo }}">• {{ modulo }}</option>
           {% endfor %}
         </select>
       </label>

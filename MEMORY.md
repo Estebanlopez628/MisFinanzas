@@ -2854,6 +2854,14 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v156`. Gate `qa_v4_56.py` **6/6**: separación de 18 px medida entre quincenas y atajos, `clientHeight 325 / scrollHeight 386` en 1280 px, `370 / 439` en 375 px y bordes inferiores iguales en web. Suite completa **1002 pruebas** en verde y 20 gates sin regresiones propias.
 
+### 2026-11-26 — Punto en todas las opciones de los select (ADR-135)
+
+**Decisión (ADR-135).** El propietario pidió que todos los `<select>` del proyecto lleven «•» delante de cada opción, no solo los de categoría. Se excluyen los `<datalist>` (no son select) y los placeholders con `value=""` («Elige una…», «Mes completo» conserva punto por ser una elección real). El valor enviado no cambia.
+
+**Consecuencias.** Se agregó «• » a 61 opciones en 14 plantillas (Gastos, Presupuesto, Trabajos, Perfil, Deudas, Ayuda, Administración, OLB BYTE y la macro de vinculación con deudas). En JS: `categorias.js` quita el «•» al mostrar el acreedor de la deuda vinculada (`split("·")` sigue igual); `perfil.js` y `olb_byte.js` agregan «• » a las opciones que escriben en tiempo de ejecución. `sw.js` en `olb-finanzas-v164`.
+
+**Verificación.** Suite completa en verde (1003 pruebas); `node --check` de los cuatro scripts afectados; `generar_guia.py --verificar` correcto.
+
 ### 2026-11-26 — Select nativo con punto en Deducciones y Trabajos Extras (ADR-134)
 
 **Decisión (ADR-134).** En iPhone la lista de un `<select>` la dibuja iOS y no admite estilo, así que el selector personalizado se mantiene en todos los dispositivos para Gastos fijos de Mis Finanzas (sin cambios). En Deducciones fijas y en el alta de gastos fijos de Trabajos Extras la categoría pasa a `<select>` nativo, con «•» en el texto de cada opción.

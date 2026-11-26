@@ -124,7 +124,7 @@
       document
         .querySelectorAll("option[data-etiqueta-quincena='" + numero + "']")
         .forEach(function (opcion) {
-          opcion.textContent = "Quincena " + numero + " (día " + dia + ")";
+          opcion.textContent = "• Quincena " + numero + " (día " + dia + ")";
         });
     });
   });

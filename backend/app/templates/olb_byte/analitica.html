@@ -22,7 +22,7 @@
         <span class="campo__etiqueta">Año</span>
         <select class="campo__control" name="anio">
           {% for opcion in anios %}
-            <option value="{{ opcion }}"{% if opcion == anio %} selected{% endif %}>{{ opcion }}</option>
+            <option value="{{ opcion }}"{% if opcion == anio %} selected{% endif %}>• {{ opcion }}</option>
           {% endfor %}
         </select>
       </label>
@@ -31,7 +31,7 @@
         <select class="campo__control" name="mes">
           <option value="">Todos los meses</option>
           {% for numero, nombre in meses %}
-            <option value="{{ numero }}"{% if numero == mes %} selected{% endif %}>{{ nombre }}</option>
+            <option value="{{ numero }}"{% if numero == mes %} selected{% endif %}>• {{ nombre }}</option>
           {% endfor %}
         </select>
       </label>

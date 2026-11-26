@@ -30,7 +30,7 @@
             <select class="campo__control" data-estado-reporte
                     aria-label="Estado del reporte de {{ reporte.usuario }}">
               {% for estado in estados %}
-                <option value="{{ estado }}" {% if estado == reporte.estado %}selected{% endif %}>{{ estado }}</option>
+                <option value="{{ estado }}" {% if estado == reporte.estado %}selected{% endif %}>• {{ estado }}</option>
               {% endfor %}
             </select>
           </label>
@@ -67,7 +67,7 @@
                 <select class="campo__control campo__control--compacto" data-estado-reporte
                         aria-label="Estado del reporte de {{ reporte.usuario }}">
                   {% for estado in estados %}
-                    <option value="{{ estado }}" {% if estado == reporte.estado %}selected{% endif %}>{{ estado }}</option>
+                    <option value="{{ estado }}" {% if estado == reporte.estado %}selected{% endif %}>• {{ estado }}</option>
                   {% endfor %}
                 </select>
               </td>

@@ -326,7 +326,7 @@
       if (nota) {
         nota.hidden = false;
         if (notaAcreedor && opcion) {
-          notaAcreedor.textContent = opcion.textContent.split("·")[0].trim();
+          notaAcreedor.textContent = opcion.textContent.split("·")[0].replace("•", "").trim();
         }
       }
     }

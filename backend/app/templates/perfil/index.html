@@ -65,10 +65,10 @@
           <span class="campo__etiqueta">Modalidad de pago</span>
           <select class="campo__control" name="modalidad_pago" data-modalidad>
             <option value="MENSUAL" {% if valores.modalidad_pago == 'MENSUAL' %}selected{% endif %}>
-              Mensual
+              • Mensual
             </option>
             <option value="QUINCENAL" {% if valores.modalidad_pago == 'QUINCENAL' %}selected{% endif %}>
-              Quincenal
+              • Quincenal
             </option>
           </select>
         </label>
@@ -152,10 +152,10 @@
               <select class="campo__control" name="quincena_deducciones"
                       data-quincena-deducciones>
                 <option value="1" data-etiqueta-quincena="1" {% if valores.quincena_deducciones == '1' %}selected{% endif %}>
-                  Quincena 1 (día {{ valores.dia_quincena_1 }})
+                  • Quincena 1 (día {{ valores.dia_quincena_1 }})
                 </option>
                 <option value="2" data-etiqueta-quincena="2" {% if valores.quincena_deducciones == '2' %}selected{% endif %}>
-                  Quincena 2 (día {{ valores.dia_quincena_2 }})
+                  • Quincena 2 (día {{ valores.dia_quincena_2 }})
                 </option>
               </select>
               <span class="ayuda">Los porcentajes deben sumar 100 %.</span>
@@ -183,10 +183,10 @@
               <span class="campo__etiqueta">¿En qué quincena recibes ese valor neto?</span>
               <select class="campo__control" name="quincena_sin_deducciones">
                 <option value="1" data-etiqueta-quincena="1" {% if valores.quincena_sin_deducciones == '1' %}selected{% endif %}>
-                  Quincena 1 (día {{ valores.dia_quincena_1 }})
+                  • Quincena 1 (día {{ valores.dia_quincena_1 }})
                 </option>
                 <option value="2" data-etiqueta-quincena="2" {% if valores.quincena_sin_deducciones == '2' %}selected{% endif %}>
-                  Quincena 2 (día {{ valores.dia_quincena_2 }})
+                  • Quincena 2 (día {{ valores.dia_quincena_2 }})
                 </option>
               </select>
               <span class="ayuda">

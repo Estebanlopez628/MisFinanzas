@@ -430,8 +430,8 @@
         <label class="campo">
           <span class="campo__etiqueta">Tipo de duración</span>
           <select class="campo__control" name="tipo_duracion" data-duracion>
-            <option value="FIJO">Meta a largo plazo</option>
-            <option value="LIMITADO">Meta a corto plazo</option>
+            <option value="FIJO">• Meta a largo plazo</option>
+            <option value="LIMITADO">• Meta a corto plazo</option>
           </select>
         </label>
         <label class="campo">
@@ -442,8 +442,8 @@
         <label class="campo">
           <span class="campo__etiqueta">Unidad</span>
           <select class="campo__control" name="unidad_periodo" data-unidad>
-            <option value="MESES">Meses</option>
-            <option value="ANIOS">Años</option>
+            <option value="MESES">• Meses</option>
+            <option value="ANIOS">• Años</option>
           </select>
           <span class="ayuda">Hasta 50 años. Así se generan sus gastos fijos.</span>
         </label>
@@ -454,9 +454,9 @@
         <label class="campo">
           <span class="campo__etiqueta">Quincena donde aplicaremos los pagos</span>
           <select class="campo__control" name="quincena" data-quincena>
-            <option value="1">{{ etiquetas_quincena[1] }}</option>
-            <option value="2">{{ etiquetas_quincena[2] }}</option>
-            <option value="3">Ambas quincenas</option>
+            <option value="1">• {{ etiquetas_quincena[1] }}</option>
+            <option value="2">• {{ etiquetas_quincena[2] }}</option>
+            <option value="3">• Ambas quincenas</option>
           </select>
         </label>
       </div>
@@ -469,8 +469,8 @@
         <label class="campo">
           <span class="campo__etiqueta">¿Cómo aplicar el monto en cada quincena?</span>
           <select class="campo__control" name="modo_ambas" data-modo>
-            <option value="DIVIDIR">Dividir la cuota entre los dos pagos</option>
-            <option value="DUPLICAR">Cobrar el valor completo en cada pago</option>
+            <option value="DIVIDIR">• Dividir la cuota entre los dos pagos</option>
+            <option value="DUPLICAR">• Cobrar el valor completo en cada pago</option>
           </select>
           <span class="ayuda">
             Dividir: $100.000 → $50.000 + $50.000 ($100.000 al mes). Cobrar
@@ -522,8 +522,8 @@
       <label class="campo deduccion-quincena">
         <span class="campo__etiqueta">Quincena donde aplican los pagos</span>
         <select class="campo__control" name="quincena">
-          <option value="1">{{ etiquetas_quincena[1] }}</option>
-          <option value="2">{{ etiquetas_quincena[2] }}</option>
+          <option value="1">• {{ etiquetas_quincena[1] }}</option>
+          <option value="2">• {{ etiquetas_quincena[2] }}</option>
         </select>
       </label>
       {{ vinculo_condicional(
@@ -576,8 +576,8 @@
                   <label class="campo">
                     <span class="campo__etiqueta">Quincena</span>
                     <select class="campo__control" name="quincena">
-                      <option value="1" {% if deduccion.quincena == 1 %}selected{% endif %}>{{ etiquetas_quincena[1] }}</option>
-                      <option value="2" {% if deduccion.quincena == 2 %}selected{% endif %}>{{ etiquetas_quincena[2] }}</option>
+                      <option value="1" {% if deduccion.quincena == 1 %}selected{% endif %}>• {{ etiquetas_quincena[1] }}</option>
+                      <option value="2" {% if deduccion.quincena == 2 %}selected{% endif %}>• {{ etiquetas_quincena[2] }}</option>
                     </select>
                   </label>
                   {{ vinculo_deuda(deudas_activas, deduccion.id_deuda or '') }}
@@ -659,8 +659,8 @@
               <input class="campo__control campo__control--compacto" type="number" name="cantidad"
                      min="1" max="600" step="1" placeholder="Cantidad" required />
               <select class="campo__control campo__control--compacto" name="unidad_periodo">
-                <option value="MESES">Meses</option>
-                <option value="ANIOS">Años</option>
+                <option value="MESES">• Meses</option>
+                <option value="ANIOS">• Años</option>
               </select>
               <button class="boton boton--primario boton--pequeno" type="submit">Extender</button>
             </form>

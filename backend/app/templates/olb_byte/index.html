@@ -74,7 +74,7 @@
                             <span class="campo__etiqueta">Medio de devolución</span>
                             <select class="campo__control" name="metodo_devolucion">
                               {% for metodo in metodos_pago %}
-                                <option value="{{ metodo }}">{{ metodo | capitalize }}</option>
+                                <option value="{{ metodo }}">• {{ metodo | capitalize }}</option>
                               {% endfor %}
                             </select>
                           </label>
@@ -96,7 +96,7 @@
                             <span class="campo__etiqueta">Medio</span>
                             <select class="campo__control" name="metodo_pago">
                               {% for metodo in metodos_pago %}
-                                <option value="{{ metodo }}">{{ metodo | capitalize }}</option>
+                                <option value="{{ metodo }}">• {{ metodo | capitalize }}</option>
                               {% endfor %}
                             </select>
                           </label>
@@ -193,15 +193,15 @@
           <label class="campo">
             <span class="campo__etiqueta">Forma de pago</span>
             <select class="campo__control" name="forma_pago" data-forma-pago>
-              <option value="CONTADO" {% if forma == 'CONTADO' %}selected{% endif %}>Pago de contado</option>
-              <option value="CREDITO" {% if forma == 'CREDITO' %}selected{% endif %}>Pago a crédito</option>
+              <option value="CONTADO" {% if forma == 'CONTADO' %}selected{% endif %}>• Pago de contado</option>
+              <option value="CREDITO" {% if forma == 'CREDITO' %}selected{% endif %}>• Pago a crédito</option>
             </select>
           </label>
           <label class="campo" data-bloque="contado">
             <span class="campo__etiqueta">Método de pago</span>
             <select class="campo__control" name="metodo_pago" data-metodo-pago>
-              <option value="TRANSFERENCIA" {% if pago.metodo_pago == 'TRANSFERENCIA' %}selected{% endif %}>Transferencia</option>
-              <option value="EFECTIVO" {% if pago.metodo_pago != 'TRANSFERENCIA' %}selected{% endif %}>Efectivo</option>
+              <option value="TRANSFERENCIA" {% if pago.metodo_pago == 'TRANSFERENCIA' %}selected{% endif %}>• Transferencia</option>
+              <option value="EFECTIVO" {% if pago.metodo_pago != 'TRANSFERENCIA' %}selected{% endif %}>• Efectivo</option>
             </select>
           </label>
         </div>
@@ -210,8 +210,8 @@
           <label class="campo">
             <span class="campo__etiqueta">Anticipo de compra</span>
             <select class="campo__control" name="anticipo" data-anticipo>
-              <option value="NO" {% if anticipo == 'NO' %}selected{% endif %}>No realiza anticipo</option>
-              <option value="SI" {% if anticipo == 'SI' %}selected{% endif %}>Sí realiza anticipo</option>
+              <option value="NO" {% if anticipo == 'NO' %}selected{% endif %}>• No realiza anticipo</option>
+              <option value="SI" {% if anticipo == 'SI' %}selected{% endif %}>• Sí realiza anticipo</option>
             </select>
           </label>
         </div>
@@ -225,8 +225,8 @@
           <label class="campo">
             <span class="campo__etiqueta">Método de pago del anticipo</span>
             <select class="campo__control" name="metodo_anticipo" data-metodo-anticipo>
-              <option value="TRANSFERENCIA" {% if pago.metodo_anticipo == 'TRANSFERENCIA' %}selected{% endif %}>Transferencia</option>
-              <option value="EFECTIVO" {% if pago.metodo_anticipo != 'TRANSFERENCIA' %}selected{% endif %}>Efectivo</option>
+              <option value="TRANSFERENCIA" {% if pago.metodo_anticipo == 'TRANSFERENCIA' %}selected{% endif %}>• Transferencia</option>
+              <option value="EFECTIVO" {% if pago.metodo_anticipo != 'TRANSFERENCIA' %}selected{% endif %}>• Efectivo</option>
             </select>
           </label>
         </div>

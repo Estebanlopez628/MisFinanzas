@@ -124,7 +124,7 @@
     if (!existe && texto) {
       var opcion = document.createElement("option");
       opcion.value = texto;
-      opcion.textContent = texto;
+      opcion.textContent = "• " + texto;
       opcion.setAttribute("data-historico", "1");
       campo.appendChild(opcion);
     }

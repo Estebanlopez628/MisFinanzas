@@ -97,7 +97,7 @@
               {% for opcion in periodicidades %}
                 <option value="{{ opcion }}"
                         {% if opcion == (valores.periodicidad if valores else 'MENSUAL') %}selected{% endif %}>
-                  {{ opcion | capitalize }}
+                  • {{ opcion | capitalize }}
                 </option>
               {% endfor %}
             </select>
