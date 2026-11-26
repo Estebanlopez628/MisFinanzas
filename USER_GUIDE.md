@@ -190,9 +190,13 @@ En **OLB_BYTE → Cartera y liquidez** ya puedes registrar deudas que tenías an
 
 También puedes registrar **gastos operativos** (por ejemplo, internet o transporte de la tienda). La fecha del día queda fija y solo escribes el valor. Estos gastos **no cambian** lo que debes al proveedor ni el dinero en caja, pero se descuentan de inmediato de tu **ganancia real (neta)**: la ves en el historial de gastos, en los indicadores de Analítica y en las tablas y descargas CSV. Puedes editar la fecha y el valor, o eliminar el gasto; las estadísticas se recalculan al instante.
 
+En el celular, el historial de gastos es una tabla limpia de dos columnas: **FECHA | MONTO**. La fecha aparece completa a la izquierda (`11/26/2026`) y el monto en verde a la derecha (`$10.000`), sin puntos suspensivos ni etiquetas largas. Al tocar una fila se abre la edición con la X arriba, los campos de Fecha y Valor y los botones **Actualizar** y **Eliminar**. En la computadora se mantiene la tabla de Fecha | Monto | Acciones.
+
+Dentro de OLB_BYTE, las secciones se llaman **Registro de ventas**, **Cuentas por cobrar**, **Cartera y pagos a proveedores**, **Soporte y garantías** y **Analítica comercial**. La pantalla de análisis se titula **Gestión de ventas y control**.
+
 Los movimientos con el proveedor muestran ahora Fecha, Tipo, Cliente, Producto, Concepto, Monto y Saldo. En el celular, toca una fila para ver el detalle completo y cierra con la X.
 
-En el celular, al registrar una venta verás el botón **Agregar Numero** junto al campo del celular: si tu navegador abre contactos, toma el número y lo deja limpio (sin +57 ni espacios). Si no abre contactos, verás un aviso con **Elegir contacto**, **Abrir WhatsApp** y **Pegar número**. En iPhone toca «Elegir contacto»: se abre el teclado y encima aparecen tus contactos sugeridos; elige uno y el número queda limpio (sin +57 ni espacios). También puedes abrir WhatsApp, copiar el número del contacto, volver y tocar «Pegar número». El campo ya no se enfoca solo, así que no se abre el teclado de golpe. En la computadora el botón sigue diciendo **Pegar número** y funciona igual que antes.
+En el celular, al registrar una venta verás el botón **Agregar Numero** junto al campo del celular: al tocarlo se abre WhatsApp directamente. Busca el contacto, copia su número, vuelve a la aplicación y pégalo en el campo. El campo limpia solo los espacios y el `+57`, y deja únicamente los 10 dígitos que se guardan en la factura. En la computadora el botón sigue diciendo **Pegar número** y funciona igual que antes.
 
 Cuando abras la factura o envíes por WhatsApp desde «Órdenes registradas», al volver quedarás exactamente en el mismo punto de la lista; en el celular, la factura usa «Volver a Ventas» y se reabre el detalle de la orden que estabas viendo.
 

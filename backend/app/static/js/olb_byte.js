@@ -448,6 +448,10 @@
   }
 
   if (campoTelefono) {
+    // Al pegar el número copiado en WhatsApp (o al escribirlo) queda limpio de inmediato.
+    campoTelefono.addEventListener("input", function () {
+      campoTelefono.value = normalizarTelefono(campoTelefono.value);
+    });
     campoTelefono.addEventListener("blur", function () {
       campoTelefono.value = normalizarTelefono(campoTelefono.value);
     });
@@ -511,53 +515,14 @@
   }
 
   /**
-   * Abre la libreta de contactos en móvil y deja el número limpio en el campo.
-   * Si la API no está disponible, enfoca el campo y avisa sin bloquear la vista.
+   * Abre WhatsApp en el celular para que el usuario busque el contacto y copie su número.
+   * La página no puede leer la libreta de WhatsApp; el usuario pega el número en el campo
+   * y el evento `input` lo deja limpio (sin espacios ni indicativo 57).
    *
    * @returns {void}
    */
-  /**
-   * Avisa del fallo, enfoca el campo y deja una nota breve junto a él.
-   *
-   * @param {string} mensaje Texto del aviso.
-   * @returns {void}
-   */
-  function avisarFalloNumero(mensaje) {
-    // No se enfoca el campo: en móvil eso abre el teclado y tapa el aviso.
-    mostrarNotaContactos(mensaje);
-  }
-
   function agregarNumeroMovil() {
-    if (!navigator.contacts || typeof navigator.contacts.select !== "function") {
-      avisarFalloNumero(
-        "Este navegador no abre la libreta de contactos. Toca «Elegir contacto» para ver los contactos del teclado, o abre WhatsApp, copia el número y toca «Pegar número»."
-      );
-      return;
-    }
-    try {
-      Promise.resolve(navigator.contacts.select(["tel"], { multiple: false }))
-        .then(function (contactos) {
-          var numeroContacto = contactos && contactos[0] && contactos[0].tel && contactos[0].tel[0];
-          if (!numeroContacto) {
-            avisarFalloNumero("El contacto no tiene número. Escribe el celular manualmente.");
-            return;
-          }
-          var numero = normalizarTelefono(numeroContacto);
-          if (numero.length !== 10) {
-            avisarFalloNumero("El número del contacto no tiene 10 dígitos. Revísalo e inténtalo otra vez.");
-            return;
-          }
-          if (campoTelefono) {
-            campoTelefono.value = numero;
-          }
-          mostrarNotaContactos("");
-        })
-        .catch(function () {
-          avisarFalloNumero("No se pudo abrir la libreta de contactos. Toca «Elegir contacto» para ver los contactos del teclado, o abre WhatsApp, copia el número y toca «Pegar número».");
-        });
-    } catch (error) {
-      avisarFalloNumero("No se pudo abrir la libreta de contactos. Toca «Elegir contacto» para ver los contactos del teclado, o abre WhatsApp, copia el número y toca «Pegar número».");
-    }
+    window.location.href = "whatsapp://";
   }
 
   /**
@@ -601,34 +566,6 @@
 
   if (botonPegar) {
     botonPegar.addEventListener("click", manejarBotonNumero);
-  }
-
-  var botonPegarPortapapeles = formulario.querySelector("[data-pegar-portapapeles]");
-  var botonAbrirWhatsapp = formulario.querySelector("[data-abrir-whatsapp]");
-  if (botonPegarPortapapeles) {
-    botonPegarPortapapeles.addEventListener("click", function (evento) {
-      evento.preventDefault();
-      evento.stopPropagation();
-      pegarNumero();
-    });
-  }
-  if (botonAbrirWhatsapp) {
-    botonAbrirWhatsapp.addEventListener("click", function (evento) {
-      evento.preventDefault();
-      evento.stopPropagation();
-      window.location.href = "whatsapp://";
-    });
-  }
-
-  var botonElegirContacto = formulario.querySelector("[data-elegir-contacto]");
-  if (botonElegirContacto && campoTelefono) {
-    // En iOS el teclado de los campos `tel` ofrece contactos del dispositivo.
-    // Aquí sí enfocamos el campo a propósito, porque es una acción explícita.
-    botonElegirContacto.addEventListener("click", function (evento) {
-      evento.preventDefault();
-      evento.stopPropagation();
-      campoTelefono.focus();
-    });
   }
 
   // ----------------------------------- Arranque ---------------------------------

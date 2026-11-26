@@ -322,12 +322,15 @@
       </div>
 
       <ul class="ordenes-moviles ordenes-moviles--gastos" aria-label="Historial de gastos operativos">
+        <li class="orden-movil orden-movil--cabecera orden-movil--gasto" aria-hidden="true">
+          <span>Fecha</span><span>Monto</span>
+        </li>
         {% for gasto in gastos_operativos %}
           <li>
             <button type="button" class="orden-movil orden-movil--gasto"
                     data-abrir-dialogo="gasto-{{ gasto.id_gasto_operativo }}">
-              <span class="orden-movil__fecha">Fecha: {{ gasto.fecha.strftime('%d/%m/%y') }}</span>
-              <span>Valor del gasto: {{ gasto.monto | cop }}</span>
+              <span class="orden-movil__fecha">{{ gasto.fecha.strftime('%m/%d/%Y') }}</span>
+              <span class="orden-movil__monto">{{ gasto.monto | cop }}</span>
             </button>
           </li>
         {% endfor %}
@@ -354,7 +357,7 @@
                        value="{{ gasto.monto | cop }}" required data-moneda />
               </label>
               <div class="gasto-operativo__acciones">
-                <button class="boton boton--primario boton--pequeno" type="submit">Guardar</button>
+                <button class="boton boton--primario boton--pequeno" type="submit">Actualizar</button>
                 <button class="boton boton--peligro boton--pequeno" type="submit"
                         formaction="{{ url_for('eliminar_gasto_operativo', id_gasto=gasto.id_gasto_operativo) }}"
                         data-confirmar="¿Eliminar este gasto operativo?">Eliminar</button>

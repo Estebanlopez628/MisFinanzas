@@ -2774,6 +2774,30 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v148`; gate `qa_v4_51.py` verifica que «Elegir contacto» enfoca el campo y que las tres acciones están visibles en 375 px.
 
+### 2026-11-26 — Nomenclatura de navegación de OLB_BYTE (ADR-123)
+
+**Decisión (ADR-123).** El propietario pidió un cambio quirúrgico de etiquetas: las cinco pestañas del submenú pasan a «Registro de ventas», «Cuentas por cobrar», «Cartera y pagos a proveedores», «Soporte y garantías» y «Analítica comercial»; el encabezado principal de Analítica pasa a «📈 Gestión de ventas y control», con el título del navegador acorde. Confirmó que el cambio aplica al `<h1>` de esa vista, no al nombre del módulo en el Inicio.
+
+**Consecuencias.** Se editan `_subnav.html`, el `{% block titulo %}` y el `<h1>` de `analitica.html`, y `titulo_pagina` en `ver_analitica`. No se tocan cálculos, tablas analíticas, CSV, modales, scroll ni Mis Finanzas. Los enlaces «← Volver a Ventas» se conservan por la regla de no regresión v4.44.
+
+**Verificación.** `sw.js` en `olb-finanzas-v149`. Gate `qa_v4_54.py` **6/6** en 1280 y 375 px: cinco pestañas nuevas, encabezado y título del navegador. Pruebas `test_olb_ui.py` actualizadas a las nuevas etiquetas.
+
+### 2026-11-26 — Botón móvil abre WhatsApp directo (ADR-124)
+
+**Decisión (ADR-124).** El propietario simplificó el flujo: al tocar «Agregar Numero» en móvil debe abrirse WhatsApp de inmediato (`whatsapp://` vía `location.href`); él mismo busca el contacto, copia el número y lo pega en el campo. La web no puede abrir ni leer la libreta interna de WhatsApp, así que se retira el aviso con «Elegir contacto» / «Abrir WhatsApp» / «Pegar número» de ADR-122. El campo debe dejar solo los 10 dígitos, sin espacios ni `+57`, para que ese sea el número que llega a la factura.
+
+**Consecuencias.** `agregarNumeroMovil()` ahora solo abre WhatsApp; se eliminan los manejadores de los tres botones y sus reglas CSS. El campo `cliente_telefono` normaliza en el evento `input` (además de `blur`) con `normalizarTelefono()`, que quita no dígitos y el prefijo 57 de 12 dígitos. El backend `servicios/comercial.normalizar_telefono()` sigue siendo la última guardia. En web el botón conserva «Pegar número» y el portapapeles.
+
+**Verificación.** `sw.js` en `olb-finanzas-v150`. Gate `qa_v4_51.py` **8/8**: sin teclado ni aviso al pulsar, campo limpio tras pegar con y sin indicativo, un solo rótulo por ancho. Suite completa en verde.
+
+### 2026-11-26 — Tabla limpia de gastos operativos en móvil (ADR-125)
+
+**Decisión (ADR-125).** El propietario pidió, para «Historial de pagos operativos» en móvil, una tabla limpia de dos columnas con encabezado FECHA | MONTO, igual a «Movimientos con el proveedor»: fecha a la izquierda (`11/26/2026`) y monto a la derecha en verde esmeralda (`$10.000`). Prohíbe `truncate` y prefijos largos como «Valor del gasto:» que recortan con `...`. En web se conservan las tres columnas Fecha | Monto | Acciones. Al tocar la fila debe abrirse el modal con X arriba a la derecha, campos editables de Fecha y Valor y dos botones compactos Actualizar / Eliminar.
+
+**Consecuencias.** La lista móvil gana una fila de cabecera y usa `orden-movil__monto` con `color: var(--accent-green)` y `text-align: right`; se anula `text-overflow: ellipsis` para esa lista. El formato pasa a `%m/%d/%Y`, igual al de la tabla de escritorio (sustituye al `DD/MM/AA` con prefijos de ADR-121). El corte móvil de este panel se baja a <768 px mediante un media query 641–767 px, sin alterar el corte de 640 px de las demás listas. El botón «Guardar» del modal pasa a «Actualizar» y el diálogo lleva `z-index: 9999`.
+
+**Verificación.** `sw.js` en `olb-finanzas-v151`. Gate `qa_v4_52.py` **15/15** en 375, 700 y 1280 px: encabezado, fila sin prefijos ni recorte, monto `rgb(16, 185, 129)`, modal Actualizar/Eliminar y capa 9999. `qa_v4_46.py` ajustado al nuevo rótulo (**27/27**).
+
 ### 2026-11-24 — SRS v4.43: corrección de columnas y portal del modal (ADR-105)
 
 **Decisión (ADR-105).** El propietario corrigió dos puntos de v4.42: el ancho fijo de 440 px forzaba scroll aunque el texto cupiera, y el modal de edición quedaba atrapado en el contexto de la tarjeta. Las referencias a `hidden md:table-cell` y `ReactDOM.createPortal` del documento son ilustrativas; se implementan con CSS y `document.body.appendChild`, según el stack.

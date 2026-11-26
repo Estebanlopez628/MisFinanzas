@@ -4,26 +4,26 @@
   <a class="subnav-finanzas__enlace {% if seccion|default('') == 'ventas' %}subnav-finanzas__enlace--activo{% endif %}"
      href="{{ url_for('ver_olb_byte') }}"
      {% if seccion|default('') == 'ventas' %}aria-current="page"{% endif %}>
-    Ventas
+    Registro de ventas
   </a>
   <a class="subnav-finanzas__enlace {% if seccion|default('') == 'pendientes' %}subnav-finanzas__enlace--activo{% endif %}"
      href="{{ url_for('ver_pendientes') }}"
      {% if seccion|default('') == 'pendientes' %}aria-current="page"{% endif %}>
-    Pendientes de pago
+    Cuentas por cobrar
   </a>
   <a class="subnav-finanzas__enlace {% if seccion|default('') == 'cartera' %}subnav-finanzas__enlace--activo{% endif %}"
      href="{{ url_for('ver_cartera') }}"
      {% if seccion|default('') == 'cartera' %}aria-current="page"{% endif %}>
-    Cartera y liquidez
+    Cartera y pagos a proveedores
   </a>
   <a class="subnav-finanzas__enlace {% if seccion|default('') == 'garantias' %}subnav-finanzas__enlace--activo{% endif %}"
      href="{{ url_for('ver_garantias') }}"
      {% if seccion|default('') == 'garantias' %}aria-current="page"{% endif %}>
-    Garantías
+    Soporte y garantías
   </a>
   <a class="subnav-finanzas__enlace {% if seccion|default('') == 'analitica' %}subnav-finanzas__enlace--activo{% endif %}"
      href="{{ url_for('ver_analitica') }}"
      {% if seccion|default('') == 'analitica' %}aria-current="page"{% endif %}>
-    Analítica
+    Analítica comercial
   </a>
 </nav>

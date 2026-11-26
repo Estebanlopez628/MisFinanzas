@@ -34,12 +34,20 @@ def _etiquetas_con(html: str, atributo: str) -> list[str]:
 
 
 def test_submenu_de_olb_byte_queda_arriba(cliente_admin: TestClient) -> None:
-    """El submenú con Ventas, Pendientes, Cartera, Garantías y Analítica va bajo el encabezado."""
+    """El submenú con las cinco secciones renombradas va bajo el encabezado."""
     texto = cliente_admin.get("/olb-byte").text
 
     assert "subnav-finanzas" in texto
     for ruta in ("/olb-byte/pendientes", "/olb-byte/cartera", "/olb-byte/garantias", "/olb-byte/analitica"):
         assert re.search(rf'href="[^"]*{re.escape(ruta)}"', texto)
+    for etiqueta in (
+        "Registro de ventas",
+        "Cuentas por cobrar",
+        "Cartera y pagos a proveedores",
+        "Soporte y garantías",
+        "Analítica comercial",
+    ):
+        assert etiqueta in texto
     assert "Ver pendientes de pago (" not in texto
     assert texto.index("subnav-finanzas") < texto.index("Registrar venta")
 
@@ -61,9 +69,18 @@ def _pestana_activa(html: str) -> str:
 
 def test_submenu_marca_la_seccion_activa_en_cada_vista(cliente_admin: TestClient) -> None:
     """Cada vista resalta su propia pestaña del submenú."""
-    assert _pestana_activa(cliente_admin.get("/olb-byte/pendientes").text) == "Pendientes de pago"
-    assert _pestana_activa(cliente_admin.get("/olb-byte/analitica").text) == "Analítica"
-    assert _pestana_activa(cliente_admin.get("/olb-byte").text) == "Ventas"
+    assert _pestana_activa(cliente_admin.get("/olb-byte/pendientes").text) == "Cuentas por cobrar"
+    assert _pestana_activa(cliente_admin.get("/olb-byte/analitica").text) == "Analítica comercial"
+    assert _pestana_activa(cliente_admin.get("/olb-byte").text) == "Registro de ventas"
+
+
+def test_titulo_principal_de_analitica_es_gestion_de_ventas(cliente_admin: TestClient) -> None:
+    """El encabezado y el título del navegador de Analítica usan la nueva nomenclatura."""
+    texto = cliente_admin.get("/olb-byte/analitica").text
+
+    assert "📈 Gestión de ventas y control" in texto
+    assert "Gestión de ventas y control · OLB_BYTE</title>" in texto
+    assert "<h1 class=\"heroe__titulo\">📈 Analítica</h1>" not in texto
 
 
 def test_boton_pegar_numero_reemplaza_a_contactos(cliente_admin: TestClient) -> None:

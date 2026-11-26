@@ -264,12 +264,24 @@ Principios innegociables. Toda especificación, plan y tarea debe cumplirlos de 
 
 55. **Límites y contactos (ADR-120):**
     - Analítica: 6 productos; Ventas: 5 órdenes; ambas con scroll vertical y cabeceras opacas.
-    - Sin Contact Picker: aviso con «Elegir contacto», «Abrir WhatsApp» y «Pegar número», sin abrir el teclado de golpe ni bloquear.
+    - El flujo del botón de número se simplificó en ADR-124; aquí solo se fijan los límites de filas.
 
 56. **Ganancia global y etiquetas de KPI (ADR-121):**
     - Ganancia global = Ganancia neta − Pago a Proveedor; se muestra sin signo menos (`| abs |`) y se colorea rojo si el valor real es negativo, verde si es positivo.
-    - Etiquetas sin año y contenido centrado en web y móvil; fila móvil de gastos operativos con «Fecha: DD/MM/AA» y «Valor del gasto:». Columna «PASIVO ANTIGUO» y CSV intactos.
+    - Etiquetas sin año y contenido centrado en web y móvil. Columna «PASIVO ANTIGUO» y CSV intactos. El formato móvil de gastos se corrigió en ADR-125.
 
-57. **Contactos en iOS, opción A (ADR-122):**
-    - Safari iOS no expone Contact Picker ni permite abrir la libreta interna de WhatsApp: «Elegir contacto» enfoca el campo `tel autocomplete="tel"` para que el teclado ofrezca contactos sugeridos.
-    - El número se normaliza igual en las tres rutas; el botón «Agregar Numero» sigue siendo solo móvil y no enfoca de golpe.
+57. **Contactos en iOS, opción A (ADR-122, sustituida):**
+    - Safari iOS no expone Contact Picker ni permite abrir la libreta interna de WhatsApp.
+    - Sustituida por ADR-124: el botón abre WhatsApp directamente y el campo limpia el número pegado.
+
+58. **Nomenclatura de OLB_BYTE (ADR-123):**
+    - Pestañas: «Registro de ventas», «Cuentas por cobrar», «Cartera y pagos a proveedores», «Soporte y garantías», «Analítica comercial».
+    - Encabezado de Analítica: «📈 Gestión de ventas y control»; «Volver a Ventas» se conserva. Sin tocar cálculos, tablas, CSV ni Mis Finanzas.
+
+59. **Botón móvil abre WhatsApp (ADR-124):**
+    - «Agregar Numero» abre `whatsapp://` en <768 px sin enfocar el campo; el número pegado se limpia a 10 dígitos en `input`.
+    - Web mantiene «Pegar número» con portapapeles; se retiraron los tres botones del aviso.
+
+60. **Tabla limpia de gastos operativos (ADR-125):**
+    - Móvil (<768 px): FECHA | MONTO, fecha `MM/DD/YYYY` y monto verde esmeralda, sin `truncate` ni prefijos. Web: Fecha | Monto | Acciones.
+    - Modal con X, Actualizar y Eliminar a `z-index: 9999`; no alterar Movimientos con el proveedor.

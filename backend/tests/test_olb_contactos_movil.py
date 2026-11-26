@@ -1,4 +1,4 @@
-"""Pruebas del botón de número en Registrar venta (SRS v4.44, solo móvil)."""
+"""Pruebas del botón de número en Registrar venta (solo móvil abre WhatsApp)."""
 
 from __future__ import annotations
 
@@ -18,44 +18,58 @@ def plantilla_leida() -> str:
     return (RUTA / "templates/olb_byte/index.html").read_text(encoding="utf-8")
 
 
+def javascript_leido() -> str:
+    """Lee el JavaScript de OLB_BYTE.
+
+    Returns:
+        Contenido de `olb_byte.js`.
+    """
+    return (RUTA / "static/js/olb_byte.js").read_text(encoding="utf-8")
+
+
 def test_boton_tiene_un_solo_rotulo() -> None:
     """El DOM trae solo «Agregar Numero»; el escritorio lo cambia por JS."""
-    plantilla = (RUTA / "templates/olb_byte/index.html").read_text(encoding="utf-8")
-    bloque = plantilla.split("data-pegar-numero>", 1)[1].split("</button>", 1)[0]
+    bloque = plantilla_leida().split("data-pegar-numero>", 1)[1].split("</button>", 1)[0]
     assert "Agregar Numero" in bloque
     assert "Pegar número" not in bloque
     assert "data-rotulo-numero" in bloque
 
 
-def test_js_rotulo_y_contactos_con_respaldo() -> None:
-    """Un solo rótulo por ancho, Contact Picker y fallback sin errores."""
-    js = (RUTA / "static/js/olb_byte.js").read_text(encoding="utf-8")
-    rotulo = js[js.index("function sincronizarRotuloNumero()") : js.index("if (botonPegar)")]
-    assert 'window.matchMedia("(max-width: 767px)").matches' in rotulo
-    assert '"Agregar Numero"' in rotulo and '"Pegar número"' in rotulo
-    bloque = js[js.index("function avisarFalloNumero(") : js.index("function manejarBotonNumero()")]
-    assert "navigator.contacts.select" in bloque
-    assert "try {" in bloque and "Promise.resolve" in bloque
-    assert "nota-contactos--aviso" in js
-    assert "data-nota-contactos-texto" in plantilla_leida()
-    assert "data-pegar-portapapeles" in plantilla_leida()
-    assert "data-elegir-contacto" in plantilla_leida()
-    assert "botonElegirContacto" in js
-    assert 'window.location.href = "whatsapp://"' in js
-    assert "campoTelefono.focus()" not in bloque
+def test_movil_abre_whatsapp_y_el_campo_limpia_lo_pegado() -> None:
+    """El botón móvil abre WhatsApp y el campo quita espacios e indicativo al pegar."""
+    js = javascript_leido()
+    movil = js.split("function agregarNumeroMovil() {", 1)[1].split("}", 1)[0]
+    assert 'window.location.href = "whatsapp://"' in movil
+    assert "navigator.contacts.select" not in js
+    assert "data-elegir-contacto" not in js
+    assert "data-abrir-whatsapp" not in js
+    assert "data-pegar-portapapeles" not in js
+    assert 'campoTelefono.addEventListener("input"' in js
     normalizar = js.split("function normalizarTelefono(texto) {", 1)[1].split("}", 1)[0]
     assert "replace(/\\D/g" in normalizar
     assert "digitos.slice(2)" in normalizar
 
 
-def test_vista_de_ventas_muestra_un_solo_rotulo(cliente_admin: TestClient) -> None:
-    """La plantilla no renderiza el rótulo de escritorio en el móvil."""
+def test_rotulo_de_escritorio_sigue_siendo_portapapeles() -> None:
+    """El mismo botón dice «Pegar número» en web y conserva el portapapeles."""
+    js = javascript_leido()
+    rotulo = js[js.index("function sincronizarRotuloNumero()") : js.index("if (botonPegar)")]
+    assert 'window.matchMedia("(max-width: 767px)").matches' in rotulo
+    assert '"Agregar Numero"' in rotulo and '"Pegar número"' in rotulo
+    manejar = js[js.index("function manejarBotonNumero()") : js.index("var rotuloNumero")]
+    assert "agregarNumeroMovil()" in manejar
+    assert "pegarNumero()" in manejar
+
+
+def test_vista_de_ventas_no_renderiza_los_controles_del_aviso(cliente_admin: TestClient) -> None:
+    """La plantilla no ofrece Elegir contacto ni botones de respaldo."""
     respuesta = cliente_admin.get("/olb-byte")
     assert respuesta.status_code == 200
     html = respuesta.text
-    assert "data-pegar-numero" in html
     rotulo = html.split("data-pegar-numero>", 1)[1].split("</button>", 1)[0]
     assert "Agregar Numero" in rotulo
-    assert "Pegar número" not in rotulo
-    # El rótulo «Pegar número» solo existe en el botón de respaldo del aviso.
-    assert "data-pegar-portapapeles>Pegar número</button>" in html
+    assert "Pegar número" not in html
+    assert "data-elegir-contacto" not in html
+    assert "data-abrir-whatsapp" not in html
+    assert "data-pegar-portapapeles" not in html
+    assert "data-nota-contactos-texto" in html

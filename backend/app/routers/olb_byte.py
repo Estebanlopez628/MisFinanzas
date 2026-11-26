@@ -1274,7 +1274,7 @@ def ver_analitica(
     contexto = contexto_base(usuario)
     contexto.update(
         {
-            "titulo_pagina": "Analítica · OLB_BYTE",
+            "titulo_pagina": "Gestión de ventas y control · OLB_BYTE",
             "anio": filtro.anio,
             "mes": filtro.mes,
             "nombre_mes": analitica.MESES[filtro.mes - 1] if filtro.mes else None,

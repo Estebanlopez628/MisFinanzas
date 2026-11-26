@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import re
+
 from playwright.sync_api import sync_playwright
 
 from app.core.base_datos import FabricaSesiones
@@ -95,14 +97,26 @@ def main() -> None:
         pagina = contexto_movil.new_page()
         iniciar(pagina, "/olb-byte/cartera")
         lista = pagina.locator(".ordenes-moviles--gastos")
-        texto_fila = lista.locator("button.orden-movil").first.inner_text()
+        cabecera = lista.locator("li.orden-movil--cabecera").first.inner_text()
         comprobar(
-            "375px: fila con Fecha DD/MM/AA y Valor del gasto",
-            "Fecha:" in texto_fila
-            and "Valor del gasto:" in texto_fila
-            and "/26" in texto_fila,
+            "375px: encabezado FECHA | MONTO",
+            [parte.strip().upper() for parte in cabecera.split()] == ["FECHA", "MONTO"],
+            cabecera,
+        )
+        fila = lista.locator("button.orden-movil").first
+        texto_fila = fila.inner_text()
+        comprobar(
+            "375px: fila limpia sin prefijos ni recorte",
+            "Fecha:" not in texto_fila
+            and "Valor del gasto:" not in texto_fila
+            and re.search(r"\b\d{2}/\d{2}/\d{4}\b", texto_fila) is not None
+            and "$" in texto_fila,
             texto_fila,
         )
+        color = fila.locator(".orden-movil__monto").evaluate("e => getComputedStyle(e).color")
+        comprobar("375px: monto en verde esmeralda", color == "rgb(16, 185, 129)", color)
+        recorte = fila.locator("span").first.evaluate("e => getComputedStyle(e).textOverflow")
+        comprobar("375px: sin truncate en la fila", recorte == "clip", recorte)
         tope = lista.evaluate("e => getComputedStyle(e).maxHeight")
         comprobar(
             "375px: historial con cinco filas visibles",
@@ -115,10 +129,12 @@ def main() -> None:
         comprobar("375px: la fila abre el modal", dialogo.count() == 1)
         botones = [b.strip() for b in dialogo.locator(".gasto-operativo__acciones button").all_inner_texts()]
         comprobar(
-            "375px: modal con Guardar y Eliminar",
-            "Guardar" in botones and "Eliminar" in botones and "Actualizar" not in botones,
+            "375px: modal con Actualizar y Eliminar",
+            "Actualizar" in botones and "Eliminar" in botones and "Guardar" not in botones,
             str(botones),
         )
+        capa = dialogo.evaluate("e => getComputedStyle(e).zIndex")
+        comprobar("375px: modal por encima de todo", capa == "9999", capa)
         x = dialogo.locator(".detalle-orden__cerrar")
         color_x = x.evaluate("e => getComputedStyle(e).backgroundColor")
         comprobar(
@@ -133,6 +149,20 @@ def main() -> None:
             pagina.locator("dialog.detalle-orden[open]").count() == 0,
         )
         contexto_movil.close()
+
+        contexto_700 = navegador.new_context(viewport={"width": 700, "height": 900}, service_workers="block")
+        pagina_700 = contexto_700.new_page()
+        iniciar(pagina_700, "/olb-byte/cartera")
+        visibilidad = (
+            pagina_700.locator(".tabla-contenedor--gastos").is_visible(),
+            pagina_700.locator(".ordenes-moviles--gastos").is_visible(),
+        )
+        comprobar(
+            "700px: tabla de dos columnas (corte <768 px)",
+            visibilidad == (False, True),
+            str(visibilidad),
+        )
+        contexto_700.close()
         navegador.close()
 
     fallos = [fila for fila in resultados if not fila[1]]

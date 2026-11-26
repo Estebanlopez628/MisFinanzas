@@ -1,4 +1,4 @@
-"""Gate QA: botón de número en Registrar venta, solo móvil (SRS v4.44)."""
+"""Gate QA: botón móvil abre WhatsApp y el campo limpia el número pegado."""
 
 from __future__ import annotations
 
@@ -42,7 +42,7 @@ def iniciar(pagina) -> None:
 
 
 def main() -> None:
-    """Verifica rotulos, contactos y respaldo en web y móvil.
+    """Verifica rótulos, apertura de WhatsApp y limpieza del campo en web y móvil.
 
     Returns:
         None. Imprime el informe.
@@ -84,56 +84,36 @@ def main() -> None:
             and (boton.text_content() or "").count("Agregar Numero") == 1
             and "Pegar número" not in (boton.text_content() or ""),
         )
+        aviso = pagina_movil.locator("[data-nota-contactos]")
+        comprobar(
+            "375px: sin botones de respaldo en el aviso",
+            aviso.locator("[data-elegir-contacto]").count() == 0
+            and aviso.locator("[data-abrir-whatsapp]").count() == 0
+            and aviso.locator("[data-pegar-portapapeles]").count() == 0,
+        )
         boton.click()
         pagina_movil.wait_for_timeout(200)
         campo = pagina_movil.locator("input[data-cliente-telefono]")
-        enfocado = campo.evaluate("e => document.activeElement === e")
-        aviso = pagina_movil.locator("[data-nota-contactos]")
         comprobar(
-            "375px: sin Contact Picker avisa sin abrir teclado",
-            aviso.is_visible()
-            and "WhatsApp" in (aviso.text_content() or "")
-            and not enfocado
-            and pagina_movil.locator("#modal-aviso:visible").count() == 0,
-            (aviso.text_content() or "").strip(),
+            "375px: al pulsar no se abre el teclado ni aparece aviso",
+            not campo.evaluate("e => document.activeElement === e") and not aviso.is_visible(),
         )
-        comprobar(
-            "375px: ofrece Elegir contacto, WhatsApp y Pegar número",
-            aviso.locator("[data-elegir-contacto]").is_visible()
-            and aviso.locator("[data-abrir-whatsapp]").is_visible()
-            and aviso.locator("[data-pegar-portapapeles]").is_visible(),
-        )
-        aviso.locator("[data-elegir-contacto]").click()
+
+        campo.fill("+57 (300) 123-4567")
         pagina_movil.wait_for_timeout(100)
         comprobar(
-            "375px: Elegir contacto enfoca el campo a propósito",
-            campo.evaluate("e => document.activeElement === e"),
+            "375px: al pegar queda solo el número de 10 dígitos",
+            campo.input_value() == "3001234567",
+            campo.input_value(),
+        )
+        campo.fill("300 456 7890")
+        pagina_movil.wait_for_timeout(100)
+        comprobar(
+            "375px: al pegar sin indicativo también queda limpio",
+            campo.input_value() == "3004567890",
+            campo.input_value(),
         )
         contexto_movil.close()
-
-        contexto_contactos = navegador.new_context(viewport={"width": 375, "height": 900}, service_workers="block")
-        contexto_contactos.add_init_script(
-            """Object.defineProperty(navigator, 'contacts', {
-              configurable: true,
-              value: {
-                select: function () {
-                  return Promise.resolve([{ tel: ['+57 (300) 123-4567'] }]);
-                }
-              }
-            });"""
-        )
-        pagina_contactos = contexto_contactos.new_page()
-        iniciar(pagina_contactos)
-        pagina_contactos.locator("button[data-pegar-numero]").click()
-        pagina_contactos.wait_for_timeout(250)
-        valor = pagina_contactos.locator("input[data-cliente-telefono]").input_value()
-        comprobar(
-            "375px: contacto se pega sin +57 ni formatos",
-            valor == "3001234567",
-            valor,
-        )
-        contexto_contactos.close()
-
         navegador.close()
 
     fallos = [fila for fila in resultados if not fila[1]]

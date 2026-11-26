@@ -79,19 +79,40 @@ def plantilla_ventas() -> str:
     return (RUTA / "templates/olb_byte/index.html").read_text(encoding="utf-8")
 
 
-def test_modal_de_gasto_en_movil_tiene_guardar_y_x(cliente_admin: TestClient) -> None:
-    """El modal solo ofrece Guardar/Eliminar y cierra con la X roja uniforme."""
+def test_historial_movil_es_tabla_limpia_de_dos_columnas() -> None:
+    """La fila móvil lleva FECHA | MONTO sin prefijos ni recorte."""
+    css = _css()
+    limpio = css.split(".ordenes-moviles--gastos .orden-movil span {", 1)[1].split("}", 1)[0]
+    assert "overflow: visible" in limpio
+    assert "text-overflow: clip" in limpio
+    assert "white-space: normal" in limpio
+    monto = css.split(".ordenes-moviles--gastos .orden-movil__monto {", 1)[1].split("}", 1)[0]
+    assert "var(--accent-green)" in monto
+    assert "text-align: right" in monto
+    corte = css.split("@media (min-width: 641px) and (max-width: 767px) {", 1)[1][:300]
+    assert ".tabla-contenedor--gastos" in corte and "display: none" in corte
+    plantilla = (RUTA / "templates/olb_byte/cartera.html").read_text(encoding="utf-8")
+    lista = plantilla.split('<ul class="ordenes-moviles ordenes-moviles--gastos"', 1)[1].split("</ul>", 1)[0]
+    assert "<span>Fecha</span><span>Monto</span>" in lista
+    assert "orden-movil__fecha" in lista and "orden-movil__monto" in lista
+    assert "Fecha:" not in lista and "Valor del gasto:" not in lista
+
+
+def test_modal_de_gasto_en_movil_tiene_actualizar_y_x(cliente_admin: TestClient) -> None:
+    """El modal ofrece Actualizar/Eliminar, cierra con la X y queda sobre todo."""
     with FabricaSesiones() as bd:
         comercial.registrar_gasto_operativo(bd, "10000", "2026-11-01")
     respuesta = cliente_admin.get("/olb-byte/cartera")
     assert respuesta.status_code == 200
     html = respuesta.text
-    assert ">Guardar</button>" in html
-    assert ">Actualizar</button>" not in html
-    # Fila móvil con etiquetas y fecha DD/MM/AA.
-    assert "Fecha: 01/11/26" in html
-    assert "Valor del gasto:" in html
+    assert ">Actualizar</button>" in html
+    assert ">Guardar</button>" not in html
+    # Fila móvil limpia: fecha MM/DD/YYYY a la izquierda y monto a la derecha.
+    assert ">11/01/2026</span>" in html
+    assert "Fecha:" not in html
+    assert "Valor del gasto:" not in html
     assert 'class="detalle-orden__cerrar" data-cerrar-dialogo' in html
+    assert "dialog.detalle-orden {" in _css()
 
 
 def test_garantias_y_cartera_renderizan_las_tablas(cliente_admin: TestClient) -> None:

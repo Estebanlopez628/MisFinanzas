@@ -1229,6 +1229,21 @@ a.tarjeta:focus-visible {
   margin-top: 4px;
 }
 
+/* ADR-125: tabla limpia de dos columnas. Sin «truncate» ni prefijos largos:
+   la fecha y el monto deben verse completos aunque la pantalla sea estrecha.
+   Esta regla gana sobre `.orden-movil span` por especificidad. */
+.ordenes-moviles--gastos .orden-movil span {
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+}
+
+.ordenes-moviles--gastos .orden-movil__monto {
+  color: var(--accent-green);
+  font-weight: 700;
+  text-align: right;
+}
+
 .panel__total {
   font-size: 0.85rem;
   color: var(--text-muted);
@@ -3005,25 +3020,10 @@ textarea.campo__control {
   min-width: 0;
 }
 
-/* Aviso breve junto al celular cuando no se puede abrir la libreta. */
+/* Aviso breve junto al celular cuando el portapapeles no se puede leer. */
 .nota-contactos--aviso {
   color: var(--accent-red);
   font-weight: 600;
-}
-
-.nota-contactos__acciones {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 6px;
-}
-
-/* El aviso con WhatsApp/Pegar es exclusivo de móvil; en web el botón ya usa
-   el portapapeles directamente. */
-@media (min-width: 768px) {
-  .nota-contactos__acciones {
-    display: none;
-  }
 }
 
 
@@ -4695,6 +4695,19 @@ strong.valor-negativo.recibo__cifra--saldo {
   }
 }
 
+/* ADR-125: en el historial de gastos el corte es <768 px, no 640 px como en
+   el resto de las listas móviles. De 641 a 767 px se mantiene la tabla de dos
+   columnas; desde 768 px vuelven las tres columnas de escritorio. */
+@media (min-width: 641px) and (max-width: 767px) {
+  .tabla-contenedor--gastos {
+    display: none;
+  }
+
+  .ordenes-moviles--gastos {
+    display: flex;
+  }
+}
+
 /* ------------ Deducciones fijas: fila superior de tres campos (3.1) ------- */
 
 .deduccion-quincena {
@@ -5872,6 +5885,11 @@ dialog.detalle-orden {
   z-index: 50;
   max-width: calc(100vw - 2rem);
   max-height: calc(100vh - 2rem);
+}
+
+/* ADR-125: el modal de edición de gasto se abre por encima de cualquier capa. */
+dialog.detalle-orden {
+  z-index: 9999;
 }
 
 /* ---------- SRS v2.0: ayuda, badge administrativo e invitación ---------- */

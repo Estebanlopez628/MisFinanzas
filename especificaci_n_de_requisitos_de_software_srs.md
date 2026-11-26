@@ -1567,4 +1567,56 @@ Safari iOS no expone Contact Picker API y ninguna web puede abrir ni leer la lib
 ### 62.3 Gate QA y cierre documental
 
 - `scripts/qa_v4_51.py` verifica en 375 px que «Elegir contacto» está visible y enfoca el campo. `sw.js` en `olb-finanzas-v148`.
-- Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-122), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.44.
+- Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-122), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.44. Sección sustituida por la 64.
+
+---
+
+## 63. Nomenclatura de navegación y título principal
+
+Línea base v4.44. Alcance quirúrgico: solo etiquetas de navegación y el encabezado de Analítica en OLB_BYTE, en web y móvil.
+
+### 63.1 Cambios
+
+1. Pestañas del submenú: `Ventas` → **Registro de ventas**; `Pendientes de pago` → **Cuentas por cobrar**; `Cartera y liquidez` → **Cartera y pagos a proveedores**; `Garantías` → **Soporte y garantías**; `Analítica` → **Analítica comercial**.
+2. Encabezado principal de Analítica: `📈 Analítica` → **📈 Gestión de ventas y control**, con el título del navegador acorde.
+3. No se alteran cálculos, lógica de negocio, tablas analíticas, CSV, modales, scroll ni Mis Finanzas. «Volver a Ventas» se conserva.
+
+### 63.2 Gate QA y cierre documental
+
+- `qa_v4_54.py` **6/6** en 1280 y 375 px. `sw.js` en `olb-finanzas-v149`.
+- Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-123), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.44.
+
+---
+
+## 64. Botón móvil abre WhatsApp directo
+
+Línea base v4.44. Sustituye la sección 62.
+
+### 64.1 Cambios
+
+1. En móvil (<768 px), «Agregar Numero» abre `whatsapp://` vía `location.href`, sin enfocar el campo ni mostrar avisos.
+2. El usuario busca el contacto en WhatsApp, copia el número y lo pega en el campo. El evento `input` aplica `normalizarTelefono()`: quita espacios y el indicativo 57, y deja solo 10 dígitos para la factura. El backend sigue validando con `servicios/comercial.normalizar_telefono()`.
+3. Se retiran «Elegir contacto», «Abrir WhatsApp» y «Pegar número» del aviso. En web (≥768 px) el botón sigue «Pegar número» con portapapeles.
+
+### 64.2 Gate QA y cierre documental
+
+- `qa_v4_51.py` **8/8**: sin teclado ni aviso al pulsar, un solo rótulo por ancho y campo limpio con y sin indicativo. `sw.js` en `olb-finanzas-v150`.
+- Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-124), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.44.
+
+---
+
+## 65. Tabla limpia de gastos operativos en móvil
+
+Línea base v4.44. Sustituye el formato de fila móvil descrito en la sección 61.
+
+### 65.1 Cambios
+
+1. Móvil (<768 px): tabla de dos columnas con encabezado **FECHA | MONTO**, fecha `MM/DD/YYYY` a la izquierda y monto en verde esmeralda a la derecha (ej. `11/26/2026 | $10.000`). Sin `truncate` ni prefijos «Fecha:»/«Valor del gasto:».
+2. Web (≥768 px): se mantienen las tres columnas **Fecha | Monto | Acciones** (Editar / Eliminar) sin recortes.
+3. Al tocar la fila se abre el modal con X arriba a la derecha, campos editables de Fecha y Valor y dos botones compactos **Actualizar** y **Eliminar**, a `z-index: 9999`.
+4. «Movimientos con el proveedor» y las demás listas móviles no cambian.
+
+### 65.2 Gate QA y cierre documental
+
+- `qa_v4_52.py` **15/15** en 375, 700 y 1280 px; `qa_v4_46.py` **27/27** con el rótulo «Actualizar». `sw.js` en `olb-finanzas-v151`.
+- Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-125), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.44.
