@@ -2854,6 +2854,14 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v156`. Gate `qa_v4_56.py` **6/6**: separación de 18 px medida entre quincenas y atajos, `clientHeight 325 / scrollHeight 386` en 1280 px, `370 / 439` en 375 px y bordes inferiores iguales en web. Suite completa **1002 pruebas** en verde y 20 gates sin regresiones propias.
 
+### 2026-11-26 — SRS Consolidado Final: onda fluida y simetría (ADR-146)
+
+**Decisión (ADR-146).** SRS consolidado: onda luminosa inferior tipo Boceto 2 en todas las tarjetas con el color propio de cada una, tono azul noche en los resúmenes de Registrar venta, limpieza de envoltorios internos y orden/color de botones en Liquidación del período. Login, iconos, modales, tablas, lógica y scroll intactos.
+
+**Consecuencias.** En `estilos.css`, `body:not(.pagina-acceso)` aplica a `.tarjeta`, `.panel--kpis .kpi` y `.impacto-deuda`: base `rgba(7,23,48,.72)`, `blur(14px)`, radio 18 px, borde cian suave y `::after` con onda de ancho completo (`radial-gradient` + `linear-gradient`, `blur(10px)`, `pointer-events: none`, `z-index: 1`), contenido en `z-index: 2`; en móvil la onda baja a 54 px y opacidad .45. Se anula la franja superior con `::before { content: none }`. `.resumen-venta > div` usa `rgba(4,18,42,.72)` con borde cian; atajos bajan a `rgba(4,18,42,.82)`. Los formularios internos de Nueva deuda y Liquidación y sus grillas/barras quedan transparentes, sin borde ni sombra, con ancho completo y `box-sizing: border-box`, sin cambiar el padding de los campos. En `finanzas/index.html`, los botones pasan a «Guardar periodo» (primario, azul) y luego «Limpiar» (secundario).
+
+**Verificación.** Playwright 1280 px y 390 px sobre Login, Inicio, Mis Finanzas, OLB BYTE y Deudas: onda inferior con el acento de cada tarjeta, botones en orden y con los colores pedidos, resúmenes oscurecidos, envoltorios transparentes, login intacto, sin desbordes ni errores de consola. Suite completa en verde. `sw.js` en `olb-finanzas-v180`.
+
 ### 2026-11-26 — Textos más cortos en la vinculación con deudas (ADR-145)
 
 **Decisión (ADR-145).** El propietario pidió acortar los dos textos largos de `_categorias.html` sin romper el enlace ni el flujo de vinculación.

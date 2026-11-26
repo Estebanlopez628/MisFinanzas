@@ -6979,28 +6979,61 @@ body:not(.pagina-acceso) .panel {
   border-color: rgba(56, 189, 248, 0.22);
 }
 
-/* Todas las tarjetas: base azul marino translúcida y onda difusa inferior. */
-body:not(.pagina-acceso) .tarjeta {
+/* Todas las tarjetas: base azul marino translúcida, esquinas de 18 px y onda
+   luminosa fluida en todo el borde inferior (Boceto 2). */
+body:not(.pagina-acceso) .tarjeta,
+body:not(.pagina-acceso) .panel--kpis .kpi,
+body:not(.pagina-acceso) .impacto-deuda {
   position: relative;
   overflow: hidden;
-  background: linear-gradient(160deg, rgba(7, 32, 68, 0.72), rgba(4, 18, 42, 0.6));
-  border-color: rgba(56, 189, 248, 0.26);
+  border-radius: 18px;
+  background: rgba(7, 23, 48, 0.72);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(148, 197, 255, 0.16);
+  box-shadow: 0 12px 28px rgba(2, 8, 20, 0.45);
+  --card-accent: var(--acento, var(--accent-blue));
+  --card-accent-soft: color-mix(in srgb, var(--acento, var(--accent-blue)) 30%, transparent);
 }
 
-/* La franja superior se sustituye por dos resplandores en las esquinas
-   inferiores; el contenido y los iconos quedan por encima de la onda. */
+/* Se elimina la franja superior de acento; ahora solo hay onda inferior. */
 body:not(.pagina-acceso) .tarjeta::before {
-  inset: auto 0 0 0;
-  height: 60%;
-  background:
-    radial-gradient(ellipse 70% 65% at 12% 100%,
-      color-mix(in srgb, var(--acento, var(--accent-blue)) 30%, transparent) 0%, transparent 72%),
-    radial-gradient(ellipse 65% 60% at 88% 100%, rgba(34, 211, 238, 0.2) 0%, transparent 74%);
-  opacity: 0.95;
+  content: none;
 }
 
-body:not(.pagina-acceso) .tarjeta > * {
+body:not(.pagina-acceso) .tarjeta::after,
+body:not(.pagina-acceso) .panel--kpis .kpi::after,
+body:not(.pagina-acceso) .impacto-deuda::after {
+  content: "";
+  position: absolute;
+  left: -6%;
+  right: -6%;
+  bottom: -18px;
+  height: 68px;
   z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(120% 95% at 72% 100%, var(--card-accent-soft) 0%, transparent 72%),
+    linear-gradient(90deg, transparent 0%, var(--card-accent) 68%, transparent 100%);
+  opacity: 0.55;
+  filter: blur(10px);
+  border-radius: 50% 50% 0 0 / 85% 85% 0 0;
+}
+
+body:not(.pagina-acceso) .tarjeta > *,
+body:not(.pagina-acceso) .panel--kpis .kpi > *,
+body:not(.pagina-acceso) .impacto-deuda > * {
+  position: relative;
+  z-index: 2;
+}
+
+@media (max-width: 767px) {
+  body:not(.pagina-acceso) .tarjeta::after,
+  body:not(.pagina-acceso) .panel--kpis .kpi::after,
+  body:not(.pagina-acceso) .impacto-deuda::after {
+    height: 54px;
+    opacity: 0.45;
+  }
 }
 
 /* Formularios y subsecciones: azul marino translúcido de referencia. El borde
@@ -7077,26 +7110,6 @@ body:not(.pagina-acceso) .subnav-finanzas__enlace--activo:focus-visible {
   background: linear-gradient(135deg, rgba(2, 132, 199, 0.95), rgba(56, 189, 248, 0.95));
   border-color: rgba(125, 211, 252, 0.75);
   color: #ffffff;
-}
-
-body:not(.pagina-acceso) .panel--kpis .kpi {
-  position: relative;
-  overflow: hidden;
-  background: rgba(7, 32, 68, 0.68);
-  border: 1px solid rgba(56, 189, 248, 0.2);
-  border-radius: var(--radio-md);
-  padding: 12px;
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-}
-
-body:not(.pagina-acceso) .panel--kpis .kpi::before {
-  content: "";
-  position: absolute;
-  inset: auto 0 0 0;
-  height: 45%;
-  background: radial-gradient(ellipse at 50% 100%, rgba(34, 211, 238, 0.18) 0%, transparent 72%);
-  pointer-events: none;
 }
 
 /* --------------------------------------------------------------------------
@@ -7177,8 +7190,7 @@ body:not(.pagina-acceso) .impacto-deudas {
 }
 
 body:not(.pagina-acceso) .cierre-deuda__velocimetro,
-body:not(.pagina-acceso) .mf-gauge-card,
-body:not(.pagina-acceso) .impacto-deuda {
+body:not(.pagina-acceso) .mf-gauge-card {
   background: rgba(4, 18, 42, 0.62);
   border: 1px solid rgba(56, 189, 248, 0.18);
   backdrop-filter: blur(6px);
@@ -7239,3 +7251,50 @@ body:not(.pagina-acceso) dialog::backdrop {
    color/transparencia. No se modifican ancho, padding, borde, sombra, posición
    ni z-index: los modales de edición (incluidos los que se trasladan al <body>
    en móvil) conservan su configuración original de posicionamiento. */
+
+/* --------------------------------------------------------------------------
+   SRS Consolidado Final — resúmenes de OLB BYTE, envoltorios internos y
+   atajos. Solo apariencia; login, iconos, lógica y modales intactos.
+   -------------------------------------------------------------------------- */
+
+/* Tres resúmenes inferiores de «Registrar venta»: mismo azul noche que los
+   cuadros de CANTIDAD y GARANTÍA, con borde fino y alto contraste. */
+body:not(.pagina-acceso) .resumen-venta > div {
+  background: rgba(4, 18, 42, 0.72);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 10px;
+}
+
+/* Atajos: un paso más oscuros que el panel que los contiene. */
+body:not(.pagina-acceso) .lista-atajos__item,
+body:not(.pagina-acceso) .atajo-tarjeta-movil {
+  background: rgba(4, 18, 42, 0.82);
+}
+
+/* Envoltorios internos de Nueva deuda y Liquidación del período: sin cajas
+   fantasma. Se excluyen los formularios de edición dentro de modales. */
+body:not(.pagina-acceso) .rejilla-paneles--deudas form.formulario,
+body:not(.pagina-acceso) .panel--liquidacion form.formulario,
+body:not(.pagina-acceso) .fila-campos,
+body:not(.pagina-acceso) [class*="acciones-formulario"] {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  border-radius: var(--radio-md, 14px);
+}
+
+/* Contenedores internos que se conservan visibles: sin esquinas cuadradas, sin
+   ensanchar los campos (se mantiene su padding original). */
+body:not(.pagina-acceso) .bloque-producto,
+body:not(.pagina-acceso) .bloque-pago,
+body:not(.pagina-acceso) .grupo-quincenal,
+body:not(.pagina-acceso) .bloque-tabla-pagos,
+body:not(.pagina-acceso) .abonos-scroll {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  border-radius: var(--radio-md, 14px);
+}

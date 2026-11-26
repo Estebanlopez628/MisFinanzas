@@ -445,18 +445,18 @@ contenido %}
 
         <div class="acciones-formulario acciones-formulario--liquidacion">
           <button
+            class="boton boton--primario"
+            type="submit"
+            formaction="{{ url_for('guardar_liquidacion') }}"
+          >
+            Guardar periodo
+          </button>
+          <button
             class="boton boton--secundario"
             type="button"
             data-plantilla="limpiar"
           >
             Limpiar
-          </button>
-          <button
-            class="boton boton--secundario"
-            type="submit"
-            formaction="{{ url_for('guardar_liquidacion') }}"
-          >
-            Guardar periodo
           </button>
         </div>
         <p class="ayuda" data-aviso-cambios hidden>Hay cambios sin guardar.</p>

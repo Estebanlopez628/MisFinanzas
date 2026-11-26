@@ -1850,3 +1850,19 @@ Línea base v4.44. Ajusta la sección 69. Alcance exclusivo: Mis Finanzas (`/fin
 
 - Playwright sobre `/gastos`: texto corto visible y nota con el acreedor y el enlace correcto; sin cambios en la lógica de vinculación.
 - Suite completa en verde. `sw.js` en `olb-finanzas-v179`. Documentación sincronizada.
+
+## 81. SRS Consolidado Final — Onda fluida y simetría (ADR-146)
+
+**Regla suprema.** Login, iconos, modales, tablas, lógica, cálculos, flujos, CSV y scroll intactos. Solo apariencia, sin sobreexposición en Web ni Móvil.
+
+### 81.1 Ajustes aplicados
+
+1. Todas las tarjetas (`.tarjeta`, KPI e ítems de impacto): base `rgba(7,23,48,.72)`, radio 18 px, `blur(14px)`, borde cian suave y `::after` con onda inferior de ancho completo en el color de acento de cada tarjeta; `pointer-events: none`, contenido en `z-index: 2`, franja superior anulada. Móvil: onda de 54 px y opacidad .45.
+2. Resúmenes de Registrar venta en `rgba(4,18,42,.72)` con borde cian; atajos más oscuros que el panel; velocímetros y comparativa ya en azul marino.
+3. Envoltorios internos de Nueva deuda y Liquidación: transparentes, sin borde ni sombra, ancho completo y `box-sizing: border-box`, sin cambiar el padding de los campos.
+4. Liquidación del período: «Guardar periodo» primero con estilo primario azul; «Limpiar» después con estilo secundario.
+
+### 81.2 Verificación y cierre documental
+
+- Playwright 1280 px y 390 px: onda inferior por tarjeta con su acento, botones en orden y color correcto, resúmenes oscurecidos, envoltorios transparentes, login intacto, sin desbordes ni errores de consola.
+- Suite completa en verde. `sw.js` en `olb-finanzas-v180`. Documentación sincronizada.

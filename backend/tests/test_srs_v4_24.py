@@ -35,7 +35,11 @@ def test_css_badges_y_ancho_movil() -> None:
     assert "display: none" in movil
     assert ".impacto-deuda__badge--movil" in css
 
-    ancho = css.split("@media (max-width: 767px) {")[-1]
+    ancho = next(
+        bloque
+        for bloque in reversed(css.split("@media (max-width: 767px) {")[1:])
+        if ".cierre-deuda {" in bloque
+    )
     bloque = ancho.split(".cierre-deuda {", 1)[1].split("}", 1)[0]
     assert "padding: 14px" in bloque
     assert ".cierre-deuda__velocimetros," in ancho
