@@ -855,4 +855,5 @@ Las reglas CSS viven fuera de `@media (max-width: 767px)` para aplicar en ambos 
 
 - Este requerimiento es exclusivamente visual: no crea, renombra ni elimina tablas, columnas, índices ni relaciones. El diccionario de datos sigue siendo la fuente única de la base de datos.
 - El acabado translúcido se limita a las pantallas de OLB BYTE que llevan `class="olb-translucido"` en el `<body>`. La factura y el recibo no llevan esa clase; sus documentos PDF e imágenes no cambian.
-- Las reglas viven en `estilos.css` con el prefijo `body.olb-translucido`. No se modifica ningún campo de `usuarios`, `ventas`, `venta_detalle`, `movimientos_proveedor`, `gastos_operativos` ni de Mis Finanzas.
+- Las reglas viven en `estilos.css` con el prefijo `body:not(.pagina-acceso)`, de modo que el login queda fuera. No se modifica ningún campo de `usuarios`, `ventas`, `venta_detalle`, `movimientos_proveedor`, `gastos_operativos` ni de Mis Finanzas.
+- ADR-137: las tarjetas de resumen de OLB BYTE sustituyen la franja superior por un resplandor radial inferior con `--acento`. Solo cambia apariencia; ningún dato, cálculo ni columna se altera.

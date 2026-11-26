@@ -300,6 +300,7 @@ Principios innegociables. Toda especificación, plan y tarea debe cumplirlos de 
     - En Mis Finanzas se ven dos atajos completos y parte del tercero; el resto se alcanza con scroll vertical en web y móvil.
     - En web, «Atajos de pago» y «Resultado del periodo» terminan a la misma altura, con separación normal de 18 px sobre el panel anterior. /chancucos no se toca.
 
-65. **Estética translúcida de OLB BYTE (ADR-136):**
-    - El acabado translúcido solo se aplica a las pantallas de OLB BYTE mediante `body.olb-translucido`. Mis Finanzas, Deudas, Trabajos Extras y Ayuda conservan su estilo.
+65. **Estética translúcida de OLB BYTE (ADR-136, corregida en ADR-137):**
+    - El acabado translúcido se aplica a las pantallas autenticadas mediante `body:not(.pagina-acceso)`; el login conserva sus estilos originales.
+    - En OLB BYTE las tarjetas de resumen sustituyen la franja superior por un resplandor radial inferior con el acento de cada tarjeta.
     - No se modifican iconos, medidas, márgenes, cálculos ni flujos. La factura y el recibo (PDF e imagen) quedan fuera del ámbito.

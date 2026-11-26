@@ -2854,6 +2854,14 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v156`. Gate `qa_v4_56.py` **6/6**: separación de 18 px medida entre quincenas y atajos, `clientHeight 325 / scrollHeight 386` en 1280 px, `370 / 439` en 375 px y bordes inferiores iguales en web. Suite completa **1002 pruebas** en verde y 20 gates sin regresiones propias.
 
+### 2026-11-26 — Corrección real de translucidez y resplandor inferior (ADR-137)
+
+**Decisión (ADR-137).** Dos SRS aparte: (1) hacer efectiva la estética translúcida en tarjetas, formularios, campos, botones y modales de Mis Finanzas y OLB BYTE, venciendo las reglas opacas/grises previas; (2) sustituir la franja superior de las tarjetas de resumen de OLB BYTE por un resplandor difuso inferior con el color de acento de cada tarjeta. Login e iconos intactos; sin cambios de lógica, cálculos, flujos, CSV, scroll ni Mis Finanzas.
+
+**Consecuencias.** El bloque de `estilos.css` pasa a selectors `body:not(.pagina-acceso)` con suficiente especificidad: `.panel`, `.tarjeta`, `.formulario`, `.edicion-gasto__formulario` (incluido el modal abierto), `.app-modal__tarjeta`, `.modal-centrado > *`, `.campo__control` y `select.campo__control` (con `background-color`, preservando la flecha SVG), `.boton--secundario`, `.boton--primario`, `.subnav-finanzas__enlace` y `.kpi`. En `body.olb-translucido .tarjeta::before` la franja superior pasa a `inset: auto 0 0 0`, altura 55 % y `radial-gradient` inferior con `color-mix` sobre `--acento`.
+
+**Verificación.** Playwright 1280 px y 390 px: Login conserva `pagina-acceso` y su campo sin desenfoque; en Finanzas y OLB BYTE panel/campo/botón/pestaña/modal/formulario de edición devuelven `rgba` y `backdrop-filter`; las tarjetas OLB muestran el degradado translúcido y `::before` con resplandor radial en la esquina inferior; iconos presentes y `scrollWidth === innerWidth`. Suite completa en verde. `sw.js` en `olb-finanzas-v171`.
+
 ### 2026-11-26 — Estética translúcida de OLB BYTE (ADR-136)
 
 **Decisión (ADR-136).** SRS aparte: acabado translúcido oscuro con desenfoque suave en formularios, campos, botones, pestañas y tarjetas de OLB BYTE, en Web y Móvil. El fondo de ondas azules (ADR anterior) se ve ahora a través de esos componentes. Alcance quirúrgico: solo estilos visuales; no se tocan iconos, cálculos, flujos, tablas, CSV, modales, scroll ni Mis Finanzas.

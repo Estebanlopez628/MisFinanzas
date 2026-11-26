@@ -1720,3 +1720,18 @@ Línea base v4.44. Ajusta la sección 69. Alcance exclusivo: Mis Finanzas (`/fin
 - Las seis pantallas de OLB BYTE definen `clase_cuerpo = olb-translucido`. Factura y recibo quedan fuera para no tocar el PDF ni la imagen compartida.
 - Verificado en Web (1280 px) y Móvil (390 px): translucidez aplicada, sin desbordamiento horizontal e iconos intactos. Suite completa en verde (1003 pruebas).
 - `sw.js` en `olb-finanzas-v169`. Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-136), `AGENTS.md` y esta SRS quedan sincronizados.
+
+## 72. SRS aparte — Corrección real de translucidez y resplandor inferior (ADR-137)
+
+**Regla suprema.** Login intacto e iconos intactos. Alcance exclusivamente visual en tarjetas, formularios, campos, botones y modales de Mis Finanzas y OLB BYTE en Web y Móvil. Sin cambios de cálculos, validaciones, ventas, cobros, cartera, garantías, analítica, CSV, scroll ni lógica de Mis Finanzas.
+
+### 72.1 Corrección aplicada
+
+1. Las reglas usan `body:not(.pagina-acceso)` con especificidad suficiente para vencer fondos grises/opacos previos: `.panel`, `.tarjeta`, `.formulario`, `.edicion-gasto__formulario`, `.app-modal__tarjeta`, `.modal-centrado > *`, `.campo__control`, `.boton--secundario`, `.boton--primario`, pestañas y KPI, todos con `rgba` + `backdrop-filter` y borde cian sutil.
+2. En los `select` se cambia `background-color`, no `background-image`, para conservar la flecha SVG.
+3. En OLB BYTE, `body.olb-translucido .tarjeta::before` sustituye la franja superior por un `radial-gradient` difuso en la esquina inferior, con `color-mix` sobre `--acento` de cada tarjeta.
+
+### 72.2 Verificación y cierre documental
+
+- Playwright 1280 px y 390 px: login sin fondo de ondas y campo sin desenfoque; Mis Finanzas y OLB BYTE con superficies translúcidas y modales con desenfoque; resplandor inferior visible en las tres tarjetas de OLB BYTE; iconos presentes y sin desbordamiento horizontal.
+- Suite completa en verde (1003 pruebas). `sw.js` en `olb-finanzas-v171`. Guías, Diccionario de Datos, Constitución, `MEMORY.md`, `AGENTS.md` y esta SRS sincronizados.
