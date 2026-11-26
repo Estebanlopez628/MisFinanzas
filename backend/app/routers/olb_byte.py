@@ -1266,8 +1266,10 @@ def ver_analitica(
         pasivo_periodo = analitica._pasivo_antiguo_en(
             saldos, filtro.anio, filtro.mes or 12
         )
+    # KPI «Pago a Proveedor»: deuda vieja + costo de la mercancía fiada en el periodo.
+    pago_proveedor_periodo = pasivo_periodo + costo_periodo
     # Panorama amplio: compromisos (pasivo + costo) frente a lo realmente ganado.
-    ganancia_global_periodo = pasivo_periodo + costo_periodo - ganancia_neta_periodo
+    ganancia_global_periodo = pago_proveedor_periodo - ganancia_neta_periodo
 
     contexto = contexto_base(usuario)
     contexto.update(
@@ -1294,6 +1296,7 @@ def ver_analitica(
             "gastos_operativos_periodo": gastos_periodo,
             "ganancia_neta_periodo": ganancia_neta_periodo,
             "pasivo_antiguo_periodo": pasivo_periodo,
+            "pago_proveedor_periodo": pago_proveedor_periodo,
             "ganancia_global_periodo": ganancia_global_periodo,
             "vip": vip,
             "alertas": alertas,

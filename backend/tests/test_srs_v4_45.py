@@ -229,5 +229,6 @@ def test_vista_analitica_muestra_kpis_y_columnas(cliente_admin: TestClient, bd) 
     html = respuesta.text
     assert "Gastos operativos" in html
     assert "Ganancia neta" in html
-    assert "Ganancia real (neta) = ganancia bruta de ventas" in html
+    assert "Pago a Proveedor" in html
+    assert "Ganancia real (neta) = ganancia bruta de ventas" not in html
     assert html.count("Gastos op.") >= 2

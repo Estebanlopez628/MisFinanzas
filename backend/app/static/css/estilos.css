@@ -1238,16 +1238,21 @@ a.tarjeta:focus-visible {
   color: var(--accent-green);
 }
 
-/* SRS v4.44, §8.3: KPI de gastos operativos y ganancia real (neta). */
+/* SRS v4.44: cuatro KPI en una fila en web y 2 × 2 en móvil. */
 .panel--kpis {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
   align-items: stretch;
 }
 
+@media (max-width: 767px) {
+  .panel--kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 .panel--kpis .kpi {
-  flex: 1 1 220px;
   min-width: 0;
 }
 
@@ -1271,11 +1276,6 @@ a.tarjeta:focus-visible {
 
 .kpi__valor--positivo {
   color: var(--accent-green);
-}
-
-.kpi__nota {
-  flex: 1 1 100%;
-  margin: 0;
 }
 
 /* SRS v4.44: ranking de fallas con siete filas visibles y cabecera opaca. */

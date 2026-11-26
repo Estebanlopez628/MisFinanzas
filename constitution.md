@@ -257,3 +257,7 @@ Principios innegociables. Toda especificación, plan y tarea debe cumplirlos de 
 53. **Límites de filas y botón de número (ADR-118):**
     - Ranking de fallas: 7 filas; historial de gastos: 5 filas en web y móvil, con scroll vertical y cabeceras opacas.
     - El botón del celular tiene un solo rótulo y su fallback no bloquea la pantalla; el modal móvil usa Guardar/Eliminar y X roja.
+
+54. **Panel KPI de Analítica (ADR-119):**
+    - Sin nota explicativa; «Pago a Proveedor» = pasivo antiguo + costos de ventas del periodo.
+    - Orden 2 × 2 en móvil y cuatro en fila en web; Ganancia global = Pago a Proveedor − Ganancia neta.

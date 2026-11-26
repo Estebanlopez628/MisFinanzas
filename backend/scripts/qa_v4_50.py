@@ -126,7 +126,7 @@ def main() -> None:
                     f"costos={celdas[3]} esperado={costo} pasivo={celdas[5]} esperado={pasivo}",
                 )
 
-            # KPI del panel: pasivo antiguo y ganancia global con la fórmula dada.
+            # KPI del panel: cuatro tarjetas, sin nota, en el orden pedido.
             pagina.goto(
                 f"{BASE}/olb-byte/analitica?anio={date.today().year}&mes={date.today().month}"
             )
@@ -134,11 +134,22 @@ def main() -> None:
             tarjetas = pagina.locator(".panel--kpis .kpi").all()
             etiquetas = [t.locator(".kpi__etiqueta").inner_text() for t in tarjetas]
             valores = [a_pesos(t.locator(".kpi__valor").inner_text()) for t in tarjetas]
+            columnas = pagina.locator(".panel--kpis").evaluate(
+                "e => getComputedStyle(e).gridTemplateColumns.split(' ').length"
+            )
             comprobar(
-                f"{prefijo}: KPI de Pasivo antiguo y Ganancia global",
-                any("Pasivo antiguo" in e for e in etiquetas)
-                and any("Ganancia global" in e for e in etiquetas),
+                f"{prefijo}: cuatro KPI en el orden pedido y {columnas} columnas",
+                len(etiquetas) == 4
+                and "Gastos operativos" in etiquetas[0]
+                and "Pago a Proveedor" in etiquetas[1]
+                and "Ganancia neta" in etiquetas[2]
+                and "Ganancia global" in etiquetas[3]
+                and columnas == (2 if ancho < 768 else 4),
                 str(etiquetas),
+            )
+            comprobar(
+                f"{prefijo}: nota explicativa retirada",
+                "muestra el compromiso total" not in pagina.content(),
             )
             with FabricaSesiones() as bd:
                 anio, mes = date.today().year, date.today().month
@@ -157,10 +168,17 @@ def main() -> None:
                     ),
                     Decimal("0"),
                 )
+                saldos = analitica._saldos_pasivo_antiguo(bd)
+                pasivo_mes = analitica._pasivo_antiguo_en(saldos, anio, mes)
             comprobar(
-                f"{prefijo}: Ganancia global = Pasivo + Costos − Neta",
-                len(valores) >= 4 and valores[3] == valores[2] + int(costo_mes) - valores[1],
-                f"pasivo={valores[2]} costos={costo_mes} neta={valores[1]} global={valores[3]}",
+                f"{prefijo}: Pago a Proveedor = pasivo + costos",
+                len(valores) >= 4 and valores[1] == int(pasivo_mes) + int(costo_mes),
+                f"pago={valores[1]} pasivo={pasivo_mes} costos={costo_mes}",
+            )
+            comprobar(
+                f"{prefijo}: Ganancia global = Pago a Proveedor − Neta",
+                len(valores) >= 4 and valores[3] == valores[1] - valores[2],
+                f"pago={valores[1]} neta={valores[2]} global={valores[3]}",
             )
 
             for tabla in ("mensual", "anual"):

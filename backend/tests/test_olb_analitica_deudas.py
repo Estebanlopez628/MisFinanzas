@@ -106,14 +106,17 @@ def test_abono_paga_deuda_corriente_y_sobrante_baja_pasivo(bd) -> None:
     assert comercial.deuda_proveedor(bd) == Decimal("50000")
 
 
-def test_kpis_de_pasivo_y_ganancia_global(cliente_admin: TestClient) -> None:
-    """El panel muestra Pasivo antiguo y Ganancia global con su fórmula."""
+def test_kpis_de_pago_proveedor_y_ganancia_global(cliente_admin: TestClient) -> None:
+    """El panel muestra Pago a Proveedor y Ganancia global sin nota explicativa."""
     respuesta = cliente_admin.get("/olb-byte/analitica")
     assert respuesta.status_code == 200
     html = respuesta.text
-    assert "Pasivo antiguo" in html
+    assert "Pago a Proveedor" in html
     assert "Ganancia global" in html
-    assert "global = (Pasivo antiguo + Costos) − Ganancia neta" in html
+    assert "Gastos operativos" in html
+    assert "Ganancia neta" in html
+    assert "muestra el compromiso total" not in html
+    assert "kpi__nota" not in html
 
 
 def test_csv_incluye_la_denominacion_exacta(cliente_admin: TestClient, bd) -> None:

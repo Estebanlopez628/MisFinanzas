@@ -2742,6 +2742,14 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v144`. 4 pruebas nuevas en `test_olb_tablas_scroll.py`, ajuste en `test_olb_contactos_movil.py`. Gates `qa_v4_51.py` 6/6 y `qa_v4_52.py` 9/9 en 1280 y 375 px: max-heights 336/252/210 px, cabeceras `rgb(15,23,42)`, modal con Guardar/Eliminar y X roja, un solo rótulo y fallback sin modal.
 
+### 2026-11-26 — Panel KPI sin nota y con Pago a Proveedor (ADR-119)
+
+**Decisión (ADR-119).** El propietario pidió retirar la nota explicativa del panel de KPI de Analítica, renombrar «Pasivo antiguo» a «Pago a Proveedor» y sumar en ese KPI el pasivo antiguo más los costos de ventas del periodo, para mostrar el compromiso completo con el proveedor. También pidió 2 × 2 en móvil (Gastos | Pago / Neta | Global) y cuatro en fila en web.
+
+**Consecuencias.** `ver_analitica` expone `pago_proveedor_periodo = pasivo_periodo + costo_periodo`; `ganancia_global_periodo` sigue siendo `pago_proveedor_periodo − ganancia_neta_periodo` y mantiene color por signo. La plantilla reordena las cuatro tarjetas y elimina el párrafo `.kpi__nota`. El CSS cambia `.panel--kpis` de flex a grid de 4 columnas en web y 2 en móvil. La columna «PASIVO ANTIGUO» de tablas y CSV no se toca.
+
+**Verificación.** `sw.js` en `olb-finanzas-v145`. Gate `qa_v4_50.py` **27/27** en 1280 y 375 px: cuatro KPI en orden, 4/2 columnas, nota ausente, Pago a Proveedor = pasivo + costos y Ganancia global = Pago − Neta.
+
 ### 2026-11-24 — SRS v4.43: corrección de columnas y portal del modal (ADR-105)
 
 **Decisión (ADR-105).** El propietario corrigió dos puntos de v4.42: el ancho fijo de 440 px forzaba scroll aunque el texto cupiera, y el modal de edición quedaba atrapado en el contexto de la tarjeta. Las referencias a `hidden md:table-cell` y `ReactDOM.createPortal` del documento son ilustrativas; se implementan con CSS y `document.body.appendChild`, según el stack.

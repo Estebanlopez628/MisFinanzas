@@ -1493,3 +1493,21 @@ Línea base v4.44. Alcance: Ranking de fallas, Historial de gastos operativos y 
 
 - `qa_v4_51.py` **6/6** y `qa_v4_52.py` **9/9** en 1280 y 375 px; 4 pruebas nuevas. `sw.js` en `olb-finanzas-v144`.
 - Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-118), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.44.
+
+---
+
+## 59. Panel KPI sin nota y con Pago a Proveedor
+
+Línea base v4.44. Solo se ajusta el panel de indicadores de Analítica; tablas, CSV y otros módulos no cambian.
+
+### 59.1 Cambios
+
+1. Se retira el párrafo explicativo del panel (`Ganancia real (neta) = …`).
+2. «Pasivo antiguo» pasa a llamarse **Pago a Proveedor** y su valor es `pasivo antiguo + Costos de ventas` del periodo.
+3. Orden de las tarjetas: Gastos operativos | Pago a Proveedor / Ganancia neta | Ganancia global (2 × 2 en móvil, cuatro en fila en web).
+4. Ganancia global = `Pago a Proveedor − Ganancia neta`, con color rojo si negativo y verde si positivo.
+
+### 59.2 Gate QA y cierre documental
+
+- `scripts/qa_v4_50.py`: **27/27 comprobaciones** en 1280 y 375 px. `sw.js` en `olb-finanzas-v145`.
+- Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-119), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.44.
