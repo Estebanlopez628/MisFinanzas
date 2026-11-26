@@ -67,11 +67,12 @@ def test_submenu_marca_la_seccion_activa_en_cada_vista(cliente_admin: TestClient
 
 
 def test_boton_pegar_numero_reemplaza_a_contactos(cliente_admin: TestClient) -> None:
-    """El botón «Pegar número» aparece y el de contactos ya no existe."""
+    """El botón de número aparece con un solo rótulo y sin buscador de contactos."""
     texto = cliente_admin.get("/olb-byte").text
 
     assert "data-pegar-numero" in texto
-    assert "Pegar número" in texto
+    assert "Agregar Numero" in texto
+    assert "Pegar número" not in texto
     assert "Buscar en Contactos" not in texto
 
 

@@ -130,12 +130,12 @@ def main() -> None:
             )
             nombres = dialogo.locator("button[type='submit']").all_inner_texts()
             comprobar(
-                f"{prefijo}: botones Actualizar y Eliminar",
-                any("Actualizar" in n for n in nombres) and any("Eliminar" in n for n in nombres),
+                f"{prefijo}: botones Guardar y Eliminar",
+                any("Guardar" in n for n in nombres) and any("Eliminar" in n for n in nombres),
                 str(nombres),
             )
             dialogo.locator('input[name="monto"]').fill("30000")
-            dialogo.locator('button[type="submit"]:has-text("Actualizar")').click()
+            dialogo.locator('button[type="submit"]:has-text("Guardar")').click()
             pagina.wait_for_load_state("networkidle")
             total = pagina.locator(".panel__total strong").first.text_content() or ""
             comprobar(

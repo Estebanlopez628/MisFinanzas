@@ -292,7 +292,7 @@
       </span>
     </div>
     {% if gastos_operativos %}
-      <div class="tabla-contenedor tabla-escritorio">
+      <div class="tabla-contenedor tabla-escritorio tabla-contenedor--gastos">
         <table class="tabla">
           <thead>
             <tr>
@@ -321,7 +321,7 @@
         </table>
       </div>
 
-      <ul class="ordenes-moviles" aria-label="Historial de gastos operativos">
+      <ul class="ordenes-moviles ordenes-moviles--gastos" aria-label="Historial de gastos operativos">
         {% for gasto in gastos_operativos %}
           <li>
             <button type="button" class="orden-movil orden-movil--gasto"
@@ -354,7 +354,7 @@
                        value="{{ gasto.monto | cop }}" required data-moneda />
               </label>
               <div class="gasto-operativo__acciones">
-                <button class="boton boton--primario boton--pequeno" type="submit">Actualizar</button>
+                <button class="boton boton--primario boton--pequeno" type="submit">Guardar</button>
                 <button class="boton boton--peligro boton--pequeno" type="submit"
                         formaction="{{ url_for('eliminar_gasto_operativo', id_gasto=gasto.id_gasto_operativo) }}"
                         data-confirmar="¿Eliminar este gasto operativo?">Eliminar</button>

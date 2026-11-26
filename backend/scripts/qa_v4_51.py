@@ -61,9 +61,10 @@ def main() -> None:
             texto_web,
         )
         comprobar(
-            "1280px: rótulo de escritorio visible",
-            boton_web.locator(".texto-escritorio").is_visible()
-            and not boton_web.locator(".texto-movil").is_visible(),
+            "1280px: un solo rótulo en el DOM",
+            boton_web.locator("[data-rotulo-numero]").count() == 1
+            and boton_web.text_content().count("Pegar número") == 1
+            and "Agregar Numero" not in (boton_web.text_content() or ""),
         )
         contexto_web.close()
 
@@ -78,9 +79,10 @@ def main() -> None:
             texto,
         )
         comprobar(
-            "375px: rótulo móvil visible",
-            boton.locator(".texto-movil").is_visible()
-            and not boton.locator(".texto-escritorio").is_visible(),
+            "375px: un solo rótulo en el DOM",
+            boton.locator("[data-rotulo-numero]").count() == 1
+            and (boton.text_content() or "").count("Agregar Numero") == 1
+            and "Pegar número" not in (boton.text_content() or ""),
         )
         boton.click()
         pagina_movil.wait_for_timeout(200)
@@ -89,7 +91,10 @@ def main() -> None:
         aviso = pagina_movil.locator("[data-nota-contactos]")
         comprobar(
             "375px: sin Contact Picker avisa y enfoca sin errores",
-            aviso.is_visible() and "libreta de contactos" in (aviso.text_content() or "") and enfocado,
+            aviso.is_visible()
+            and "libreta de contactos" in (aviso.text_content() or "")
+            and enfocado
+            and pagina_movil.locator("#modal-aviso:visible").count() == 0,
             (aviso.text_content() or "").strip(),
         )
         contexto_movil.close()

@@ -2734,6 +2734,14 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v143`. 1 prueba nueva en `test_olb_analitica_deudas.py`; gate `qa_v4_50.py` valida en 1280 y 375 px que ambos KPI existen y que el valor de Ganancia global coincide con la fórmula usando los costos del mes.
 
+### 2026-11-26 — Límites de filas, cabeceras opacas y botón de número (ADR-118)
+
+**Decisión (ADR-118).** El propietario pidió: 7 productos en el Ranking de fallas, 5 filas en el Historial de gastos operativos (web y móvil, scroll vertical), cabeceras con color sólido (sin transparencia), modal móvil de gasto con «Guardar» y «Eliminar» más X roja uniforme, y un solo rótulo en el botón del celular con fallback visible. También confirmó que la Ganancia global mantiene su color por signo.
+
+**Consecuencias.** Se añaden `.tabla-contenedor--ranking` (336 px = cabecera + 7 filas) y `.tabla-contenedor--gastos` (252 px = cabecera + 5 filas), más `.ordenes-moviles--gastos` (210 px) en móvil, todos con `overflow-y: auto` y `thead th` sticky con `background: var(--bg-primary)` mediante selectores más específicos. La plantilla del botón lleva un único `<span data-rotulo-numero>` que JS sincroniza con `matchMedia`; `navigator.contacts.select` se envuelve en `try/catch` y el fallback usa nota roja + foco sin modal bloqueante. El modal de gasto renombra «Actualizar» a «Guardar».
+
+**Verificación.** `sw.js` en `olb-finanzas-v144`. 4 pruebas nuevas en `test_olb_tablas_scroll.py`, ajuste en `test_olb_contactos_movil.py`. Gates `qa_v4_51.py` 6/6 y `qa_v4_52.py` 9/9 en 1280 y 375 px: max-heights 336/252/210 px, cabeceras `rgb(15,23,42)`, modal con Guardar/Eliminar y X roja, un solo rótulo y fallback sin modal.
+
 ### 2026-11-24 — SRS v4.43: corrección de columnas y portal del modal (ADR-105)
 
 **Decisión (ADR-105).** El propietario corrigió dos puntos de v4.42: el ancho fijo de 440 px forzaba scroll aunque el texto cupiera, y el modal de edición quedaba atrapado en el contexto de la tarjeta. Las referencias a `hidden md:table-cell` y `ReactDOM.createPortal` del documento son ilustrativas; se implementan con CSS y `document.body.appendChild`, según el stack.

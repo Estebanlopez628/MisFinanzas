@@ -1278,6 +1278,52 @@ a.tarjeta:focus-visible {
   margin: 0;
 }
 
+/* SRS v4.44: ranking de fallas con siete filas visibles y cabecera opaca. */
+.tabla-contenedor--ranking {
+  max-height: 336px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.tabla-contenedor--ranking thead th,
+.tabla-contenedor--ranking tbody td {
+  height: 42px;
+}
+
+.tabla-contenedor--ranking .tabla thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--bg-primary);
+}
+
+/* Historial de gastos operativos: cinco filas visibles y cabecera opaca. */
+.tabla-contenedor--gastos {
+  max-height: 252px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.tabla-contenedor--gastos thead th,
+.tabla-contenedor--gastos tbody td {
+  height: 42px;
+}
+
+.tabla-contenedor--gastos .tabla thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--bg-primary);
+}
+
+@media (max-width: 640px) {
+  .ordenes-moviles--gastos {
+    max-height: 210px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+}
+
 /* SRS v4.44, §7.3: seis filas visibles con desplazamiento y encabezado fijo.
    Cada fila mide 42 px; el contenedor admite el encabezado más seis filas. */
 .tabla-contenedor--movimientos {
@@ -2915,20 +2961,12 @@ textarea.campo__control {
   min-width: 0;
 }
 
-/* SRS v4.44: en escritorio se lee «Pegar número»; en móvil, «Agregar Numero». */
-.texto-movil {
-  display: none;
+/* Aviso breve junto al celular cuando no se puede abrir la libreta. */
+.nota-contactos--aviso {
+  color: var(--accent-red);
+  font-weight: 600;
 }
 
-@media (max-width: 767px) {
-  .texto-escritorio {
-    display: none;
-  }
-
-  .texto-movil {
-    display: inline;
-  }
-}
 
 .insignia {
   display: inline-block;

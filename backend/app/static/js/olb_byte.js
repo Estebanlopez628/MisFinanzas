@@ -467,6 +467,11 @@
     }
     nota.textContent = texto;
     nota.hidden = !texto;
+    if (texto) {
+      nota.classList.add("nota-contactos--aviso");
+    } else {
+      nota.classList.remove("nota-contactos--aviso");
+    }
   }
 
   /**
@@ -508,46 +513,48 @@
    *
    * @returns {void}
    */
+  /**
+   * Avisa del fallo, enfoca el campo y deja una nota breve junto a él.
+   *
+   * @param {string} mensaje Texto del aviso.
+   * @returns {void}
+   */
+  function avisarFalloNumero(mensaje) {
+    if (campoTelefono) {
+      campoTelefono.focus();
+    }
+    mostrarNotaContactos(mensaje);
+  }
+
   function agregarNumeroMovil() {
     if (!navigator.contacts || typeof navigator.contacts.select !== "function") {
-      if (campoTelefono) {
-        campoTelefono.focus();
-      }
-      mostrarNotaContactos(
-        "Este navegador no abre la libreta de contactos. Escribe el celular manualmente."
-      );
+      avisarFalloNumero("Este navegador no abre la libreta de contactos. Escribe el celular manualmente.");
       return;
     }
-    navigator.contacts
-      .select(["tel"], { multiple: false })
-      .then(function (contactos) {
-        var numeroContacto = contactos && contactos[0] && contactos[0].tel && contactos[0].tel[0];
-        if (!numeroContacto) {
-          if (campoTelefono) {
-            campoTelefono.focus();
+    try {
+      Promise.resolve(navigator.contacts.select(["tel"], { multiple: false }))
+        .then(function (contactos) {
+          var numeroContacto = contactos && contactos[0] && contactos[0].tel && contactos[0].tel[0];
+          if (!numeroContacto) {
+            avisarFalloNumero("El contacto no tiene número. Escribe el celular manualmente.");
+            return;
           }
-          mostrarNotaContactos("El contacto no tiene número. Escribe el celular manualmente.");
-          return;
-        }
-        var numero = normalizarTelefono(numeroContacto);
-        if (numero.length !== 10) {
-          if (campoTelefono) {
-            campoTelefono.focus();
+          var numero = normalizarTelefono(numeroContacto);
+          if (numero.length !== 10) {
+            avisarFalloNumero("El número del contacto no tiene 10 dígitos. Revísalo e inténtalo otra vez.");
+            return;
           }
-          mostrarNotaContactos("El número del contacto no tiene 10 dígitos. Revísalo e inténtalo otra vez.");
-          return;
-        }
-        if (campoTelefono) {
-          campoTelefono.value = numero;
-        }
-        mostrarNotaContactos("");
-      })
-      .catch(function () {
-        if (campoTelefono) {
-          campoTelefono.focus();
-        }
-        mostrarNotaContactos("No se pudo abrir la libreta de contactos. Escribe el celular manualmente.");
-      });
+          if (campoTelefono) {
+            campoTelefono.value = numero;
+          }
+          mostrarNotaContactos("");
+        })
+        .catch(function () {
+          avisarFalloNumero("No se pudo abrir la libreta de contactos. Escribe el celular manualmente.");
+        });
+    } catch (error) {
+      avisarFalloNumero("No se pudo abrir la libreta de contactos. Escribe el celular manualmente.");
+    }
   }
 
   /**
@@ -561,6 +568,32 @@
       return;
     }
     pegarNumero();
+  }
+
+  var rotuloNumero = botonPegar ? botonPegar.querySelector("[data-rotulo-numero]") : null;
+
+  /**
+   * Deja un solo rótulo en el DOM: móvil «Agregar Numero», web «Pegar número».
+   *
+   * @returns {void}
+   */
+  function sincronizarRotuloNumero() {
+    if (!rotuloNumero || !window.matchMedia) {
+      return;
+    }
+    rotuloNumero.textContent = window.matchMedia("(max-width: 767px)").matches
+      ? "Agregar Numero"
+      : "Pegar número";
+  }
+
+  sincronizarRotuloNumero();
+  if (window.matchMedia) {
+    var mediaNumero = window.matchMedia("(max-width: 767px)");
+    if (mediaNumero.addEventListener) {
+      mediaNumero.addEventListener("change", sincronizarRotuloNumero);
+    } else if (mediaNumero.addListener) {
+      mediaNumero.addListener(sincronizarRotuloNumero);
+    }
   }
 
   if (botonPegar) {

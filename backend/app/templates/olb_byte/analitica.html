@@ -93,6 +93,7 @@
       <span class="kpi__etiqueta">
         Ganancia global{% if nombre_mes %} · {{ nombre_mes }}{% endif %} {{ anio }}
       </span>
+      {# Color por signo: rojo si negativo, verde si positivo; la fórmula no cambia. #}
       <strong class="kpi__valor {{ 'kpi__valor--negativo' if ganancia_global_periodo < 0 else 'kpi__valor--positivo' }}">
         {{ ganancia_global_periodo | cop }}
       </strong>

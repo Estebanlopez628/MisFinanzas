@@ -252,4 +252,8 @@ Principios innegociables. Toda especificación, plan y tarea debe cumplirlos de 
 
 52. **KPI de Analítica (ADR-117):**
     - El panel muestra Pasivo antiguo y Ganancia global además de Gastos operativos y Ganancia neta.
-    - Ganancia global = (Pasivo antiguo + Costos) − Ganancia neta del periodo.
+    - Ganancia global = (Pasivo antiguo + Costos) − Ganancia neta del periodo; rojo si negativo, verde si positivo.
+
+53. **Límites de filas y botón de número (ADR-118):**
+    - Ranking de fallas: 7 filas; historial de gastos: 5 filas en web y móvil, con scroll vertical y cabeceras opacas.
+    - El botón del celular tiene un solo rótulo y su fallback no bloquea la pantalla; el modal móvil usa Guardar/Eliminar y X roja.

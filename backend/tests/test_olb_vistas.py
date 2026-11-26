@@ -47,7 +47,9 @@ def test_panel_muestra_formulario_de_venta_sin_inventario(cliente_admin: TestCli
     assert respuesta.status_code == 200
     assert "Registrar venta" in respuesta.text
     assert "+ Agregar otro producto" in respuesta.text
-    assert "Pegar número" in respuesta.text
+    # SRS v4.44: un solo rótulo en el DOM; JS lo cambia a «Pegar número» en web.
+    assert "Agregar Numero" in respuesta.text
+    assert "data-rotulo-numero" in respuesta.text
     assert "Inventario" not in respuesta.text
     assert "stock" not in respuesta.text.lower()
 

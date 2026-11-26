@@ -1474,3 +1474,22 @@ Línea base v4.44. Solo se amplía el panel de indicadores de Analítica; tablas
 
 - `scripts/qa_v4_50.py` verifica en 1280 y 375 px ambos KPI y la igualdad de la fórmula. 1 prueba nueva en `test_olb_analitica_deudas.py`. `sw.js` en `olb-finanzas-v143`.
 - Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-117), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.44.
+
+---
+
+## 58. Límites de filas, cabeceras opacas y botón de número
+
+Línea base v4.44. Alcance: Ranking de fallas, Historial de gastos operativos y botón del celular en Registrar venta. Mis Finanzas y los demás flujos no se tocan.
+
+### 58.1 Cambios
+
+1. Ranking de fallas: 7 productos visibles con scroll vertical (`max-height: 336px`).
+2. Historial de gastos operativos: 5 filas visibles en web (`252px`) y móvil (`210px`), con scroll vertical.
+3. Ambas cabeceras son `sticky` con fondo sólido `var(--bg-primary)` (selector más específico que `.tabla thead th`), sin transparencia.
+4. Modal móvil del gasto: fila con solo Fecha | Monto, X roja uniforme y botones «Guardar» y «Eliminar».
+5. Botón del celular: un solo rótulo en el DOM, decidido por `matchMedia`; Contact Picker con `try/catch` y fallback con nota roja + foco, sin modal bloqueante. Ganancia global conserva color por signo.
+
+### 58.2 Gate QA y cierre documental
+
+- `qa_v4_51.py` **6/6** y `qa_v4_52.py` **9/9** en 1280 y 375 px; 4 pruebas nuevas. `sw.js` en `olb-finanzas-v144`.
+- Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-118), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.44.
