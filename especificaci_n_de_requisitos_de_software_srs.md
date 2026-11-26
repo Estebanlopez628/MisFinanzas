@@ -1322,3 +1322,36 @@ Línea base v4.44. No se rehacen las secciones 1 a 3 ni las secciones 7 a 9. El 
 - `scripts/qa_v4_47.py`: **20/20 comprobaciones** en 375 y 1280 px, en `screen` y `print`, con estilos computados reales; verifica además que la vista, el PDF y el uso compartido por WhatsApp usan la misma plantilla `_hoja_factura.html` y la misma hoja `factura-olb.css`.
 - Documento completo validado con los gates v4.33, v4.35, v4.38, v4.40, v4.41, v4.42, v4.43, v4.44, v4.45, v4.46 y v4.47. Suite: **965 pruebas** en verde. `sw.js` en `olb-finanzas-v133`.
 - Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-108), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.44.
+
+---
+
+## 49. Retorno desde «Ver factura» y «Enviar por WhatsApp» — OLB_BYTE Ventas
+
+Requisito del propietario sobre «Órdenes registradas», válido en escritorio y móvil. No modifica la factura ni sus cálculos.
+
+### 49.1 Cambios
+
+1. «Ver factura» y «Enviar por WhatsApp» comparten `data-volver-ventas`. Un listener en fase de captura guarda `scrollX`, `scrollY` y el `id` del diálogo abierto en claves propias de `sessionStorage`, con una validez de 15 minutos.
+2. Al cargar `/olb-byte`, se consumen esas claves, se reabre el diálogo móvil si había uno abierto y se restaura la posición exacta con `behavior: "instant"`, reaplicada durante el asentamiento del layout.
+3. En móvil se oculta «← Volver a Ventas» y se muestra una X fija de 38 px arriba a la derecha, con fondo rojo oscuro y sombra rojiza. La X no guarda posición: conserva la que se guardó al salir.
+
+### 49.2 Gate QA y cierre documental
+
+- `scripts/qa_v4_48.py`: **15/15 comprobaciones** en 1280 y 375 px. Posición 1400 → 1400 en ambos anchos, diálogo móvil reabierto, claves consumidas y WhatsApp guardando sin abrir el chat. Suite: **968 pruebas** en verde. `sw.js` en `olb-finanzas-v134`.
+- Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-109), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.44.
+
+---
+
+## 50. Pendientes de pago — buscador y modal del cliente
+
+Requisito del propietario sobre «OLB_BYTE → Pendientes de pago», válido en escritorio y móvil.
+
+### 50.1 Cambios
+
+1. Se anula el `border-top` de `.formulario--compacto` en `.formulario--buscar` (con `padding-top: 0`), de modo que no aparece la línea sobre «Buscar por cliente, celular o número de orden».
+2. En el `<dialog>` del cliente se retira «Volver a pendientes de pago» y queda únicamente «Registrar Pago». Se añade una X rojiza de 34 px arriba a la derecha con `data-cerrar-dialogo`, que cierra el modal sin recargar ni desplazar la lista.
+
+### 50.2 Gate QA y cierre documental
+
+- `scripts/qa_v4_49.py`: **7/7 comprobaciones** en 1280 y 375 px (borde 0 px, un solo botón, X rojisa, cierre y scroll 55 → 55). Suite: **971 pruebas** en verde. `sw.js` en `olb-finanzas-v136`.
+- Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-110), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.44.

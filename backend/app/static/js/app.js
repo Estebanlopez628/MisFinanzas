@@ -952,6 +952,107 @@
     });
   }
 
+  // SRS v4.44 (OLB_BYTE · Ventas): al abrir la factura o WhatsApp desde una
+  // orden, guardar X, Y y el diálogo abierto con claves propias. Las claves
+  // genéricas se consumen en la página intermedia de la factura, así que no
+  // pueden usarse para el regreso a «Órdenes registradas».
+  var CLAVE_OLB_X = "misfinanzas_olb_ventas_scroll_x";
+  var CLAVE_OLB_Y = "misfinanzas_olb_ventas_scroll_y";
+  var CLAVE_OLB_DIALOGO = "misfinanzas_olb_ventas_dialogo";
+  var CLAVE_OLB_TIEMPO = "misfinanzas_olb_ventas_ts";
+
+  /**
+   * Guarda la posición y el diálogo abierto antes de salir de Ventas.
+   *
+   * @returns {void}
+   */
+  function guardarPosicionVentas() {
+    try {
+      sessionStorage.setItem(CLAVE_OLB_X, String(window.scrollX || window.pageXOffset || 0));
+      sessionStorage.setItem(CLAVE_OLB_Y, String(window.scrollY || window.pageYOffset || 0));
+      var abierto = document.querySelector("dialog[open]");
+      sessionStorage.setItem(CLAVE_OLB_DIALOGO, abierto ? abierto.id : "");
+      sessionStorage.setItem(CLAVE_OLB_TIEMPO, String(Date.now()));
+    } catch (error) {
+      // Sin sessionStorage el retorno empieza desde arriba, como antes.
+    }
+  }
+
+  document.addEventListener(
+    "click",
+    function (evento) {
+      var objetivo = evento.target instanceof Element ? evento.target : null;
+      if (objetivo && objetivo.closest("[data-volver-ventas]")) {
+        guardarPosicionVentas();
+      }
+    },
+    true
+  );
+
+  /**
+   * Restaura la posición exacta al volver a Ventas y reabre el diálogo móvil.
+   *
+   * @returns {void}
+   */
+  function restaurarPosicionVentas() {
+    if (window.location.pathname.replace(/\/$/, "") !== "/olb-byte") {
+      return;
+    }
+    var textoX;
+    var textoY;
+    var idDialogo;
+    var textoFecha;
+    try {
+      textoX = sessionStorage.getItem(CLAVE_OLB_X);
+      textoY = sessionStorage.getItem(CLAVE_OLB_Y);
+      idDialogo = sessionStorage.getItem(CLAVE_OLB_DIALOGO);
+      textoFecha = sessionStorage.getItem(CLAVE_OLB_TIEMPO);
+      sessionStorage.removeItem(CLAVE_OLB_X);
+      sessionStorage.removeItem(CLAVE_OLB_Y);
+      sessionStorage.removeItem(CLAVE_OLB_DIALOGO);
+      sessionStorage.removeItem(CLAVE_OLB_TIEMPO);
+    } catch (error) {
+      return;
+    }
+    if (textoX === null && textoY === null && !idDialogo) {
+      return;
+    }
+    // Una pestaña muy antigua no debe mover la vista al abrir Ventas.
+    if (textoFecha && Date.now() - Number(textoFecha) > 15 * 60 * 1000) {
+      return;
+    }
+    var x = Number(textoX) || 0;
+    var y = Number(textoY) || 0;
+
+    /**
+     * Aplica posición y diálogo; se repite porque el layout sigue acomodándose.
+     *
+     * @returns {void}
+     */
+    function aplicar() {
+      if (idDialogo) {
+        var dialogo = document.getElementById(idDialogo);
+        if (dialogo && !dialogo.open && typeof dialogo.showModal === "function") {
+          dialogo.showModal();
+        }
+      }
+      window.scrollTo({ left: x, top: y, behavior: "instant" });
+    }
+
+    aplicar();
+    requestAnimationFrame(aplicar);
+    window.setTimeout(aplicar, 180);
+    window.setTimeout(aplicar, 500);
+  }
+
+  if (document.readyState === "complete") {
+    requestAnimationFrame(restaurarPosicionVentas);
+  } else {
+    window.addEventListener("load", function () {
+      requestAnimationFrame(restaurarPosicionVentas);
+    });
+  }
+
   // SRS (abonos): modal propio para registrar abonos a deudas vinculadas.
   var modalAbono = document.getElementById("modal-abono");
   var abonoValor = document.getElementById("modal-abono-valor");

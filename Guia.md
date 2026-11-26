@@ -106,7 +106,7 @@ Principios que explican el resto del código:
 ### Resumen del inventario
 
 - **115 archivos** documentados: 56 Python, 40 plantillas Jinja2 y 19 recursos estáticos.
-- **71 clases**, **682 funciones** y **43 métodos** de clase.
+- **71 clases**, **685 funciones** y **43 métodos** de clase.
 
 ### Detalle por archivo
 
@@ -257,13 +257,13 @@ Principios que explican el resto del código:
 
 #### `backend/app/static/css/`
 
-- **`estilos.css`** · 6706 líneas — Fondo y superficies
-- **`factura-olb.css`** · 749 líneas — Sello de Anulada si aplica
+- **`estilos.css`** · 6735 líneas — Fondo y superficies
+- **`factura-olb.css`** · 789 líneas — Retorno de la factura: X rojiza en móvil, enlace en escritorio.
 
 #### `backend/app/static/js/`
 
-- **`app.js`** · 1478 líneas — Mejoras progresivas globales.
-  - Funciones: `restaurarBotonCopiar`, `confirmarCopia`, `copiar`, `seleccionarManual`, `mostrarErrorModal`, `ocultarErrorModal`, `validarAtajo`, `normalizarEnlaceModal`, `normalizarEnlace`, `sacarDelContexto`, `devolverAlContexto`, `cerrarEdicion`, `limpiarMensajeError`, `elevarSobreDialogo`, `reposicionarModal`, `cerrarConfirmacion`, `pedirConfirmacion`, `mostrarAvisoApp`, `anclaCercana`, `guardarScroll`, `restaurarScroll`, `cerrarModalAbono`, `abrirModalAbono`, `registrarAbono`, `configurarEliminar`, `cerrar`, `accion`, `cerrar`, `abrir`, `registrar`, `hayModal`, `aplicarEstado`
+- **`app.js`** · 1579 líneas — Mejoras progresivas globales.
+  - Funciones: `restaurarBotonCopiar`, `confirmarCopia`, `copiar`, `seleccionarManual`, `mostrarErrorModal`, `ocultarErrorModal`, `validarAtajo`, `normalizarEnlaceModal`, `normalizarEnlace`, `sacarDelContexto`, `devolverAlContexto`, `cerrarEdicion`, `limpiarMensajeError`, `elevarSobreDialogo`, `reposicionarModal`, `cerrarConfirmacion`, `pedirConfirmacion`, `mostrarAvisoApp`, `anclaCercana`, `guardarScroll`, `restaurarScroll`, `guardarPosicionVentas`, `restaurarPosicionVentas`, `aplicar`, `cerrarModalAbono`, `abrirModalAbono`, `registrarAbono`, `configurarEliminar`, `cerrar`, `accion`, `cerrar`, `abrir`, `registrar`, `hayModal`, `aplicarEstado`
 - **`ayuda.js`** · 127 líneas — Envío de reportes desde «Ayuda y comentarios» (SRS v2.0, sección 5.3).
   - Funciones: `escapar`, `cargarMisReportes`
 - **`categorias.js`** · 526 líneas — Selector cerrado de categorías, vinculación con deudas y conservación de
@@ -358,10 +358,10 @@ Principios que explican el resto del código:
 - **`analitica.html`** · 345 líneas — Plantilla: Analítica
 - **`cartera.html`** · 370 líneas — Plantilla: Cartera y liquidez
 - **`cobro.html`** · 93 líneas — Plantilla: Gestionar cobro
-- **`factura.html`** · 39 líneas — Plantilla: Factura No.
+- **`factura.html`** · 43 líneas — Plantilla: Factura No.
 - **`garantias.html`** · 148 líneas — Plantilla: Garantías
-- **`index.html`** · 470 líneas — Plantilla: OLB_BYTE
-- **`pendientes.html`** · 117 líneas — Plantilla: Pendientes de pago
+- **`index.html`** · 472 líneas — Plantilla: OLB_BYTE
+- **`pendientes.html`** · 119 líneas — Plantilla: Pendientes de pago
 - **`recibo.html`** · 23 líneas — Plantilla: Recibo de abono · No.
 
 #### `backend/app/templates/perfil/`

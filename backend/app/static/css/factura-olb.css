@@ -10,6 +10,43 @@
   justify-content: flex-end;
 }
 
+/* Retorno de la factura: X rojiza en móvil, enlace en escritorio. */
+.factura-cerrar {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .volver-ventas-factura {
+    display: none;
+  }
+
+  .factura-cerrar {
+    display: inline-flex;
+    position: fixed;
+    top: 10px;
+    right: 12px;
+    z-index: 1000;
+    width: 38px;
+    height: 38px;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(254, 202, 202, 0.4);
+    border-radius: 50%;
+    background: rgba(127, 29, 29, 0.94);
+    box-shadow: 0 4px 14px rgba(239, 68, 68, 0.55), 0 0 10px rgba(239, 68, 68, 0.35);
+    color: #fee2e2;
+    font-size: 1.5rem;
+    line-height: 1;
+    text-decoration: none;
+  }
+}
+
+@media print {
+  .factura-cerrar {
+    display: none !important;
+  }
+}
+
 .hoja-factura {
   position: relative;
   width: 100%;
@@ -446,6 +483,13 @@
 
 .total-fila--con-abono .total-valor {
   border-bottom: 1px solid #b8d6f5;
+}
+
+/* Cierre de la última celda: el blanco nunca toca el borde redondeado, tanto
+   en el bloque de dos filas (TOTAL) como en el de tres (ABONADO / SALDO). */
+.total-fila:last-child .total-valor {
+  border-bottom: 1px solid #b8d6f5;
+  border-bottom-right-radius: 8px;
 }
 
 /* --- MEDIOS DE PAGO --- */

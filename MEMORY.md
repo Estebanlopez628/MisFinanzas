@@ -2662,6 +2662,22 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v133`; **965 pruebas** en verde (2 nuevas en `test_srs_v4_44.py`). Gate `qa_v4_47.py` **20/20** en 375 y 1280 px, en `screen` y `print`, con estilos computados reales; comprueba además que la vista, el PDF y el uso compartido por WhatsApp consumen la misma plantilla `_hoja_factura.html` y la misma hoja `factura-olb.css`. Sin abono no aparece el divisor. Se validó el documento completo con los gates v4.33, v4.35, v4.38, v4.40, v4.41, v4.42, v4.43, v4.44, v4.45, v4.46 y v4.47.
 
+### 2026-11-25 — Retorno desde factura y WhatsApp en OLB_BYTE (ADR-109)
+
+**Decisión (ADR-109).** El propietario pidió que, al abrir «Ver factura» o «Enviar por WhatsApp» desde «Órdenes registradas» (web y móvil), cerrar esas vistas devuelva al usuario a la posición exacta donde estaba. El mecanismo genérico de scroll no sirve: sus claves se consumen al cargar la página intermedia de la factura. Se crean claves propias `misfinanzas_olb_ventas_*` que solo se leen en `/olb-byte`, con marca de tiempo de 15 minutos para no restaurar pestañas antiguas.
+
+**Consecuencias.** Un listener en fase de captura detecta `[data-volver-ventas]` en los dos controles de `acciones_orden` (compartidos por la tabla de escritorio y el diálogo móvil) y guarda X, Y y el `id` del diálogo abierto. Al volver se reaplica la posición con `behavior: "instant"` en cuatro momentos (inmediato, rAF, 180 ms y 500 ms) y se reabre el diálogo móvil antes de reaplicar. En móvil se oculta «← Volver a Ventas» y se añade una X fija de 38 px con fondo `rgba(127, 29, 29, 0.94)` y dos sombras rojizas; en escritorio sigue el enlace. La X no lleva el marcador de guardado, para no sobrescribir la posición original con la de la factura.
+
+**Verificación.** `sw.js` en `olb-finanzas-v134`; **968 pruebas** en verde (3 nuevas en `test_olb_scroll_ventas.py`). Gate `qa_v4_48.py` **15/15** en 1280 y 375 px: 1400 → 1400 en ambos, diálogo móvil reabierto, claves consumidas y WhatsApp guardando posición sin abrir el chat.
+
+### 2026-11-25 — Pendientes de pago: buscador sin divisor y modal con X rojiza (ADR-110)
+
+**Decisión (ADR-110).** El propietario pidió quitar la línea sobre «Buscar por cliente, celular o número de orden» en web y móvil, y simplificar el modal del cliente en móvil: solo «Registrar Pago», sin «Volver a pendientes de pago», con una X rojiza arriba a la derecha que cierra y deja la lista en la misma posición.
+
+**Consecuencias.** La línea provenía de `.formulario--compacto { border-top }`; se anula solo en `.formulario--buscar` con `border-top: 0` y `padding-top: 0`, sin afectar otros formularios compactos. En el `<dialog>` de cada pendiente se sustituye el botón de regreso por `.pendiente-cerrar` (`data-cerrar-dialogo`), con el mismo rojo del retorno de la factura: fondo `rgba(127, 29, 29, 0.94)` y dos sombras `rgba(239, 68, 68, …)`, 34 px, arriba a la derecha. Como el diálogo se cierra en la misma página, no hay recarga y el scroll se conserva por sí mismo; se verificó con el gate.
+
+**Verificación.** `sw.js` en `olb-finanzas-v136`; **971 pruebas** en verde (3 nuevas en `test_olb_pendientes_ui.py`). Gate `qa_v4_49.py` **7/7** en 1280 y 375 px: borde superior 0 px, modal con un solo botón, X rojisa arriba a la derecha, cierre correcto y scroll 55 → 55.
+
 ### 2026-11-24 — SRS v4.43: corrección de columnas y portal del modal (ADR-105)
 
 **Decisión (ADR-105).** El propietario corrigió dos puntos de v4.42: el ancho fijo de 440 px forzaba scroll aunque el texto cupiera, y el modal de edición quedaba atrapado en el contexto de la tarjeta. Las referencias a `hidden md:table-cell` y `ReactDOM.createPortal` del documento son ilustrativas; se implementan con CSS y `document.body.appendChild`, según el stack.

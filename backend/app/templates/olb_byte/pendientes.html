@@ -88,6 +88,9 @@
         {% set venta = fila.venta %}
         <dialog class="detalle-orden" id="pendiente-{{ venta.id_venta }}" aria-label="Detalle de la orden {{ venta.numero_orden }}">
           <div class="detalle-orden__cuerpo">
+            {# SRS v4.44: cierre con X rojiza; el modal solo ofrece «Registrar Pago». #}
+            <button type="button" class="pendiente-cerrar" data-cerrar-dialogo
+                    aria-label="Cerrar y volver a pendientes" title="Cerrar">×</button>
             <h3 class="detalle-orden__titulo">Orden No. {{ venta.numero_orden }}</h3>
             <dl class="detalle-orden__lista">
               <div><dt>No. de orden</dt><dd>{{ venta.numero_orden }}</dd></div>
@@ -99,7 +102,6 @@
               <div><dt>Saldo</dt><dd class="valor-negativo">{{ venta.saldo_pendiente | cop }}</dd></div>
             </dl>
             <a class="boton boton--primario boton--pequeno" href="{{ url_for('ver_cobro', id_venta=venta.id_venta) }}">Registrar Pago</a>
-            <button type="button" class="boton boton--primario boton--pequeno detalle-orden__volver" data-cerrar-dialogo>Volver a pendientes de pago</button>
           </div>
         </dialog>
       {% endfor %}

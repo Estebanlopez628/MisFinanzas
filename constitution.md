@@ -224,3 +224,11 @@ Principios innegociables. Toda especificación, plan y tarea debe cumplirlos de 
     - Los movimientos del proveedor muestran Fecha | Tipo | Cliente | Producto | Concepto | Monto | Saldo, cuatro filas visibles y el mismo orden en el modal móvil con X arriba.
     - Las deudas anteriores al sistema usan `DEUDA_INICIAL`, suman al saldo del proveedor y no se editan ni se borran.
     - Los gastos operativos sí se editan y se borran; no afectan la deuda ni la caja y se descuentan de inmediato de la ganancia real (neta) en reportes y CSV.
+
+46. **Retorno desde la factura y WhatsApp (ADR-109):**
+    - «Ver factura» y «Enviar por WhatsApp» guardan posición y diálogo abierto en claves propias; al volver a Ventas se restauran literalmente.
+    - En móvil, el retorno de la factura es una X rojiza fija arriba a la derecha; en escritorio se conserva «Volver a Ventas».
+
+47. **Pendientes de pago (ADR-110):**
+    - El buscador no muestra el divisor superior del formato compacto, en web ni en móvil.
+    - El modal del cliente ofrece solo «Registrar Pago»; se cierra con una X rojiza y deja la lista en la misma posición.

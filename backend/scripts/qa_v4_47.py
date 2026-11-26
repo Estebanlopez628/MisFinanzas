@@ -61,6 +61,18 @@ def id_venta_con_saldo() -> str:
         return venta.id_venta
 
 
+def id_venta_sin_saldo() -> str:
+    """Busca una orden pagada para comprobar el bloque de dos filas.
+
+    Returns:
+        Identificador de la orden.
+    """
+    with FabricaSesiones() as bd:
+        venta = bd.query(Venta).filter(Venta.saldo_pendiente == 0).first()
+        assert venta is not None
+        return venta.id_venta
+
+
 CONSULTA_TOTALES = """() => {
   const caja = document.querySelector('.totales-caja');
   const valores = [...document.querySelectorAll('.total-valor')];
@@ -74,7 +86,9 @@ CONSULTA_TOTALES = """() => {
     divisorSubtotal: estilo(valores[0]).borderBottomWidth + ' ' + estilo(valores[0]).borderBottomColor,
     divisorTotal: estilo(valores[1]).borderBottomWidth + ' ' + estilo(valores[1]).borderBottomColor,
     divisorEtiquetaTotal: estilo(etiquetas[1]).borderBottomWidth,
-    bordeArribaAbono: estilo(etiquetas[2]).borderTopWidth,
+    bordeArribaAbono: etiquetas[2] ? estilo(etiquetas[2]).borderTopWidth : '0px',
+    bordeInferior: estilo(valores[valores.length - 1]).borderBottomWidth + ' '
+      + estilo(valores[valores.length - 1]).borderBottomColor,
     filas: document.querySelectorAll('.total-fila').length,
   };
 }"""
@@ -104,6 +118,7 @@ def main() -> None:
         None. Imprime el informe.
     """
     id_venta = id_venta_con_saldo()
+    id_pagada = id_venta_sin_saldo()
     with sync_playwright() as motor:
         navegador = motor.chromium.launch(headless=True)
         for ancho in (1280, 375):
@@ -160,7 +175,22 @@ def main() -> None:
                     datos["filas"] == 3,
                     f"filas={datos['filas']}",
                 )
+                comprobar(
+                    f"{etiqueta}: última celda sin blanco en el borde",
+                    datos["bordeInferior"] == "1px rgb(184, 214, 245)",
+                    datos["bordeInferior"],
+                )
             pagina.emulate_media(media="screen")
+            # Bloque de dos filas (sin ABONADO / SALDO): mismo cierre azul.
+            pagina.goto(f"{BASE}/olb-byte/factura/{id_pagada}/hoja")
+            pagina.wait_for_load_state("networkidle")
+            datos = pagina.evaluate(CONSULTA_TOTALES)
+            comprobar(
+                f"{prefijo}: dos filas sin línea blanca inferior",
+                datos["filas"] == 2
+                and datos["bordeInferior"] == "1px rgb(184, 214, 245)",
+                f"filas={datos['filas']} borde={datos['bordeInferior']}",
+            )
             contexto.close()
         navegador.close()
 
@@ -174,7 +204,7 @@ def main() -> None:
         and "factura-olb.css" in pdf
         and "total-fila--con-abono" in plantilla,
     )
-    impresion = css.split("@media print", 1)[1].split(".totales-caja {", 1)[1].split("}", 1)[0]
+    impresion = css.rsplit("@media print", 1)[1].split(".totales-caja {", 1)[1].split("}", 1)[0]
     comprobar(
         "La impresión no contradice el diseño del recuadro",
         "background" not in impresion and "border" not in impresion,

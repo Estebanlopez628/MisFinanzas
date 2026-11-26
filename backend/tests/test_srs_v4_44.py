@@ -105,6 +105,11 @@ def test_recuadro_totales_transparente_con_celdas_blancas() -> None:
     assert "overflow: hidden" in caja
     valor = css.split("\n.total-valor {", 1)[1].split("}", 1)[0]
     assert "background: #ffffff" in valor
+    # El blanco no debe tocar el borde inferior redondeado en ninguno de los
+    # dos bloques: con ABONADO / SALDO y sin él.
+    cierre = css.split(".total-fila:last-child .total-valor {", 1)[1].split("}", 1)[0]
+    assert "border-bottom: 1px solid #b8d6f5" in cierre
+    assert "border-bottom-right-radius: 8px" in cierre
 
 
 def test_divisor_entre_total_y_abonado_solo_cuando_hay_abono() -> None:

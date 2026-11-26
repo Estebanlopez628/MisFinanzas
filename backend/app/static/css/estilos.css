@@ -1325,6 +1325,32 @@ a.tarjeta:focus-visible {
   outline: none;
 }
 
+/* SRS v4.44: X rojisa del modal de pendientes de pago. */
+.pendiente-cerrar {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(254, 202, 202, 0.4);
+  border-radius: 50%;
+  background: rgba(127, 29, 29, 0.94);
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.55), 0 0 10px rgba(239, 68, 68, 0.35);
+  color: #fee2e2;
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.pendiente-cerrar:hover,
+.pendiente-cerrar:focus-visible {
+  background: rgba(153, 27, 27, 0.98);
+  outline: none;
+}
+
 
 /* --------------------- Edición en línea de gastos fijos ------------------ */
 
@@ -4067,6 +4093,9 @@ strong.valor-negativo.recibo__cifra--saldo {
 /* Separación entre el buscador de pendientes y la tabla */
 .formulario--buscar {
   margin-bottom: 18px;
+  /* SRS v4.44: sin línea sobre «Buscar por cliente, celular o número de orden». */
+  border-top: 0;
+  padding-top: 0;
 }
 
 /* Factura, WhatsApp y Anular de la misma medida en la tabla de órdenes */
