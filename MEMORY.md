@@ -2854,6 +2854,14 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v156`. Gate `qa_v4_56.py` **6/6**: separación de 18 px medida entre quincenas y atajos, `clientHeight 325 / scrollHeight 386` en 1280 px, `370 / 439` en 375 px y bordes inferiores iguales en web. Suite completa **1002 pruebas** en verde y 20 gates sin regresiones propias.
 
+### 2026-11-26 — Contenedores internos anchos y redondeados sin choques (ADR-141)
+
+**Decisión (ADR-141).** SRS aparte: conservar los contenedores internos de los formularios (Proyectar una meta y similares) pero con ancho completo, `box-sizing: border-box`, esquinas redondeadas y padding suficiente para que campos y botones no queden apretados ni cortados. Login, iconos, lógica y scroll intactos.
+
+**Consecuencias.** Bajo `body:not(.pagina-acceso)`, `.fila-campos`, `.cuadricula-horas`, `.cuadricula-abonos`, `.abonos-scroll`, `.bloque-producto`, `.bloque-pago`, `.grupo-quincenal` y `.bloque-tabla-pagos` reciben `width: 100%`, `box-sizing: border-box`, `border-radius: var(--radio-md, 10px)` y `padding: 12px`, manteniendo fondo transparente, borde 0 y sin sombra. No cambian tamaños de campos ni rejillas.
+
+**Verificación.** Playwright 1280 px y 390 px sobre Presupuesto, Finanzas, Deudas y OLB BYTE: contenedores al 100 % con separación de 12 px a cada lado, sin desbordes ni errores de consola, iconos presentes y login intacto. Suite completa en verde. `sw.js` en `olb-finanzas-v175`.
+
 ### 2026-11-26 — Atajos más oscuros, velocímetros en armonía y contenedores transparentes (ADR-140)
 
 **Decisión (ADR-140).** SRS aparte: atajos de pago un paso más oscuros que el panel, velocímetros y gráfica comparativa con la misma familia azul marino/cian, y formularios/fieldsets/grillas/barras de botones sin recuadros fantasma. Login, iconos, métricas, gráficos, CSV, scroll y lógica intactos.

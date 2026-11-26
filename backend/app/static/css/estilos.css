@@ -7228,3 +7228,25 @@ body:not(.pagina-acceso) .modal-centrado > * {
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
 }
+
+/* --------------------------------------------------------------------------
+   SRS aparte — Contenedores internos más anchos y redondeados sin choques.
+   Solo apariencia; login e iconos intactos, medidas de campos sin cambios.
+   -------------------------------------------------------------------------- */
+
+body:not(.pagina-acceso) .fila-campos,
+body:not(.pagina-acceso) .cuadricula-horas,
+body:not(.pagina-acceso) .cuadricula-abonos,
+body:not(.pagina-acceso) .abonos-scroll,
+body:not(.pagina-acceso) .bloque-producto,
+body:not(.pagina-acceso) .bloque-pago,
+body:not(.pagina-acceso) .grupo-quincenal,
+body:not(.pagina-acceso) .bloque-tabla-pagos {
+  width: 100%;
+  box-sizing: border-box;
+  border-radius: var(--radio-md, 10px);
+  padding: 12px;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
