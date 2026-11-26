@@ -7250,10 +7250,24 @@ body:not(.pagina-acceso) .bloque-tabla-pagos {
   max-width: 100%;
   box-sizing: border-box;
   border-radius: var(--radio-md, 14px);
-  padding: 12px;
+  padding: 0;
   background: transparent;
   border: 0;
   box-shadow: none;
+}
+
+/* Los bloques con padding propio conservan su espaciado original. */
+body:not(.pagina-acceso) .bloque-producto,
+body:not(.pagina-acceso) .bloque-pago {
+  padding: 14px 16px 16px;
+}
+
+body:not(.pagina-acceso) .grupo-quincenal {
+  padding: 16px;
+}
+
+body:not(.pagina-acceso) .abonos-scroll {
+  padding: 0 6px 0 0;
 }
 
 /* Los modales mantienen su superficie densa, sin heredar el padding anterior. */

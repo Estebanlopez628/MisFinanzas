@@ -2854,6 +2854,14 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v156`. Gate `qa_v4_56.py` **6/6**: separación de 18 px medida entre quincenas y atajos, `clientHeight 325 / scrollHeight 386` en 1280 px, `370 / 439` en 375 px y bordes inferiores iguales en web. Suite completa **1002 pruebas** en verde y 20 gates sin regresiones propias.
 
+### 2026-11-26 — Campos sin ensanchamiento: padding de contenedores revertido (ADR-143)
+
+**Decisión (ADR-143).** El propietario indicó que los campos no debían ensancharse ni verse más gruesos. Se conserva el ancho completo, `box-sizing` y el redondeado de los contenedores internos, pero se elimina el `padding: 12px` que se había añadido en ADR-142 a `form`, `fieldset`, `.formulario`, barras de acciones y grillas. Los campos vuelven a su altura de 50 px y su padding original de `12px 14px`.
+
+**Consecuencias.** La regla conjunta usa `padding: 0`. Se restauran los paddings propios que ya existían: `.bloque-producto`/`.bloque-pago` (`14px 16px 16px`), `.grupo-quincenal` (`16px`) y `.abonos-scroll` (`0 6px 0 0`). El formulario de «Salir» sigue excluido y los modales conservan su superficie densa.
+
+**Verificación.** Playwright 1280 px y 390 px sobre Presupuesto, Finanzas y OLB BYTE: campos a 50 px con padding original, contenedores sin padding añadido, sin desbordes ni errores de consola. Suite completa en verde. `sw.js` en `olb-finanzas-v177`.
+
 ### 2026-11-26 — Eliminación de esquinas cuadradas en contenedores internos (ADR-142)
 
 **Decisión (ADR-142).** SRS aparte: ningún contenedor interno (`form`, `fieldset`, grillas, filas de campos ni barras de botones) puede verse cuadrado ni chocar con campos o bordes, en Web ni Móvil. Login, iconos, lógica y scroll intactos.
