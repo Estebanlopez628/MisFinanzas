@@ -1795,3 +1795,16 @@ Línea base v4.44. Ajusta la sección 69. Alcance exclusivo: Mis Finanzas (`/fin
 
 - Playwright 1280 px y 390 px sobre Presupuesto, Finanzas, Deudas y OLB BYTE: contenedores al 100 % con 12 px de separación interna a cada lado, campos y botones sin choques ni cortes, iconos presentes, sin desbordes ni errores de consola.
 - Suite completa en verde. `sw.js` en `olb-finanzas-v175`. Documentación sincronizada.
+
+## 77. SRS aparte — Eliminación de esquinas cuadradas en contenedores internos (ADR-142)
+
+**Regla suprema.** Login e iconos intactos. Solo apariencia en Web y Móvil; sin cambios de cálculos, flujos, CSV, analítica ni scroll.
+
+### 77.1 Ajuste aplicado
+
+- Todo contenedor interno visible (`form` excepto `.navegacion__salida`, `fieldset`, `.formulario`, barras de acciones y grillas) usa `width/max-width: 100%`, `box-sizing: border-box`, `border-radius: 14px` y `padding: 12px`, con fondo transparente, borde 0 y sin sombra. Los modales conservan su superficie densa y su padding original.
+
+### 77.2 Verificación y cierre documental
+
+- Playwright 1280 px y 390 px sobre Presupuesto, Finanzas, Deudas y OLB BYTE: contenedores redondeados con 12 px de separación, sin cajas cuadradas ni choques; encabezado y login intactos, iconos presentes, sin desbordes ni errores de consola.
+- Suite completa en verde. `sw.js` en `olb-finanzas-v176`. Documentación sincronizada.

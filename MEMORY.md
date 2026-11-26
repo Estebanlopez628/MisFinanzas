@@ -2854,6 +2854,14 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v156`. Gate `qa_v4_56.py` **6/6**: separación de 18 px medida entre quincenas y atajos, `clientHeight 325 / scrollHeight 386` en 1280 px, `370 / 439` en 375 px y bordes inferiores iguales en web. Suite completa **1002 pruebas** en verde y 20 gates sin regresiones propias.
 
+### 2026-11-26 — Eliminación de esquinas cuadradas en contenedores internos (ADR-142)
+
+**Decisión (ADR-142).** SRS aparte: ningún contenedor interno (`form`, `fieldset`, grillas, filas de campos ni barras de botones) puede verse cuadrado ni chocar con campos o bordes, en Web ni Móvil. Login, iconos, lógica y scroll intactos.
+
+**Consecuencias.** Se amplió la regla de `body:not(.pagina-acceso)` para incluir `form:not(.navegacion__salida)`, `fieldset`, `.formulario` y `[class*="acciones-formulario"]` junto a las grillas ya cubiertas, todas con `width/max-width: 100%`, `box-sizing: border-box`, `border-radius: var(--radio-md, 14px)`, `padding: 12px`, fondo transparente, borde 0 y sin sombra. Se excluyó `.navegacion__salida` porque al aplicársele la regla el menú «Salir» bajaba de línea. Los modales conservan su superficie densa y su padding original.
+
+**Verificación.** Playwright 1280 px y 390 px sobre Presupuesto, Finanzas, Deudas y OLB BYTE: formularios, fieldsets, filas y barras con radio 14 px y 12 px de padding; encabezado intacto; sin desbordes ni errores de consola, iconos presentes. Suite completa en verde. `sw.js` en `olb-finanzas-v176`.
+
 ### 2026-11-26 — Contenedores internos anchos y redondeados sin choques (ADR-141)
 
 **Decisión (ADR-141).** SRS aparte: conservar los contenedores internos de los formularios (Proyectar una meta y similares) pero con ancho completo, `box-sizing: border-box`, esquinas redondeadas y padding suficiente para que campos y botones no queden apretados ni cortados. Login, iconos, lógica y scroll intactos.

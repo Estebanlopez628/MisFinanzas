@@ -7234,6 +7234,10 @@ body:not(.pagina-acceso) .modal-centrado > * {
    Solo apariencia; login e iconos intactos, medidas de campos sin cambios.
    -------------------------------------------------------------------------- */
 
+body:not(.pagina-acceso) form:not(.navegacion__salida),
+body:not(.pagina-acceso) fieldset,
+body:not(.pagina-acceso) .formulario,
+body:not(.pagina-acceso) [class*="acciones-formulario"],
 body:not(.pagina-acceso) .fila-campos,
 body:not(.pagina-acceso) .cuadricula-horas,
 body:not(.pagina-acceso) .cuadricula-abonos,
@@ -7243,10 +7247,22 @@ body:not(.pagina-acceso) .bloque-pago,
 body:not(.pagina-acceso) .grupo-quincenal,
 body:not(.pagina-acceso) .bloque-tabla-pagos {
   width: 100%;
+  max-width: 100%;
   box-sizing: border-box;
-  border-radius: var(--radio-md, 10px);
+  border-radius: var(--radio-md, 14px);
   padding: 12px;
   background: transparent;
   border: 0;
   box-shadow: none;
+}
+
+/* Los modales mantienen su superficie densa, sin heredar el padding anterior. */
+body:not(.pagina-acceso) form.edicion-gasto__formulario,
+body:not(.pagina-acceso) details.edicion-gasto--modal[open] > .edicion-gasto__formulario,
+body:not(.pagina-acceso) .app-modal__tarjeta,
+body:not(.pagina-acceso) .modal-centrado > * {
+  background: rgba(6, 22, 48, 0.86);
+  border-color: rgba(56, 189, 248, 0.3);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
