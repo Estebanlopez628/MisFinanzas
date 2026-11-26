@@ -44,17 +44,26 @@ body {
 
 body {
   min-height: 100vh;
-  /* Fondo de ondas azules con un velo oscuro encima para atenuar el azul. */
+  /* Fondo original: se conserva tal cual en el login (`.pagina-acceso`). */
   background:
     radial-gradient(1200px 600px at 15% -10%, rgba(2, 132, 199, 0.22), transparent 60%),
     radial-gradient(900px 500px at 110% 10%, rgba(16, 185, 129, 0.14), transparent 55%),
-    linear-gradient(rgba(15, 23, 42, 0.62), rgba(15, 23, 42, 0.62)),
-    url("/static/img/fondo-ondas.png") center / cover no-repeat fixed,
     var(--bg-primary);
   color: var(--text-primary);
   font-family: var(--fuente-base);
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
+}
+
+/* Fondo de ondas azules con velo oscuro en toda la aplicación, excepto el login:
+   `pagina-acceso` conserva su fondo original y su tarjeta de acceso intacta. */
+body:not(.pagina-acceso) {
+  background:
+    radial-gradient(1200px 600px at 15% -10%, rgba(2, 132, 199, 0.22), transparent 60%),
+    radial-gradient(900px 500px at 110% 10%, rgba(16, 185, 129, 0.14), transparent 55%),
+    linear-gradient(rgba(15, 23, 42, 0.62), rgba(15, 23, 42, 0.62)),
+    url("/estaticos/img/fondo-ondas.png") center / cover no-repeat fixed,
+    var(--bg-primary);
 }
 
 /* ------------------------------ Estructura ------------------------------ */

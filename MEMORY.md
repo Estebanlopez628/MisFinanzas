@@ -2860,7 +2860,9 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Consecuencias.** Seis plantillas de OLB BYTE (index, pendientes, cartera, garantías, analítica y cobro) definen `{% block clase_cuerpo %}olb-translucido{% endblock %}`. Factura y recibo quedan fuera para no alterar el PDF ni la imagen compartida. En `estilos.css` se añaden reglas con prefijo `body.olb-translucido`: `.panel`, `.formulario`, `.campo__control` (excepto `--bloqueado`), `.boton--secundario`, `.boton--primario`, `.subnav-finanzas__enlace` y `.panel--kpis .kpi`. Los campos bloqueados y los iconos conservan su aspecto. No cambia ningún valor numérico ni medida.
 
-**Verificación.** Recorrido con Playwright en 1280 px y 390 px sobre Ventas, Cartera y Analítica: clase presente en OLB BYTE y ausente en `/finanzas`, fondos `rgba` y `backdrop-filter` aplicados, pestaña activa en azul luminoso, sin desbordamiento horizontal (`scrollWidth === innerWidth`) e iconos intactos. Suite completa en verde (1003 pruebas). `sw.js` en `olb-finanzas-v169`.
+**Corrección posterior (misma fecha).** La imagen se sirve desde `/estaticos/`, no `/static/`; la URL del CSS se corrigió y ahora responde 200. El login conserva su fondo original: la regla del fondo de ondas lleva `body:not(.pagina-acceso)` y `login.html` ya define `clase_cuerpo = pagina-acceso`. El velo quedó en 0.62 para que las ondas se vean sin azul saturado.
+
+**Verificación.** Recorrido con Playwright en 1280 px y 390 px sobre Ventas, Cartera y Analítica: clase presente en OLB BYTE y ausente en `/finanzas`, fondos `rgba` y `backdrop-filter` aplicados, pestaña activa en azul luminoso, sin desbordamiento horizontal (`scrollWidth === innerWidth`) e iconos intactos. El login no pide la imagen y mantiene su fondo; Dashboard, Mis Finanzas y OLB BYTE la cargan con 200. Suite completa en verde (1003 pruebas). `sw.js` en `olb-finanzas-v170`.
 
 ### 2026-11-26 — Punto en todas las opciones de los select (ADR-135)
 
