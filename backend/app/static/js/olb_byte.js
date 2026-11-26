@@ -530,7 +530,7 @@
   function agregarNumeroMovil() {
     if (!navigator.contacts || typeof navigator.contacts.select !== "function") {
       avisarFalloNumero(
-        "Este navegador no abre la libreta de contactos. Abre WhatsApp, copia el número y toca «Pegar número»."
+        "Este navegador no abre la libreta de contactos. Toca «Elegir contacto» para ver los contactos del teclado, o abre WhatsApp, copia el número y toca «Pegar número»."
       );
       return;
     }
@@ -553,10 +553,10 @@
           mostrarNotaContactos("");
         })
         .catch(function () {
-          avisarFalloNumero("No se pudo abrir la libreta de contactos. Abre WhatsApp, copia el número y toca «Pegar número».");
+          avisarFalloNumero("No se pudo abrir la libreta de contactos. Toca «Elegir contacto» para ver los contactos del teclado, o abre WhatsApp, copia el número y toca «Pegar número».");
         });
     } catch (error) {
-      avisarFalloNumero("No se pudo abrir la libreta de contactos. Abre WhatsApp, copia el número y toca «Pegar número».");
+      avisarFalloNumero("No se pudo abrir la libreta de contactos. Toca «Elegir contacto» para ver los contactos del teclado, o abre WhatsApp, copia el número y toca «Pegar número».");
     }
   }
 
@@ -617,6 +617,17 @@
       evento.preventDefault();
       evento.stopPropagation();
       window.location.href = "whatsapp://";
+    });
+  }
+
+  var botonElegirContacto = formulario.querySelector("[data-elegir-contacto]");
+  if (botonElegirContacto && campoTelefono) {
+    // En iOS el teclado de los campos `tel` ofrece contactos del dispositivo.
+    // Aquí sí enfocamos el campo a propósito, porque es una acción explícita.
+    botonElegirContacto.addEventListener("click", function (evento) {
+      evento.preventDefault();
+      evento.stopPropagation();
+      campoTelefono.focus();
     });
   }
 

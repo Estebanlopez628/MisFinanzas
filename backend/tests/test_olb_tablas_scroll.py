@@ -88,6 +88,9 @@ def test_modal_de_gasto_en_movil_tiene_guardar_y_x(cliente_admin: TestClient) ->
     html = respuesta.text
     assert ">Guardar</button>" in html
     assert ">Actualizar</button>" not in html
+    # Fila móvil con etiquetas y fecha DD/MM/AA.
+    assert "Fecha: 01/11/26" in html
+    assert "Valor del gasto:" in html
     assert 'class="detalle-orden__cerrar" data-cerrar-dialogo' in html
 
 

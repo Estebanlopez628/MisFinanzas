@@ -326,8 +326,8 @@
           <li>
             <button type="button" class="orden-movil orden-movil--gasto"
                     data-abrir-dialogo="gasto-{{ gasto.id_gasto_operativo }}">
-              <span class="orden-movil__fecha">{{ gasto.fecha.strftime('%m/%d/%Y') }}</span>
-              <span>{{ gasto.monto | cop }}</span>
+              <span class="orden-movil__fecha">Fecha: {{ gasto.fecha.strftime('%d/%m/%y') }}</span>
+              <span>Valor del gasto: {{ gasto.monto | cop }}</span>
             </button>
           </li>
         {% endfor %}

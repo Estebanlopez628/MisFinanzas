@@ -257,7 +257,7 @@ Principios que explican el resto del código:
 
 #### `backend/app/static/css/`
 
-- **`estilos.css`** · 6845 líneas — Fondo y superficies
+- **`estilos.css`** · 6853 líneas — Fondo y superficies
 - **`factura-olb.css`** · 755 líneas — SRS v4.44: el retorno de la factura es «Volver a Ventas» en todos los
 
 #### `backend/app/static/js/`
@@ -283,7 +283,7 @@ Principios que explican el resto del código:
   - Funciones: `fechasListas`, `reemplazar`, `actualizar`, `programar`
 - **`moneda.js`** · 77 líneas — Formato de los campos de pesos mientras se escriben (SRS v1.9).
   - Funciones: `formatear`, `cuantosDigitos`, `posicionCursor`, `alEscribir`, `iniciar`
-- **`olb_byte.js`** · 635 líneas — Formulario de venta de OLB_BYTE: forma de pago, productos guardados y totales.
+- **`olb_byte.js`** · 646 líneas — Formulario de venta de OLB_BYTE: forma de pago, productos guardados y totales.
   - Funciones: `numero`, `pesos`, `normalizarTelefono`, `leerCampos`, `escribirPanel`, `escribirEdicion`, `validarProducto`, `mostrarError`, `actualizarSubtotalPanel`, `hayDatosEnPanel`, `leerFila`, `escribirFila`, `actualizarVacia`, `recalcular`, `agregarFila`, `guardarProducto`, `habilitarPanel`, `sincronizarPago`, `mostrarNotaContactos`, `pegarNumero`, `avisarFalloNumero`, `agregarNumeroMovil`, `manejarBotonNumero`, `sincronizarRotuloNumero`
 - **`perfil.js`** · 138 líneas — Mejora progresiva del perfil financiero (SRS v1.2).
   - Funciones: `alternarSubgrupo`, `conocePorcentajes`, `actualizar`, `leerPorcentaje`, `escribirPorcentaje`
@@ -355,12 +355,12 @@ Principios que explican el resto del código:
 - **`_hoja_factura.html`** · 270 líneas
 - **`_recibo.html`** · 47 líneas
 - **`_subnav.html`** · 30 líneas — Subnavegación de OLB_BYTE con el mismo componente que Mis Finanzas (subnav-finanzas).
-- **`analitica.html`** · 366 líneas — Plantilla: Analítica
+- **`analitica.html`** · 367 líneas — Plantilla: Analítica
 - **`cartera.html`** · 371 líneas — Plantilla: Cartera y liquidez
 - **`cobro.html`** · 93 líneas — Plantilla: Gestionar cobro
 - **`factura.html`** · 42 líneas — Plantilla: Factura No.
 - **`garantias.html`** · 148 líneas — Plantilla: Garantías
-- **`index.html`** · 484 líneas — Plantilla: OLB_BYTE
+- **`index.html`** · 487 líneas — Plantilla: OLB_BYTE
 - **`pendientes.html`** · 119 líneas — Plantilla: Pendientes de pago
 - **`recibo.html`** · 23 líneas — Plantilla: Recibo de abono · No.
 

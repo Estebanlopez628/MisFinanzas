@@ -71,19 +71,19 @@
   <section class="panel panel--kpis" aria-label="Indicadores del periodo">
     <div class="kpi">
       <span class="kpi__etiqueta">
-        Gastos operativos{% if nombre_mes %} · {{ nombre_mes }}{% endif %} {{ anio }}
+        Gastos operativos{% if nombre_mes %} · {{ nombre_mes }}{% endif %}
       </span>
       <strong class="kpi__valor kpi__valor--gasto">{{ gastos_operativos_periodo | cop }}</strong>
     </div>
     <div class="kpi">
       <span class="kpi__etiqueta">
-        Pago a Proveedor{% if nombre_mes %} · {{ nombre_mes }}{% endif %} {{ anio }}
+        Pago a Proveedor{% if nombre_mes %} · {{ nombre_mes }}{% endif %}
       </span>
       <strong class="kpi__valor kpi__valor--gasto">{{ pago_proveedor_periodo | cop }}</strong>
     </div>
     <div class="kpi">
       <span class="kpi__etiqueta">
-        Ganancia neta{% if nombre_mes %} · {{ nombre_mes }}{% endif %} {{ anio }}
+        Ganancia neta{% if nombre_mes %} · {{ nombre_mes }}{% endif %}
       </span>
       <strong class="kpi__valor {{ 'kpi__valor--negativo' if ganancia_neta_periodo < 0 else 'kpi__valor--positivo' }}">
         {{ ganancia_neta_periodo | cop }}
@@ -91,10 +91,11 @@
     </div>
     <div class="kpi">
       <span class="kpi__etiqueta">
-        Ganancia global{% if nombre_mes %} · {{ nombre_mes }}{% endif %} {{ anio }}
+        Ganancia global{% if nombre_mes %} · {{ nombre_mes }}{% endif %}
       </span>
+      {# Sin signo menos: el valor se muestra en positivo y el color indica el signo real. #}
       <strong class="kpi__valor {{ 'kpi__valor--negativo' if ganancia_global_periodo < 0 else 'kpi__valor--positivo' }}">
-        {{ ganancia_global_periodo | cop }}
+        {{ ganancia_global_periodo | abs | cop }}
       </strong>
     </div>
   </section>

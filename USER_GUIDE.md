@@ -192,7 +192,7 @@ También puedes registrar **gastos operativos** (por ejemplo, internet o transpo
 
 Los movimientos con el proveedor muestran ahora Fecha, Tipo, Cliente, Producto, Concepto, Monto y Saldo. En el celular, toca una fila para ver el detalle completo y cierra con la X.
 
-En el celular, al registrar una venta verás el botón **Agregar Numero** junto al campo del celular: si tu navegador abre contactos, toma el número y lo deja limpio (sin +57 ni espacios). Si no abre contactos, verás un aviso con **Abrir WhatsApp** y **Pegar número**: abre WhatsApp, copia el número del contacto, vuelve y toca «Pegar número». El campo ya no se enfoca solo, así que no se abre el teclado de golpe. En la computadora el botón sigue diciendo **Pegar número** y funciona igual que antes.
+En el celular, al registrar una venta verás el botón **Agregar Numero** junto al campo del celular: si tu navegador abre contactos, toma el número y lo deja limpio (sin +57 ni espacios). Si no abre contactos, verás un aviso con **Elegir contacto**, **Abrir WhatsApp** y **Pegar número**. En iPhone toca «Elegir contacto»: se abre el teclado y encima aparecen tus contactos sugeridos; elige uno y el número queda limpio (sin +57 ni espacios). También puedes abrir WhatsApp, copiar el número del contacto, volver y tocar «Pegar número». El campo ya no se enfoca solo, así que no se abre el teclado de golpe. En la computadora el botón sigue diciendo **Pegar número** y funciona igual que antes.
 
 Cuando abras la factura o envíes por WhatsApp desde «Órdenes registradas», al volver quedarás exactamente en el mismo punto de la lista; en el celular, la factura usa «Volver a Ventas» y se reabre el detalle de la orden que estabas viendo.
 
@@ -204,6 +204,6 @@ En Analítica ya no hay línea sobre el selector de año, ni un formulario para 
 
 En las tablas «Mes a mes» y «Año tras año» verás la columna **PASIVO ANTIGUO**: es el saldo pendiente de las deudas viejas con proveedores y **no está incluido en Costos**. Cuando abonas, primero se paga la deuda de las compras recientes y el sobrante baja ese pasivo; por eso el número va disminuyendo. La ganancia y la rentabilidad siguen midiendo solo las ventas. Al descargar el CSV aparece la columna **PASIVO ANTIGUO**, con tildes y formato Excel.
 
-Encima de las tablas verás cuatro indicadores: Gastos operativos, **Pago a Proveedor**, Ganancia neta y Ganancia global. Pago a Proveedor es la deuda antigua más el costo de la mercancía del periodo; Ganancia global es `Pago a Proveedor − Ganancia neta`, en rojo si es negativa y en verde si es positiva. En el celular se muestran en dos filas: Gastos | Pago a Proveedor y, debajo, Ganancia neta | Ganancia global.
+Encima de las tablas verás cuatro indicadores: Gastos operativos, **Pago a Proveedor**, Ganancia neta y Ganancia global. Pago a Proveedor es la deuda antigua más el costo de la mercancía del periodo; Ganancia global es `Ganancia neta − Pago a Proveedor`. El número se muestra sin signo menos y el color avisa: rojo si el resultado es negativo, verde si es positivo. En el celular se muestran en dos filas: Gastos | Pago a Proveedor y, debajo, Ganancia neta | Ganancia global, con las etiquetas sin año y centradas. En el historial de gastos del celular cada fila dice «Fecha: DD/MM/AA» y «Valor del gasto: $X».
 
 © 2026 MisFinanzas

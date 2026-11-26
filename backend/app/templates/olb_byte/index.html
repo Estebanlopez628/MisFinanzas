@@ -152,7 +152,8 @@
           <span class="campo__etiqueta">Celular (WhatsApp)</span>
           <span class="fila-entrada">
             <input class="campo__control" type="tel" name="cliente_telefono" inputmode="numeric"
-                   placeholder="3001234567" value="{{ borrador.cliente_telefono if borrador else '' }}"
+                   autocomplete="tel" placeholder="3001234567"
+                   value="{{ borrador.cliente_telefono if borrador else '' }}"
                    data-cliente-telefono />
             <button class="boton boton--secundario boton--pequeno" type="button" data-pegar-numero>
               <span data-rotulo-numero>Agregar Numero</span>
@@ -161,6 +162,8 @@
           <div class="nota-contactos" data-nota-contactos hidden>
             <span data-nota-contactos-texto></span>
             <div class="nota-contactos__acciones">
+              <button class="boton boton--secundario boton--pequeno" type="button"
+                      data-elegir-contacto>Elegir contacto</button>
               <button class="boton boton--secundario boton--pequeno" type="button"
                       data-abrir-whatsapp>Abrir WhatsApp</button>
               <button class="boton boton--secundario boton--pequeno" type="button"

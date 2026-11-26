@@ -260,8 +260,16 @@ Principios innegociables. Toda especificación, plan y tarea debe cumplirlos de 
 
 54. **Panel KPI de Analítica (ADR-119):**
     - Sin nota explicativa; «Pago a Proveedor» = pasivo antiguo + costos de ventas del periodo.
-    - Orden 2 × 2 en móvil y cuatro en fila en web; Ganancia global = Pago a Proveedor − Ganancia neta.
+    - Orden 2 × 2 en móvil y cuatro en fila en web. La fórmula de Ganancia global se corrigió en ADR-121.
 
 55. **Límites y contactos (ADR-120):**
     - Analítica: 6 productos; Ventas: 5 órdenes; ambas con scroll vertical y cabeceras opacas.
-    - Sin Contact Picker: aviso con «Abrir WhatsApp» y «Pegar número», sin abrir el teclado ni bloquear.
+    - Sin Contact Picker: aviso con «Elegir contacto», «Abrir WhatsApp» y «Pegar número», sin abrir el teclado de golpe ni bloquear.
+
+56. **Ganancia global y etiquetas de KPI (ADR-121):**
+    - Ganancia global = Ganancia neta − Pago a Proveedor; se muestra sin signo menos (`| abs |`) y se colorea rojo si el valor real es negativo, verde si es positivo.
+    - Etiquetas sin año y contenido centrado en web y móvil; fila móvil de gastos operativos con «Fecha: DD/MM/AA» y «Valor del gasto:». Columna «PASIVO ANTIGUO» y CSV intactos.
+
+57. **Contactos en iOS, opción A (ADR-122):**
+    - Safari iOS no expone Contact Picker ni permite abrir la libreta interna de WhatsApp: «Elegir contacto» enfoca el campo `tel autocomplete="tel"` para que el teclado ofrezca contactos sugeridos.
+    - El número se normaliza igual en las tres rutas; el botón «Agregar Numero» sigue siendo solo móvil y no enfoca de golpe.

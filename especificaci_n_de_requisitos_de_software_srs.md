@@ -1528,3 +1528,43 @@ Línea base v4.44. Alcance: «Ventas por producto» en Analítica, «Órdenes re
 
 - `qa_v4_51.py` **7/7**, `qa_v4_52.py` **9/9** y `qa_v4_53.py` **6/6** en 1280 y 375 px. `sw.js` en `olb-finanzas-v146`.
 - Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-120), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.44.
+
+---
+
+## 61. Ganancia global sin signo y KPI centrados
+
+Línea base v4.44. Afecta al panel de KPI de Analítica y a la fila móvil del historial de gastos operativos en Cartera. Tablas, CSV y Mis Finanzas no cambian.
+
+### 61.1 Cambios
+
+1. `Ganancia global = Ganancia neta − Pago a Proveedor` (antes `Pago − Neta`).
+2. El valor se muestra **sin signo menos** (`| abs | cop`); el color indica el signo real: rojo si el resultado es negativo, verde si es positivo.
+3. Las cuatro etiquetas pierden el año («Gastos operativos», «Pago a Proveedor», «Ganancia neta», «Ganancia global», con el mes si aplica) y su contenido va centrado en web y móvil.
+4. La fila móvil de «Historial de pagos operativos» muestra `Fecha: DD/MM/AA` y `Valor del gasto: $X`.
+5. La columna «PASIVO ANTIGUO» de las tablas y del CSV no se toca.
+
+### 61.2 Gate QA y cierre documental
+
+- `qa_v4_50.py` **29/29** en 1280 y 375 px (fórmula, valor sin signo y color por signo); `qa_v4_52.py` **10/10** (fila móvil etiquetada). `sw.js` en `olb-finanzas-v147`.
+- Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-121), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.44.
+
+---
+
+## 62. Contactos en iOS — opción A
+
+Línea base v4.44. Solo afecta al aviso del botón «Agregar Numero» en móvil.
+
+### 62.1 Cambios
+
+1. El aviso ofrece tres acciones: **Elegir contacto**, **Abrir WhatsApp** y **Pegar número**.
+2. «Elegir contacto» enfoca el campo `type="tel" autocomplete="tel"` a propósito: en iOS el teclado muestra contactos sugeridos y el usuario selecciona uno. El número se normaliza igual que en las demás rutas (sin `+57`, sin espacios, 10 dígitos).
+3. El botón principal sigue sin enfocar el campo, para no abrir el teclado de golpe. Las tres acciones solo existen en móvil.
+
+### 62.2 Limitación documentada
+
+Safari iOS no expone Contact Picker API y ninguna web puede abrir ni leer la libreta interna de WhatsApp. La opción A usa el único mecanismo que iOS ofrece al usuario: las sugerencias de contactos del teclado.
+
+### 62.3 Gate QA y cierre documental
+
+- `scripts/qa_v4_51.py` verifica en 375 px que «Elegir contacto» está visible y enfoca el campo. `sw.js` en `olb-finanzas-v148`.
+- Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-122), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.44.

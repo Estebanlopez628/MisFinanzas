@@ -39,6 +39,8 @@ def test_js_rotulo_y_contactos_con_respaldo() -> None:
     assert "nota-contactos--aviso" in js
     assert "data-nota-contactos-texto" in plantilla_leida()
     assert "data-pegar-portapapeles" in plantilla_leida()
+    assert "data-elegir-contacto" in plantilla_leida()
+    assert "botonElegirContacto" in js
     assert 'window.location.href = "whatsapp://"' in js
     assert "campoTelefono.focus()" not in bloque
     normalizar = js.split("function normalizarTelefono(texto) {", 1)[1].split("}", 1)[0]

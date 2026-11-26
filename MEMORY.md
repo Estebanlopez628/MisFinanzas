@@ -2758,6 +2758,22 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v146`. Gates `qa_v4_51.py` 7/7 (aviso sin teclado y acciones), `qa_v4_52.py` 9/9 y `qa_v4_53.py` 6/6 (max-heights 294/252 px y cabeceras `rgb(15,23,42)`).
 
+### 2026-11-26 — Ganancia global sin signo y KPI centrados (ADR-121)
+
+**Decisión (ADR-121).** El propietario corrigió la fórmula de «Ganancia global» a `Ganancia neta − Pago a Proveedor` (antes `Pago − Neta`). Confirmó que el resultado negativo se conserva pero se muestra **sin signo menos**, indicando el signo solo con el color: rojo si el valor real es negativo, verde si es positivo. También pidió quitar el año de las cuatro etiquetas de KPI, centrar su contenido en web y móvil, y reformatear la fila móvil del historial de gastos operativos como `Fecha: DD/MM/AA` y `Valor del gasto: $X`.
+
+**Consecuencias.** `ver_analitica` calcula `ganancia_global_periodo = ganancia_neta_periodo − pago_proveedor_periodo`; la plantilla aplica `| abs | cop` para ocultar el guion y mantiene la clase `kpi__valor--negativo` según el signo real. Las etiquetas pierden `{{ anio }}`; `.panel--kpis .kpi` y sus hijos llevan `text-align: center` en todos los tamaños. La fila móvil de `cartera.html` usa `strftime('%d/%m/%y')` con etiquetas. Columna «PASIVO ANTIGUO» y CSV intactos.
+
+**Verificación.** `sw.js` en `olb-finanzas-v147`. Gate `qa_v4_50.py` **29/29** en 1280 y 375 px: `Ganancia global = |Neta − Pago|` y clase de color acorde al signo; gate `qa_v4_52.py` **10/10** con la fila `Fecha:`/`Valor del gasto:`.
+
+### 2026-11-26 — Opción A para contactos en iOS (ADR-122)
+
+**Decisión (ADR-122).** El propietario eligió la opción A: en iOS Safari no existe Contact Picker API y la web no puede abrir la libreta interna de WhatsApp. En vez de prometer algo imposible, el aviso del botón «Agregar Numero» incorpora «Elegir contacto», que enfoca el campo `type="tel" autocomplete="tel"` a propósito para que el teclado de iOS ofrezca contactos sugeridos. El número se limpia con `normalizarTelefono()` (sin `+57`, sin espacios, 10 dígitos), igual que en las otras dos acciones.
+
+**Consecuencias.** Se añade `data-elegir-contacto` en la plantilla y su manejador en `olb_byte.js`; el botón principal sigue sin enfocar para no abrir el teclado de golpe. Las tres acciones del aviso son exclusivas de móvil (el CSS las oculta en ≥768 px).
+
+**Verificación.** `sw.js` en `olb-finanzas-v148`; gate `qa_v4_51.py` verifica que «Elegir contacto» enfoca el campo y que las tres acciones están visibles en 375 px.
+
 ### 2026-11-24 — SRS v4.43: corrección de columnas y portal del modal (ADR-105)
 
 **Decisión (ADR-105).** El propietario corrigió dos puntos de v4.42: el ancho fijo de 440 px forzaba scroll aunque el texto cupiera, y el modal de edición quedaba atrapado en el contexto de la tarjeta. Las referencias a `hidden md:table-cell` y `ReactDOM.createPortal` del documento son ilustrativas; se implementan con CSS y `document.body.appendChild`, según el stack.

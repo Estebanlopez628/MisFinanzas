@@ -1269,7 +1269,7 @@ def ver_analitica(
     # KPI «Pago a Proveedor»: deuda vieja + costo de la mercancía fiada en el periodo.
     pago_proveedor_periodo = pasivo_periodo + costo_periodo
     # Panorama amplio: compromisos (pasivo + costo) frente a lo realmente ganado.
-    ganancia_global_periodo = pago_proveedor_periodo - ganancia_neta_periodo
+    ganancia_global_periodo = ganancia_neta_periodo - pago_proveedor_periodo
 
     contexto = contexto_base(usuario)
     contexto.update(

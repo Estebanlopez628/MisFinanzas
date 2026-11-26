@@ -1254,6 +1254,12 @@ a.tarjeta:focus-visible {
 
 .panel--kpis .kpi {
   min-width: 0;
+  text-align: center;
+}
+
+.panel--kpis .kpi__etiqueta,
+.panel--kpis .kpi__valor {
+  text-align: center;
 }
 
 .kpi__etiqueta {
@@ -3012,8 +3018,10 @@ textarea.campo__control {
   margin-top: 6px;
 }
 
+/* El aviso con WhatsApp/Pegar es exclusivo de móvil; en web el botón ya usa
+   el portapapeles directamente. */
 @media (min-width: 768px) {
-  .nota-contactos__acciones [data-abrir-whatsapp] {
+  .nota-contactos__acciones {
     display: none;
   }
 }

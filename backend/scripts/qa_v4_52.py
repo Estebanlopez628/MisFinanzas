@@ -95,6 +95,14 @@ def main() -> None:
         pagina = contexto_movil.new_page()
         iniciar(pagina, "/olb-byte/cartera")
         lista = pagina.locator(".ordenes-moviles--gastos")
+        texto_fila = lista.locator("button.orden-movil").first.inner_text()
+        comprobar(
+            "375px: fila con Fecha DD/MM/AA y Valor del gasto",
+            "Fecha:" in texto_fila
+            and "Valor del gasto:" in texto_fila
+            and "/26" in texto_fila,
+            texto_fila,
+        )
         tope = lista.evaluate("e => getComputedStyle(e).maxHeight")
         comprobar(
             "375px: historial con cinco filas visibles",

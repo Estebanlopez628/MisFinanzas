@@ -176,9 +176,16 @@ def main() -> None:
                 f"pago={valores[1]} pasivo={pasivo_mes} costos={costo_mes}",
             )
             comprobar(
-                f"{prefijo}: Ganancia global = Pago a Proveedor − Neta",
-                len(valores) >= 4 and valores[3] == valores[1] - valores[2],
-                f"pago={valores[1]} neta={valores[2]} global={valores[3]}",
+                f"{prefijo}: Ganancia global = |Neta − Pago| sin signo",
+                len(valores) >= 4 and valores[3] == abs(valores[2] - valores[1]),
+                f"neta={valores[2]} pago={valores[1]} global={valores[3]}",
+            )
+            clase_global = tarjetas[3].locator(".kpi__valor").get_attribute("class")
+            comprobar(
+                f"{prefijo}: color de Ganancia global por signo",
+                ("kpi__valor--negativo" in clase_global)
+                == (valores[2] - valores[1] < 0),
+                clase_global or "",
             )
 
             for tabla in ("mensual", "anual"):

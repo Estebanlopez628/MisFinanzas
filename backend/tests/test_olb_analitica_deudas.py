@@ -117,6 +117,10 @@ def test_kpis_de_pago_proveedor_y_ganancia_global(cliente_admin: TestClient) -> 
     assert "Ganancia neta" in html
     assert "muestra el compromiso total" not in html
     assert "kpi__nota" not in html
+    assert "Gastos operativos 2026" not in html
+    assert "Pago a Proveedor 2026" not in html
+    assert "Ganancia neta 2026" not in html
+    assert "Ganancia global 2026" not in html
 
 
 def test_csv_incluye_la_denominacion_exacta(cliente_admin: TestClient, bd) -> None:

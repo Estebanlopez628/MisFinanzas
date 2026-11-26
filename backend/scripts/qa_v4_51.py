@@ -98,9 +98,16 @@ def main() -> None:
             (aviso.text_content() or "").strip(),
         )
         comprobar(
-            "375px: ofrece Abrir WhatsApp y Pegar número",
-            aviso.locator("[data-abrir-whatsapp]").is_visible()
+            "375px: ofrece Elegir contacto, WhatsApp y Pegar número",
+            aviso.locator("[data-elegir-contacto]").is_visible()
+            and aviso.locator("[data-abrir-whatsapp]").is_visible()
             and aviso.locator("[data-pegar-portapapeles]").is_visible(),
+        )
+        aviso.locator("[data-elegir-contacto]").click()
+        pagina_movil.wait_for_timeout(100)
+        comprobar(
+            "375px: Elegir contacto enfoca el campo a propósito",
+            campo.evaluate("e => document.activeElement === e"),
         )
         contexto_movil.close()
 
