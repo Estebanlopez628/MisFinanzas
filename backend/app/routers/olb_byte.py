@@ -15,6 +15,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, replace
 from datetime import date, datetime
+from decimal import Decimal
 from html import escape
 from typing import Annotated
 from urllib.parse import urlencode
@@ -1255,9 +1256,18 @@ def ver_analitica(
     if fila_periodo is not None:
         gastos_periodo = fila_periodo["gastos_operativos"]
         ganancia_neta_periodo = fila_periodo["ganancia_neta"]
+        costo_periodo = fila_periodo["costos"]
+        pasivo_periodo = fila_periodo["pasivo_antiguo"]
     else:
         gastos_periodo = comercial.total_gastos_operativos(bd, filtro.anio, filtro.mes)
         ganancia_neta_periodo = -gastos_periodo
+        costo_periodo = Decimal("0")
+        saldos = analitica._saldos_pasivo_antiguo(bd)
+        pasivo_periodo = analitica._pasivo_antiguo_en(
+            saldos, filtro.anio, filtro.mes or 12
+        )
+    # Panorama amplio: compromisos (pasivo + costo) frente a lo realmente ganado.
+    ganancia_global_periodo = pasivo_periodo + costo_periodo - ganancia_neta_periodo
 
     contexto = contexto_base(usuario)
     contexto.update(
@@ -1283,6 +1293,8 @@ def ver_analitica(
             "anual": anual,
             "gastos_operativos_periodo": gastos_periodo,
             "ganancia_neta_periodo": ganancia_neta_periodo,
+            "pasivo_antiguo_periodo": pasivo_periodo,
+            "ganancia_global_periodo": ganancia_global_periodo,
             "vip": vip,
             "alertas": alertas,
             "ventas": ventas,

@@ -2726,6 +2726,14 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v142`. 3 pruebas nuevas en `test_olb_contactos_movil.py`. Gate `qa_v4_51.py` **6/6** en 1280 y 375 px: rótulo correcto por ancho, fallback con aviso y foco, y contacto simulado `+57 (300) 123-4567` pegado como `3001234567`.
 
+### 2026-11-26 — KPI de Pasivo antiguo y Ganancia global (ADR-117)
+
+**Decisión (ADR-117).** El propietario pidió ampliar el panel de indicadores de Analítica —donde ya estaban Gastos operativos y Ganancia neta— con «Pasivo antiguo» y «Ganancia global», calculada como `(Pasivo antiguo + Costos) − Ganancia neta` del periodo elegido, para ver el compromiso total frente a la ganancia real.
+
+**Consecuencias.** `ver_analitica` toma `costos` y `pasivo_antiguo` de la fila mensual/anual vigente (o los calcula si el año no tiene ventas) y expone `pasivo_antiguo_periodo` y `ganancia_global_periodo`. La plantilla añade dos tarjetas `.kpi` con la nota de la fórmula. No se tocan tablas ni CSV.
+
+**Verificación.** `sw.js` en `olb-finanzas-v143`. 1 prueba nueva en `test_olb_analitica_deudas.py`; gate `qa_v4_50.py` valida en 1280 y 375 px que ambos KPI existen y que el valor de Ganancia global coincide con la fórmula usando los costos del mes.
+
 ### 2026-11-24 — SRS v4.43: corrección de columnas y portal del modal (ADR-105)
 
 **Decisión (ADR-105).** El propietario corrigió dos puntos de v4.42: el ancho fijo de 440 px forzaba scroll aunque el texto cupiera, y el modal de edición quedaba atrapado en el contexto de la tarjeta. Las referencias a `hidden md:table-cell` y `ReactDOM.createPortal` del documento son ilustrativas; se implementan con CSS y `document.body.appendChild`, según el stack.

@@ -1457,3 +1457,20 @@ Línea base v4.44. Alcance: únicamente el botón del campo «Celular (WhatsApp)
 
 - `scripts/qa_v4_51.py`: **6/6 comprobaciones** en 1280 y 375 px (rótulo por ancho, fallback y contacto simulado `+57 (300) 123-4567` → `3001234567`). 3 pruebas nuevas. `sw.js` en `olb-finanzas-v142`.
 - Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-116), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.44.
+
+---
+
+## 57. KPI de Pasivo antiguo y Ganancia global
+
+Línea base v4.44. Solo se amplía el panel de indicadores de Analítica; tablas y CSV no cambian.
+
+### 57.1 Cambios
+
+1. El panel `panel--kpis` añade «Pasivo antiguo» y «Ganancia global» junto a «Gastos operativos» y «Ganancia neta».
+2. Ambos se calculan con la fila del periodo elegido: `costos` y `pasivo_antiguo` de la fila mensual/anual, o valores calculados si el año no tiene ventas.
+3. Fórmula: **Ganancia global = (Pasivo antiguo + Costos) − Ganancia neta**.
+
+### 57.2 Gate QA y cierre documental
+
+- `scripts/qa_v4_50.py` verifica en 1280 y 375 px ambos KPI y la igualdad de la fórmula. 1 prueba nueva en `test_olb_analitica_deudas.py`. `sw.js` en `olb-finanzas-v143`.
+- Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-117), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.44.

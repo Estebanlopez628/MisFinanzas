@@ -106,6 +106,16 @@ def test_abono_paga_deuda_corriente_y_sobrante_baja_pasivo(bd) -> None:
     assert comercial.deuda_proveedor(bd) == Decimal("50000")
 
 
+def test_kpis_de_pasivo_y_ganancia_global(cliente_admin: TestClient) -> None:
+    """El panel muestra Pasivo antiguo y Ganancia global con su fórmula."""
+    respuesta = cliente_admin.get("/olb-byte/analitica")
+    assert respuesta.status_code == 200
+    html = respuesta.text
+    assert "Pasivo antiguo" in html
+    assert "Ganancia global" in html
+    assert "global = (Pasivo antiguo + Costos) − Ganancia neta" in html
+
+
 def test_csv_incluye_la_denominacion_exacta(cliente_admin: TestClient, bd) -> None:
     """Los CSV mensual y anual conservan BOM, tildes y el rótulo PASIVO ANTIGUO."""
     encabezados, filas = analitica.tabla_csv(bd, "mensual", analitica.Filtro(), date.today())

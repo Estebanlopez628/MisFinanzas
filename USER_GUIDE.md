@@ -204,4 +204,6 @@ En Analítica ya no hay línea sobre el selector de año, ni un formulario para 
 
 En las tablas «Mes a mes» y «Año tras año» verás la columna **PASIVO ANTIGUO**: es el saldo pendiente de las deudas viejas con proveedores y **no está incluido en Costos**. Cuando abonas, primero se paga la deuda de las compras recientes y el sobrante baja ese pasivo; por eso el número va disminuyendo. La ganancia y la rentabilidad siguen midiendo solo las ventas. Al descargar el CSV aparece la columna **PASIVO ANTIGUO**, con tildes y formato Excel.
 
+Encima de las tablas verás cuatro indicadores: Gastos operativos, Ganancia neta, Pasivo antiguo y **Ganancia global**. Esta última es `(Pasivo antiguo + Costos) − Ganancia neta`: te muestra el compromiso total frente a lo realmente ganado en el periodo.
+
 © 2026 MisFinanzas

@@ -249,3 +249,7 @@ Principios innegociables. Toda especificación, plan y tarea debe cumplirlos de 
 51. **Botón de número en Registrar venta (ADR-116):**
     - En móvil se llama «Agregar Numero» y usa la libreta de contactos con limpieza del número.
     - En escritorio se mantiene «Pegar número» y el portapapeles, sin cambios.
+
+52. **KPI de Analítica (ADR-117):**
+    - El panel muestra Pasivo antiguo y Ganancia global además de Gastos operativos y Ganancia neta.
+    - Ganancia global = (Pasivo antiguo + Costos) − Ganancia neta del periodo.

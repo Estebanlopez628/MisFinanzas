@@ -67,8 +67,8 @@
     {% endif %}
   </section>
 
-  {# SRS v4.44, §8.3: gastos operativos y ganancia real (neta) del periodo. #}
-  <section class="panel panel--kpis" aria-label="Gastos operativos y ganancia neta">
+  {# SRS v4.44: indicadores del periodo: gastos, neta, pasivo y panorama global. #}
+  <section class="panel panel--kpis" aria-label="Indicadores del periodo">
     <div class="kpi">
       <span class="kpi__etiqueta">
         Gastos operativos{% if nombre_mes %} · {{ nombre_mes }}{% endif %} {{ anio }}
@@ -83,9 +83,24 @@
         {{ ganancia_neta_periodo | cop }}
       </strong>
     </div>
+    <div class="kpi">
+      <span class="kpi__etiqueta">
+        Pasivo antiguo{% if nombre_mes %} · {{ nombre_mes }}{% endif %} {{ anio }}
+      </span>
+      <strong class="kpi__valor kpi__valor--gasto">{{ pasivo_antiguo_periodo | cop }}</strong>
+    </div>
+    <div class="kpi">
+      <span class="kpi__etiqueta">
+        Ganancia global{% if nombre_mes %} · {{ nombre_mes }}{% endif %} {{ anio }}
+      </span>
+      <strong class="kpi__valor {{ 'kpi__valor--negativo' if ganancia_global_periodo < 0 else 'kpi__valor--positivo' }}">
+        {{ ganancia_global_periodo | cop }}
+      </strong>
+    </div>
     <p class="ayuda kpi__nota">
-      Ganancia real (neta) = ganancia bruta de ventas − gastos operativos. Se descuenta
-      de inmediato, sin importar la fecha ni si la venta está pagada o a crédito.
+      Ganancia real (neta) = ganancia bruta de ventas − gastos operativos. Ganancia
+      global = (Pasivo antiguo + Costos) − Ganancia neta: muestra el compromiso total
+      frente a lo realmente ganado en el periodo.
     </p>
   </section>
 

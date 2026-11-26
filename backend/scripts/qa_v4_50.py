@@ -126,6 +126,43 @@ def main() -> None:
                     f"costos={celdas[3]} esperado={costo} pasivo={celdas[5]} esperado={pasivo}",
                 )
 
+            # KPI del panel: pasivo antiguo y ganancia global con la fórmula dada.
+            pagina.goto(
+                f"{BASE}/olb-byte/analitica?anio={date.today().year}&mes={date.today().month}"
+            )
+            pagina.wait_for_load_state("networkidle")
+            tarjetas = pagina.locator(".panel--kpis .kpi").all()
+            etiquetas = [t.locator(".kpi__etiqueta").inner_text() for t in tarjetas]
+            valores = [a_pesos(t.locator(".kpi__valor").inner_text()) for t in tarjetas]
+            comprobar(
+                f"{prefijo}: KPI de Pasivo antiguo y Ganancia global",
+                any("Pasivo antiguo" in e for e in etiquetas)
+                and any("Ganancia global" in e for e in etiquetas),
+                str(etiquetas),
+            )
+            with FabricaSesiones() as bd:
+                anio, mes = date.today().year, date.today().month
+                ids = [
+                    venta.id_venta
+                    for venta in bd.query(Venta).all()
+                    if venta.estado_orden == "ACTIVA"
+                    and venta.fecha_venta.year == anio
+                    and venta.fecha_venta.month == mes
+                ]
+                costo_mes = sum(
+                    (
+                        detalle.costo_unitario * detalle.cantidad
+                        for detalle in bd.query(VentaDetalle).all()
+                        if detalle.id_venta in ids
+                    ),
+                    Decimal("0"),
+                )
+            comprobar(
+                f"{prefijo}: Ganancia global = Pasivo + Costos − Neta",
+                len(valores) >= 4 and valores[3] == valores[2] + int(costo_mes) - valores[1],
+                f"pasivo={valores[2]} costos={costo_mes} neta={valores[1]} global={valores[3]}",
+            )
+
             for tabla in ("mensual", "anual"):
                 csv_respuesta = contexto.request.get(
                     f"{BASE}/olb-byte/analitica/exportar/{tabla}.csv"
