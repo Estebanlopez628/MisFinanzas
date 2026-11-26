@@ -257,7 +257,7 @@ Principios que explican el resto del código:
 
 #### `backend/app/static/css/`
 
-- **`estilos.css`** · 6729 líneas — Fondo y superficies
+- **`estilos.css`** · 6731 líneas — Fondo y superficies
 - **`factura-olb.css`** · 755 líneas — SRS v4.44: el retorno de la factura es «Volver a Ventas» en todos los
 
 #### `backend/app/static/js/`

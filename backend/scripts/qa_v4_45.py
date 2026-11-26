@@ -83,22 +83,30 @@ def main() -> None:
                     cabeceras == esperado,
                     str(cabeceras),
                 )
+                fondo_cabecera = pagina.locator(
+                    ".tabla-contenedor--movimientos thead th"
+                ).first.evaluate("e => getComputedStyle(e).backgroundColor")
+                comprobar(
+                    f"{prefijo}: cabecera sin transparencia",
+                    fondo_cabecera == "rgb(15, 23, 42)",
+                    fondo_cabecera,
+                )
                 filas = pagina.locator(".tabla-contenedor--movimientos tbody tr").count()
-                if filas > 4:
+                if filas > 6:
                     fila_alto = pagina.locator(".tabla-contenedor--movimientos tbody tr").first.bounding_box()["height"]
                     contenedor = pagina.locator(".tabla-contenedor--movimientos").bounding_box()["height"]
                     visibles = contenedor / fila_alto
                     comprobar(
-                        f"{prefijo}: cuatro filas visibles con scroll",
-                        3.5 <= visibles <= 5.2,
+                        f"{prefijo}: seis filas visibles con scroll",
+                        6.5 <= visibles <= 7.6,
                         f"filas visibles≈{visibles:.1f}",
                     )
                 else:
-                    # No es una aprobación: con menos de 5 movimientos el límite de
-                    # cuatro filas no se puede medir. Queda como nota, sin contar.
+                    # No es una aprobación: con menos de 7 movimientos el límite de
+                    # seis filas no se puede medir. Queda como nota, sin contar.
                     print(
-                        f"NOTA {prefijo}: límite de cuatro filas no verificado "
-                        f"(hay {filas} movimientos; se requieren 5 o más)",
+                        f"NOTA {prefijo}: límite de seis filas no verificado "
+                        f"(hay {filas} movimientos; se requieren 7 o más)",
                         flush=True,
                     )
             else:

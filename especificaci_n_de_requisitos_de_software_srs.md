@@ -1372,3 +1372,19 @@ Linea base v4.44. Alcance quirúrgico: solo OLB_BYTE; Mis Finanzas, los cálculo
 
 - `scripts/qa_v4_50.py`: **17/17 comprobaciones** en 1280 y 375 px. Línea 0 px, bloque presente, métricas existentes intactas, deuda persistida y X del mismo color en los tres módulos. `qa_v4_48.py`: **16/16** con «Volver a Ventas» y scroll 1400 → 1400. Suite: **976 pruebas** en verde. `sw.js` en `olb-finanzas-v137`.
 - Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-111), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.44.
+
+---
+
+## 52. Movimientos del proveedor — seis filas y cabecera opaca
+
+Línea base v4.44. Solo se ajusta la tabla de «Cartera y liquidez → Movimientos con el proveedor».
+
+### 52.1 Cambios
+
+1. El contenedor pasa de 210 px a 296 px: encabezado de 42 px más seis filas de 42 px, con scroll vertical para el resto.
+2. La cabecera sticky usa `.tabla-contenedor--movimientos .tabla thead th` con `background: var(--bg-primary)`, un selector más específico que `.tabla thead th`; así deja de ser translúcida (`rgba(15, 23, 42, 0.7)` → `rgb(15, 23, 42)`).
+
+### 52.2 Gate QA y cierre documental
+
+- `scripts/qa_v4_45.py` comprueba seis filas visibles y cabecera sin transparencia. 2 pruebas nuevas en `test_olb_movimientos_seis.py`. `sw.js` en `olb-finanzas-v138`.
+- Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-112), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.44.

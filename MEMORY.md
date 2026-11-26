@@ -2686,6 +2686,14 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v137`; **976 pruebas** en verde (5 nuevas en `test_olb_analitica_deudas.py`). Gate `qa_v4_50.py` **17/17** en 1280 y 375 px: línea 0 px, bloque presente, métricas intactas, deuda persistida (1400000 → 1445000 → 1490000) y X del mismo color en los tres módulos. Gate `qa_v4_48.py` **16/16** con «Volver a Ventas» y scroll 1400 → 1400.
 
+### 2026-11-25 — Movimientos del proveedor: seis filas y cabecera opaca (ADR-112)
+
+**Decisión (ADR-112).** El propietario pidió ver seis movimientos en lugar de cuatro y quitar la transparencia de la cabecera sticky de «Movimientos con el proveedor». No se toca el orden de columnas ni el modal móvil.
+
+**Consecuencias.** `.tabla-contenedor--movimientos` pasa de 210 px a 296 px (encabezado de 42 px + seis filas de 42 px). La regla de fondo se cambia a `.tabla-contenedor--movimientos .tabla thead th` con `background: var(--bg-primary)`: el selector tiene dos clases y gana sobre `.tabla thead th` (`rgba(15, 23, 42, 0.7)`), que antes se imponía por aparecer después con igual especificidad. El valor computado pasa de `rgba(15, 23, 42, 0.7)` a `rgb(15, 23, 42)`.
+
+**Verificación.** `sw.js` en `olb-finanzas-v138`. 2 pruebas nuevas en `test_olb_movimientos_seis.py`. Gate `qa_v4_45.py` actualizado a seis filas y con comprobación de cabecera opaca.
+
 ### 2026-11-24 — SRS v4.43: corrección de columnas y portal del modal (ADR-105)
 
 **Decisión (ADR-105).** El propietario corrigió dos puntos de v4.42: el ancho fijo de 440 px forzaba scroll aunque el texto cupiera, y el modal de edición quedaba atrapado en el contexto de la tarjeta. Las referencias a `hidden md:table-cell` y `ReactDOM.createPortal` del documento son ilustrativas; se implementan con CSS y `document.body.appendChild`, según el stack.

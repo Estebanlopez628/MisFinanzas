@@ -1278,10 +1278,10 @@ a.tarjeta:focus-visible {
   margin: 0;
 }
 
-/* SRS v4.44, §7.3: cuatro filas visibles con desplazamiento y encabezado fijo.
-   Cada fila mide 42 px; el contenedor admite el encabezado más cuatro filas. */
+/* SRS v4.44, §7.3: seis filas visibles con desplazamiento y encabezado fijo.
+   Cada fila mide 42 px; el contenedor admite el encabezado más seis filas. */
 .tabla-contenedor--movimientos {
-  max-height: 210px;
+  max-height: 296px;
   overflow-y: auto;
   overscroll-behavior: contain;
 }
@@ -1291,7 +1291,9 @@ a.tarjeta:focus-visible {
   height: 42px;
 }
 
-.tabla-contenedor--movimientos thead th {
+/* El selector incluye `.tabla` para ganar especificidad sobre `.tabla thead th`,
+   que tiene la misma y aparece más adelante. Así la cabecera es totalmente opaca. */
+.tabla-contenedor--movimientos .tabla thead th {
   position: sticky;
   top: 0;
   z-index: 1;
