@@ -2854,6 +2854,14 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v156`. Gate `qa_v4_56.py` **6/6**: separación de 18 px medida entre quincenas y atajos, `clientHeight 325 / scrollHeight 386` en 1280 px, `370 / 439` en 375 px y bordes inferiores iguales en web. Suite completa **1002 pruebas** en verde y 20 gates sin regresiones propias.
 
+### 2026-11-26 — Boceto 2 fiel: resplandor superior y doble onda (ADR-148)
+
+**Decisión (ADR-148).** El propietario pidió ajustar las tarjetas al Boceto 2 exacto: resplandor radial en la esquina superior izquierda y dos ondas luminosas superpuestas en la base, sin invadir «Abrir módulo →» ni el contador de reportes.
+
+**Consecuencias.** En `estilos.css`, bajo `body:not(.pagina-acceso)`, `::before` pasa a ser un `radial-gradient(85% 65% at 12% 8%)` con `--card-accent-soft` (opacidad .75, .60 en móvil). `::after` usa una única máscara SVG con dos ondas (trasera difusa y delantera intensa) y sus crestas, rellenas con un degradado del acento de la tarjeta (opacidad .8, .7 en móvil; altura 86 px web y 68 px móvil). Se añade `padding-bottom: 56px` (52 px móvil) para separar enlace y badge de la onda. El contenido sigue en `z-index: 3` y las capas decorativas son `pointer-events: none`. Comentarios y Reportes usa fucsia `#ec4899` aunque comparta `tarjeta--rojo`.
+
+**Verificación.** Playwright 1280 px y 390 px: doble onda visible con el color propio de cada tarjeta, resplandor superior izquierdo, enlace y contador por encima de la onda, sin desbordes ni errores de consola. Suite completa en verde. `sw.js` en `olb-finanzas-v182`.
+
 ### 2026-11-26 — Onda real SVG en lugar de mancha difusa (ADR-147)
 
 **Decisión (ADR-147).** El propietario indicó que la onda inferior debía ser la silueta definida del Boceto 2, no una nube radial. Se sustituye la mancha por una onda SVG real a todo el ancho, con relleno degradado y trazo luminoso fino, usando el color de acento propio de cada tarjeta.

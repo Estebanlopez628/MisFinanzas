@@ -6996,50 +6996,51 @@ body:not(.pagina-acceso) .impacto-deuda {
   --card-accent-soft: color-mix(in srgb, var(--acento, var(--accent-blue)) 30%, transparent);
 }
 
-/* Capa de onda real (silueta SVG), no una mancha difusa: el `::after` pinta
-   el relleno degradado y el `::before` el trazo luminoso superior. Ambos usan
-   máscaras SVG para adaptarse al ancho completo y al color de cada tarjeta. */
+/* Comentarios y Reportes usa fucsia, aunque comparta el acento rojo. */
+body:not(.pagina-acceso) .tarjeta:has(.tarjeta__badge) {
+  --card-accent: #ec4899;
+  --card-accent-soft: rgba(236, 72, 153, 0.26);
+}
+
+/* Resplandor sutil en la esquina superior izquierda, con el color de la
+   tarjeta. El contenido queda siempre por encima (z-index: 3). */
+body:not(.pagina-acceso) .tarjeta::before,
+body:not(.pagina-acceso) .panel--kpis .kpi::before,
+body:not(.pagina-acceso) .impacto-deuda::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: radial-gradient(85% 65% at 12% 8%, var(--card-accent-soft) 0%, transparent 70%);
+  opacity: 0.75;
+}
+
+/* Doble onda inferior: una trasera difusa y una delantera con cresta marcada.
+   Una sola máscara SVG con cuatro trazos mantiene el degradado y las crestas
+   alineadas; el fondo aplica el acento de cada tarjeta. */
 body:not(.pagina-acceso) .tarjeta::after,
 body:not(.pagina-acceso) .panel--kpis .kpi::after,
 body:not(.pagina-acceso) .impacto-deuda::after {
   content: "";
   position: absolute;
   inset: auto 0 0 0;
-  height: 64px;
-  z-index: 1;
+  height: 86px;
+  z-index: 2;
   pointer-events: none;
   background: linear-gradient(
     90deg,
-    color-mix(in srgb, var(--card-accent) 14%, transparent) 0%,
-    color-mix(in srgb, var(--card-accent) 46%, transparent) 55%,
-    color-mix(in srgb, var(--card-accent) 74%, transparent) 100%
+    color-mix(in srgb, var(--card-accent) 16%, transparent) 0%,
+    color-mix(in srgb, var(--card-accent) 45%, transparent) 50%,
+    color-mix(in srgb, var(--card-accent) 82%, transparent) 100%
   );
-  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 70' preserveAspectRatio='none'%3E%3Cpath d='M0,44 C95,62 175,24 275,36 C335,43 372,22 400,18 L400,70 L0,70 Z'/%3E%3C/svg%3E");
-  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 70' preserveAspectRatio='none'%3E%3Cpath d='M0,44 C95,62 175,24 275,36 C335,43 372,22 400,18 L400,70 L0,70 Z'/%3E%3C/svg%3E");
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 95' preserveAspectRatio='none'%3E%3Cpath d='M0,56 C85,30 175,74 275,48 C335,32 372,42 400,34 L400,95 L0,95 Z' fill='white' opacity='0.55'/%3E%3Cpath d='M0,72 C105,86 190,54 290,68 C342,75 375,58 400,52 L400,95 L0,95 Z' fill='white'/%3E%3Cpath d='M0,56 C85,30 175,74 275,48 C335,32 372,42 400,34' fill='none' stroke='white' stroke-width='1.6'/%3E%3Cpath d='M0,72 C105,86 190,54 290,68 C342,75 375,58 400,52' fill='none' stroke='white' stroke-width='2.2'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 95' preserveAspectRatio='none'%3E%3Cpath d='M0,56 C85,30 175,74 275,48 C335,32 372,42 400,34 L400,95 L0,95 Z' fill='white' opacity='0.55'/%3E%3Cpath d='M0,72 C105,86 190,54 290,68 C342,75 375,58 400,52 L400,95 L0,95 Z' fill='white'/%3E%3Cpath d='M0,56 C85,30 175,74 275,48 C335,32 372,42 400,34' fill='none' stroke='white' stroke-width='1.6'/%3E%3Cpath d='M0,72 C105,86 190,54 290,68 C342,75 375,58 400,52' fill='none' stroke='white' stroke-width='2.2'/%3E%3C/svg%3E");
   -webkit-mask-size: 100% 100%;
   mask-size: 100% 100%;
   -webkit-mask-repeat: no-repeat;
   mask-repeat: no-repeat;
-  opacity: 0.55;
-}
-
-body:not(.pagina-acceso) .tarjeta::before,
-body:not(.pagina-acceso) .panel--kpis .kpi::before,
-body:not(.pagina-acceso) .impacto-deuda::before {
-  content: "";
-  position: absolute;
-  inset: auto 0 0 0;
-  height: 64px;
-  z-index: 1;
-  pointer-events: none;
-  background: var(--card-accent);
-  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 70' preserveAspectRatio='none'%3E%3Cpath d='M0,44 C95,62 175,24 275,36 C335,43 372,22 400,18' fill='none' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
-  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 70' preserveAspectRatio='none'%3E%3Cpath d='M0,44 C95,62 175,24 275,36 C335,43 372,22 400,18' fill='none' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
-  -webkit-mask-size: 100% 100%;
-  mask-size: 100% 100%;
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
-  opacity: 0.78;
+  opacity: 0.8;
 }
 
 body:not(.pagina-acceso) .panel--kpis .kpi {
@@ -7054,23 +7055,30 @@ body:not(.pagina-acceso) .tarjeta > *,
 body:not(.pagina-acceso) .panel--kpis .kpi > *,
 body:not(.pagina-acceso) .impacto-deuda > * {
   position: relative;
-  z-index: 2;
+  z-index: 3;
+}
+
+/* Separación respecto a «Abrir módulo →» y al contador: más aire inferior. */
+body:not(.pagina-acceso) .tarjeta {
+  padding-bottom: 56px;
 }
 
 @media (max-width: 767px) {
-  body:not(.pagina-acceso) .tarjeta::after,
-  body:not(.pagina-acceso) .panel--kpis .kpi::after,
-  body:not(.pagina-acceso) .impacto-deuda::after,
   body:not(.pagina-acceso) .tarjeta::before,
   body:not(.pagina-acceso) .panel--kpis .kpi::before,
   body:not(.pagina-acceso) .impacto-deuda::before {
-    height: 50px;
+    opacity: 0.6;
   }
 
   body:not(.pagina-acceso) .tarjeta::after,
   body:not(.pagina-acceso) .panel--kpis .kpi::after,
   body:not(.pagina-acceso) .impacto-deuda::after {
-    opacity: 0.45;
+    height: 68px;
+    opacity: 0.7;
+  }
+
+  body:not(.pagina-acceso) .tarjeta {
+    padding-bottom: 52px;
   }
 }
 

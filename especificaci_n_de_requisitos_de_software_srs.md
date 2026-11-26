@@ -1880,3 +1880,19 @@ Línea base v4.44. Ajusta la sección 69. Alcance exclusivo: Mis Finanzas (`/fin
 
 - Playwright 1280 px y 390 px: onda definida en la base de las tarjetas con su color, sin desbordes ni errores de consola; botones, resúmenes, envoltorios y login intactos.
 - Suite completa en verde. `sw.js` en `olb-finanzas-v181`. Documentación sincronizada.
+
+## 83. SRS Consolidado Final v2 — Doble onda y resplandor (ADR-148)
+
+**Regla suprema.** Login, iconos, modales, tablas, lógica y scroll intactos; sin sobreexposición ni cruce con textos.
+
+### 83.1 Ajustes aplicados
+
+1. `::before` pasa a ser un resplandor radial en la esquina superior izquierda con `--card-accent-soft` (opacidad .75 web, .60 móvil).
+2. `::after` usa una máscara SVG con dos ondas superpuestas (trasera difusa y delantera con cresta luminosa) y relleno degradado del acento de cada tarjeta; altura 86 px en web y 68 px en móvil, opacidad .8/.7.
+3. Se añade `padding-bottom` de 56 px (52 px móvil) para que la onda no cruce «Abrir módulo →» ni el contador de reportes. Contenido en `z-index: 3`, capas decorativas con `pointer-events: none`.
+4. Comentarios y Reportes usa fucsia `#ec4899` aunque comparta `tarjeta--rojo`.
+
+### 83.2 Verificación y cierre documental
+
+- Playwright 1280 px y 390 px: doble onda con el color propio de cada tarjeta, resplandor superior izquierdo, enlace y badge por encima de la onda, sin desbordes ni errores de consola.
+- Suite completa en verde. `sw.js` en `olb-finanzas-v182`. Documentación sincronizada.
