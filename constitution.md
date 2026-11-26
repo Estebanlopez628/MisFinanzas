@@ -300,8 +300,8 @@ Principios innegociables. Toda especificación, plan y tarea debe cumplirlos de 
     - En Mis Finanzas se ven dos atajos completos y parte del tercero; el resto se alcanza con scroll vertical en web y móvil.
     - En web, «Atajos de pago» y «Resultado del periodo» terminan a la misma altura, con separación normal de 18 px sobre el panel anterior. /chancucos no se toca.
 
-65. **Estética translúcida y efecto agua (ADR-136/137/138):**
+65. **Estética translúcida, efecto agua y coherencia de atajos (ADR-136 a 139):**
     - El acabado translúcido se aplica a las pantallas autenticadas mediante `body:not(.pagina-acceso)`; el login conserva sus estilos originales.
     - Todas las tarjetas sustituyen la franja superior por un resplandor radial difuso inferior, con el acento de cada tarjeta, y conservan iconos y texto por encima.
-    - Formularios y subsecciones usan azul marino translúcido; campos, azul muy oscuro; modales, azul marino denso con desenfoque mayor.
+    - Formularios y subsecciones usan azul marino translúcido; campos, azul muy oscuro; modales, azul marino denso con desenfoque mayor. Los atajos comparten ese tono y no llevan marcos internos sobrantes.
     - No se modifican iconos, medidas, márgenes, cálculos ni flujos. La factura y el recibo (PDF e imagen) quedan fuera del ámbito.

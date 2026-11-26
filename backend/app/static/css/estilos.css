@@ -7102,3 +7102,57 @@ body:not(.pagina-acceso) .panel--kpis .kpi::before {
   background: radial-gradient(ellipse at 50% 100%, rgba(34, 211, 238, 0.18) 0%, transparent 72%);
   pointer-events: none;
 }
+
+/* --------------------------------------------------------------------------
+   SRS aparte — Coherencia en Atajos de pago y limpieza de marcos internos.
+   Solo apariencia. Login e iconos intactos; scroll y medidas sin cambios.
+   -------------------------------------------------------------------------- */
+
+/* Los atajos usan el mismo azul marino/cian que paneles y tarjetas. */
+body:not(.pagina-acceso) .lista-atajos__item {
+  background: rgba(7, 32, 68, 0.68);
+  border-color: rgba(56, 189, 248, 0.22);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+body:not(.pagina-acceso) .atajo-tarjeta-movil {
+  background: rgba(7, 32, 68, 0.72);
+  border-color: rgba(56, 189, 248, 0.28);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* Se retira el marco interior añadido a los formularios: el panel ya sirve de
+   contenedor. Las subsecciones conservan solo su borde original, más sutil. */
+body:not(.pagina-acceso) .formulario,
+body:not(.pagina-acceso) .bloque-producto,
+body:not(.pagina-acceso) .bloque-pago,
+body:not(.pagina-acceso) .grupo-quincenal,
+body:not(.pagina-acceso) .bloque-tabla-pagos {
+  box-shadow: none;
+}
+
+body:not(.pagina-acceso) .bloque-producto,
+body:not(.pagina-acceso) .bloque-pago {
+  border-color: rgba(56, 189, 248, 0.2);
+}
+
+/* Secciones dentro de los paneles: sin borde ni fondo propios, para que no
+   parezcan recuadros cortados dentro de otro recuadro. */
+body:not(.pagina-acceso) .bloque-deducciones,
+body:not(.pagina-acceso) .quincena__saldo {
+  border: 0;
+  background: transparent;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+/* El scroll sigue funcionando; la barra se integra sin cortes bruscos. */
+body:not(.pagina-acceso) .lista-atajos,
+body:not(.pagina-acceso) .tabla-contenedor,
+body:not(.pagina-acceso) .tabla-contenedor--atajos,
+body:not(.pagina-acceso) .tabla-contenedor--deudas {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(56, 189, 248, 0.4) transparent;
+}

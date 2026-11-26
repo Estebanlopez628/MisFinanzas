@@ -1751,3 +1751,19 @@ Línea base v4.44. Ajusta la sección 69. Alcance exclusivo: Mis Finanzas (`/fin
 
 - Playwright 1280 px y 390 px sobre Login, Inicio, Mis Finanzas, Deudas, Trabajos Extras, OLB BYTE y Comentarios: onda inferior en todas las tarjetas, colores solicitados en formularios/campos/modales, iconos intactos, sin desbordes ni errores de consola.
 - Suite completa en verde. `sw.js` en `olb-finanzas-v172`. Documentación sincronizada.
+
+## 74. SRS aparte — Coherencia en Atajos de pago y limpieza de marcos internos (ADR-139)
+
+**Regla suprema.** Login e iconos intactos. Solo apariencia en Web y Móvil; sin cambios de cálculos, ventas, cobros, cartera, garantías, analítica, CSV, scroll ni Mis Finanzas.
+
+### 74.1 Ajustes aplicados
+
+1. Atajos: `.lista-atajos__item` pasa a `rgba(7,32,68,.68)` + `blur(6px)` + borde cian; `.atajo-tarjeta-movil` a `rgba(7,32,68,.72)` + `blur(8px)`.
+2. Se retira el `box-shadow: inset` que dibujaba un marco dentro de `.formulario` y subsecciones; los bordes de producto/pago se suavizan.
+3. `.bloque-deducciones` y `.quincena__saldo` pierden borde y fondo propios, conservando padding horizontal limpio.
+4. Listas y tablas conservan `overflow` y reciben barra de scroll delgada en cian.
+
+### 74.2 Verificación y cierre documental
+
+- Playwright 1280 px y 390 px sobre Finanzas, Atajos, Deudas y OLB BYTE: coherencia cromática, sin marcos internos sobrantes, sin desbordes ni errores de consola; scroll operativo.
+- Suite completa en verde. `sw.js` en `olb-finanzas-v173`. Documentación sincronizada.

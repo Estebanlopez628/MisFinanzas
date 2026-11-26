@@ -2854,6 +2854,14 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v156`. Gate `qa_v4_56.py` **6/6**: separación de 18 px medida entre quincenas y atajos, `clientHeight 325 / scrollHeight 386` en 1280 px, `370 / 439` en 375 px y bordes inferiores iguales en web. Suite completa **1002 pruebas** en verde y 20 gates sin regresiones propias.
 
+### 2026-11-26 — Coherencia en Atajos de pago y limpieza de marcos internos (ADR-139)
+
+**Decisión (ADR-139).** SRS aparte: los atajos de pago deben usar el mismo azul marino/cian translúcido que el resto del sistema y se retiran los recuadros internos sobrantes en formularios y tarjetas, sin sensación de corte en Web ni Móvil. Login, iconos, lógica y scroll intactos.
+
+**Consecuencias.** En `estilos.css`, bajo `body:not(.pagina-acceso)`: `.lista-atajos__item` usa `rgba(7,32,68,.68)` + `blur(6px)` y borde cian; `.atajo-tarjeta-movil` usa `rgba(7,32,68,.72)` + `blur(8px)`. Se anula el `box-shadow: inset` que dibujaba un marco dentro de `.formulario`, `.bloque-producto`, `.bloque-pago`, `.grupo-quincenal` y `.bloque-tabla-pagos`; el borde de los bloques de producto/pago se suaviza. `.bloque-deducciones` y `.quincena__saldo` pierden borde y fondo propios, conservando padding horizontal limpio. Las listas y tablas con scroll mantienen `overflow` y reciben barra delgada cian.
+
+**Verificación.** Playwright 1280 px y 390 px sobre Finanzas, Atajos, Deudas y OLB BYTE: sin desbordes ni errores de consola; elementos inyectados con las clases reales confirman los `rgba` y `backdrop-filter` de atajos y que `overflow-y` sigue `auto`; login sin fondo de ondas. Suite completa en verde. `sw.js` en `olb-finanzas-v173`.
+
 ### 2026-11-26 — Efecto agua en todas las tarjetas y azul marino en formularios (ADR-138)
 
 **Decisión (ADR-138).** SRS aparte: extender el resplandor difuso inferior a **todas** las tarjetas del sistema y ajustar formularios, subsecciones, campos y modales al azul marino/cian translúcido de las imágenes de referencia. Login e iconos intactos; sin cambios de lógica ni flujos.
