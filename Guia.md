@@ -1464,7 +1464,7 @@ Configuración de atajos: formulario con descripción, referencia, «Valor a pag
 
 Panel comercial: inventario, clientes, venta multipartida, cartera y ventas
 recientes con acceso a la factura. El campo «Categoría» del producto es un
-selector cerrado con las 12 categorías estándar (Smartwatches, Audífonos,
+selector cerrado con las 12 categorías estándar (Smartwatch, Audífonos,
 Parlantes, Energía y carga, Cables y adaptadores, Accesorios celular,
 Almacenamiento, Periféricos PC, Hogar y LED, Gaming, Combos y Otros); el mismo
 catálogo se repite en el cuadro de edición.

@@ -13,7 +13,7 @@ from fastapi.testclient import TestClient
 from app.servicios import comercial
 
 CATEGORIAS_VENTA = (
-    "Smartwatches",
+    "Smartwatch",
     "Audífonos",
     "Parlantes",
     "Energía y carga",
