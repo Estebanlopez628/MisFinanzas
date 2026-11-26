@@ -483,12 +483,15 @@ a.tarjeta:focus-visible {
   margin-top: 0;
 }
 
-/* En escritorio el último panel de cada columna baja hasta el fondo de la
-   rejilla: así «Atajos de pago» termina a la misma altura que «Resultado del
-   periodo». El selector de la izquierda iguala la especificidad de la regla
-   anterior para poder vencer su `margin-top: 0`. */
+/* En escritorio «Atajos de pago» mantiene la separación normal de 18 px con el
+   bloque anterior y se estira para terminar a la misma altura que «Resultado
+   del periodo». El panel de resultado solo baja si su columna queda corta. */
 @media (min-width: 901px) {
-  .columna-finanzas--quincenas > .panel + .panel--atajos,
+  .columna-finanzas--quincenas > .panel + .panel--atajos {
+    margin-top: 0;
+    flex-grow: 1;
+  }
+
   .columna-finanzas--liquidacion > .panel--resultado {
     margin-top: auto;
   }
@@ -943,17 +946,17 @@ a.tarjeta:focus-visible {
   margin: 0;
   padding: 0;
   list-style: none;
-  /* Solo se ven dos atajos; los demás se alcanzan con desplazamiento vertical.
-     Medido sobre filas web de 122 px + 10 px de separación. */
-  max-height: 254px;
+  /* Se ven dos atajos completos y un trozo del tercero; los demás se alcanzan
+     con desplazamiento vertical. 2*122 + 2*10 + 61 px de media fila = 325 px. */
+  max-height: 325px;
   overflow-y: auto;
   overscroll-behavior: contain;
 }
 
 @media (max-width: 767px) {
-  /* En móvil la tarjeta de cada atajo mide ~140 px. */
+  /* En móvil la tarjeta mide ~140 px: dos completas y media. */
   .lista-atajos {
-    max-height: 290px;
+    max-height: 370px;
   }
 }
 
@@ -3297,6 +3300,35 @@ strong.valor-negativo.recibo__cifra--saldo {
 
   .dona {
     margin-inline: auto;
+  }
+}
+
+/* Cartera frente a deuda: en móvil la dona y su leyenda van centradas en
+   pantalla, y el sub-desglose de la deuda pierde la sangría para quedar
+   alineado con el resto de la leyenda. Escritorio no cambia. */
+@media (max-width: 767px) {
+  .panel--dona-cartera .dona-contenedor {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .panel--dona-cartera .dona {
+    margin-inline: auto;
+  }
+
+  .panel--dona-cartera .dona__leyenda,
+  .panel--dona-cartera .dona__leyenda li {
+    width: 100%;
+    text-align: center;
+  }
+
+  .panel--dona-cartera .dona__desglose {
+    margin: 4px 0 0;
+    padding-left: 0;
+    border-left: 0;
+    justify-items: center;
+    text-align: center;
   }
 }
 
@@ -6739,27 +6771,31 @@ dialog::backdrop {
   }
 }
 
-/* SRS v4.22, sección 3: en escritorio las leyendas van centradas debajo de
-   la dona. Móvil (< 768px) queda intacto: ya estaba correcto. */
+/* Capacidad de endeudamiento: en móvil la dona y sus leyendas siguen
+   centradas; en escritorio el bloque se alinea a la izquierda y las leyendas
+   quedan al lado derecho de la dona (ADR-133). */
 @media (min-width: 768px) {
   .panel.capacidad .dona-contenedor {
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start !important;
   }
 
   .panel.capacidad .dona {
-    margin-inline: auto;
+    margin-inline: 0;
+    flex: 0 0 auto;
   }
 
   .panel.capacidad .dona__leyenda {
-    margin-top: 16px !important;
-    text-align: center;
+    margin-top: 0 !important;
+    flex: 1 1 auto;
+    text-align: left;
   }
 
-  .panel.capacidad .dona__leyenda li {
-    justify-content: center;
-    text-align: center;
+  .panel.capacidad .dona__leyenda li,
+  .panel.capacidad .dona__desglose li {
+    justify-content: flex-start;
+    text-align: left;
   }
 }
 

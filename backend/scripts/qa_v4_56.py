@@ -86,10 +86,20 @@ def main() -> None:
         lista = pagina.locator(".lista-atajos")
         comprobar("1280px: hay tres atajos en la lista", lista.locator("li").count() >= 3)
         alto, contenido = lista.evaluate("e => [e.clientHeight, e.scrollHeight]")
-        comprobar("1280px: solo dos atajos visibles con scroll", alto == 254 and contenido > alto, f"{alto}/{contenido}")
+        comprobar("1280px: dos atajos y medio visibles con scroll", alto == 325 and contenido > alto, f"{alto}/{contenido}")
         comprobar(
             "1280px: sin desplazamiento horizontal de la página",
             pagina.evaluate("document.documentElement.scrollWidth === window.innerWidth"),
+        )
+
+        paneles = pagina.locator(".columna-finanzas--quincenas > .panel")
+        ultimo_anterior = paneles.nth(paneles.count() - 2).bounding_box()
+        atajos_inicio = pagina.locator(".panel--atajos").bounding_box()["y"]
+        separacion = atajos_inicio - (ultimo_anterior["y"] + ultimo_anterior["height"])
+        comprobar(
+            "1280px: separación normal de 18 px con el bloque anterior",
+            abs(separacion - 18) <= 1,
+            f"{separacion}px",
         )
 
         atajos = pagina.locator(".panel--atajos").bounding_box()
@@ -108,7 +118,7 @@ def main() -> None:
         abrir(pagina_movil, 375)
         lista_movil = pagina_movil.locator(".lista-atajos")
         alto, contenido = lista_movil.evaluate("e => [e.clientHeight, e.scrollHeight]")
-        comprobar("375px: solo dos atajos visibles con scroll", alto == 290 and contenido > alto, f"{alto}/{contenido}")
+        comprobar("375px: dos atajos y medio visibles con scroll", alto == 370 and contenido > alto, f"{alto}/{contenido}")
         contexto_movil.close()
         navegador.close()
 

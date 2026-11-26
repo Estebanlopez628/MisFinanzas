@@ -1685,5 +1685,22 @@ Línea base v4.44. Alcance exclusivo: el panel «🔗 Atajos de pago» dentro de
 
 ### 69.2 Gate QA y cierre documental
 
-- `qa_v4_56.py` **5/5** en 1280 y 375 px: dos atajos visibles con scroll y bordes inferiores iguales en web. `sw.js` en `olb-finanzas-v154`.
+- `qa_v4_56.py` **5/5** en 1280 y 375 px: dos atajos visibles con scroll y bordes inferiores iguales en web. `sw.js` en `olb-finanzas-v154`. Sección ajustada en la 70.
 - Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-129), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.44.
+
+---
+
+## 70. Dos atajos y medio con separación normal
+
+Línea base v4.44. Ajusta la sección 69. Alcance exclusivo: Mis Finanzas (`/finanzas`).
+
+### 70.1 Cambios
+
+1. En web (≥901 px), `.panel--atajos` mantiene los 18 px de separación con el último bloque de quincenas y se estira con `flex-grow: 1` hasta igualar el borde inferior de «Resultado del periodo». Deja de usar `margin-top: auto`.
+2. `.lista-atajos` muestra **dos atajos completos y parte del tercero**: `max-height` de 325 px en web y 370 px en móvil, con `overflow-y: auto` para los restantes.
+3. El panel de resultado conserva `margin-top: auto`. No se alteran cálculos, botones, modales ni /chancucos.
+
+### 70.2 Gate QA y cierre documental
+
+- `qa_v4_56.py` **6/6**: separación de 18 px en 1280 px, `clientHeight 325 / scrollHeight 386` en web y `370 / 439` en móvil, pies alineados. `sw.js` en `olb-finanzas-v156`.
+- Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-132), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.44.

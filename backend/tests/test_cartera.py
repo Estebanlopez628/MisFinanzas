@@ -164,8 +164,12 @@ def test_leyenda_de_la_dona_muestra_el_desglose(cliente_admin: TestClient, bd) -
     html = cliente_admin.get("/olb-byte/cartera").text
     assert "Deudas anteriores al sistema" in html
     assert "Deuda de ventas actuales" in html
-    assert "% de la deuda" in html
     assert "dona__desglose" in html
+    # Las sub-líneas muestran el porcentaje sin el texto «de la deuda».
+    assert "% de la deuda" not in html
+    # Mismo formato que la leyenda de «Capacidad de endeudamiento»: flecha ↳.
+    assert "↳ Deudas anteriores al sistema" in html
+    assert "↳ Deuda de ventas actuales" in html
 
 
 def test_panel_de_cartera_muestra_balance_y_dona(cliente_admin: TestClient, bd) -> None:

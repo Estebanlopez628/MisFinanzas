@@ -2838,6 +2838,30 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** Suite completa **1002 pruebas** en verde; `node --check` de `olb_byte.js` correcto y `generar_guia.py --verificar` sin pendientes (115 fichas). `sw.js` sube a `olb-finanzas-v155` para que los clientes descarguen el JavaScript con el nuevo catálogo.
 
+### 2026-11-26 — Flechas del desglose de deuda en cartera (ADR-131)
+
+**Decisión (ADR-131).** El propietario pidió que la leyenda de «Cartera frente a deuda» use el mismo formato de sub-desglose que la dona de «Capacidad de endeudamiento» de Mis Finanzas: las dos líneas de origen de la deuda con el proveedor deben empezar con la flecha `↳`.
+
+**Consecuencias.** Solo se agrega `↳` a las dos sub-líneas de `cartera.html`; se conservan el texto «% de la deuda», los valores, los porcentajes, la estructura `dona__desglose` y el resto de la dona. No hay cambios de cálculo, CSS, JavaScript, base de datos ni caché.
+
+**Verificación.** `test_cartera.py` comprueba las dos flechas; suite completa en verde.
+
+### 2026-11-26 — Dos atajos y medio con separación normal (ADR-132)
+
+**Decisión (ADR-132).** El propietario observó que, al alinear el pie del panel «🔗 Atajos de pago» con «Resultado del periodo», el recuadro quedaba empujado al fondo y dejaba un hueco grande respecto al bloque anterior. Pidió mantener la separación normal de 18 px, estirar el panel en vez de bajarlo y dejar ver dos atajos completos y un trozo del tercero en web y móvil.
+
+**Consecuencias.** En `@media (min-width: 901px)` el panel de atajos pasa de `margin-top: auto` a `margin-top: 0; flex-grow: 1`, conservando el pie alineado sin hueco superior; el panel de resultado mantiene `margin-top: auto`. `.lista-atajos` sube a `max-height: 325px` en web (2×122 + 2×10 + 61 px de media fila) y `370px` en móvil (2×140 + 20 + ~70), con `overflow-y: auto` y scroll vertical para los demás atajos.
+
+**Verificación.** `sw.js` en `olb-finanzas-v156`. Gate `qa_v4_56.py` **6/6**: separación de 18 px medida entre quincenas y atajos, `clientHeight 325 / scrollHeight 386` en 1280 px, `370 / 439` en 375 px y bordes inferiores iguales en web. Suite completa **1002 pruebas** en verde y 20 gates sin regresiones propias.
+
+### 2026-11-26 — Leyendas de dona: cartera y capacidad (ADR-133)
+
+**Decisión (ADR-133).** El propietario pidió dos ajustes de presentación: (1) en «Cartera frente a deuda», quitar el texto «de la deuda» de las sub-líneas del desglose y centrar la dona y la leyenda en móvil; (2) en «Capacidad de endeudamiento» (Gastos y Presupuesto y Trabajos Extras), mantener el centrado en móvil pero en escritorio alinear el bloque a la izquierda con las leyendas al lado derecho de la dona.
+
+**Consecuencias.** En `cartera.html` las sub-líneas quedan `↳ Nombre: valor (porcentaje %)` y la sección lleva la clase `panel--dona-cartera`; un `@media (max-width: 767px)` centra dona, leyenda y sub-desglose (sin sangría ni borde izquierdo) solo en móvil. En `estilos.css` el bloque `@media (min-width: 768px)` de `.panel.capacidad` pasa de columna centrada a `flex-direction: row`, `justify-content: flex-start !important`, dona sin margen automático y leyenda a la izquierda de su columna (a la derecha de la dona). El centrado móvil de capacidad no se toca. No hay cambios de cálculo, routers, servicios, base de datos ni otras donas.
+
+**Verificación.** `test_cartera.py` comprueba las flechas y que «% de la deuda» ya no aparece; pruebas de cartera, v4.28, dona interactiva y v4.22 en verde; suite completa en verde. `sw.js` en `olb-finanzas-v156` (el mismo bump de ADR-132 cubre este CSS).
+
 ### 2026-11-24 — SRS v4.43: corrección de columnas y portal del modal (ADR-105)
 
 **Decisión (ADR-105).** El propietario corrigió dos puntos de v4.42: el ancho fijo de 440 px forzaba scroll aunque el texto cupiera, y el modal de edición quedaba atrapado en el contexto de la tarjeta. Las referencias a `hidden md:table-cell` y `ReactDOM.createPortal` del documento son ilustrativas; se implementan con CSS y `document.body.appendChild`, según el stack.

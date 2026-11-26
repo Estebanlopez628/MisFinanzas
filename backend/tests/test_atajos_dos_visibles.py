@@ -1,4 +1,4 @@
-"""Pruebas del límite de dos atajos visibles y la alineación inferior en Mis Finanzas."""
+"""Pruebas de los dos atajos y medio y la alineación inferior en Mis Finanzas."""
 
 from __future__ import annotations
 
@@ -16,27 +16,27 @@ def _css() -> str:
     return (RUTA / "static/css/estilos.css").read_text(encoding="utf-8")
 
 
-def test_lista_de_atajos_muestra_dos_con_scroll_vertical() -> None:
-    """El `<ul>` de atajos se limita a dos filas y permite desplazarse."""
+def test_lista_de_atajos_muestra_dos_y_medio_con_scroll_vertical() -> None:
+    """El `<ul>` deja ver dos filas completas y parte de la tercera."""
     css = _css()
     bloque = css.split(".lista-atajos {", 1)[1].split("}", 1)[0]
-    assert "max-height: 254px" in bloque
+    assert "max-height: 325px" in bloque
     assert "overflow-y: auto" in bloque
     assert "overscroll-behavior: contain" in bloque
-    movil = css.split(".lista-atajos {\n    max-height: 290px;", 1)
+    movil = css.split(".lista-atajos {\n    max-height: 370px;", 1)
     assert len(movil) == 2
 
 
-def test_ultimos_paneles_se_alinean_por_abajo_en_web() -> None:
-    """La rejilla estira las columnas y empuja los dos últimos paneles al fondo."""
+def test_panel_de_atajos_se_estira_sin_perder_la_separacion() -> None:
+    """En web el panel conserva los 18 px y crece para igualar el pie derecho."""
     css = _css()
     rejilla = css.split(".rejilla-finanzas {", 1)[1].split("}", 1)[0]
     assert "align-items: stretch" in rejilla
-    assert (
-        "@media (min-width: 901px) {\n"
-        "  .columna-finanzas--quincenas > .panel + .panel--atajos,\n"
-        "  .columna-finanzas--liquidacion > .panel--resultado {\n"
-        "    margin-top: auto;\n"
-        "  }\n"
-        "}" in css
-    )
+    media = css.split("@media (min-width: 901px) {", 1)[1].split("}", 3)
+    atajos = media[0]
+    resultado = media[1]
+    assert ".columna-finanzas--quincenas > .panel + .panel--atajos" in atajos
+    assert "margin-top: 0" in atajos
+    assert "flex-grow: 1" in atajos
+    assert ".columna-finanzas--liquidacion > .panel--resultado" in resultado
+    assert "margin-top: auto" in resultado

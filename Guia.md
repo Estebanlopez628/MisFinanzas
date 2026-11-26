@@ -257,7 +257,7 @@ Principios que explican el resto del código:
 
 #### `backend/app/static/css/`
 
-- **`estilos.css`** · 6900 líneas — Fondo y superficies
+- **`estilos.css`** · 6936 líneas — Fondo y superficies
 - **`factura-olb.css`** · 755 líneas — SRS v4.44: el retorno de la factura es «Volver a Ventas» en todos los
 
 #### `backend/app/static/js/`
@@ -1175,7 +1175,10 @@ barra muestra su valor en pesos; los déficits salen a la izquierda del cero, en
 signo menos (`barras_balance`). La dona compara cartera y deuda con el proveedor. Incluye
 el pago al proveedor y el libro de movimientos. En «Pago al proveedor» el campo
 «Concepto» es un selector cerrado con dos opciones: «Compra de inventario» y
-«Deudas al proveedor anteriores al sistema».
+«Deudas al proveedor anteriores al sistema». La leyenda de la dona muestra el
+desglose de la deuda con el mismo formato de «Capacidad de endeudamiento»: cada
+sub-línea empieza con `↳` y muestra su porcentaje sin el texto «de la deuda».
+En móvil (<768 px) la dona y la leyenda van centradas en pantalla.
 
 ### `backend/app/templates/olb_byte/garantias.html`
 
@@ -1387,7 +1390,9 @@ porcentaje de cada categoría con valor mayor que cero, sin duplicados ni notas
 adicionales. También muestra el semáforo,
 las deudas con tres cuotas o menos y la tabla de doce meses con su
 barra de saldo libre. Se incluye una vez en `presupuesto/index.html` y otra en
-`trabajos/index.html`, cada una con su propio título.
+`trabajos/index.html`, cada una con su propio título. En móvil la dona y sus
+leyendas van centradas; en escritorio (≥768 px) el bloque se alinea a la
+izquierda y las leyendas quedan al lado derecho de la dona.
 
 ### `backend/app/templates/gastos/index.html`
 

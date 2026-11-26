@@ -90,7 +90,7 @@
 
   {# Comparativa temporal cartera/deuda: se conserva el indicador histórico de
      la vista (dona y balance con signo) junto al panel de tres bloques. #}
-  <section class="panel">
+  <section class="panel panel--dona-cartera">
     <h2 class="panel__titulo">Cartera frente a deuda</h2>
     {% if segmentos %}
       <div class="dona-contenedor" data-dona-contenedor>
@@ -126,8 +126,8 @@
               {# Los porcentajes del desglose son sobre la deuda total, no sobre la dona. #}
               {% if arco.etiqueta == 'Deuda con proveedor' and desglose_deuda.total > 0 %}
                 <ul class="dona__desglose">
-                  <li>Deudas anteriores al sistema: <strong class="valor-negativo">{{ desglose_deuda.anteriores_texto }}</strong> ({{ desglose_deuda.anteriores_porcentaje }} % de la deuda)</li>
-                  <li>Deuda de ventas actuales: <strong class="valor-negativo">{{ desglose_deuda.ventas_texto }}</strong> ({{ desglose_deuda.ventas_porcentaje }} % de la deuda)</li>
+                  <li>↳ Deudas anteriores al sistema: <strong class="valor-negativo">{{ desglose_deuda.anteriores_texto }}</strong> ({{ desglose_deuda.anteriores_porcentaje }} %)</li>
+                  <li>↳ Deuda de ventas actuales: <strong class="valor-negativo">{{ desglose_deuda.ventas_texto }}</strong> ({{ desglose_deuda.ventas_porcentaje }} %)</li>
                 </ul>
               {% endif %}
             </li>

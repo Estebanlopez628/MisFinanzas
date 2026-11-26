@@ -296,6 +296,6 @@ Principios innegociables. Toda especificación, plan y tarea debe cumplirlos de 
 63. **Marca visible sin guion bajo (ADR-128):**
     - Los textos visibles dicen «OLB BYTE». No se cambian rutas, módulos, tablas, nombres de archivo ni mensajes compartidos.
 
-64. **Atajos visibles y pie alineado (ADR-129):**
-    - En Mis Finanzas se ven dos atajos; el resto se alcanza con scroll vertical en web y móvil.
-    - En web, «Atajos de pago» y «Resultado del periodo» terminan a la misma altura. /chancucos no se toca.
+64. **Atajos visibles y pie alineado (ADR-129, ajustado en ADR-132):**
+    - En Mis Finanzas se ven dos atajos completos y parte del tercero; el resto se alcanza con scroll vertical en web y móvil.
+    - En web, «Atajos de pago» y «Resultado del periodo» terminan a la misma altura, con separación normal de 18 px sobre el panel anterior. /chancucos no se toca.
