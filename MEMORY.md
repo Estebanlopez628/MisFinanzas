@@ -2654,6 +2654,14 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v132`; **963 pruebas** en verde (13 nuevas en `test_srs_v4_45.py`). Gate `qa_v4_46.py` **27/27** en 375 y 1280 px, incluida la comprobación real `neta = ganancia − gasto` en la fila del mes. Se corrigió `qa_v4_40.py` en el ciclo anterior para fijar una posición de scroll inicial medible.
 
+### 2026-11-25 — SRS v4.44, sección 4.3 y validación integral (ADR-108)
+
+**Decisión (ADR-108).** El propietario pidió validar el documento completo. La única sección aún no ejecutada era la 4.3 (recuadro de totales de la factura), que antes se había dejado pendiente por aparente contradicción con el «único cambio permitido». Se ejecuta con alcance estrictamente limitado a ese bloque: no se tocan curva, circuitos, responsable, datos, tabla de productos, pie ni márgenes.
+
+**Consecuencias.** La fila TOTAL recibe la clase `total-fila--con-abono` solo cuando `saldo_pendiente > 0`. El divisor inferior replica exactamente el de SUBTOTAL (1 px `#b8d6f5` en la celda de valor y `#3c7ac4` en la etiqueta); se retira el `border-top` que tenía ABONADO / SALDO para no duplicar la línea. `.totales-caja` pasa a `background: transparent`, conservando borde, radio de 10 px y `overflow: hidden`; el blanco se mueve a `.total-valor`, de modo que no queda subpíxel blanco bajo el borde redondeado en móvil.
+
+**Verificación.** `sw.js` en `olb-finanzas-v133`; **965 pruebas** en verde (2 nuevas en `test_srs_v4_44.py`). Gate `qa_v4_47.py` **20/20** en 375 y 1280 px, en `screen` y `print`, con estilos computados reales; comprueba además que la vista, el PDF y el uso compartido por WhatsApp consumen la misma plantilla `_hoja_factura.html` y la misma hoja `factura-olb.css`. Sin abono no aparece el divisor. Se validó el documento completo con los gates v4.33, v4.35, v4.38, v4.40, v4.41, v4.42, v4.43, v4.44, v4.45, v4.46 y v4.47.
+
 ### 2026-11-24 — SRS v4.43: corrección de columnas y portal del modal (ADR-105)
 
 **Decisión (ADR-105).** El propietario corrigió dos puntos de v4.42: el ancho fijo de 440 px forzaba scroll aunque el texto cupiera, y el modal de edición quedaba atrapado en el contexto de la tarjeta. Las referencias a `hidden md:table-cell` y `ReactDOM.createPortal` del documento son ilustrativas; se implementan con CSS y `document.body.appendChild`, según el stack.

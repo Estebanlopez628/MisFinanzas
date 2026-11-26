@@ -208,7 +208,9 @@
           <span class="total-etiqueta">SUBTOTAL</span>
           <span class="total-valor">{{ venta.subtotal | cop }}</span>
         </div>
-        <div class="total-fila total-fila--final">
+        {# SRS v4.44, §4.3: con abono, la fila TOTAL lleva el divisor inferior
+           idéntico al que separa SUBTOTAL de TOTAL. #}
+        <div class="total-fila total-fila--final{% if venta.saldo_pendiente and venta.saldo_pendiente > 0 %} total-fila--con-abono{% endif %}">
           <span class="total-etiqueta">TOTAL</span>
           <span class="total-valor">{{ venta.total | cop }}</span>
         </div>

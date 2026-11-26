@@ -369,7 +369,9 @@
   border: 1.5px solid #4c93de;
   border-radius: 10px;
   overflow: hidden;
-  background: #ffffff;
+  /* SRS v4.44, §4.3: el blanco vive solo en las celdas de valor; así no queda
+     un subpíxel blanco bajo el borde inferior redondeado en móvil. */
+  background: transparent;
 }
 
 /* Las dos celdas de cada fila llenan toda la altura: si el valor ocupa dos líneas,
@@ -402,11 +404,11 @@
 }
 
 /* ABONADO / SALDO: conserva las mismas columnas que las otras filas del bloque;
-   el valor va en una línea con una letra un poco menor. */
+   el valor va en una línea con una letra un poco menor. El divisor superior lo
+   dibuja TOTAL (SRS v4.44, §4.3), aquí no se duplica. */
 .total-fila--abono .total-etiqueta {
   background: #1d3557;
   font-size: 0.72rem;
-  border-top: 1px solid #3c7ac4;
 }
 
 .total-fila--abono .total-valor {
@@ -422,6 +424,8 @@
   text-align: center;
   font-weight: 700;
   color: #0b2240;
+  /* SRS v4.44, §4.3: el blanco solo en la celda de valor. */
+  background: #ffffff;
 }
 
 .total-fila--subtotal .total-valor {
@@ -432,6 +436,16 @@
 .total-fila--final .total-valor {
   font-size: 1.05rem;
   font-weight: 800;
+}
+
+/* SRS v4.44, §4.3: divisor entre TOTAL y ABONADO / SALDO, idéntico al de
+   SUBTOTAL → TOTAL. Se pinta solo cuando existe la fila de abono. */
+.total-fila--con-abono .total-etiqueta {
+  border-bottom: 1px solid #3c7ac4;
+}
+
+.total-fila--con-abono .total-valor {
+  border-bottom: 1px solid #b8d6f5;
 }
 
 /* --- MEDIOS DE PAGO --- */

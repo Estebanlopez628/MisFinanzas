@@ -1278,10 +1278,10 @@ Versión 4.44 (documento titulado v4.25 Final, secciones 1 a 4). Línea base vig
 3. **Tarjeta móvil de Atajos de pago:** Ref sobre Copiar a la izquierda; Valor sobre Pagar a la derecha. La vista de escritorio no cambia.
 4. **Cabecera de la factura:** logo y eslogan centrados entre sí y desplazados leve y ligeramente hacia arriba; por debajo de 480 px el eslogan se reduce. El resto de la factura no cambia.
 
-### 46.2 Pendiente (no implementado en esta versión)
+### 46.2 Estado de las secciones restantes
 
-- Sección 4.3 (divisor y fondo del recuadro de totales): contradice el «único cambio permitido» de la factura; requiere confirmación del propietario.
-- Secciones 7 a 9 (cartera de OLB_BYTE: orden de Pago al proveedor, columnas de Movimientos, deudas previas y gastos operativos con tabla nueva): requieren actualizar `diccionario_datos.md` antes de codificarse.
+- La sección 4.3 (divisor y fondo del recuadro de totales) se ejecutó en el ciclo final; ver §48.
+- Las secciones 7 a 9 (cartera de OLB_BYTE) se ejecutaron después de documentar el cambio; ver §47.
 
 ### 46.3 Gate QA y cierre documental
 
@@ -1305,3 +1305,20 @@ Misma línea base v4.44. No se rehacen las secciones 1 a 4. Las secciones 5 y 6 
 
 - `scripts/qa_v4_46.py`: **27/27 comprobaciones** en 375 y 1280 px, incluida la igualdad `neta = ganancia − gasto` en la fila del mes. Suite: **963 pruebas** en verde. `sw.js` en `olb-finanzas-v132`.
 - Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-107), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.44.
+
+---
+
+## 48. SRS v4.44, sección 4.3 — Recuadro de totales de la factura y cierre del documento
+
+Línea base v4.44. No se rehacen las secciones 1 a 3 ni las secciones 7 a 9. El resto de la factura (curva, circuitos, responsable, datos, tabla de productos, pie y márgenes) permanece intacto.
+
+### 48.1 Cambios
+
+1. Con abono, la fila TOTAL lleva `total-fila--con-abono` y un divisor inferior de 1 px idéntico al que separa SUBTOTAL de TOTAL: `#3c7ac4` en la etiqueta y `#b8d6f5` en la celda de valor. Se retira el `border-top` de ABONADO / SALDO para no duplicar la línea. Sin abono la fila no aparece y no hay divisor.
+2. `.totales-caja` usa `background: transparent`, conserva `border-radius: 10px`, el borde azul y `overflow: hidden`. El fondo blanco se aplica solo a `.total-valor`, evitando el subpíxel blanco bajo el borde redondeado en móvil.
+
+### 48.2 Validación integral y cierre documental
+
+- `scripts/qa_v4_47.py`: **20/20 comprobaciones** en 375 y 1280 px, en `screen` y `print`, con estilos computados reales; verifica además que la vista, el PDF y el uso compartido por WhatsApp usan la misma plantilla `_hoja_factura.html` y la misma hoja `factura-olb.css`.
+- Documento completo validado con los gates v4.33, v4.35, v4.38, v4.40, v4.41, v4.42, v4.43, v4.44, v4.45, v4.46 y v4.47. Suite: **965 pruebas** en verde. `sw.js` en `olb-finanzas-v133`.
+- Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-108), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.44.

@@ -94,3 +94,30 @@ def test_cabecera_factura_centrada_sin_tocar_el_resto() -> None:
     assert "text-align: center" in eslogan
     assert "margin-top: -10px" in contenedor
     assert "margin-left: -6px" in contenedor
+
+
+def test_recuadro_totales_transparente_con_celdas_blancas() -> None:
+    """El fondo blanco vive solo en las celdas de valor (SRS §4.3)."""
+    css = (RUTA / "static/css/factura-olb.css").read_text(encoding="utf-8")
+    caja = css.split(".totales-caja {", 1)[1].split("}", 1)[0]
+    assert "background: transparent" in caja
+    assert "border-radius: 10px" in caja
+    assert "overflow: hidden" in caja
+    valor = css.split("\n.total-valor {", 1)[1].split("}", 1)[0]
+    assert "background: #ffffff" in valor
+
+
+def test_divisor_entre_total_y_abonado_solo_cuando_hay_abono() -> None:
+    """La fila TOTAL hereda el divisor de SUBTOTAL si existe ABONADO / SALDO."""
+    plantilla = (RUTA / "templates/olb_byte/_hoja_factura.html").read_text(encoding="utf-8")
+    assert (
+        'class="total-fila total-fila--final{% if venta.saldo_pendiente and '
+        'venta.saldo_pendiente > 0 %} total-fila--con-abono{% endif %}"'
+    ) in plantilla
+    css = (RUTA / "static/css/factura-olb.css").read_text(encoding="utf-8")
+    subtotal = css.split(".total-fila--subtotal .total-valor {", 1)[1].split("}", 1)[0]
+    con_abono = css.split(".total-fila--con-abono .total-valor {", 1)[1].split("}", 1)[0]
+    assert "border-bottom: 1px solid #b8d6f5" in subtotal
+    assert "border-bottom: 1px solid #b8d6f5" in con_abono
+    abono = css.split(".total-fila--abono .total-etiqueta {", 1)[1].split("}", 1)[0]
+    assert "border-top" not in abono

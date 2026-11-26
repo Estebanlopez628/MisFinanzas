@@ -257,8 +257,8 @@ Principios que explican el resto del código:
 
 #### `backend/app/static/css/`
 
-- **`estilos.css`** · 6700 líneas — Fondo y superficies
-- **`factura-olb.css`** · 731 líneas — Sello de Anulada si aplica
+- **`estilos.css`** · 6706 líneas — Fondo y superficies
+- **`factura-olb.css`** · 749 líneas — Sello de Anulada si aplica
 
 #### `backend/app/static/js/`
 
@@ -352,7 +352,7 @@ Principios que explican el resto del código:
 
 - **`_fragmento_factura.html`** · 3 líneas — Plantilla Jinja2
 - **`_fragmento_recibo.html`** · 8 líneas — Plantilla Jinja2
-- **`_hoja_factura.html`** · 268 líneas
+- **`_hoja_factura.html`** · 270 líneas
 - **`_recibo.html`** · 47 líneas
 - **`_subnav.html`** · 30 líneas — Subnavegación de OLB_BYTE con el mismo componente que Mis Finanzas (subnav-finanzas).
 - **`analitica.html`** · 345 líneas — Plantilla: Analítica
