@@ -198,8 +198,8 @@ En «Pendientes de pago», el buscador ya no tiene una línea por encima. Al toc
 
 La X roja es la misma en Cartera, Pendientes y Órdenes registradas. En la factura no hay X: usas «Volver a Ventas» y vuelves al punto exacto de la lista de órdenes.
 
-En Analítica ya no hay línea sobre el selector de año. Allí encontrarás un bloque propio de **Deudas con proveedores** con el total adeudado, los abonos y el historial. Para abonar o liquidar, ve a «Cartera y liquidez → Pago al proveedor».
+En Analítica ya no hay línea sobre el selector de año, ni un formulario para registrar deudas: el alta y los abonos se hacen en «Cartera y liquidez → Pago al proveedor».
 
-En las tablas «Mes a mes» y «Año tras año», los **Costos** ya incluyen las deudas anteriores al sistema del periodo y se muestra una columna «Deudas proveedor» con ese valor. La ganancia y la rentabilidad siguen midiendo solo las ventas. Al descargar el CSV aparece la columna **Deudas al proveedor anteriores al sistema**, con tildes y formato Excel.
+En las tablas «Mes a mes» y «Año tras año» verás la columna **PASIVO ANTIGUO**: es el saldo pendiente de las deudas viejas con proveedores y **no está incluido en Costos**. Cuando abonas, primero se paga la deuda de las compras recientes y el sobrante baja ese pasivo; por eso el número va disminuyendo. La ganancia y la rentabilidad siguen midiendo solo las ventas. Al descargar el CSV aparece la columna **PASIVO ANTIGUO**, con tildes y formato Excel.
 
 © 2026 MisFinanzas

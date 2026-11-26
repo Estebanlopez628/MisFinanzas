@@ -2710,6 +2710,14 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v140`. Gate `qa_v4_45.py` **9/9** (4,0 filas móviles y cabecera opaca en escritorio), `qa_v4_49.py` **7/7** y `qa_v4_50.py` **25/25** con el color computado `rgba(239, 68, 68, 0.14)` en los tres módulos. 1 prueba nueva en `test_olb_movimientos_seis.py`.
 
+### 2026-11-26 — PASIVO ANTIGUO: fuera de Costos y sin módulo en Analítica (ADR-115)
+
+**Decisión (ADR-115).** El propietario corrigió ADR-111/113: la deuda vieja con proveedores es un pasivo que baja con abonos, no un costo del periodo. Se retira el módulo de registro dentro de Analítica y se saca la deuda de la columna Costos.
+
+**Consecuencias.** Se eliminan de `ver_analitica` los parámetros y contextos de registro y la ruta `POST /olb-byte/analitica/deudas-proveedor`; la plantilla pierde el panel, el formulario y los avisos. `reporte_mensual` y `reporte_anual` vuelven a `costos = Σ costo de líneas` y exponen `pasivo_antiguo`. El nuevo cálculo `_saldos_pasivo_antiguo()` recorre `movimientos_proveedor` en orden cronológico e imputa cada abono **primero a la deuda corriente** (`COMPRA_CREDITO`) y el sobrante al pasivo (`DEUDA_INICIAL`), con mínimo 0; `_pasivo_antiguo_en()` arrastra el saldo a meses/años sin movimiento. La columna de ambas tablas y del CSV se llama **PASIVO ANTIGUO**, conservando BOM, separador y tildes.
+
+**Verificación.** `sw.js` en `olb-finanzas-v141`. 6 pruebas en `test_olb_analitica_deudas.py` (incluye compra 150.000 + abono 200.000 → pasivo 50.000 y Costos 150.000). Gate `qa_v4_50.py` **19/19** en 1280 y 375 px sin módulo de registro, Costos sin deuda y CSV con la nueva etiqueta.
+
 ### 2026-11-24 — SRS v4.43: corrección de columnas y portal del modal (ADR-105)
 
 **Decisión (ADR-105).** El propietario corrigió dos puntos de v4.42: el ancho fijo de 440 px forzaba scroll aunque el texto cupiera, y el modal de edición quedaba atrapado en el contexto de la tarjeta. Las referencias a `hidden md:table-cell` y `ReactDOM.createPortal` del documento son ilustrativas; se implementan con CSS y `document.body.appendChild`, según el stack.

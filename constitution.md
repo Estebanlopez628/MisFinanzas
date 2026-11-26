@@ -237,9 +237,10 @@ Principios innegociables. Toda especificación, plan y tarea debe cumplirlos de 
     - Cartera, Pendientes y Órdenes registradas usan la misma X roja; la factura usa «Volver a Ventas» y restaura la posición.
     - Analítica muestra deudas a proveedores en bloque propio, sin sumarlas a ventas ni mezclarlas con Mis Finanzas, y sin nueva tabla.
 
-49. **Deudas en Costos y CSV (ADR-113):**
-    - En Mes a mes y Año tras año, los Costos incluyen las deudas anteriores al sistema y se detalla una columna propia.
-    - El CSV usa la denominación exacta «Deudas al proveedor anteriores al sistema», conservando BOM, separador y tildes.
+49. **PASIVO ANTIGUO (ADR-115):**
+    - Costos es solo costo de ventas; la deuda vieja se muestra aparte como PASIVO ANTIGUO en Mes a mes y Año tras año.
+    - Los abonos se imputan primero a la deuda corriente y el sobrante reduce el pasivo, que nunca es negativo.
+    - No hay registro de deudas dentro de Analítica: se hace en Cartera y liquidez. El CSV usa «PASIVO ANTIGUO» con BOM, separador y tildes.
 
 50. **Rojo de la X y filas móviles (ADR-114):**
     - La X de los modales de Órdenes, Pendientes y Movimientos usa el rojo del botón destructivo.

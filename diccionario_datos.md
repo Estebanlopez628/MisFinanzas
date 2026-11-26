@@ -511,11 +511,17 @@ movimientos no se editan ni se borran: una corrección se registra como un movim
 nuevo. `DEUDA_INICIAL` se usa solo para deudas anteriores al sistema (SRS v4.44, §8.1),
 no lleva orden (`id_venta = NULL`) y en el libro muestra Cliente y Producto como «—».
 
-Analítica (SRS v4.44, §53) suma los movimientos `DEUDA_INICIAL` de cada mes/año a la
-columna **Costos** de «Mes a mes» y «Año tras año» y los detalla en una columna propia.
-Las exportaciones CSV mensual y anual incluyen la columna **Deudas al proveedor
-anteriores al sistema**. No se crea tabla nueva ni se modifica `ganancia`,
-`rentabilidad` ni el módulo de Mis Finanzas.
+Analítica (SRS v4.44, §55, ADR-115) **no suma** la deuda a la columna Costos: Costos
+sigue siendo `Σ (precio − costo) × cantidad` de las líneas de venta. El saldo de las
+deudas anteriores al sistema se muestra aparte como **PASIVO ANTIGUO** en «Mes a mes»
+y «Año tras año», y en el CSV con esa misma denominación.
+
+Imputación cronológica sobre `movimientos_proveedor`: `COMPRA_CREDITO` aumenta la
+deuda corriente; `DEUDA_INICIAL` aumenta el pasivo antiguo; cada `ABONO` cancela
+primero la deuda corriente y el remanente reduce el pasivo antiguo, con mínimo 0.
+El saldo se arrastra a los periodos sin movimiento. No se crea tabla nueva ni se
+modifican `ganancia`, `rentabilidad`, Mis Finanzas ni el registro (que sigue en
+Cartera y liquidez).
 
 ### 10.7 `garantias_proveedor` — *Garantías en trámite (RF-05)*
 | Campo | Tipo | Nulo | Descripción |

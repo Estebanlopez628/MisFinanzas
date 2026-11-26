@@ -1,13 +1,15 @@
-"""Gate QA: X uniforme y deudas a proveedores en Analítica (SRS v4.44)."""
+"""Gate QA: PASIVO ANTIGUO en Analítica y X uniforme (SRS v4.44, decisión final)."""
 
 from __future__ import annotations
 
 from datetime import date
+from decimal import Decimal
 
 from playwright.sync_api import sync_playwright
 
 from app.core.base_datos import FabricaSesiones
-from app.servicios import analitica, comercial
+from app.modelos import Venta, VentaDetalle
+from app.servicios import analitica
 
 BASE = "http://127.0.0.1:8000"
 CORREO = "prueba_qa_admin@misfinanzas.local"
@@ -26,6 +28,18 @@ def comprobar(nombre: str, condicion: bool, detalle: str = "") -> None:
     """
     resultados.append((nombre, bool(condicion), detalle))
     print(("PASS " if condicion else "FAIL ") + nombre + (f" — {detalle}" if detalle else ""), flush=True)
+
+
+def a_pesos(texto: str) -> int:
+    """Convierte una celda con formato COP a entero.
+
+    Args:
+        texto: Celda con símbolo y separadores.
+
+    Returns:
+        Valor numérico sin formato.
+    """
+    return int("".join(c for c in texto if c.isdigit()) or "0")
 
 
 def main() -> None:
@@ -55,46 +69,26 @@ def main() -> None:
             )
             comprobar(f"{prefijo}: sin línea sobre Año", borde == "0px", borde)
 
-            bloque = pagina.locator("section:has(#titulo-deudas-proveedor)")
-            comprobar(f"{prefijo}: bloque de deudas a proveedores", bloque.count() == 1)
-            metricas = ["Mes a mes", "Ganancia neta", "Gastos operativos", "Año tras año"]
             html = pagina.content()
+            comprobar(
+                f"{prefijo}: sin módulo de registro en Analítica",
+                "Deudas con proveedores" not in html
+                and 'name="proveedor"' not in html
+                and "/analitica/deudas-proveedor" not in html,
+            )
+            metricas = ["Mes a mes", "Ganancia neta", "Gastos operativos", "Año tras año"]
             comprobar(
                 f"{prefijo}: métricas existentes intactas",
                 all(texto in html for texto in metricas),
             )
 
-            with FabricaSesiones() as bd:
-                antes = comercial.deuda_proveedor(bd)
-            formulario = pagina.locator('form[action$="/analitica/deudas-proveedor"]')
-            formulario.locator('input[name="proveedor"]').fill("Proveedor QA Analítica")
-            formulario.locator('input[name="monto"]').fill("45000")
-            formulario.locator('button[type="submit"]').click()
-            pagina.wait_for_load_state("networkidle")
-            comprobar(
-                f"{prefijo}: aviso de deuda registrada",
-                pagina.locator(".alerta--exito:has-text('Deuda con proveedor registrada')").count() == 1,
-            )
-            with FabricaSesiones() as bd:
-                despues = comercial.deuda_proveedor(bd)
-            comprobar(
-                f"{prefijo}: deuda persistida en el libro",
-                despues == antes + 45000,
-                f"{antes} -> {despues}",
-            )
-            comprobar(
-                f"{prefijo}: el concepto aparece en el historial",
-                "Proveedor QA Analítica" in pagina.content(),
-            )
-
-            # Las deudas aparecen como columna propia en Mes a mes y Año tras año.
             cabeceras = [
                 texto.strip().title()
                 for texto in pagina.locator(".panel--tabla thead th").all_inner_texts()
             ]
             comprobar(
-                f"{prefijo}: columna de deudas en ambas tablas",
-                cabeceras.count("Deudas Proveedor") >= 2,
+                f"{prefijo}: columna PASIVO ANTIGUO en ambas tablas",
+                cabeceras.count("Pasivo Antiguo") >= 2,
                 str(cabeceras[:12]),
             )
 
@@ -107,15 +101,29 @@ def main() -> None:
             ).first
             if fila_mes.count():
                 celdas = [c.strip() for c in fila_mes.locator("td").all_inner_texts()]
-                deuda_tabla = int("".join(c for c in celdas[5] if c.isdigit()) or "0")
                 with FabricaSesiones() as bd:
-                    deuda_bd = analitica._deudas_proveedor_por_mes(bd, date.today().year)[
-                        date.today().month
+                    anio, mes = date.today().year, date.today().month
+                    ids = [
+                        venta.id_venta
+                        for venta in bd.query(Venta).all()
+                        if venta.estado_orden == "ACTIVA"
+                        and venta.fecha_venta.year == anio
+                        and venta.fecha_venta.month == mes
                     ]
+                    costo = sum(
+                        (
+                            detalle.costo_unitario * detalle.cantidad
+                            for detalle in bd.query(VentaDetalle).all()
+                            if detalle.id_venta in ids
+                        ),
+                        Decimal("0"),
+                    )
+                    saldos = analitica._saldos_pasivo_antiguo(bd)
+                    pasivo = analitica._pasivo_antiguo_en(saldos, anio, mes)
                 comprobar(
-                    f"{prefijo}: deuda del mes reflejada en la tabla",
-                    deuda_tabla == int(deuda_bd),
-                    f"tabla={deuda_tabla} bd={deuda_bd}",
+                    f"{prefijo}: Costos sin deuda y PASIVO ANTIGUO aparte",
+                    a_pesos(celdas[3]) == int(costo) and a_pesos(celdas[5]) == int(pasivo),
+                    f"costos={celdas[3]} esperado={costo} pasivo={celdas[5]} esperado={pasivo}",
                 )
 
             for tabla in ("mensual", "anual"):
@@ -124,8 +132,8 @@ def main() -> None:
                 )
                 cuerpo = csv_respuesta.body()
                 comprobar(
-                    f"{prefijo}: CSV {tabla} con etiqueta exacta, BOM y tildes",
-                    analitica.DEUDAS_PROVEEDOR_LABEL.encode("utf-8") in cuerpo
+                    f"{prefijo}: CSV {tabla} con PASIVO ANTIGUO, BOM y tildes",
+                    analitica.PASIVO_ANTIGUO_LABEL.encode("utf-8") in cuerpo
                     and cuerpo.startswith(b"\xef\xbb\xbf")
                     and "Variación".encode("utf-8") in cuerpo,
                 )
@@ -138,7 +146,6 @@ def main() -> None:
                 and pagina.locator("dialog.detalle-orden .detalle-orden__cerrar").count() > 0,
             )
 
-            # Comparar la X de órdenes con la de cartera y la de pendientes.
             pagina.goto(f"{BASE}/olb-byte/cartera")
             pagina.wait_for_load_state("networkidle")
             color_cartera = pagina.locator(".detalle-orden__cerrar").first.evaluate(

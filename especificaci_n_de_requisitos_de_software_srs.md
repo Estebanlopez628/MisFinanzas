@@ -1422,3 +1422,21 @@ Línea base v4.44. Solo se ajusta el color de las X y el número de filas visibl
 
 - `scripts/qa_v4_45.py`: **9/9**, `qa_v4_49.py`: **7/7** y `qa_v4_50.py`: **25/25**, con color computado verificado en los tres módulos. 1 prueba nueva. `sw.js` en `olb-finanzas-v140`.
 - Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-114), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.44.
+
+---
+
+## 55. PASIVO ANTIGUO — corrección de ADR-111 y ADR-113
+
+Línea base v4.44. Se retira lo implementado en §§51 y 53 referido a registro dentro de Analítica y a la imputación de deuda en Costos.
+
+### 55.1 Cambios
+
+1. No hay módulo de registro de deudas en Analítica: se eliminan el panel, el formulario, los avisos y `POST /olb-byte/analitica/deudas-proveedor`. Alta y abonos siguen en Cartera y liquidez.
+2. `reporte_mensual` y `reporte_anual` vuelven a `Costos = Σ costo de líneas`. El pasivo antiguo se expone como campo independiente `pasivo_antiguo`.
+3. Regla de imputación cronológica: `COMPRA_CREDITO` suma a deuda corriente; `DEUDA_INICIAL` suma al pasivo; cada `ABONO` paga primero la deuda corriente y el remanente reduce el pasivo (mínimo 0). El saldo se arrastra a periodos sin movimiento.
+4. La columna de «Mes a mes» y «Año tras año» y del CSV se denomina **PASIVO ANTIGUO**, con BOM, separador `;` y tildes.
+
+### 55.2 Gate QA y cierre documental
+
+- `scripts/qa_v4_50.py`: **19/19 comprobaciones** en 1280 y 375 px. 6 pruebas en `test_olb_analitica_deudas.py`, incluido el caso compra 150.000 + abono 200.000 ⇒ deuda corriente 0 y PASIVO ANTIGUO 50.000. `sw.js` en `olb-finanzas-v141`.
+- Guías, Diccionario de Datos, Constitución, `MEMORY.md` (ADR-115), `AGENTS.md` y esta SRS quedan sincronizados con la versión activa v4.44.

@@ -1,4 +1,4 @@
-"""Pruebas del bloque de deudas a proveedores en Analítica (SRS v4.44)."""
+"""Pruebas del pasivo antiguo en Analítica (SRS v4.44, decisión final)."""
 
 from __future__ import annotations
 
@@ -8,7 +8,6 @@ from pathlib import Path
 
 from fastapi.testclient import TestClient
 
-from app.core.base_datos import FabricaSesiones
 from app.servicios import analitica, comercial
 
 RUTA = Path(__file__).resolve().parent.parent / "app"
@@ -34,41 +33,25 @@ def test_x_uniforme_en_los_modales_de_olb_byte() -> None:
     assert 'class="detalle-orden__cerrar" data-cerrar-dialogo' in index
 
 
-def test_analitica_muestra_bloque_propio_de_deudas(cliente_admin: TestClient) -> None:
-    """El bloque de pasivos existe sin alterar las métricas de ventas."""
+def test_analitica_sin_modulo_de_registro_y_con_pasivo_antiguo(
+    cliente_admin: TestClient,
+) -> None:
+    """No hay formulario de deudas en Analítica; la columna es independiente."""
     respuesta = cliente_admin.get("/olb-byte/analitica")
     assert respuesta.status_code == 200
     html = respuesta.text
-    assert "Deudas con proveedores" in html
-    assert "Total adeudado" in html
-    assert "Compromisos pendientes con proveedores" in html
-    assert 'name="proveedor"' in html and 'name="monto"' in html
-    # Las métricas existentes siguen presentes.
+    assert "Deudas con proveedores" not in html
+    assert 'name="proveedor"' not in html
+    assert "deudas-proveedor" not in html
+    assert html.count("PASIVO ANTIGUO") >= 2
+    assert "no incluido en Costos" in html
+    # Métricas existentes intactas.
     assert "Gastos operativos" in html and "Ganancia neta" in html
-    assert "Mes a mes" in html
+    assert "Mes a mes" in html and "Año tras año" in html
 
 
-def test_registro_de_deuda_desde_analitica(cliente_admin: TestClient, bd) -> None:
-    """El alta desde Analítica usa el libro de movimientos existente."""
-    antes = comercial.deuda_proveedor(bd)
-    respuesta = cliente_admin.post(
-        "/olb-byte/analitica/deudas-proveedor",
-        data={"proveedor": "Proveedor QA", "monto": "80.000"},
-        follow_redirects=False,
-    )
-    assert respuesta.status_code == 303
-    assert "/olb-byte/analitica?guardado=deuda" in respuesta.headers["location"]
-    bd.rollback()
-    assert comercial.deuda_proveedor(bd) == antes + Decimal("80000")
-    movimientos = comercial.listar_movimientos_con_orden(bd)
-    assert any(
-        f["etiqueta"] == "Deuda inicial" and f["concepto"] == "Proveedor QA"
-        for f in movimientos
-    )
-
-
-def test_deudas_se_suman_a_los_costos_en_mensual_y_anual(bd) -> None:
-    """Costos incluye la deuda del periodo; ganancia sigue siendo de ventas."""
+def test_pasivo_antiguo_no_se_suma_a_costos(bd) -> None:
+    """Costos sigue siendo el costo de ventas; el pasivo va aparte."""
     hoy = datetime.now(comercial.ZONA_TIENDA)
     comercial.registrar_venta(
         bd,
@@ -84,26 +67,52 @@ def test_deudas_se_suman_a_los_costos_en_mensual_y_anual(bd) -> None:
         ],
         hoy,
     )
-    comercial.registrar_deuda_inicial(bd, "25000", "Deuda del mes")
+    comercial.registrar_deuda_inicial(bd, "25000", "Pasivo viejo")
 
     mensual = analitica.reporte_mensual(bd, hoy.year)
     fila = mensual[hoy.month - 1]
-    assert fila["deudas_proveedor"] == Decimal("25000")
-    assert fila["costos"] == Decimal("55000")  # 30000 de venta + 25000 de deuda
-    assert fila["ganancia"] == Decimal("20000")  # métrica de ventas intacta
+    assert fila["costos"] == Decimal("30000")
+    assert fila["pasivo_antiguo"] == Decimal("25000")
+    assert fila["ganancia"] == Decimal("20000")
 
     anual = {f["anio"]: f for f in analitica.reporte_anual(bd)}
-    assert anual[hoy.year]["deudas_proveedor"] == Decimal("25000")
-    assert anual[hoy.year]["costos"] == Decimal("55000")
+    assert anual[hoy.year]["costos"] == Decimal("30000")
+    assert anual[hoy.year]["pasivo_antiguo"] == Decimal("25000")
+
+
+def test_abono_paga_deuda_corriente_y_sobrante_baja_pasivo(bd) -> None:
+    """Compra fiada 150.000 y abono 200.000: deuda actual 0, pasivo −50.000."""
+    hoy = datetime.now(comercial.ZONA_TIENDA)
+    comercial.registrar_deuda_inicial(bd, "100000", "Pasivo viejo")
+    comercial.registrar_venta(
+        bd,
+        "Cliente Noviembre",
+        "3003334444",
+        [
+            comercial.LineaVenta(
+                nombre="Producto fiado",
+                cantidad=1,
+                precio_unitario="200000",
+                costo_unitario="150000",
+            )
+        ],
+        hoy,
+    )
+    comercial.registrar_abono_proveedor(bd, "200000")
+
+    fila = analitica.reporte_mensual(bd, hoy.year)[hoy.month - 1]
+    assert fila["costos"] == Decimal("150000")
+    assert fila["pasivo_antiguo"] == Decimal("50000")
+    assert comercial.deuda_proveedor(bd) == Decimal("50000")
 
 
 def test_csv_incluye_la_denominacion_exacta(cliente_admin: TestClient, bd) -> None:
-    """Los CSV mensual y anual conservan BOM, tildes y la etiqueta exacta."""
+    """Los CSV mensual y anual conservan BOM, tildes y el rótulo PASIVO ANTIGUO."""
     encabezados, filas = analitica.tabla_csv(bd, "mensual", analitica.Filtro(), date.today())
-    assert analitica.DEUDAS_PROVEEDOR_LABEL in encabezados
+    assert analitica.PASIVO_ANTIGUO_LABEL in encabezados
     assert all(len(fila) == len(encabezados) for fila in filas)
     encabezados, filas = analitica.tabla_csv(bd, "anual", analitica.Filtro(), date.today())
-    assert analitica.DEUDAS_PROVEEDOR_LABEL in encabezados
+    assert analitica.PASIVO_ANTIGUO_LABEL in encabezados
     assert all(len(fila) == len(encabezados) for fila in filas)
 
     for tabla in ("mensual", "anual"):
@@ -111,20 +120,5 @@ def test_csv_incluye_la_denominacion_exacta(cliente_admin: TestClient, bd) -> No
         assert respuesta.status_code == 200
         texto = respuesta.text
         assert texto.startswith("\ufeff")
-        assert analitica.DEUDAS_PROVEEDOR_LABEL in texto
+        assert analitica.PASIVO_ANTIGUO_LABEL in texto
         assert "Variación" in texto  # tildes conservadas
-
-
-def test_registro_de_deuda_rechaza_monto_invalido(cliente_admin: TestClient) -> None:
-    """Un monto inválido no modifica la deuda."""
-    with FabricaSesiones() as bd:
-        antes = comercial.deuda_proveedor(bd)
-    respuesta = cliente_admin.post(
-        "/olb-byte/analitica/deudas-proveedor",
-        data={"proveedor": "Proveedor QA", "monto": "0"},
-        follow_redirects=False,
-    )
-    assert respuesta.status_code == 303
-    assert "error_deuda=1" in respuesta.headers["location"]
-    with FabricaSesiones() as bd:
-        assert comercial.deuda_proveedor(bd) == antes

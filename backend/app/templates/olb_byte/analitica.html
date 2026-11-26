@@ -14,15 +14,6 @@
   {% set seccion = 'analitica' %}
   {% include "olb_byte/_subnav.html" with context %}
 
-  {% if guardado_deuda %}
-    <div class="alerta alerta--exito" role="status">Deuda con proveedor registrada.</div>
-  {% endif %}
-  {% if error_deuda %}
-    <div class="alerta alerta--error" role="alert">
-      No se pudo registrar la deuda. Revisa el proveedor y el monto e intenta de nuevo.
-    </div>
-  {% endif %}
-
   {# SRS v1.9: los filtros valen para todas las tablas y para sus descargas CSV.
      Tocar una fila activa o quita su filtro. #}
   <section class="panel">
@@ -98,74 +89,6 @@
     </p>
   </section>
 
-  {# SRS v4.44: bloque propio de pasivos con proveedores. No se suma a ventas,
-     ganancia ni a los gastos personales de Mis Finanzas. #}
-  <section class="panel" aria-labelledby="titulo-deudas-proveedor">
-    <div class="panel__cabecera">
-      <h2 class="panel__titulo" id="titulo-deudas-proveedor">Deudas con proveedores</h2>
-      <span class="panel__total">
-        Total adeudado: <strong class="kpi__valor--gasto">{{ deuda_proveedor_analitica | cop }}</strong>
-      </span>
-    </div>
-    <p class="ayuda">
-      Compromisos pendientes con proveedores, registrados aparte de las ventas y de la
-      ganancia. Abonos registrados: <strong>{{ abonos_proveedor_analitica | cop }}</strong>.
-      Para abonar o liquidar, usa «Cartera y liquidez → Pago al proveedor».
-    </p>
-    <form class="formulario formulario--compacto" method="post"
-          action="{{ url_for('registrar_deuda_proveedor_analitica') }}">
-      <label class="campo">
-        <span class="campo__etiqueta">Proveedor o concepto</span>
-        <input class="campo__control" type="text" name="proveedor" maxlength="200" required
-               placeholder="Nombre del proveedor" />
-      </label>
-      <label class="campo">
-        <span class="campo__etiqueta">Saldo pendiente (COP)</span>
-        <input class="campo__control" type="text" name="monto" inputmode="decimal" required
-               placeholder="100.000" data-moneda />
-      </label>
-      <button class="boton boton--primario boton--pequeno" type="submit">Registrar deuda</button>
-    </form>
-
-    {% if movimientos_proveedor_analitica %}
-      <div class="tabla-contenedor tabla-escritorio">
-        <table class="tabla">
-          <thead>
-            <tr>
-              <th scope="col">Fecha</th>
-              <th scope="col">Tipo</th>
-              <th scope="col">Proveedor / concepto</th>
-              <th scope="col">Monto</th>
-              <th scope="col">Saldo</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for movimiento in movimientos_proveedor_analitica %}
-              <tr>
-                <td>{{ movimiento.fecha.strftime('%d/%m/%Y') }}</td>
-                <td>{{ movimiento.etiqueta }}</td>
-                <td>{{ movimiento.concepto }}</td>
-                <td class="tabla__numero">{{ movimiento.monto | cop }}</td>
-                <td class="tabla__numero">{{ movimiento.saldo_resultante | cop }}</td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-      <ul class="ordenes-moviles" aria-label="Movimientos con proveedores">
-        {% for movimiento in movimientos_proveedor_analitica %}
-          <li class="orden-movil orden-movil--tres orden-movil--solo-lectura">
-            <span class="orden-movil__fecha">{{ movimiento.fecha.strftime('%d/%m/%Y') }}</span>
-            <span>{{ movimiento.concepto }}</span>
-            <span class="tabla__numero">{{ movimiento.saldo_resultante | cop }}</span>
-          </li>
-        {% endfor %}
-      </ul>
-    {% else %}
-      <p class="tabla__vacia">Aún no hay deudas con proveedores registradas.</p>
-    {% endif %}
-  </section>
-
   <section class="panel panel--tabla">
     <div class="panel__cabecera">
       <h2 class="panel__titulo">Mes a mes · {{ anio }}</h2>
@@ -180,7 +103,7 @@
             <th scope="col">Ingresos</th>
             <th scope="col">Costos</th>
             <th scope="col">Ganancia</th>
-            <th scope="col" title="Deudas al proveedor anteriores al sistema">Deudas proveedor</th>
+            <th scope="col" title="Saldo del pasivo anterior al sistema; no incluido en Costos">PASIVO ANTIGUO</th>
             <th scope="col">Gastos op.</th>
             <th scope="col">Ganancia neta</th>
             <th scope="col">Var. ganancia</th>
@@ -195,7 +118,7 @@
               <td class="tabla__numero">{{ fila.ingresos | cop }}</td>
               <td class="tabla__numero">{{ fila.costos | cop }}</td>
               <td class="tabla__numero">{{ fila.ganancia | cop }}</td>
-              <td class="tabla__numero">{{ fila.deudas_proveedor | cop }}</td>
+              <td class="tabla__numero">{{ fila.pasivo_antiguo | cop }}</td>
               <td class="tabla__numero">{{ fila.gastos_operativos | cop }}</td>
               <td class="tabla__numero">{{ fila.ganancia_neta | cop }}</td>
               <td class="tabla__numero">{{ fila.variacion ~ ' %' if fila.variacion is not none else '—' }}</td>
@@ -208,8 +131,8 @@
       </table>
     </div>
     <p class="ayuda">
-      Los Costos incluyen las Deudas al proveedor anteriores al sistema registradas
-      en cada mes; ese valor se detalla en la columna «Deudas proveedor».
+      PASIVO ANTIGUO es el saldo pendiente con proveedores; no incluido en Costos.
+      Los abonos se imputan primero a la deuda corriente y el sobrante reduce este pasivo.
     </p>
   </section>
 
@@ -277,7 +200,7 @@
               <th scope="col">Ingresos</th>
               <th scope="col">Costos</th>
               <th scope="col">Ganancia</th>
-              <th scope="col" title="Deudas al proveedor anteriores al sistema">Deudas proveedor</th>
+              <th scope="col" title="Saldo del pasivo anterior al sistema; no incluido en Costos">PASIVO ANTIGUO</th>
               <th scope="col">Gastos op.</th>
               <th scope="col">Ganancia neta</th>
               <th scope="col">Rentabilidad</th>
@@ -292,7 +215,7 @@
                 <td class="tabla__numero">{{ fila.ingresos | cop }}</td>
                 <td class="tabla__numero">{{ fila.costos | cop }}</td>
                 <td class="tabla__numero">{{ fila.ganancia | cop }}</td>
-                <td class="tabla__numero">{{ fila.deudas_proveedor | cop }}</td>
+                <td class="tabla__numero">{{ fila.pasivo_antiguo | cop }}</td>
                 <td class="tabla__numero">{{ fila.gastos_operativos | cop }}</td>
                 <td class="tabla__numero">{{ fila.ganancia_neta | cop }}</td>
                 <td class="tabla__numero">{{ fila.rentabilidad ~ ' %' if fila.rentabilidad is not none else '—' }}</td>
@@ -303,8 +226,8 @@
         </table>
       </div>
       <p class="ayuda">
-        Rentabilidad = ganancia del año ÷ costo del año × 100. Los Costos incluyen
-        las Deudas al proveedor anteriores al sistema del periodo.
+        Rentabilidad = ganancia del año ÷ costo del año × 100. PASIVO ANTIGUO es
+        el saldo al cierre del año, no incluido en Costos.
       </p>
     {% else %}
       <p class="tabla__vacia">Aún no hay ventas activas para resumir por año.</p>

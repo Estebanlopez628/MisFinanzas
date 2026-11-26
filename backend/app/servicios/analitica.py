@@ -42,12 +42,14 @@ from app.modelos import GastoOperativo, MovimientoProveedor, Venta, VentaDetalle
 from app.servicios.comercial import (
     CERO,
     ESTADO_ACTIVA,
+    TIPO_ABONO_PROVEEDOR,
+    TIPO_COMPRA,
     TIPO_DEUDA_INICIAL,
     etiqueta_producto,
 )
 
-# Denominación exacta exigida en la exportación CSV.
-DEUDAS_PROVEEDOR_LABEL = "Deudas al proveedor anteriores al sistema"
+# Denominación de la columna en tablas y en el CSV (SRS v4.44, decisión final).
+PASIVO_ANTIGUO_LABEL = "PASIVO ANTIGUO"
 
 MESES = (
     "Enero",
@@ -322,47 +324,57 @@ def _gastos_operativos_por_mes(bd: Session, anio: int) -> dict[int, Decimal]:
     return totales
 
 
-def _deudas_proveedor_por_mes(bd: Session, anio: int) -> dict[int, Decimal]:
-    """Suma las deudas anteriores al sistema por mes (SRS v4.44).
+def _saldos_pasivo_antiguo(bd: Session) -> dict[tuple[int, int], Decimal]:
+    """Calcula el saldo del pasivo antiguo al cierre de cada mes (SRS v4.44).
 
-    Solo se consideran los movimientos `DEUDA_INICIAL` del libro que ya usa
-    Cartera y liquidez; no se crea ningún registro nuevo aquí.
+    Regla de imputación: un abono paga primero la deuda corriente de las compras
+    a crédito; el remanente reduce el pasivo anterior al sistema, sin bajar de
+    cero. El resultado se guarda por (año, mes) y se arrastra a los meses sin
+    movimiento al consultarlo.
 
     Args:
         bd: Sesión de base de datos.
+
+    Returns:
+        Diccionario `{(año, mes): saldo}` con el saldo tras el último movimiento
+        de cada mes que tuvo movimientos.
+    """
+    corriente = CERO
+    antiguo = CERO
+    saldos: dict[tuple[int, int], Decimal] = {}
+    consulta = select(MovimientoProveedor).order_by(MovimientoProveedor.fecha)
+    for movimiento in bd.scalars(consulta):
+        monto = movimiento.monto
+        if movimiento.tipo == TIPO_COMPRA:
+            corriente += monto
+        elif movimiento.tipo == TIPO_DEUDA_INICIAL:
+            antiguo += monto
+        elif movimiento.tipo == TIPO_ABONO_PROVEEDOR:
+            pago_corriente = min(monto, corriente)
+            corriente -= pago_corriente
+            antiguo = max(CERO, antiguo - (monto - pago_corriente))
+        saldos[(movimiento.fecha.year, movimiento.fecha.month)] = redondear_dinero(antiguo)
+    return saldos
+
+
+def _pasivo_antiguo_en(
+    saldos: dict[tuple[int, int], Decimal], anio: int, mes: int
+) -> Decimal:
+    """Devuelve el saldo vigente en un mes, arrastrando el último conocido.
+
+    Args:
+        saldos: Saldos por periodo devueltos por `_saldos_pasivo_antiguo`.
         anio: Año consultado.
+        mes: Mes consultado (1 a 12).
 
     Returns:
-        Diccionario con los doce meses; cero donde no hay deuda.
+        Saldo del pasivo antiguo al cierre de ese mes, o cero si aún no hay.
     """
-    totales = {mes: CERO for mes in range(1, 13)}
-    consulta = select(MovimientoProveedor.fecha, MovimientoProveedor.monto).where(
-        MovimientoProveedor.tipo == TIPO_DEUDA_INICIAL
-    )
-    for fecha, monto in bd.execute(consulta):
-        if fecha.year == anio:
-            totales[fecha.month] += monto
-    return totales
-
-
-def _deudas_proveedor_por_anio(bd: Session, mes: int | None = None) -> dict[int, Decimal]:
-    """Suma las deudas anteriores al sistema por año, opcionalmente por mes.
-
-    Args:
-        bd: Sesión de base de datos.
-        mes: Mes a considerar; `None` suma el año completo.
-
-    Returns:
-        Diccionario `{año: total}`; los años sin deuda no aparecen.
-    """
-    totales: dict[int, Decimal] = {}
-    consulta = select(MovimientoProveedor.fecha, MovimientoProveedor.monto).where(
-        MovimientoProveedor.tipo == TIPO_DEUDA_INICIAL
-    )
-    for fecha, monto in bd.execute(consulta):
-        if mes is None or fecha.month == mes:
-            totales[fecha.year] = totales.get(fecha.year, CERO) + monto
-    return totales
+    objetivo = (anio, mes)
+    anteriores = [periodo for periodo in saldos if periodo <= objetivo]
+    if not anteriores:
+        return CERO
+    return saldos[max(anteriores)]
 
 
 def _gastos_operativos_por_anio(bd: Session, mes: int | None = None) -> dict[int, Decimal]:
@@ -435,8 +447,8 @@ def reporte_mensual(bd: Session, anio: int, filtro: Filtro | None = None) -> lis
 
     Returns:
         Doce filas, de enero a diciembre, con cantidad, ingresos, costos, ganancia,
-        gastos operativos del mes, ganancia neta, variación de la ganancia frente
-        al mes previo y el ancho relativo de la barra de ingresos (0 a 100).
+        pasivo antiguo, gastos operativos del mes, ganancia neta, variación de la
+        ganancia frente al mes previo y el ancho relativo de la barra de ingresos.
     """
     seleccion = filtro or Filtro()
     lineas = [linea for linea in _lineas(bd) if seleccion.de_cliente_y_producto(linea)]
@@ -447,7 +459,7 @@ def reporte_mensual(bd: Session, anio: int, filtro: Filtro | None = None) -> lis
 
     maximo = max((p.ingresos for p in periodos.values()), default=CERO)
     gastos_mes = _gastos_operativos_por_mes(bd, anio)
-    deudas_mes = _deudas_proveedor_por_mes(bd, anio)
+    saldos = _saldos_pasivo_antiguo(bd)
     filas: list[dict[str, object]] = []
     previo: _Acumulado | None = None
     for mes in range(1, 13):
@@ -455,17 +467,15 @@ def reporte_mensual(bd: Session, anio: int, filtro: Filtro | None = None) -> lis
         variacion = None if previo is None else _variacion(datos.ganancia, previo.ganancia)
         barra = 0 if maximo == CERO else int((datos.ingresos / maximo * 100).to_integral_value())
         gastos = redondear_dinero(gastos_mes[mes])
-        deudas = redondear_dinero(deudas_mes[mes])
         filas.append(
             {
                 "mes": MESES[mes - 1],
                 "numero_mes": mes,
                 "ventas": datos.ventas,
                 "ingresos": redondear_dinero(datos.ingresos),
-                # SRS v4.44: Costos incluye las deudas a proveedores anteriores al
-                # sistema; `ganancia` se mantiene como utilidad de las ventas.
-                "costos": redondear_dinero(datos.costos + deudas),
-                "deudas_proveedor": deudas,
+                # Costos sigue siendo el costo de ventas; el pasivo antiguo va aparte.
+                "costos": redondear_dinero(datos.costos),
+                "pasivo_antiguo": redondear_dinero(_pasivo_antiguo_en(saldos, anio, mes)),
                 "ganancia": redondear_dinero(datos.ganancia),
                 # SRS v4.44, §8.3: gasto operativo del mes y ganancia real (neta).
                 "gastos_operativos": gastos,
@@ -506,12 +516,12 @@ def reporte_anual(bd: Session, filtro: Filtro | None = None) -> list[dict[str, o
     filas: list[dict[str, object]] = []
     previo: _Acumulado | None = None
     gastos_anio = _gastos_operativos_por_anio(bd, seleccion.mes)
-    deudas_anio = _deudas_proveedor_por_anio(bd, seleccion.mes)
+    saldos = _saldos_pasivo_antiguo(bd)
     for anio in sorted(periodos):
         datos = _acumular(periodos[anio])
-        deudas = redondear_dinero(deudas_anio.get(anio, CERO))
-        costos = redondear_dinero(datos.costos + deudas)
-        # La rentabilidad sigue midiendo solo la operación de ventas.
+        # Saldo al cierre del año; arrastra el de años anteriores si no hubo
+        # movimientos en este periodo.
+        pasivo = redondear_dinero(_pasivo_antiguo_en(saldos, anio, 12))
         rentabilidad = (
             (datos.ganancia / datos.costos * 100).quantize(UNO) if datos.costos > CERO else None
         )
@@ -522,10 +532,9 @@ def reporte_anual(bd: Session, filtro: Filtro | None = None) -> list[dict[str, o
                 "anio": anio,
                 "ventas": datos.ventas,
                 "ingresos": redondear_dinero(datos.ingresos),
-                # SRS v4.44: Costos incluye las deudas a proveedores anteriores al
-                # sistema; `ganancia` se mantiene como utilidad de las ventas.
-                "costos": costos,
-                "deudas_proveedor": deudas,
+                # Costos es solo costo de ventas; el pasivo antiguo va aparte.
+                "costos": redondear_dinero(datos.costos),
+                "pasivo_antiguo": pasivo,
                 "ganancia": redondear_dinero(datos.ganancia),
                 # SRS v4.44, §8.3: gasto operativo del año y ganancia real (neta).
                 "gastos_operativos": gastos,
@@ -796,7 +805,7 @@ def tabla_csv(
     if nombre == "mensual":
         encabezados = [
             "Mes", "Ventas", "Ingresos", "Costos", "Ganancia",
-            DEUDAS_PROVEEDOR_LABEL,
+            PASIVO_ANTIGUO_LABEL,
             "Gastos operativos", "Ganancia neta", "Variación ganancia (%)",
         ]
         filas = [
@@ -806,7 +815,7 @@ def tabla_csv(
                 _csv_dinero(fila["ingresos"]),
                 _csv_dinero(fila["costos"]),
                 _csv_dinero(fila["ganancia"]),
-                _csv_dinero(fila["deudas_proveedor"]),
+                _csv_dinero(fila["pasivo_antiguo"]),
                 _csv_dinero(fila["gastos_operativos"]),
                 _csv_dinero(fila["ganancia_neta"]),
                 _csv_numero(fila["variacion"]),
@@ -816,7 +825,7 @@ def tabla_csv(
     elif nombre == "anual":
         encabezados = [
             "Año", "Ventas", "Ingresos", "Costos", "Ganancia",
-            DEUDAS_PROVEEDOR_LABEL,
+            PASIVO_ANTIGUO_LABEL,
             "Gastos operativos", "Ganancia neta", "Rentabilidad (%)",
             "Variación ganancia (%)",
         ]
@@ -827,7 +836,7 @@ def tabla_csv(
                 _csv_dinero(fila["ingresos"]),
                 _csv_dinero(fila["costos"]),
                 _csv_dinero(fila["ganancia"]),
-                _csv_dinero(fila["deudas_proveedor"]),
+                _csv_dinero(fila["pasivo_antiguo"]),
                 _csv_dinero(fila["gastos_operativos"]),
                 _csv_dinero(fila["ganancia_neta"]),
                 _csv_numero(fila["rentabilidad"]),
