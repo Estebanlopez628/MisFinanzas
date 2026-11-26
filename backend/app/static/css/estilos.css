@@ -7156,3 +7156,75 @@ body:not(.pagina-acceso) .tabla-contenedor--deudas {
   scrollbar-width: thin;
   scrollbar-color: rgba(56, 189, 248, 0.4) transparent;
 }
+
+/* --------------------------------------------------------------------------
+   SRS aparte — Atajos más oscuros, velocímetros/gráfica en armonía y
+   contenedores internos transparentes. Solo apariencia; login e iconos intactos.
+   -------------------------------------------------------------------------- */
+
+/* Atajos: un paso más oscuro que el panel que los contiene. */
+body:not(.pagina-acceso) .lista-atajos__item,
+body:not(.pagina-acceso) .atajo-tarjeta-movil {
+  background: rgba(4, 18, 42, 0.78);
+  border-color: rgba(56, 189, 248, 0.2);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+/* Velocímetros y comparativa: misma familia azul marino/cian que el resto. */
+body:not(.pagina-acceso) .cierre-deuda,
+body:not(.pagina-acceso) .impacto-deudas {
+  background: rgba(7, 32, 68, 0.7);
+  border-color: rgba(56, 189, 248, 0.24);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+body:not(.pagina-acceso) .cierre-deuda__velocimetro,
+body:not(.pagina-acceso) .mf-gauge-card,
+body:not(.pagina-acceso) .impacto-deuda {
+  background: rgba(4, 18, 42, 0.62);
+  border: 1px solid rgba(56, 189, 248, 0.18);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+body:not(.pagina-acceso) .cierre-deuda__extremo {
+  background: rgba(7, 32, 68, 0.7);
+  border-color: rgba(56, 189, 248, 0.24);
+}
+
+body:not(.pagina-acceso) .cierre-deuda__ahorro {
+  background: rgba(6, 22, 48, 0.85);
+  border-color: rgba(56, 189, 248, 0.3);
+}
+
+/* Formularios, fieldsets, grillas y barras de botones: sin recuadros fantasma.
+   Los modales conservan su superficie densa definida más arriba. */
+body:not(.pagina-acceso) form,
+body:not(.pagina-acceso) .formulario,
+body:not(.pagina-acceso) fieldset,
+body:not(.pagina-acceso) .grupo-quincenal,
+body:not(.pagina-acceso) .bloque-producto,
+body:not(.pagina-acceso) .bloque-pago,
+body:not(.pagina-acceso) .bloque-tabla-pagos,
+body:not(.pagina-acceso) .fila-campos,
+body:not(.pagina-acceso) .cuadricula-horas,
+body:not(.pagina-acceso) .cuadricula-abonos,
+body:not(.pagina-acceso) .abonos-scroll,
+body:not(.pagina-acceso) [class*="acciones-formulario"] {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+/* Excepción: los modales siguen siendo superficies densas y legibles. */
+body:not(.pagina-acceso) form.edicion-gasto__formulario,
+body:not(.pagina-acceso) details.edicion-gasto--modal[open] > .edicion-gasto__formulario,
+body:not(.pagina-acceso) .app-modal__tarjeta,
+body:not(.pagina-acceso) .modal-centrado > * {
+  background: rgba(6, 22, 48, 0.86);
+  border-color: rgba(56, 189, 248, 0.3);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}

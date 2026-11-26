@@ -2854,6 +2854,14 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v156`. Gate `qa_v4_56.py` **6/6**: separación de 18 px medida entre quincenas y atajos, `clientHeight 325 / scrollHeight 386` en 1280 px, `370 / 439` en 375 px y bordes inferiores iguales en web. Suite completa **1002 pruebas** en verde y 20 gates sin regresiones propias.
 
+### 2026-11-26 — Atajos más oscuros, velocímetros en armonía y contenedores transparentes (ADR-140)
+
+**Decisión (ADR-140).** SRS aparte: atajos de pago un paso más oscuros que el panel, velocímetros y gráfica comparativa con la misma familia azul marino/cian, y formularios/fieldsets/grillas/barras de botones sin recuadros fantasma. Login, iconos, métricas, gráficos, CSV, scroll y lógica intactos.
+
+**Consecuencias.** Bajo `body:not(.pagina-acceso)`: `.lista-atajos__item` y `.atajo-tarjeta-movil` pasan a `rgba(4,18,42,.78)` + `blur(6px)`. `.cierre-deuda` y `.impacto-deudas` a `rgba(7,32,68,.7)` + `blur(8px)`; `.cierre-deuda__velocimetro`, `.mf-gauge-card`, `.impacto-deuda` a `rgba(4,18,42,.62)` + borde cian; `.cierre-deuda__extremo` y `.cierre-deuda__ahorro` alineados. Formularios, `fieldset`, grillas, barras de acciones y bloques internos quedan `transparent` con `border: 0` y `box-shadow: none`; los modales conservan su superficie densa mediante una excepción de mayor especificidad.
+
+**Verificación.** Playwright 1280 px y 390 px sobre Login, Finanzas, Presupuesto, Deudas y OLB BYTE: login intacto, atajos con el nuevo tono, velocímetros/gráfica en azul marino/cian, formularios sin bordes ni sombras, modales legibles, iconos presentes, sin desbordes ni errores de consola. Suite completa en verde. `sw.js` en `olb-finanzas-v174`.
+
 ### 2026-11-26 — Coherencia en Atajos de pago y limpieza de marcos internos (ADR-139)
 
 **Decisión (ADR-139).** SRS aparte: los atajos de pago deben usar el mismo azul marino/cian translúcido que el resto del sistema y se retiran los recuadros internos sobrantes en formularios y tarjetas, sin sensación de corte en Web ni Móvil. Login, iconos, lógica y scroll intactos.

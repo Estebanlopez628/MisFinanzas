@@ -1767,3 +1767,18 @@ Línea base v4.44. Ajusta la sección 69. Alcance exclusivo: Mis Finanzas (`/fin
 
 - Playwright 1280 px y 390 px sobre Finanzas, Atajos, Deudas y OLB BYTE: coherencia cromática, sin marcos internos sobrantes, sin desbordes ni errores de consola; scroll operativo.
 - Suite completa en verde. `sw.js` en `olb-finanzas-v173`. Documentación sincronizada.
+
+## 75. SRS aparte — Atajos más oscuros, armonía de gráficas y contenedores limpios (ADR-140)
+
+**Regla suprema.** Login e iconos intactos. Solo apariencia en Web y Móvil; sin cambios de cálculos, proyecciones, flujos de Mis Finanzas u OLB BYTE, CSV ni scroll.
+
+### 75.1 Ajustes aplicados
+
+1. Atajos: `.lista-atajos__item` y `.atajo-tarjeta-movil` pasan a `rgba(4,18,42,.78)` + `blur(6px)`, un paso más oscuros que el panel.
+2. Velocímetros y comparativa: `.cierre-deuda`/`.impacto-deudas` en `rgba(7,32,68,.7)`; `.cierre-deuda__velocimetro`, `.mf-gauge-card` y `.impacto-deuda` en `rgba(4,18,42,.62)` con borde cian. Extremos y etiqueta de ahorro alineados.
+3. Formularios, `fieldset`, grillas y barras de acciones: `background: transparent`, `border: 0`, `box-shadow: none`. Los modales conservan `rgba(6,22,48,.86)` con excepción de mayor especificidad.
+
+### 75.2 Verificación y cierre documental
+
+- Playwright 1280 px y 390 px sobre Login, Finanzas, Presupuesto, Deudas y OLB BYTE: atajos más oscuros, gráficas en armonía, formularios sin recuadros fantasma, modales legibles, iconos intactos, sin desbordes ni errores de consola.
+- Suite completa en verde. `sw.js` en `olb-finanzas-v174`. Documentación sincronizada.
