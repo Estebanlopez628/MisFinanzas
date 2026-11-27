@@ -48,10 +48,10 @@ CERO = Decimal("0")
 CIEN = Decimal("100")
 MESES_PROYECCION = 12
 CUOTAS_POR_TERMINAR = 3
-# SRS v1.8: reserva mensual de supervivencia. El dinero libre que no supere este
-# monto no se ofrece para abonos ni metas; solo el remanente se considera
-# capacidad real de abono.
-BASE_MINIMA_LIQUIDEZ = Decimal("300000")
+# SRS §5 (ajuste del propietario): si el usuario no digitó un monto, la reserva
+# es 0 y todo el libre se ofrece para abonos o metas. El valor real se lee del
+# perfil con `base_minima_de`; esta constante es solo el respaldo.
+BASE_MINIMA_LIQUIDEZ = Decimal("0")
 # Umbrales del semáforo, en porcentaje del ingreso mensual.
 UMBRAL_VERDE = Decimal("20")
 UMBRAL_AMBAR = Decimal("35")
@@ -134,8 +134,8 @@ def base_minima_de(perfil: PerfilFinanciero | None) -> Decimal:
     """Devuelve la base mínima de liquidez configurada por el usuario.
 
     SRS §5: la reserva ya no es una constante global. El valor digitado en el
-    onboarding manda; la constante de $300.000 solo sirve de respaldo para
-    perfiles antiguos o ausentes. Nunca devuelve un número negativo.
+    onboarding manda; si no se digitó (0 o perfil ausente) no se reserva nada y
+    el Consejero usa todo el dinero libre. Nunca devuelve un número negativo.
 
     Args:
         perfil: Perfil financiero del usuario, o `None` si aún no existe.
@@ -156,10 +156,10 @@ def repartir_libre(
 ) -> tuple[Decimal, Decimal]:
     """Separa el dinero libre entre la base mínima y el disponible para abonar.
 
-    SRS v1.8 y §5: la base mínima de liquidez se reserva completa en cuanto el
-    libre la alcance; si el libre es menor, todo él queda como base y no hay
-    disponible. Un libre negativo no reserva nada. El monto reservado es el que
-    configuró cada usuario (con respaldo de $300.000).
+    SRS v1.8 y §5: la base mínima se reserva completa en cuanto el libre la
+    alcance; si el libre es menor, todo él queda como base y no hay disponible.
+    Un libre negativo no reserva nada. El monto reservado es el que configuró
+    cada usuario; si no lo configuró, es 0 y todo el libre queda disponible.
 
     Args:
         libre: Dinero que queda después de gastos y cuotas (puede ser negativo).

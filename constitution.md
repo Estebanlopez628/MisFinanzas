@@ -314,6 +314,6 @@ Principios innegociables. Toda especificación, plan y tarea debe cumplirlos de 
     - No se modifican iconos, medidas de campos, márgenes, cálculos ni flujos. La factura y el recibo (PDF e imagen) quedan fuera del ámbito.
 
 66. **Colchón propio y recuperación de un solo uso (Documento Único Integrado §5 y §6):**
-    - La base mínima de liquidez es un dato del perfil (`monto_minimo_liquidez NUMERIC(12,2) NOT NULL DEFAULT 300000`), elegido en el onboarding; la constante de $300.000 solo sirve de respaldo. Dona, diagnóstico, banner y Consejero leen el mismo valor. Los perfiles previos conservan 300000 sin nulos.
+    - La base mínima de liquidez es un dato del perfil (`monto_minimo_liquidez NUMERIC(12,2) NOT NULL DEFAULT 0`), elegido en el onboarding; si no se digita, no hay reserva y el Consejero usa todo el libre. El valor digitado aparece en la dona y lo leen diagnóstico, banner y Consejero. Sin nulos.
     - La recuperación por olvido dispone además de tokens SHA-256 de un solo uso con vigencia de 20 minutos en `password_reset_tokens`, con `RESEND_FROM` y `FRONTEND_URL`. Los endpoints `/auth/forgot-password` y `/auth/reset-password` son aditivos: no alteran el Login, el flujo histórico ni el hash PBKDF2.
     - El alcance de este documento se limita a estas dos secciones; el fondo, los botones de OLB BYTE y la línea neón ya aprobados no se modifican.

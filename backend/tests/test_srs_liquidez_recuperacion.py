@@ -45,7 +45,7 @@ def _id_usuario() -> str:
 
 
 def test_columna_liquidez_tipo_y_valor_previo(bd) -> None:
-    """La columna existe como NUMERIC(12,2) y los perfiles previos valen 300000."""
+    """La columna existe como NUMERIC(12,2) y sin valor digitado vale 0."""
     with FabricaSesiones() as conexion:
         filas = conexion.execute(text("PRAGMA table_info(perfiles_financieros)")).fetchall()
     columna = next((fila for fila in filas if fila[1] == "monto_minimo_liquidez"), None)
@@ -54,11 +54,11 @@ def test_columna_liquidez_tipo_y_valor_previo(bd) -> None:
     assert "12" in columna[2]
     perfil = perfiles.obtener_perfil(bd, _id_usuario())
     assert perfil is not None
-    assert perfil.monto_minimo_liquidez == Decimal("300000.00")
+    assert perfil.monto_minimo_liquidez == Decimal("0.00")
 
 
-def test_migracion_base_antigua_recibe_300000(tmp_path, monkeypatch) -> None:
-    """Una base sin la columna recibe 300000 en las filas ya existentes."""
+def test_migracion_base_antigua_recibe_cero(tmp_path, monkeypatch) -> None:
+    """Sin valor digitado la base antigua queda en 0: no reserva colchón."""
     archivo = tmp_path / "perfil_antiguo.db"
     conexion = sqlite3.connect(archivo)
     conexion.execute(
@@ -83,8 +83,61 @@ def test_migracion_base_antigua_recibe_300000(tmp_path, monkeypatch) -> None:
         valor = enlace.execute(
             text("SELECT monto_minimo_liquidez FROM perfiles_financieros")
         ).scalar()
-    assert Decimal(str(valor)) == Decimal("300000")
+    assert Decimal(str(valor)) == Decimal("0")
     motor.dispose()
+
+
+def test_migracion_resetea_el_300000_predeterminado(tmp_path, monkeypatch) -> None:
+    """Los 300000 que nacieron por defecto pasan a 0; un valor propio se conserva."""
+    archivo = tmp_path / "perfil_intermedio.db"
+    conexion = sqlite3.connect(archivo)
+    conexion.execute(
+        "CREATE TABLE perfiles_financieros ("
+        "id_perfil TEXT PRIMARY KEY, id_usuario TEXT, sueldo_basico NUMERIC, "
+        "modalidad_pago TEXT, monto_minimo_liquidez NUMERIC(12,2))"
+    )
+    conexion.executemany(
+        "INSERT INTO perfiles_financieros VALUES (?, ?, ?, ?, ?)",
+        [
+            ("p1", "u1", 2960000, "MENSUAL", 300000),
+            ("p2", "u2", 2960000, "MENSUAL", 450000),
+        ],
+    )
+    conexion.commit()
+    conexion.close()
+
+    motor = create_engine(f"sqlite:///{archivo.as_posix()}")
+    monkeypatch.setattr(modulo_bd, "motor", motor)
+    monkeypatch.setattr(modulo_bd, "_conexion_sqlite", True)
+    modulo_bd._migrar_monto_minimo_liquidez()
+
+    with motor.connect() as enlace:
+        valores = dict(
+            enlace.execute(
+                text("SELECT id_perfil, monto_minimo_liquidez FROM perfiles_financieros")
+            ).fetchall()
+        )
+    assert Decimal(str(valores["p1"])) == Decimal("0")
+    assert Decimal(str(valores["p2"])) == Decimal("450000")
+    motor.dispose()
+
+
+def test_sin_valor_el_consejero_usa_todo_el_libre(cliente_usuario, bd) -> None:
+    """Sin monto digitado no se reserva nada y el Consejero toma el libre total."""
+    perfil = perfiles.obtener_perfil(bd, _id_usuario())
+    assert perfil is not None
+    assert perfil.monto_minimo_liquidez == Decimal("0")
+
+    consejo = consejero.consejo_financiero(
+        bd, perfil.id_usuario, "Usuario", Decimal("345204"), umbral=capacidad.base_minima_de(perfil)
+    )
+    assert consejo.activo is True
+    assert consejo.umbral == Decimal("0")
+    assert consejo.excedente == Decimal("345204.00")
+
+    html = cliente_usuario.get("/presupuesto").text
+    assert "No digitaste un monto mínimo" in html
+    assert "Base mínima de liquidez:" not in html
 
 
 def test_onboarding_guarda_monto_digitado(cliente_usuario, bd, monkeypatch) -> None:
@@ -98,8 +151,14 @@ def test_onboarding_guarda_monto_digitado(cliente_usuario, bd, monkeypatch) -> N
 
     html = cliente_usuario.get("/perfil?bienvenida=1").text
     assert "Monto mínimo que deseas mantener libre para imprevistos" in html
-    assert 'name="monto_minimo_liquidez"' in html
-    assert 'type="number"' in html
+    inicio = html.index('id="monto_minimo_liquidez"')
+    etiqueta = html[inicio : html.index(">", inicio)]
+    # SRS §5 (ajuste del propietario): sin valor precargado ni 0; la sugerencia
+    # es solo el placeholder y el campo usa el formato de miles del proyecto.
+    assert 'name="monto_minimo_liquidez"' in etiqueta
+    assert 'value=""' in etiqueta
+    assert 'placeholder="300000"' in etiqueta
+    assert "data-moneda" in etiqueta
     assert "Digita el valor:" in html
 
     respuesta = cliente_usuario.post(
@@ -108,7 +167,7 @@ def test_onboarding_guarda_monto_digitado(cliente_usuario, bd, monkeypatch) -> N
             "alias": "Usuario",
             "sueldo_basico": "3.000.000",
             "modalidad_pago": perfiles.MODALIDAD_MENSUAL,
-            "monto_minimo_liquidez": "450000",
+            "monto_minimo_liquidez": "450.000",
         },
         follow_redirects=False,
     )
@@ -141,6 +200,20 @@ def test_liquidez_configurada_alimenta_calculos(bd) -> None:
     )
     assert consejo.umbral == Decimal("450000.00")
     assert consejo.excedente == Decimal("50000.00")
+
+
+def test_presupuesto_muestra_el_umbral_del_perfil(cliente_usuario, bd) -> None:
+    """El texto del Consejero usa el monto del perfil, nunca los 300000 fijos."""
+    perfil = perfiles.obtener_perfil(bd, _id_usuario())
+    assert perfil is not None
+    perfil.monto_minimo_liquidez = Decimal("450000")
+    bd.commit()
+
+    html = cliente_usuario.get("/presupuesto").text
+    assert "Ya se reservaron $450.000 de base mínima de liquidez" in html
+    assert "Ya se reservaron $300.000" not in html
+    assert "Base mínima de liquidez" in html
+    assert "$450.000" in html
 
 
 def test_token_guarda_solo_hash_invalida_previos_y_expira(bd) -> None:

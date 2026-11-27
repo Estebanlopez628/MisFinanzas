@@ -2,9 +2,9 @@
 
 Responsabilidad
 ---------------
-- Decidir si el dinero libre del mes supera la base mínima de liquidez
-  configurada por el usuario ($300.000 como respaldo) y, solo con el remanente,
-  sugerir abonos o metas (SRS §5).
+- Decidir si el dinero libre del mes supera la base mínima configurada por el
+  usuario (0 si no la digitó, así que se usa todo el libre) y, solo con el
+  remanente, sugerir abonos o metas (SRS §5).
 - En deudas, ordenar por **liberación de flujo de caja**: primero la deuda que
   el excedente pueda cancelar completa y que deje más cuotas por delante (la de
   12 meses antes que la de 5); si ninguna se puede cancelar de una vez, la de

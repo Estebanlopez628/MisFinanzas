@@ -448,6 +448,9 @@ funciones `_migrar_*` solo corren con SQLite.
 
 `_migrar_columnas_usuarios` agrega `avatar_url` a `usuarios` solo si falta; se ejecuta
 desde `inicializar_base_datos` y se probó dos veces sobre una copia de la base real (SRS v1.8).
+SRS §5/ADR-173: `_migrar_monto_minimo_liquidez()` corre en SQLite y PostgreSQL, agrega
+la columna con `DEFAULT 0`, rellena nulos y convierte a 0 los 300000 que nacieron
+predeterminados; los valores escritos por el usuario se conservan.
 
 Motor, sesión por petición y esquema. `crear_esquema` crea las tablas que falten;
 las funciones `_migrar_*` ajustan bases antiguas de forma **idempotente**:
@@ -760,10 +763,10 @@ usuario solo conoce el neto de una quincena; `guardar_perfil` hace upsert;
 liquidación y las quincenas. SRS v1.9: `parsear_dia_quincena` acepta solo dígitos
 de 1 a 31; `validar_dias_quincena` exige que la quincena 2 sea posterior a la 1;
 `dias_quincena` devuelve 15 y 30 cuando no hay dato, y `etiquetas_quincena`
-arma los rótulos «Quincena N · día X» que usan los formularios. SRS §5:
+arma los rótulos «Quincena N · día X» que usan los formularios. SRS §5/ADR-173:
 `guardar_perfil` persiste `monto_minimo_liquidez` (NUMERIC(12,2), no negativo);
-si el formulario no lo envía conserva el valor anterior y solo usa $300.000 como
-respaldo cuando el perfil no tenía ninguno.
+si el formulario no lo envía conserva el valor anterior y, si no había ninguno,
+queda en 0 (sin reserva).
 
 ### `backend/app/servicios/quincenas.py`
 
@@ -850,8 +853,8 @@ Capacidad de endeudamiento y proyección a doce meses (SRS v1.7, bloque F; base
 mínima en v1.8). `capacidad_endeudamiento` suma el ingreso de las quincenas y los
 extras cobrados, resta gastos fijos, deducciones y cuota mensual de deudas;
 `repartir_libre` separa el libre en la base mínima configurada y el disponible
-para abonar; `base_minima_de(perfil)` lee `perfil.monto_minimo_liquidez` y usa
-$300.000 solo si el perfil no tiene valor (SRS §5). `_repartir_arcos` dibuja cuatro arcos («Gastos fijos»,
+para abonar; `base_minima_de(perfil)` lee `perfil.monto_minimo_liquidez` y devuelve
+0 si no se digitó (ADR-173), de modo que todo el libre queda disponible. `_repartir_arcos` dibuja cuatro arcos («Gastos fijos»,
 «Cuota de deudas», «Base mínima de liquidez», «Disponible para abonar») que
 siempre cierran en 100,0 %. El semáforo usa el porcentaje de deuda sobre el
 ingreso (`UMBRAL_VERDE = 20`, `UMBRAL_AMBAR = 35`). `deudas_por_terminar` lista
@@ -1220,7 +1223,9 @@ el pago al proveedor y el libro de movimientos. En «Pago al proveedor» el camp
 «Deudas al proveedor anteriores al sistema». La leyenda de la dona muestra el
 desglose de la deuda con el mismo formato de «Capacidad de endeudamiento»: cada
 sub-línea empieza con `↳` y muestra su porcentaje sin el texto «de la deuda».
-En móvil (<768 px) la dona y la leyenda van centradas en pantalla.
+En móvil (<768 px) la dona y la leyenda van centradas en pantalla. ADR-173: el
+título «Cartera frente a deuda» lleva `panel__titulo--centrado`, así que el título
+y su línea neón quedan centrados también en escritorio.
 
 ### `backend/app/templates/olb_byte/garantias.html`
 
@@ -1354,7 +1359,9 @@ porcentajes se escriben y se muestran con «%» y coma decimal. Incluye cambio d
 contraseña y, para el administrador, acceso a Usuarios. SRS §5: junto a la
 configuración de quincenas se pide «Monto mínimo que deseas mantener libre para
 imprevistos o gastos del día a día.», con la etiqueta «Digita el valor:» y el
-campo numérico `monto_minimo_liquidez` (mínimo 0, sugerencia 300000).
+campo `monto_minimo_liquidez` con `data-moneda`: nace vacío (ni 0 ni 300000
+precargados), `placeholder="300000"` como sugerencia y separadores de miles
+mientras se escribe. En un perfil existente muestra su valor con puntos.
 
 ### `backend/app/templates/finanzas/index.html`
 
@@ -1432,7 +1439,9 @@ liquidez y disponible para abonar. Desde SRS v1.9 los arcos y la leyenda salen
 de `capacidad.arcos_categoria`, con los nombres y colores del catálogo. Hay una
 **sola** leyenda: los propios arcos ya traen el nombre, el color, el valor y el
 porcentaje de cada categoría con valor mayor que cero, sin duplicados ni notas
-adicionales. También muestra el semáforo,
+adicionales. SRS §5: la leyenda añade «Base mínima de liquidez» **solo cuando el
+usuario digitó un valor mayor que 0**; ese número es el mismo `umbral` que usa
+el Consejero. También muestra el semáforo,
 las deudas con tres cuotas o menos y la tabla de doce meses con su
 barra de saldo libre. Se incluye una vez en `presupuesto/index.html` y otra en
 `trabajos/index.html`, cada una con su propio título. En móvil la dona y sus

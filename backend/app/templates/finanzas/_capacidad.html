@@ -82,6 +82,15 @@
             Ingreso del mes: <strong class="valor-positivo">{{ capacidad.ingreso | cop }}</strong>
           </li>
           {% else %}
+          {# SRS §5: el colchón elegido por el usuario se hace visible aquí y
+             alimenta el mismo `umbral` que usa el Consejero. No es un arco nuevo:
+             la dona global conserva una sola tajada «Total libre». #}
+          {% if capacidad.base_minima > 0 %}
+          <li class="dona__base-liquidez">
+            Base mínima de liquidez:
+            <strong class="valor-positivo">{{ capacidad.base_minima | cop }}</strong>
+          </li>
+          {% endif %}
           <li>
             Ingreso global del mes: <strong class="valor-positivo">{{ capacidad.base_global | cop }}</strong>
           </li>

@@ -56,7 +56,7 @@ Configuración salarial del usuario (onboarding). Un registro por usuario.
 | `quincena_deducciones` | `SMALLINT` | Sí | Condicional | Obligatorio si `modalidad_pago = QUINCENAL`. `1` o `2`: quincena a la que se descuentan salud y pensión. `CHECK (IN (1,2))`. |
 | `dia_quincena_1` | `SMALLINT` | Sí | Condicional | SRS v1.9. Obligatorio si `modalidad_pago = QUINCENAL`: día del mes en que se paga la quincena 1 (por ejemplo, 5). `CHECK (BETWEEN 1 AND 31)`. Los perfiles anteriores quedan con 15. |
 | `dia_quincena_2` | `SMALLINT` | Sí | Condicional | SRS v1.9. Obligatorio si `modalidad_pago = QUINCENAL`: día del mes en que se paga la quincena 2 (por ejemplo, 20). Debe ser mayor que `dia_quincena_1`. `CHECK (BETWEEN 1 AND 31)`. Los perfiles anteriores quedan con 30. |
-| `monto_minimo_liquidez` | `NUMERIC(12,2)` | No | Sí | Documento Único Integrado §5. Colchón que el usuario elige en el onboarding. `NOT NULL DEFAULT 300000`, `CHECK (>= 0)`. Las cuentas previas conservan 300000 sin nulos. Lo leen la dona de capacidad, el diagnóstico de liquidez y el Consejero. |
+| `monto_minimo_liquidez` | `NUMERIC(12,2)` | No | Sí | Documento Único Integrado §5 (ajuste del propietario). Colchón que el usuario elige en el onboarding. `NOT NULL DEFAULT 0`, `CHECK (>= 0)`. Si no se digitó queda en 0 y **no se reserva nada**; el valor digitado aparece en la dona y lo lee el Consejero. Sin nulos. |
 | `auxilio_transporte_habilitado` | `BOOLEAN` | No | Sí | Resultado del validador de tope 2 SMMLV (Tarea 3). Solo lectura en UI. |
 | `fecha_actualizacion` | `TIMESTAMPTZ` | No | Sí | `now()` en cada cambio. |
 
@@ -66,7 +66,7 @@ Configuración salarial del usuario (onboarding). Un registro por usuario.
 - **Caso B del onboarding (SRS v1.2):** si el usuario no conoce sus porcentajes, informa el valor neto recibido en la quincena **sin** deducciones. Al no tener descuentos, ese neto equivale al devengado: `porcentaje_sin = neto / sueldo_basico × 100`, `porcentaje_con = 100 − porcentaje_sin` y `quincena_deducciones` es la quincena restante (por descarte).
 - Los porcentajes son porcentajes de **devengo**; las deducciones de ley (4 % salud + 4 % pensión) se restan únicamente de la quincena marcada en `quincena_deducciones`.
 - `porcentaje_quincenal` (campo único de la primera versión) quedó **obsoleto**; la migración ligera de `core/base_datos.py` copia su valor a la quincena 1 y calcula la quincena 2 como complemento a 100 %.
-- **Colchón personalizado (SRS §5):** `monto_minimo_liquidez` se guarda en este perfil (donde viven las quincenas) con `NUMERIC(12,2) NOT NULL DEFAULT 300000`. La base mínima deja de ser una constante global: se reserva este valor y el Consejero solo trabaja con el excedente que lo supere. Si el campo estuviera ausente, se usa 300000 como respaldo.
+- **Colchón personalizado (SRS §5, ajuste del propietario):** `monto_minimo_liquidez` se guarda en este perfil (donde viven las quincenas) con `NUMERIC(12,2) NOT NULL DEFAULT 0`. Si el usuario no escribe nada, no hay reserva y el Consejero usa todo el dinero libre. Si escribe un valor, ese monto aparece en la dona y se usa como umbral. Los 300000 que nacieron como predeterminado en una versión intermedia se migran a 0; un valor distinto se conserva.
 
 ---
 
@@ -862,9 +862,9 @@ Las reglas CSS viven fuera de `@media (max-width: 767px)` para aplicar en ambos 
 
 ## 49. Documento Único Integrado §5 — Base mínima de liquidez personalizable
 
-Sin cambios de esquema adicionales: la única columna nueva es `perfiles_financieros.monto_minimo_liquidez` (§2), documentada arriba con tipo `NUMERIC(12,2)`, valor por defecto 300000 y restricción de no negatividad. La migración idempotente `_migrar_monto_minimo_liquidez()` en `core/base_datos.py` opera en SQLite (`PRAGMA table_info` + `ALTER TABLE`) y PostgreSQL (`ADD COLUMN IF NOT EXISTS`), y rellena con 300000 cualquier fila previa que quedara nula. No se crea una columna en `usuarios`: la configuración de quincenas y el colchón viven juntos en el perfil 1:1.
+Sin cambios de esquema adicionales: la única columna nueva es `perfiles_financieros.monto_minimo_liquidez` (§2), documentada arriba con tipo `NUMERIC(12,2)`, valor por defecto 0 y restricción de no negatividad. La migración idempotente `_migrar_monto_minimo_liquidez()` en `core/base_datos.py` opera en SQLite (`PRAGMA table_info` + `ALTER TABLE`) y PostgreSQL (`ADD COLUMN IF NOT EXISTS`), rellena con 0 cualquier fila previa que quedara nula y convierte a 0 los antiguos 300000 predeterminados sin tocar valores escritos por el usuario. No se crea una columna en `usuarios`: la configuración de quincenas y el colchón viven juntos en el perfil 1:1.
 
-**Regla de cálculo:** `capacidad.base_minima_de(perfil)` devuelve el valor guardado y `repartir_libre()` lo reserva antes de calcular «Disponible para abonar». `ahorro.diagnostico()` expone el mismo número en `umbral` y `consejo_financiero(..., umbral=...)` lo usa para activarse. Trabajos Extras sigue sin reservar colchón (ADR-63).
+**Regla de cálculo:** `capacidad.base_minima_de(perfil)` devuelve el valor guardado (0 si no se digitó) y `repartir_libre()` lo reserva antes de calcular «Disponible para abonar». `ahorro.diagnostico()` expone el mismo número en `umbral` y `consejo_financiero(..., umbral=...)` lo usa para activarse. La dona solo muestra «Base mínima de liquidez» cuando el valor es mayor que 0. Trabajos Extras sigue sin reservar colchón (ADR-63).
 
 ## 50. Documento Único Integrado §6 — Tokens de recuperación de un solo uso
 

@@ -314,9 +314,8 @@ _COLUMNAS_PERFIL_NUEVAS = {
     "quincena_deducciones": "SMALLINT",
     "dia_quincena_1": "SMALLINT",
     "dia_quincena_2": "SMALLINT",
-    # SRS (Documento Único Integrado, §5): columna nueva con valor por defecto
-    # para que los perfiles ya existentes conserven exactamente $300.000.
-    "monto_minimo_liquidez": "NUMERIC(12, 2) NOT NULL DEFAULT 300000",
+    # SRS §5 (ajuste del propietario): sin valor digitado no hay reserva (0).
+    "monto_minimo_liquidez": "NUMERIC(12, 2) NOT NULL DEFAULT 0",
 }
 
 # SRS v1.9: los perfiles anteriores no tenían día de quincena. Se les asigna el
@@ -986,11 +985,13 @@ def _migrar_monto_minimo_liquidez() -> None:
     """Asegura la base mínima personalizada en SQLite y PostgreSQL (SRS §5).
 
     Los perfiles creados antes de este requerimiento no tenían el campo. Se
-    agrega con `NOT NULL DEFAULT 300000` para que ninguna cuenta previa quede
-    con un nulo, un error de cálculo o un colchón distinto al que ya usaba.
+    agrega con `NOT NULL DEFAULT 0`: si el usuario nunca digitó un monto, no se
+    reserva colchón y el Consejero usa todo el dinero libre. Los valores 300000
+    que nacieron como predeterminado en una versión intermedia también pasan a 0;
+    cualquier otro valor escrito por el usuario se conserva.
 
     Returns:
-        None. La migración es idempotente y no modifica valores ya guardados.
+        None. La migración es idempotente y no modifica valores digitados.
     """
     with motor.begin() as conexion:
         if _conexion_sqlite:
@@ -1000,17 +1001,24 @@ def _migrar_monto_minimo_liquidez() -> None:
             if columnas and "monto_minimo_liquidez" not in {fila[1] for fila in columnas}:
                 conexion.exec_driver_sql(
                     "ALTER TABLE perfiles_financieros "
-                    "ADD COLUMN monto_minimo_liquidez NUMERIC(12, 2) NOT NULL DEFAULT 300000"
+                    "ADD COLUMN monto_minimo_liquidez NUMERIC(12, 2) NOT NULL DEFAULT 0"
                 )
         else:
             conexion.exec_driver_sql(
                 "ALTER TABLE perfiles_financieros ADD COLUMN IF NOT EXISTS "
-                "monto_minimo_liquidez NUMERIC(12, 2) NOT NULL DEFAULT 300000"
+                "monto_minimo_liquidez NUMERIC(12, 2) NOT NULL DEFAULT 0"
             )
         # Defensivo: si una base intermedia llegó a crear la columna nullable.
         conexion.exec_driver_sql(
-            "UPDATE perfiles_financieros SET monto_minimo_liquidez = 300000 "
+            "UPDATE perfiles_financieros SET monto_minimo_liquidez = 0 "
             "WHERE monto_minimo_liquidez IS NULL"
+        )
+        # La primera versión de este campo nacía con 300000. Como nadie lo había
+        # digitado todavía, ese valor era el predeterminado: se deja en 0 para
+        # que esas cuentas usen todo su libre. Un valor distinto se conserva.
+        conexion.exec_driver_sql(
+            "UPDATE perfiles_financieros SET monto_minimo_liquidez = 0 "
+            "WHERE monto_minimo_liquidez = 300000"
         )
 
 

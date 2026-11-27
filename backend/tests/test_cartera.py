@@ -185,6 +185,8 @@ def test_panel_de_cartera_muestra_balance_y_dona(cliente_admin: TestClient, bd) 
     assert "$50.000" in respuesta.text
     # El balance del centro de la dona lleva clase de color según su signo.
     assert "dona__centro-valor" in respuesta.text
+    # ADR-173: el título de la comparativa queda centrado en web y móvil.
+    assert 'class="panel__titulo panel__titulo--centrado form-header-white">Cartera frente a deuda' in respuesta.text
 
 
 def test_deficit_se_muestra_en_rojo_con_signo_menos(cliente_admin: TestClient, bd) -> None:

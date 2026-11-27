@@ -225,6 +225,9 @@ def test_diagnostico_alerta_con_gastos_altos(bd) -> None:
     """Con gastos fijos que consumen el sueldo se dispara la alerta crítica."""
     id_usuario = _id_admin(bd)
     perfil = perfiles.obtener_perfil(bd, id_usuario)
+    assert perfil is not None
+    perfil.monto_minimo_liquidez = Decimal("300000")
+    bd.commit()
     gastos.crear_gasto(
         bd,
         id_usuario,
@@ -237,7 +240,8 @@ def test_diagnostico_alerta_con_gastos_altos(bd) -> None:
     )
 
     resultado = ahorro.diagnostico(bd, id_usuario, perfil, 2026, 11)
-    assert resultado["saldo_libre"] < ahorro.UMBRAL_ALERTA
+    assert resultado["umbral"] == Decimal("300000.00")
+    assert resultado["saldo_libre"] < resultado["umbral"]
     assert resultado["alerta"] is True
 
 
@@ -255,6 +259,10 @@ def test_presupuesto_exige_sesion(cliente) -> None:
 
 def test_presupuesto_muestra_banner_y_alerta(cliente_admin, bd) -> None:
     """La página presenta el diagnóstico y la advertencia de liquidez."""
+    perfil = perfiles.obtener_perfil(bd, _id_admin(bd))
+    assert perfil is not None
+    perfil.monto_minimo_liquidez = Decimal("300000")
+    bd.commit()
     respuesta = cliente_admin.get("/presupuesto")
     assert respuesta.status_code == 200
     assert "Diagnóstico del mes" in respuesta.text

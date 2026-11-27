@@ -60,8 +60,8 @@ MODOS_AMBAS = (MODO_DIVIDIR, MODO_DUPLICAR)
 # Ventana de comparación para los gastos fijos indefinidos, que no tienen final.
 MESES_VENTANA_FIJA = 12
 # SRS v1.8 y §5: la alerta de liquidez comparte la base mínima del consejero.
-# La constante sigue siendo el respaldo para perfiles sin valor guardado; el
-# umbral real se lee del perfil en `diagnostico()`.
+# La constante es 0 cuando el usuario no digitó un monto; el umbral real se lee
+# del perfil en `diagnostico()`.
 UMBRAL_ALERTA = servicio_capacidad.BASE_MINIMA_LIQUIDEZ
 # SRS v1.6: estado con el que queda archivada una meta en el historial.
 ESTADO_CUMPLIDA = "CUMPLIDA"

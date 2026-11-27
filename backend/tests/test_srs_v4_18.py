@@ -78,7 +78,7 @@ def test_no_nombrar_deudas_fuera_del_plan(bd) -> None:
     deudas.crear_deuda(bd, id_usuario, "Addi", "300000", "25000", 12)
     deudas.crear_deuda(bd, id_usuario, "BBVA", "9000000", "90000", 100)
     resultado = consejero.consejo_financiero(
-        bd, id_usuario, "Ana", Decimal("700000"), date(2026, 11, 1)
+        bd, id_usuario, "Ana", Decimal("700000"), date(2026, 11, 1), umbral=Decimal("300000")
     )
     pasos = " ".join(resultado.pasos)
     assert "deudas que te acabo de recomendar" in pasos

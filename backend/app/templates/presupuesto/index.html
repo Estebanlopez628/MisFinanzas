@@ -97,7 +97,11 @@
       {# SRS v4.20, sección 3.2: jerarquía mayor en el banner de liquidez. #}
       <p class="ayuda consejero__liquidez">
         Dinero libre disponible para abonar: <strong>{{ consejo.excedente | cop }}</strong>.
-        Ya se reservaron {{ consejo.umbral | cop }} de base mínima de liquidez.
+        {% if consejo.umbral > 0 %}
+          Ya se reservaron {{ consejo.umbral | cop }} de base mínima de liquidez.
+        {% else %}
+          No digitaste un monto mínimo, así que no reservamos nada y usamos todo tu dinero libre.
+        {% endif %}
       </p>
 
       <ul class="consejero__pasos">

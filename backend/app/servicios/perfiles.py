@@ -36,9 +36,10 @@ QUINCENAS_VALIDAS = (QUINCENA_PRIMERA, QUINCENA_SEGUNDA)
 CIEN = Decimal("100")
 CERO = Decimal("0")
 UN_CENTAVO = Decimal("0.01")
-# SRS §5: respaldo para cuentas anteriores al campo personalizable. El perfil
-# nuevo trae el mismo valor predeterminado en la base de datos.
-MONTO_MINIMO_LIQUIDEZ_PREDETERMINADO = Decimal("300000")
+# SRS §5 (ajuste del propietario): si el usuario no digita un monto, la reserva
+# es 0 y todo el dinero libre queda disponible. El valor digitado se guarda y lo
+# leen la dona y el Consejero.
+MONTO_MINIMO_LIQUIDEZ_PREDETERMINADO = Decimal("0")
 
 
 def obtener_perfil(bd: Session, id_usuario: str) -> PerfilFinanciero | None:
@@ -290,7 +291,8 @@ def guardar_perfil(
         dia_quincena_2: Día del mes en que cae la quincena 2. Si se omite, se
             usa el día 30.
         monto_minimo_liquidez: Colchón que desea mantener libre. Si se omite,
-            se conserva el valor anterior; si no existía, se usa $300.000.
+            se conserva el valor anterior; si no existía, queda en 0 (sin
+            reserva).
 
     Returns:
         El perfil persistido.

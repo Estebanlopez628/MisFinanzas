@@ -89,7 +89,8 @@ def _contexto_perfil(
         "quincena_sin_deducciones": "1",
         "dia_quincena_1": str(perfiles.DIA_QUINCENA_1_PREDETERMINADO),
         "dia_quincena_2": str(perfiles.DIA_QUINCENA_2_PREDETERMINADO),
-        "monto_minimo_liquidez": str(perfiles.MONTO_MINIMO_LIQUIDEZ_PREDETERMINADO),
+        # SRS §5: sugerencia visual, sin valor precargado en el onboarding.
+        "monto_minimo_liquidez": "",
     }
 
     if perfil is not None:
@@ -105,8 +106,13 @@ def _contexto_perfil(
                 "quincena_deducciones": str(perfil.quincena_deducciones or 1),
                 "dia_quincena_1": str(dia_1),
                 "dia_quincena_2": str(dia_2),
-                # SRS §5: se muestra exactamente el valor guardado (o el respaldo).
-                "monto_minimo_liquidez": str(perfil.monto_minimo_liquidez),
+                # SRS §5: perfil existente conserva su valor con separadores de
+                # miles, igual que el sueldo; el onboarding lo deja vacío.
+                "monto_minimo_liquidez": (
+                    formatear_cop(perfil.monto_minimo_liquidez, con_simbolo=False)
+                    if perfil.monto_minimo_liquidez > 0
+                    else ""
+                ),
             }
         )
 
@@ -174,7 +180,7 @@ def guardar_perfil(
     quincena_sin_deducciones: Annotated[str, Form()] = "1",
     dia_quincena_1: Annotated[str, Form()] = "",
     dia_quincena_2: Annotated[str, Form()] = "",
-    monto_minimo_liquidez: Annotated[str, Form()] = "300000",
+    monto_minimo_liquidez: Annotated[str, Form()] = "",
 ) -> HTMLResponse | RedirectResponse:
     """Guarda el perfil salarial del usuario.
 

@@ -118,11 +118,12 @@ class PerfilFinanciero(Base):
     # (por ejemplo 5 y 20). Si no existe el día en un mes, se usa su último día.
     dia_quincena_1: Mapped[int | None] = mapped_column(SmallInteger, nullable=True)
     dia_quincena_2: Mapped[int | None] = mapped_column(SmallInteger, nullable=True)
-    # SRS §5: base mínima de liquidez elegida por el usuario en el onboarding.
-    # NUMERIC(12, 2) según la SRS; `server_default` garantiza 300000 también al
-    # insertar desde SQL directo, sin nulos en cuentas previas.
+    # SRS §5 (ajuste del propietario): base mínima elegida en el onboarding.
+    # Si no se escribe nada queda en 0 y **no se reserva colchón**: el Consejero
+    # usa todo el dinero libre. El valor digitado aparece en la dona y se usa
+    # como umbral. NUMERIC(12, 2) según la SRS, sin nulos.
     monto_minimo_liquidez: Mapped[Decimal] = mapped_column(
-        Numeric(12, 2), nullable=False, default=Decimal("300000"), server_default="300000"
+        Numeric(12, 2), nullable=False, default=Decimal("0"), server_default="0"
     )
     auxilio_transporte_habilitado: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     fecha_actualizacion: Mapped[datetime] = mapped_column(

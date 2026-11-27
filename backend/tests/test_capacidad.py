@@ -44,6 +44,23 @@ def _perfil(bd, id_usuario: str):
     return perfil
 
 
+def _con_colchon(bd, id_usuario: str, monto: str = "300000"):
+    """Fija un colchón explícito para preservar escenarios históricos de prueba.
+
+    Args:
+        bd: Sesión de base de datos.
+        id_usuario: Dueño del perfil.
+        monto: Valor a reservar.
+
+    Returns:
+        El perfil con el colchón guardado.
+    """
+    perfil = _perfil(bd, id_usuario)
+    perfil.monto_minimo_liquidez = Decimal(monto)
+    bd.commit()
+    return perfil
+
+
 # ---------------------------------------------------------------------------
 # Reparto del ingreso y semáforo
 # ---------------------------------------------------------------------------
@@ -70,7 +87,7 @@ def test_los_porcentajes_de_la_dona_suman_cien(bd) -> None:
     deudas.crear_deuda(bd, id_usuario, "Banco", "2400000", "800000", 3)
 
     resultado = capacidad.capacidad_endeudamiento(
-        bd, id_usuario, _perfil(bd, id_usuario), HOY.year, HOY.month
+        bd, id_usuario, _con_colchon(bd, id_usuario), HOY.year, HOY.month
     )
 
     total = sum((arco["porcentaje"] for arco in resultado.arcos), start=Decimal("0"))
@@ -101,7 +118,7 @@ def test_las_cifras_de_la_dona_usan_verde_y_rojo(bd) -> None:
     deudas.crear_deuda(bd, id_usuario, "Banco", "2400000", "800000", 3)
 
     resultado = capacidad.capacidad_endeudamiento(
-        bd, id_usuario, _perfil(bd, id_usuario), HOY.year, HOY.month
+        bd, id_usuario, _con_colchon(bd, id_usuario), HOY.year, HOY.month
     )
 
     clases = {arco["etiqueta"]: arco["clase"] for arco in resultado.arcos}

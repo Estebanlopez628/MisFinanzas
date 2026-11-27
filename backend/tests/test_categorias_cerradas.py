@@ -212,8 +212,14 @@ def test_dona_y_consejero_respetan_el_colchon_de_trescientos_mil(bd) -> None:
     """La base mínima se aparta antes de ofrecer el excedente al consejero."""
     id_usuario = _id_admin(bd)
     perfil = perfiles.obtener_perfil(bd, id_usuario)
+    assert perfil is not None
+    # SRS §5: el colchón solo existe si el usuario lo digita.
+    perfil.monto_minimo_liquidez = Decimal("300000")
+    bd.commit()
     resultado = capacidad.capacidad_endeudamiento(bd, id_usuario, perfil, HOY.year, HOY.month)
-    consejo = consejero.consejo_financiero(bd, id_usuario, "Admin", resultado.libre)
+    consejo = consejero.consejo_financiero(
+        bd, id_usuario, "Admin", resultado.libre, umbral=Decimal("300000")
+    )
 
     assert resultado.base_minima == Decimal("300000.00")
     assert resultado.disponible_abono == resultado.libre - Decimal("300000.00")

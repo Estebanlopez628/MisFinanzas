@@ -15,6 +15,7 @@ from app.servicios import (
     consejero,
     deducciones_fijas,
     deudas,
+    perfiles,
     usuarios,
 )
 
@@ -43,7 +44,9 @@ def _id_admin(bd) -> str:
 def test_el_consejero_no_se_activa_sin_excedente_suficiente(bd) -> None:
     """Con 300.000 exactos el consejero queda apagado: el umbral es estricto."""
     id_usuario = _id_admin(bd)
-    resultado = consejero.consejo_financiero(bd, id_usuario, "Ana", Decimal("300000"))
+    resultado = consejero.consejo_financiero(
+        bd, id_usuario, "Ana", Decimal("300000"), umbral=Decimal("300000")
+    )
 
     assert resultado.activo is False
     assert resultado.serie == []
@@ -71,7 +74,9 @@ def test_el_excedente_ataca_la_deuda_que_libera_mas_cuotas(bd) -> None:
     deudas.crear_deuda(bd, id_usuario, "Grande", "1200000", "100000", 12)
     deudas.crear_deuda(bd, id_usuario, "Pequeña", "500000", "100000", 5)
 
-    resultado = consejero.consejo_financiero(bd, id_usuario, "Ana", Decimal("1800000"))
+    resultado = consejero.consejo_financiero(
+        bd, id_usuario, "Ana", Decimal("1800000"), umbral=Decimal("300000")
+    )
 
     assert resultado.modo == consejero.MODO_DEUDA
     assert resultado.estrategia == consejero.ESTRATEGIA_FLUJO
@@ -190,6 +195,10 @@ def test_presupuesto_muestra_el_consejero_cuando_hay_excedente(cliente_admin) ->
 def test_presupuesto_avisa_sin_excedente_suficiente(bd, cliente_admin) -> None:
     """Una deducción fija alta deja el libre en la base mínima y apaga el consejo."""
     id_usuario = _id_admin(bd)
+    perfil = perfiles.obtener_perfil(bd, id_usuario)
+    assert perfil is not None
+    perfil.monto_minimo_liquidez = Decimal("300000")
+    bd.commit()
     deducciones_fijas.crear_deduccion(bd, id_usuario, "Cuota interna", "2800000", 1)
 
     respuesta = cliente_admin.get("/presupuesto")
