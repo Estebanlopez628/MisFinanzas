@@ -2854,6 +2854,22 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v156`. Gate `qa_v4_56.py` **6/6**: separación de 18 px medida entre quincenas y atajos, `clientHeight 325 / scrollHeight 386` en 1280 px, `370 / 439` en 375 px y bordes inferiores iguales en web. Suite completa **1002 pruebas** en verde y 20 gates sin regresiones propias.
 
+### 2026-11-26 — Fondo único con encuadre fijo (ADR-163)
+
+**Decisión (ADR-163).** El propietario reportó que el fondo mostraba un modelo o posición distinta al cambiar de pestaña o módulo. La causa era `background-size: cover` aplicado al `body`, cuyo alto cambia entre vistas: la imagen se recortaba de forma diferente en cada página.
+
+**Consecuencias.** El fondo se pinta ahora en `body:not(.pagina-acceso)::before`, una capa `position: fixed; inset: 0; z-index: -1; pointer-events: none` con el mismo degradado y la misma imagen centrada. El `body` conserva solo `background-color: #050f24`. Así el encuadre depende del viewport y no del contenido de cada módulo. Login y Crear cuenta conservan su tarjeta y ondas originales.
+
+**Verificación.** Playwright 1280 px sobre Inicio, Mis Finanzas, OLB BYTE y Analítica: capa fija, mismas dimensiones y mismo píxel de fondo en los cuatro módulos; sin desbordes. Suite completa en verde. `sw.js` en `olb-finanzas-v197`.
+
+### 2026-11-26 — Línea neón azul en títulos de formularios (ADR-162)
+
+**Decisión (ADR-162).** El propietario pidió una línea inferior fina con degradado neón azul/cian-violeta bajo los títulos de formularios con texto blanco, tomando «Registrar venta» como referencia. El alcance es exclusivamente visual y no toca iconos, textos, etiquetas, validaciones, modales, tablas ni el Login.
+
+**Consecuencias.** Se agrega la clase `.form-header-white` en `estilos.css` (trazo de 2 px, degradado `#0ea5e9 → #00d4ff → #38bdf8 → #6366f1`, desvanecido a la derecha, `box-shadow` cian suave, `padding-bottom: 12px` y `10px` en móvil). Se aplica a 16 títulos principales de formularios en Ventas, Garantías, Cartera, Cobro, Atajos, Deudas, Gastos, Incapacidades, Perfil, Presupuesto, Trabajos Extras y la liquidación de Mis Finanzas. No se aplica a títulos de tablas, listas, subtítulos, modales de edición ni Login.
+
+**Verificación.** Playwright 1280 px y 390 px: `::after` de 2 px con el degradado y la sombra exactos, `padding-bottom` 12/10 px, ancho dentro del panel y sin desbordes; el título de tabla conserva `content: none`. Suite completa **1003 pruebas** en verde. `sw.js` en `olb-finanzas-v196`.
+
 ### 2026-11-26 — Acomodo visual de Crear cuenta (ADR-161)
 
 **Decisión (ADR-161).** El propietario pidió acomodar el menú de «Crear cuenta», que usaba el componente antiguo `.acceso__panel` y se veía apretado frente al Login.

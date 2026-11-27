@@ -2002,3 +2002,8 @@ Línea base v4.44. Ajusta la sección 69. Alcance exclusivo: Mis Finanzas (`/fin
 
 - `registro.html` adopta `.acceso-nuevo` / `.acceso-nuevo__tarjeta` con ondas, `clase_cuerpo = pagina-acceso`, campos uniformes y botón primario a ancho completo. Se conservan los cuatro campos, `action="/registro"`, validaciones y alertas. No se modificó `login.html` ni `auth.py`.
 - Verificado en 1280 px y 390 px; envío real redirigió a `/login?registrado=1` con aviso de éxito. Suite completa en verde. `sw.js` en `olb-finanzas-v195`.
+
+## 97. Fondo único con encuadre fijo (ADR-163)
+
+- La imagen futurista se pinta en `body:not(.pagina-acceso)::before` con `position: fixed; inset: 0; z-index: -1`, el mismo degradado y `center center / cover`. El `body` solo conserva `background-color: #050f24`, de modo que el recorte no depende del alto de cada módulo.
+- Verificado en 1280 px en Inicio, Mis Finanzas, OLB BYTE y Analítica: capa fija idéntica y mismo píxel de fondo; sin desbordes. Suite completa en verde. `sw.js` en `olb-finanzas-v197`.

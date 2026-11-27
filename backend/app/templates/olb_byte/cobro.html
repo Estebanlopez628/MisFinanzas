@@ -34,7 +34,7 @@
 
   <div class="cobro-opciones">
     <section class="panel cobro-opciones__tarjeta">
-      <h2 class="panel__titulo">Registrar Abono / Pago Total</h2>
+      <h2 class="panel__titulo form-header-white">Registrar Abono / Pago Total</h2>
       {% if cobrable %}
         <form class="formulario" method="post" action="{{ url_for('registrar_abono', id_venta=venta.id_venta) }}">
           <input type="hidden" name="desde_cobro" value="1" />

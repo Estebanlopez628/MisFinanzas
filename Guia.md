@@ -257,12 +257,12 @@ Principios que explican el resto del código:
 
 #### `backend/app/static/css/`
 
-- **`estilos.css`** · 7498 líneas — Fondo y superficies
+- **`estilos.css`** · 7544 líneas — Fondo y superficies
 - **`factura-olb.css`** · 764 líneas — SRS v4.44: el retorno de la factura es «Volver a Ventas» en todos los
 
 #### `backend/app/static/js/`
 
-- **`app.js`** · 1579 líneas — Mejoras progresivas globales.
+- **`app.js`** · 1586 líneas — Mejoras progresivas globales.
   - Funciones: `restaurarBotonCopiar`, `confirmarCopia`, `copiar`, `seleccionarManual`, `mostrarErrorModal`, `ocultarErrorModal`, `validarAtajo`, `normalizarEnlaceModal`, `normalizarEnlace`, `sacarDelContexto`, `devolverAlContexto`, `cerrarEdicion`, `limpiarMensajeError`, `elevarSobreDialogo`, `reposicionarModal`, `cerrarConfirmacion`, `pedirConfirmacion`, `mostrarAvisoApp`, `anclaCercana`, `guardarScroll`, `restaurarScroll`, `guardarPosicionVentas`, `restaurarPosicionVentas`, `aplicar`, `cerrarModalAbono`, `abrirModalAbono`, `registrarAbono`, `configurarEliminar`, `cerrar`, `accion`, `cerrar`, `abrir`, `registrar`, `hayModal`, `aplicarEstado`
 - **`ayuda.js`** · 127 líneas — Envío de reportes desde «Ayuda y comentarios» (SRS v2.0, sección 5.3).
   - Funciones: `escapar`, `cargarMisReportes`
@@ -283,7 +283,7 @@ Principios que explican el resto del código:
   - Funciones: `fechasListas`, `reemplazar`, `actualizar`, `programar`
 - **`moneda.js`** · 77 líneas — Formato de los campos de pesos mientras se escriben (SRS v1.9).
   - Funciones: `formatear`, `cuantosDigitos`, `posicionCursor`, `alEscribir`, `iniciar`
-- **`olb_byte.js`** · 628 líneas — Formulario de venta de OLB_BYTE: forma de pago, productos guardados y totales.
+- **`olb_byte.js`** · 640 líneas — Formulario de venta de OLB_BYTE: forma de pago, productos guardados y totales.
   - Funciones: `numero`, `pesos`, `normalizarTelefono`, `leerCampos`, `fijarValorSelect`, `escribirPanel`, `escribirEdicion`, `validarProducto`, `mostrarError`, `actualizarSubtotalPanel`, `hayDatosEnPanel`, `leerFila`, `escribirFila`, `actualizarVacia`, `recalcular`, `agregarFila`, `guardarProducto`, `habilitarPanel`, `sincronizarPago`, `mostrarNotaContactos`, `pegarNumero`, `agregarNumeroMovil`, `manejarBotonNumero`, `sincronizarRotuloNumero`
 - **`perfil.js`** · 138 líneas — Mejora progresiva del perfil financiero (SRS v1.2).
   - Funciones: `alternarSubgrupo`, `conocePorcentajes`, `actualizar`, `leerPorcentaje`, `escribirPorcentaje`
@@ -302,7 +302,7 @@ Principios que explican el resto del código:
 - **`dashboard.html`** · 96 líneas — Plantilla: Panel principal
 - **`login.html`** · 95 líneas — Plantilla: Iniciar sesión
 - **`olvide_contrasena.html`** · 35 líneas — Plantilla: Recuperar contraseña
-- **`registro.html`** · 59 líneas — Plantilla: Crear cuenta
+- **`registro.html`** · 73 líneas — Plantilla: Crear cuenta
 - **`restablecer_contrasena.html`** · 37 líneas — Plantilla: Nueva contraseña
 
 #### `backend/app/templates/admin/`

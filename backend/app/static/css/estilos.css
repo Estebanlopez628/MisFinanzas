@@ -55,14 +55,22 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Fondo de ondas azules futuristas en toda la aplicación, excepto el login.
-   El velo anterior al 62 % y los radiales tapaban la imagen; se reduce a un
-   filtro ligero para que se vea sin perder contraste en tarjetas y textos. */
+/* Fondo único de ondas azules futuristas. Se pinta en una capa fija del
+   tamaño del viewport: así el encuadre no cambia aunque el alto del body varíe
+   entre módulos. El Login conserva su tarjeta y sus ondas originales. */
 body:not(.pagina-acceso) {
+  background-color: #050f24;
+}
+
+body:not(.pagina-acceso)::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
   background:
     linear-gradient(rgba(5, 15, 36, 0.34), rgba(5, 15, 36, 0.34)),
-    url("/estaticos/img/fondo-ondas-futuristas.png") center center / cover no-repeat,
-    #050f24;
+    url("/estaticos/img/fondo-ondas-futuristas.png") center center / cover no-repeat;
 }
 
 /* ------------------------------ Estructura ------------------------------ */
@@ -455,6 +463,47 @@ a.tarjeta:focus-visible {
 .panel__titulo {
   margin: 0 0 6px;
   font-size: 1.05rem;
+}
+
+/* SRS línea neón azul: subrayado decorativo exclusivo de los títulos de
+   formularios con texto blanco. No altera iconos, etiquetas ni contenido. */
+.form-header-white {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #ffffff;
+  padding-bottom: 12px;
+  margin-bottom: 18px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.form-header-white::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    rgba(14, 165, 233, 0.08) 0%,
+    rgba(0, 212, 255, 0.95) 28%,
+    rgba(56, 189, 248, 0.85) 48%,
+    rgba(99, 102, 241, 0.75) 68%,
+    rgba(99, 102, 241, 0.15) 88%,
+    transparent 100%
+  );
+  box-shadow: 0 0 8px rgba(0, 212, 255, 0.35);
+}
+
+/* Ajuste sutil en móvil para evitar desbordes. */
+@media (max-width: 767px) {
+  .form-header-white {
+    padding-bottom: 10px;
+  }
 }
 
 .panel__descripcion {

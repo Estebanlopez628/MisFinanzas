@@ -154,7 +154,7 @@
   {% set forma = pago.forma_pago or 'CONTADO' %}
   {% set anticipo = pago.anticipo or 'NO' %}
   <section class="panel">
-    <h2 class="panel__titulo">Registrar venta</h2>
+    <h2 class="panel__titulo form-header-white">Registrar venta</h2>
 
     <form class="formulario" method="post" action="{{ url_for('registrar_venta') }}" data-venta-form>
       <div class="fila-campos">
