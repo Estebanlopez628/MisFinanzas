@@ -130,22 +130,49 @@ class Capacidad:
     categorias_globales: list[dict[str, object]] = field(default_factory=list)
 
 
-def repartir_libre(libre: Decimal) -> tuple[Decimal, Decimal]:
+def base_minima_de(perfil: PerfilFinanciero | None) -> Decimal:
+    """Devuelve la base mínima de liquidez configurada por el usuario.
+
+    SRS §5: la reserva ya no es una constante global. El valor digitado en el
+    onboarding manda; la constante de $300.000 solo sirve de respaldo para
+    perfiles antiguos o ausentes. Nunca devuelve un número negativo.
+
+    Args:
+        perfil: Perfil financiero del usuario, o `None` si aún no existe.
+
+    Returns:
+        Monto mínimo a reservar, redondeado y no negativo.
+    """
+    if perfil is None:
+        return BASE_MINIMA_LIQUIDEZ
+    valor = getattr(perfil, "monto_minimo_liquidez", None)
+    if valor is None:
+        return BASE_MINIMA_LIQUIDEZ
+    return max(redondear_dinero(Decimal(str(valor))), CERO)
+
+
+def repartir_libre(
+    libre: Decimal, base_minima: Decimal | None = None
+) -> tuple[Decimal, Decimal]:
     """Separa el dinero libre entre la base mínima y el disponible para abonar.
 
-    SRS v1.8: la base mínima de liquidez ($300.000) se reserva completa en cuanto
-    el libre la alcance; si el libre es menor, todo él queda como base y no hay
-    disponible. Un libre negativo no reserva nada.
+    SRS v1.8 y §5: la base mínima de liquidez se reserva completa en cuanto el
+    libre la alcance; si el libre es menor, todo él queda como base y no hay
+    disponible. Un libre negativo no reserva nada. El monto reservado es el que
+    configuró cada usuario (con respaldo de $300.000).
 
     Args:
         libre: Dinero que queda después de gastos y cuotas (puede ser negativo).
+        base_minima: Monto a reservar; si se omite, se usa el respaldo global.
 
     Returns:
         Tupla `(base_minima, disponible_abono)` con ambos montos redondeados.
     """
+    reserva = base_minima if base_minima is not None else BASE_MINIMA_LIQUIDEZ
+    reserva = max(redondear_dinero(Decimal(str(reserva))), CERO)
     positivo = max(redondear_dinero(libre), CERO)
-    base = min(positivo, BASE_MINIMA_LIQUIDEZ)
-    disponible = max(redondear_dinero(positivo - BASE_MINIMA_LIQUIDEZ), CERO)
+    base = min(positivo, reserva)
+    disponible = max(redondear_dinero(positivo - reserva), CERO)
     return redondear_dinero(base), redondear_dinero(disponible)
 
 
@@ -445,6 +472,7 @@ def _repartir_arcos(
     deudas: Decimal,
     libre: Decimal,
     ingreso: Decimal,
+    base_minima: Decimal | None = None,
 ) -> list[dict[str, object]]:
     """Construye los arcos de la dona de capacidad.
 
@@ -452,15 +480,16 @@ def _repartir_arcos(
     proporcional para que la circunferencia cierre y el segmento libre quede en
     cero; así el gráfico no muestra arcos mayores que la vuelta completa.
 
-    SRS v1.8: el dinero libre se parte en «Base mínima de liquidez» (hasta
-    $300.000) y «Disponible para abonar» (el remanente). Si el libre no alcanza
-    la base, solo se dibuja el arco de la base.
+    SRS v1.8 y §5: el dinero libre se parte en «Base mínima de liquidez» (hasta
+    el monto configurado por el usuario) y «Disponible para abonar» (el
+    remanente). Si el libre no alcanza la base, solo se dibuja el arco de la base.
 
     Args:
         gastos: Gastos fijos del mes.
         deudas: Cuota mensual de deudas.
         libre: Dinero restante (puede ser negativo).
         ingreso: Ingreso mensual consolidado.
+        base_minima: Reserva configurada por el usuario (SRS §5).
 
     Returns:
         Lista de diccionarios con etiqueta, valor, porcentaje, longitud,
@@ -470,7 +499,7 @@ def _repartir_arcos(
     if ingreso <= CERO:
         return []
 
-    base, disponible = repartir_libre(libre)
+    base, disponible = repartir_libre(libre, base_minima)
     gastos_positivos = max(gastos, CERO)
     deudas_positivas = max(deudas, CERO)
 
@@ -793,7 +822,9 @@ def capacidad_trabajos(
         porcentaje_libre=_porcentaje(libre, ingreso),
         semaforo=ESTADO_VERDE,
         mensaje="",
-        arcos=_repartir_arcos(gastos, CERO, libre, ingreso),
+        # Extras no reserva colchón: se pasa CERO para que los arcos coincidan
+        # con el reparto del dataclass (SRS v4.4, respetado por SRS §5).
+        arcos=_repartir_arcos(gastos, CERO, libre, ingreso, CERO),
         base_minima=base,
         disponible_abono=disponible,
         categorias=resumen_categorias(totales, ingreso),
@@ -870,7 +901,10 @@ def capacidad_endeudamiento(
     deudas = list(servicio_deudas.listar_deudas(bd, id_usuario))
     libre = redondear_dinero(ingreso - gastos)
     libre_salario = redondear_dinero(libre - libre_extras)
-    base, disponible = repartir_libre(libre)
+    # SRS §5: la reserva la elige cada usuario en su perfil; los perfiles sin
+    # valor conservan los $300.000 históricos mediante `base_minima_de`.
+    reserva = base_minima_de(perfil)
+    base, disponible = repartir_libre(libre, reserva)
 
     # SRS v4.5: las deducciones de crédito también alimentan la categoría 8 del
     # módulo, para que el desglose por origen de la dona global cuadre con los
@@ -929,7 +963,7 @@ def capacidad_endeudamiento(
         porcentaje_libre=_porcentaje(libre, ingreso),
         semaforo=estado,
         mensaje=_mensaje_semaforo(estado, porcentaje_deudas),
-        arcos=_repartir_arcos(gastos, CERO, libre, ingreso),
+        arcos=_repartir_arcos(gastos, CERO, libre, ingreso, reserva),
         por_terminar=deudas_por_terminar(bd, id_usuario),
         # La proyección mantiene constantes los gastos y aplica el calendario de
         # cada deuda: cuando una termina, su cuota deja de pesar en ese mes.

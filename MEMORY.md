@@ -2854,6 +2854,22 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v156`. Gate `qa_v4_56.py` **6/6**: separación de 18 px medida entre quincenas y atajos, `clientHeight 325 / scrollHeight 386` en 1280 px, `370 / 439` en 375 px y bordes inferiores iguales en web. Suite completa **1002 pruebas** en verde y 20 gates sin regresiones propias.
 
+### 2026-11-26 — Base mínima de liquidez personalizable (ADR-171)
+
+**Decisión (ADR-171).** Documento Único Integrado, sección 5 (único alcance solicitado junto con la sección 6). La reserva de liquidez deja de ser la constante global `BASE_MINIMA_LIQUIDEZ = 300000` y pasa a ser un dato del perfil financiero, que es donde ya viven las quincenas. Se agrega `perfiles_financieros.monto_minimo_liquidez NUMERIC(12,2) NOT NULL DEFAULT 300000` con `CHECK (>= 0)`, se documenta en el diccionario §2/§49 y se migra de forma idempotente en SQLite y PostgreSQL.
+
+**Consecuencias.** El onboarding pide «Monto mínimo que deseas mantener libre para imprevistos o gastos del día a día.», con «Digita el valor:» y un `input[type=number] min=0 step=1000 value=300000 required` llamado `monto_minimo_liquidez`. `guardar_perfil()` persiste el valor (o conserva el anterior si no viene), `capacidad.base_minima_de(perfil)` lo lee, `repartir_libre()` lo reserva, `ahorro.diagnostico()` lo expone como `umbral` y `consejo_financiero(..., umbral=...)` lo propaga a sus dos ramas. La plantilla del banner usa `diagnostico.umbral | cop`. Trabajos Extras sigue sin colchón. La constante queda únicamente como respaldo de cuentas sin valor.
+
+**Verificación.** Migración probada sobre una base SQLite con esquema antiguo: la columna se agrega y la fila previa queda en 300000. Nuevas pruebas en `test_srs_liquidez_recuperacion.py` (tipo, backfill, onboarding, cálculos). Suite completa en verde (1012 pruebas). Sin cambios en el fondo, botones de OLB BYTE ni línea neón.
+
+### 2026-11-26 — Recuperación con tokens de un solo uso y Resend (ADR-172)
+
+**Decisión (ADR-172).** Documento Único Integrado, sección 6. Se agrega un flujo **aditivo** de recuperación sin tocar el Login ni el flujo histórico `/olvide-contrasena`: tabla `password_reset_tokens` con SHA-256 del token (nunca el texto en claro), expiración de 20 minutos, marca `used` y `created_at`, con índice en `token_hash` y FK a `usuarios` en cascada.
+
+**Consecuencias.** `POST /auth/forgot-password` invalida tokens previos, genera `secrets.token_urlsafe(32)`, guarda el hash, compone la URL con `FRONTEND_URL` (o `APP_URL`) y envía el correo en segundo plano. `POST /auth/reset-password` valida vigencia y no uso, cambia la clave con el PBKDF2 del proyecto (no se introduce `passlib`/bcrypt: ADR-07 sigue vigente) y marca el token como usado. `GET/POST /reset-password` ofrecen lo mismo en navegador con `reset_password.html`. `RESEND_FROM` se usa solo para Resend; `correo.py` añade HTML y mantiene a Brevo/SendGrid/SMTP como respaldo, sin dependencias nuevas. `EmailStr` se sustituye por `str` para no agregar `email-validator`.
+
+**Verificación.** 10 pruebas nuevas: hash sin texto en claro, invalidación de enlaces anteriores, vencimiento, un solo uso, login con la clave nueva, respuesta neutra, JSON y vista HTML, y uso de `RESEND_FROM`/`FRONTEND_URL`. Suite completa en verde (1012 pruebas), `compileall` y `generar_guia.py --verificar` correctos.
+
 ### 2026-11-26 — Paneles de Trabajos Extras a la misma altura (ADR-170)
 
 **Decisión (ADR-170).** El propietario pidió que, en Trabajos Extras, «Nuevo trabajo» y «Contratos registrados» arranquen a la misma altura; «Contratos registrados» estaba 18 px más abajo.

@@ -3,7 +3,8 @@
 Responsabilidad
 ---------------
 - Decidir si el dinero libre del mes supera la base mínima de liquidez
-  ($300.000) y, solo con el remanente, sugerir abonos o metas.
+  configurada por el usuario ($300.000 como respaldo) y, solo con el remanente,
+  sugerir abonos o metas (SRS §5).
 - En deudas, ordenar por **liberación de flujo de caja**: primero la deuda que
   el excedente pueda cancelar completa y que deje más cuotas por delante (la de
   12 meses antes que la de 5); si ninguna se puede cancelar de una vez, la de
@@ -544,6 +545,7 @@ def _consejo_deuda(
     alias: str,
     etiquetas: list[str],
     referencia: date | None = None,
+    umbral: Decimal | None = None,
 ) -> Consejo:
     """Recomienda a qué deuda dirigir el excedente para liberar la cuota.
 
@@ -553,10 +555,12 @@ def _consejo_deuda(
         alias: Nombre visible para el saludo.
         etiquetas: Rótulos de los doce meses.
         referencia: Mes de partida de la proyección.
+        umbral: Base mínima configurada por el usuario (SRS §5).
 
     Returns:
         El consejo configurado en modo deuda.
     """
+    reserva = umbral if umbral is not None else UMBRAL_ACTIVACION
     # SRS v4.20, sección 3.4: el cierre se calcula solo sobre el subconjunto de
     # deudas recomendadas. Las deudas largas no incluidas en el plan se ignoran.
     orden = _ordenar(estados, excedente)
@@ -680,7 +684,7 @@ def _consejo_deuda(
         activo=True,
         alias=alias,
         excedente=excedente,
-        umbral=UMBRAL_ACTIVACION,
+        umbral=reserva,
         modo=MODO_DEUDA,
         estrategia=ESTRATEGIA_FLUJO,
         titulo=f"Hola, {alias}: esto es lo que haría con tu excedente",
@@ -710,6 +714,7 @@ def _consejo_ahorro(
     excedente: Decimal,
     alias: str,
     etiquetas: list[str],
+    umbral: Decimal | None = None,
 ) -> Consejo:
     """Recomienda dirigir el excedente a las metas de ahorro.
 
@@ -719,10 +724,12 @@ def _consejo_ahorro(
         excedente: Dinero disponible después de la base mínima de liquidez.
         alias: Nombre visible para el saludo.
         etiquetas: Rótulos de los doce meses.
+        umbral: Base mínima configurada por el usuario (SRS §5).
 
     Returns:
         El consejo configurado en modo ahorro.
     """
+    reserva = umbral if umbral is not None else UMBRAL_ACTIVACION
     metas = servicio_ahorro.resumen_metas(bd, id_usuario)
     planeado = redondear_dinero(
         sum(
@@ -812,7 +819,7 @@ def _consejo_ahorro(
             activo=True,
             alias=alias,
             excedente=excedente,
-            umbral=UMBRAL_ACTIVACION,
+            umbral=reserva,
             modo=MODO_AHORRO,
             estrategia=estrategia,
             titulo=f"Hola, {alias}: esto es lo que haría con tu excedente",
@@ -833,6 +840,7 @@ def consejo_financiero(
     alias: str,
     excedente: Decimal | int | str,
     hoy: date | None = None,
+    umbral: Decimal | None = None,
 ) -> Consejo:
     """Genera el consejo financiero del mes.
 
@@ -842,19 +850,22 @@ def consejo_financiero(
         alias: Nombre visible del usuario.
         excedente: Dinero libre del mes (quincenas + trabajos extras − gastos).
         hoy: Mes de partida de la comparación; por defecto, el actual.
+        umbral: Base mínima configurada por el usuario (SRS §5). Si se omite,
+            se usa el respaldo histórico de $300.000.
 
     Returns:
         El `Consejo` activo con su recomendación y su gráfica, o uno inactivo si
         el dinero libre no supera la base mínima de liquidez.
     """
+    reserva = umbral if umbral is not None else UMBRAL_ACTIVACION
     libre = redondear_dinero(Decimal(str(excedente or CERO)))
-    disponible = max(redondear_dinero(libre - UMBRAL_ACTIVACION), CERO)
-    if libre <= UMBRAL_ACTIVACION:
+    disponible = max(redondear_dinero(libre - reserva), CERO)
+    if libre <= reserva:
         return Consejo(
             activo=False,
             alias=alias,
             excedente=CERO,
-            umbral=UMBRAL_ACTIVACION,
+            umbral=reserva,
             titulo=f"Hola, {alias}",
             mensaje=(
                 "Tienes el valor de la base mínima de liquidez. No puedo "
@@ -873,5 +884,5 @@ def consejo_financiero(
     ]
     estados = _estados(servicio_deudas.listar_deudas(bd, id_usuario))
     if estados:
-        return _consejo_deuda(estados, disponible, alias, etiquetas, referencia)
-    return _consejo_ahorro(bd, id_usuario, disponible, alias, etiquetas)
+        return _consejo_deuda(estados, disponible, alias, etiquetas, referencia, reserva)
+    return _consejo_ahorro(bd, id_usuario, disponible, alias, etiquetas, reserva)

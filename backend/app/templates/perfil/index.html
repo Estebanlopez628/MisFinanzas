@@ -73,6 +73,25 @@
           </select>
         </label>
 
+        {# SRS §5: colchón mínimo personalizable desde el primer inicio de sesión. #}
+        <div class="onboarding-liquidez-field">
+          <p class="onboarding-field-title">
+            Monto mínimo que deseas mantener libre para imprevistos o gastos del día a día.
+          </p>
+          <label class="campo" for="monto_minimo_liquidez">
+            <span class="campo__etiqueta onboarding-field-label">Digita el valor:</span>
+            <input id="monto_minimo_liquidez"
+                   class="campo__control"
+                   name="monto_minimo_liquidez"
+                   type="number"
+                   min="0"
+                   step="1000"
+                   value="{{ valores.monto_minimo_liquidez }}"
+                   required />
+            <span class="ayuda">Este monto se reserva antes de calcular tus posibles abonos o metas.</span>
+          </label>
+        </div>
+
         {# ------------------- Configuración de quincenas ------------------- #}
         <p class="ayuda aviso-modalidad" data-aviso-mensual
            {% if valores.modalidad_pago == 'QUINCENAL' %}hidden{% endif %}>

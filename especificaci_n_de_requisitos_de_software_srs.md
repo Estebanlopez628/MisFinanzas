@@ -2027,3 +2027,28 @@ Línea base v4.44. Ajusta la sección 69. Alcance exclusivo: Mis Finanzas (`/fin
 
 - La rejilla de `trabajos/index.html` usa `rejilla-paneles--trabajos` y `.rejilla-paneles--trabajos > .panel--tabla { margin-top: 0; }` anula el margen genérico de `.panel--tabla`, de modo que «Nuevo trabajo» y «Contratos registrados» arrancan alineados en escritorio y comparten altura por `stretch` de la grilla. En móvil siguen apilados. No cambian campos, tablas ni cálculos.
 - Verificado en 1280 px: ambos paneles con `top = 916` y `height = 695`; en 390 px apilados con margen 0 y sin desbordes. Suite completa en verde. `sw.js` en `olb-finanzas-v204`.
+
+---
+
+## 102. Documento Único Integrado — Liquidez personalizable y recuperación con Resend
+
+**Regla suprema.** Alcance exclusivo: secciones 5 y 6 del documento entregado. El fondo, los botones de OLB BYTE, las tarjetas KPI y la línea neón de los títulos ya cumplían lo solicitado (ADR-155, ADR-162, ADR-163, ADR-166) y no se tocan. Login, iconos, cálculos salariales, deudas, modales, tablas, CSV ni scroll se modifican.
+
+### 102.1 Base mínima de liquidez (§5)
+
+1. `perfiles_financieros.monto_minimo_liquidez NUMERIC(12,2) NOT NULL DEFAULT 300000` con `CHECK (>= 0)` (diccionario §2 y §49). Se documenta en el perfil porque allí vive la configuración de quincenas; no se crea la columna en `usuarios`.
+2. Migración idempotente `_migrar_monto_minimo_liquidez()` en SQLite y PostgreSQL, con backfill de 300000 para filas previas.
+3. Onboarding: título «Monto mínimo que deseas mantener libre para imprevistos o gastos del día a día.», etiqueta «Digita el valor:» y campo `type="number" min="0" step="1000" value="300000" required`.
+4. `base_minima_de()`, `repartir_libre(libre, base_minima)`, `diagnostico()["umbral"]` y `consejo_financiero(..., umbral=...)` sustituyen a la constante; Trabajos Extras sigue sin reservar colchón.
+
+### 102.2 Recuperación con tokens (§6)
+
+1. `password_reset_tokens`: `token_hash` SHA-256, `expires_at` (20 min), `used`, `created_at`, FK a `usuarios` en cascada e índice en `token_hash` (diccionario §50).
+2. Variables `RESEND_API_KEY`, `RESEND_FROM` y `FRONTEND_URL`; Resend se llama por HTTPS con la librería estándar, sin `resend`/`passlib`/`email-validator`.
+3. `POST /auth/forgot-password` (mensaje neutral, invalida previos, guarda hash, envía en segundo plano) y `POST /auth/reset-password` (vigencia, no uso, PBKDF2, `used = TRUE`), más `GET/POST /reset-password?token=...`.
+4. El acceso «¿Olvidaste tu contraseña?» ya existía en el Login y se conserva sin cambios.
+
+### 102.3 Verificación y cierre documental
+
+- 10 pruebas nuevas; suite completa **1012 pruebas** en verde, `compileall` y `generar_guia.py --verificar` correctos (117 fichas).
+- Actualizados `AGENTS.md` (ADR-171/172), `MEMORY.md`, `Guia.md`, `diccionario_datos.md`, `constitution.md`, `USER_GUIDE.md` y esta SRS.

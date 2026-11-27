@@ -70,8 +70,8 @@
 
     {% if diagnostico.alerta %}
       <div class="alerta alerta--critica" role="alert">
-        {{ usuario.alias }}, te está quedando menos de $300.000 pesos mensuales;
-        te aconsejo disminuir tus deudas antes de proyectar un nuevo gasto.
+        {{ usuario.alias }}, te está quedando menos de {{ diagnostico.umbral | cop }}
+        mensuales; te aconsejo disminuir tus deudas antes de proyectar un nuevo gasto.
       </div>
     {% endif %}
 

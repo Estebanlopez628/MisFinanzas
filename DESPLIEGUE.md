@@ -282,6 +282,14 @@ cadena `postgresql://` de Neon se convierte sola a `postgresql+psycopg://` en
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Credenciales de Google. |
 | `GOOGLE_REDIRECT_URI` | `https://<tu-servicio>/login/google/callback` |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` | Correo de recuperación. |
+| `RESEND_API_KEY` | Clave `re_...` de Resend (se prueba primero, antes que Brevo/SendGrid/SMTP). |
+| `RESEND_FROM` | Remitente verificado en Resend (por ejemplo `onboarding@resend.dev` en pruebas o tu dominio). Se usa solo para Resend. |
+| `FRONTEND_URL` | URL pública que precede al enlace `/reset-password?token=...`. Si falta, se usa `APP_URL`. |
+
+> Los enlaces de recuperación de un solo uso se guardan como SHA-256 en
+> `password_reset_tokens` y vencen a los 20 minutos. La columna
+> `perfiles_financieros.monto_minimo_liquidez` se agrega sola al arrancar con
+> valor 300000 para las cuentas existentes; no hace falta un script adicional.
 
 ### 11.2 Servicio web en Render
 

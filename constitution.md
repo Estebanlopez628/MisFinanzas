@@ -312,3 +312,8 @@ Principios innegociables. Toda especificación, plan y tarea debe cumplirlos de 
     - «Liquidación del periodo» y «Horas extras y recargos» se presentan como dos paneles con el mismo estilo y separación estable de 18 px, dentro de un único formulario.
     - El fondo de las pantallas autenticadas usa «Ondas azules futuristas luminosas» centrado; los KPIs de analítica y los campos de horas en cero son excepciones sobrias.
     - No se modifican iconos, medidas de campos, márgenes, cálculos ni flujos. La factura y el recibo (PDF e imagen) quedan fuera del ámbito.
+
+66. **Colchón propio y recuperación de un solo uso (Documento Único Integrado §5 y §6):**
+    - La base mínima de liquidez es un dato del perfil (`monto_minimo_liquidez NUMERIC(12,2) NOT NULL DEFAULT 300000`), elegido en el onboarding; la constante de $300.000 solo sirve de respaldo. Dona, diagnóstico, banner y Consejero leen el mismo valor. Los perfiles previos conservan 300000 sin nulos.
+    - La recuperación por olvido dispone además de tokens SHA-256 de un solo uso con vigencia de 20 minutos en `password_reset_tokens`, con `RESEND_FROM` y `FRONTEND_URL`. Los endpoints `/auth/forgot-password` y `/auth/reset-password` son aditivos: no alteran el Login, el flujo histórico ni el hash PBKDF2.
+    - El alcance de este documento se limita a estas dos secciones; el fondo, los botones de OLB BYTE y la línea neón ya aprobados no se modifican.

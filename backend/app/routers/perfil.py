@@ -89,6 +89,7 @@ def _contexto_perfil(
         "quincena_sin_deducciones": "1",
         "dia_quincena_1": str(perfiles.DIA_QUINCENA_1_PREDETERMINADO),
         "dia_quincena_2": str(perfiles.DIA_QUINCENA_2_PREDETERMINADO),
+        "monto_minimo_liquidez": str(perfiles.MONTO_MINIMO_LIQUIDEZ_PREDETERMINADO),
     }
 
     if perfil is not None:
@@ -104,6 +105,8 @@ def _contexto_perfil(
                 "quincena_deducciones": str(perfil.quincena_deducciones or 1),
                 "dia_quincena_1": str(dia_1),
                 "dia_quincena_2": str(dia_2),
+                # SRS §5: se muestra exactamente el valor guardado (o el respaldo).
+                "monto_minimo_liquidez": str(perfil.monto_minimo_liquidez),
             }
         )
 
@@ -171,6 +174,7 @@ def guardar_perfil(
     quincena_sin_deducciones: Annotated[str, Form()] = "1",
     dia_quincena_1: Annotated[str, Form()] = "",
     dia_quincena_2: Annotated[str, Form()] = "",
+    monto_minimo_liquidez: Annotated[str, Form()] = "300000",
 ) -> HTMLResponse | RedirectResponse:
     """Guarda el perfil salarial del usuario.
 
@@ -189,6 +193,7 @@ def guardar_perfil(
         quincena_sin_deducciones: Quincena a la que corresponde ese valor.
         dia_quincena_1: Día del mes en que cae la quincena 1 (modalidad quincenal).
         dia_quincena_2: Día del mes en que cae la quincena 2 (modalidad quincenal).
+        monto_minimo_liquidez: Colchón que desea mantener libre para imprevistos.
 
     Returns:
         Redirección al tablero si se guarda; la vista con errores en caso
@@ -223,10 +228,15 @@ def guardar_perfil(
                 deducciones,
                 dia_quincena_1=dia_quincena_1,
                 dia_quincena_2=dia_quincena_2,
+                monto_minimo_liquidez=monto_minimo_liquidez,
             )
         else:
             perfiles.guardar_perfil(
-                bd, usuario.id_usuario, sueldo_basico, modalidad
+                bd,
+                usuario.id_usuario,
+                sueldo_basico,
+                modalidad,
+                monto_minimo_liquidez=monto_minimo_liquidez,
             )
     except (ValueError, ArithmeticError) as error:
         errores.append(str(error))
@@ -247,6 +257,7 @@ def guardar_perfil(
                 "quincena_sin_deducciones": quincena_sin_deducciones,
                 "dia_quincena_1": dia_quincena_1,
                 "dia_quincena_2": dia_quincena_2,
+                "monto_minimo_liquidez": monto_minimo_liquidez,
             }
         )
         contexto["es_onboarding"] = perfil is None

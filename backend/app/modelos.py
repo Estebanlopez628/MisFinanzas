@@ -25,6 +25,7 @@ from sqlalchemy import (
     Date,
     DateTime,
     ForeignKey,
+    Index,
     Integer,
     Numeric,
     SmallInteger,
@@ -93,6 +94,12 @@ class PerfilFinanciero(Base):
             "dia_quincena_2 IS NULL OR dia_quincena_2 BETWEEN 1 AND 31",
             name="ck_perfil_dia_quincena_2",
         ),
+        # SRS (Documento Único Integrado, §5): colchón mínimo personalizado.
+        # Nunca puede ser negativo; la migración backfillea 300000 a los perfiles
+        # anteriores para que no aparezcan nulos ni se alteren sus cifras.
+        CheckConstraint(
+            "monto_minimo_liquidez >= 0", name="ck_perfil_monto_minimo_liquidez"
+        ),
     )
 
     id_perfil: Mapped[str] = mapped_column(String(32), primary_key=True, default=nuevo_id)
@@ -111,6 +118,12 @@ class PerfilFinanciero(Base):
     # (por ejemplo 5 y 20). Si no existe el día en un mes, se usa su último día.
     dia_quincena_1: Mapped[int | None] = mapped_column(SmallInteger, nullable=True)
     dia_quincena_2: Mapped[int | None] = mapped_column(SmallInteger, nullable=True)
+    # SRS §5: base mínima de liquidez elegida por el usuario en el onboarding.
+    # NUMERIC(12, 2) según la SRS; `server_default` garantiza 300000 también al
+    # insertar desde SQL directo, sin nulos en cuentas previas.
+    monto_minimo_liquidez: Mapped[Decimal] = mapped_column(
+        Numeric(12, 2), nullable=False, default=Decimal("300000"), server_default="300000"
+    )
     auxilio_transporte_habilitado: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     fecha_actualizacion: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
@@ -872,3 +885,31 @@ class FeedbackUsuario(Base):
     # SRS v3.0, punto 7.2: se registra cuándo el administrador resolvió o puso
     # en revisión el reporte; vuelve a nulo si se devuelve a «Pendiente».
     fecha_resolucion: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class TokenRecuperacion(Base):
+    """Token de un solo uso para restablecer la contraseña (SRS §6).
+
+    El token en claro **nunca** se persiste: solo se guarda su SHA-256. Así, una
+    filtración de la base no permite reconstruir enlaces vigentes. Cada nueva
+    solicitud marca como usados los tokens anteriores del usuario, y el enlace
+    deja de servir en cuanto se consuma o venza.
+
+    La clave primaria es `String(32)` con UUID hexadecimal, como el resto del
+    modelo, para que la misma definición funcione en SQLite y PostgreSQL sin
+    depender de `SERIAL`.
+    """
+
+    __tablename__ = "password_reset_tokens"
+    __table_args__ = (Index("idx_reset_token_hash", "token_hash"),)
+
+    id_token: Mapped[str] = mapped_column(String(32), primary_key=True, default=nuevo_id)
+    id_usuario: Mapped[str] = mapped_column(
+        ForeignKey("usuarios.id_usuario", ondelete="CASCADE"), nullable=False, index=True
+    )
+    token_hash: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    used: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default="0")
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )

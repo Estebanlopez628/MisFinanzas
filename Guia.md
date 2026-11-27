@@ -105,8 +105,8 @@ Principios que explican el resto del código:
 
 ### Resumen del inventario
 
-- **115 archivos** documentados: 56 Python, 40 plantillas Jinja2 y 19 recursos estáticos.
-- **71 clases**, **692 funciones** y **43 métodos** de clase.
+- **117 archivos** documentados: 57 Python, 41 plantillas Jinja2 y 19 recursos estáticos.
+- **74 clases**, **710 funciones** y **43 métodos** de clase.
 
 ### Detalle por archivo
 
@@ -121,20 +121,20 @@ Principios que explican el resto del código:
   - Funciones: `_categoria_cerrada`, `_exigir_deuda_si_es_credito`, `validar_formulario`
 - **`main.py`** · 224 líneas — Punto de entrada de la aplicación **Finanzas y OLB_BYTE**.
   - Funciones: `_pide_json`, `_manejar_sesion_requerida`, `_manejar_onboarding`, `_pagina_dato_invalido`, `_manejar_dato_invalido`, `crear_aplicacion`
-- **`modelos.py`** · 875 líneas — Modelos SQLAlchemy derivados de `diccionario_datos.md`.
-  - Clases: `Usuario`, `PerfilFinanciero`, `PeriodoNomina`, `RegistroHorasExtra`, `Incapacidad`, `SaldoIncapacidad`, `Gasto`, `Deuda`, `PagoDeuda`, `AbonoDeuda`, `Chancuco`, `ProyeccionAhorro`, `AbonoProyeccion`, `DeduccionFija`, `Cliente`, `Producto`, `Venta`, `VentaDetalle`, `Abono`, `DevolucionCliente`, `MovimientoProveedor`, `GastoOperativo`, `GarantiaProveedor`, `TrabajoExtra`, `Auditoria`, `FeedbackUsuario`
+- **`modelos.py`** · 916 líneas — Modelos SQLAlchemy derivados de `diccionario_datos.md`.
+  - Clases: `Usuario`, `PerfilFinanciero`, `PeriodoNomina`, `RegistroHorasExtra`, `Incapacidad`, `SaldoIncapacidad`, `Gasto`, `Deuda`, `PagoDeuda`, `AbonoDeuda`, `Chancuco`, `ProyeccionAhorro`, `AbonoProyeccion`, `DeduccionFija`, `Cliente`, `Producto`, `Venta`, `VentaDetalle`, `Abono`, `DevolucionCliente`, `MovimientoProveedor`, `GastoOperativo`, `GarantiaProveedor`, `TrabajoExtra`, `Auditoria`, `FeedbackUsuario`, `TokenRecuperacion`
   - Funciones: `nuevo_id`
 
 #### `backend/app/core/`
 
 - **`__init__.py`** · 11 líneas — Núcleo de la aplicación: parámetros de negocio y utilidades transversales.
-- **`base_datos.py`** · 1017 líneas — Conexión a la base de datos y sesión por petición.
+- **`base_datos.py`** · 1053 líneas — Conexión a la base de datos y sesión por petición.
   - Clases: `Base`
-  - Funciones: `_cargar_archivo_entorno`, `_url_con_driver`, `obtener_bd`, `crear_esquema`, `_renombrar_referencia_a_categoria`, `_reconstruir_comercial_sin_stock`, `_migrar_columnas_trabajos`, `_migrar_columnas_chancucos`, `_migrar_columnas_metas`, `_migrar_dias_quincena_postgres`, `_migrar_columnas_perfil`, `_migrar_columnas_gastos`, `_migrar_chancucos`, `_migrar_columnas_deudas`, `_migrar_proyeccion_quincena`, `_migrar_saldos_incapacidad`, `_migrar_columnas_usuarios`, `_migrar_garantia_detalle`, `_migrar_deduccion_vinculada`, `_migrar_categorias_y_vinculos`, `_migrar_valor_atajo`, `_migrar_feedback_resolucion`, `_migrar_tipo_deuda_inicial`, `_migrar_tipos_hora_2026`, `aplicar_migraciones`, `inicializar_base_datos`
+  - Funciones: `_cargar_archivo_entorno`, `_url_con_driver`, `obtener_bd`, `crear_esquema`, `_renombrar_referencia_a_categoria`, `_reconstruir_comercial_sin_stock`, `_migrar_columnas_trabajos`, `_migrar_columnas_chancucos`, `_migrar_columnas_metas`, `_migrar_dias_quincena_postgres`, `_migrar_columnas_perfil`, `_migrar_columnas_gastos`, `_migrar_chancucos`, `_migrar_columnas_deudas`, `_migrar_proyeccion_quincena`, `_migrar_saldos_incapacidad`, `_migrar_columnas_usuarios`, `_migrar_garantia_detalle`, `_migrar_deduccion_vinculada`, `_migrar_categorias_y_vinculos`, `_migrar_valor_atajo`, `_migrar_feedback_resolucion`, `_migrar_tipo_deuda_inicial`, `_migrar_tipos_hora_2026`, `_migrar_monto_minimo_liquidez`, `aplicar_migraciones`, `inicializar_base_datos`
 - **`categorias.py`** · 240 líneas — Catálogo cerrado de categorías de egresos y colores de la dona.
   - Clases: `Categoria`
   - Funciones: `_clave`, `normalizar_categoria`, `es_categoria_valida`, `color_de_categoria`, `es_credito`, `paleta_es_unica`, `lista_categorias`
-- **`config.py`** · 331 líneas — Parámetros de negocio y configuración de la plataforma.
+- **`config.py`** · 337 líneas — Parámetros de negocio y configuración de la plataforma.
   - Clases: `ParametrosNomina`, `ConfiguracionApp`
   - Funciones: `_decimal_desde_entorno`, `_lista_desde_entorno`, `obtener_parametros`, `obtener_configuracion`
 - **`limitador.py`** · 130 líneas — Limitador de intentos para proteger el inicio de sesión.
@@ -154,8 +154,9 @@ Principios que explican el resto del código:
 - **`__init__.py`** · 11 líneas — Routers de la aplicación.
 - **`admin.py`** · 176 líneas — Administración de cuentas (solo `ADMIN_OLB`).
   - Funciones: `_contexto_admin`, `ver_usuarios`, `cambiar_rol_usuario`, `cambiar_estado_usuario`
-- **`auth.py`** · 595 líneas — Rutas de autenticación: login, registro y cierre de sesión.
-  - Funciones: `_clave_intento`, `_establecer_cookie`, `ver_login`, `procesar_login`, `cerrar_sesion`, `ver_registro`, `procesar_registro`, `ver_olvide_contrasena`, `_login_con_error`, `iniciar_google`, `callback_google`, `_base_publica`, `_pagina_olvide`, `_cuenta_del_enlace`, `_pagina_restablecer`, `procesar_olvide_contrasena`, `ver_restablecer_contrasena`, `procesar_restablecer_contrasena`
+- **`auth.py`** · 797 líneas — Rutas de autenticación: login, registro y cierre de sesión.
+  - Clases: `SolicitudRecuperacion`, `RestablecimientoConToken`
+  - Funciones: `_clave_intento`, `_establecer_cookie`, `ver_login`, `procesar_login`, `cerrar_sesion`, `ver_registro`, `procesar_registro`, `ver_olvide_contrasena`, `_login_con_error`, `iniciar_google`, `callback_google`, `_base_publica`, `_pagina_olvide`, `_cuenta_del_enlace`, `_pagina_restablecer`, `procesar_olvide_contrasena`, `ver_restablecer_contrasena`, `procesar_restablecer_contrasena`, `_url_base_recuperacion`, `forgot_password`, `reset_password_api`, `_pagina_reset`, `ver_reset_password`, `procesar_reset_password`
 - **`ayuda.py`** · 50 líneas — Vista «Ayuda y comentarios» del usuario estándar (SRS v2.0, Fase C).
   - Funciones: `ver_ayuda`
 - **`chancucos.py`** · 250 líneas — Panel de Chancucos: referencias de pago con copiado y botón *Pagar*.
@@ -175,9 +176,9 @@ Principios que explican el resto del código:
 - **`olb_byte.py`** · 1492 líneas — Módulo comercial OLB_BYTE: ventas a crédito, cobros, anulaciones y factura.
   - Clases: `DetalleVenta`
   - Funciones: `_detalle_de_venta`, `_filas_del_formulario`, `_lineas_desde_filas`, `_contexto`, `_contexto_pendientes`, `_pagina_con_error`, `ver_olb_byte`, `_datos_pago`, `_pago_desde_datos`, `registrar_venta`, `registrar_abono`, `_contexto_cobro`, `ver_cobro`, `ver_pendientes`, `ver_recibo`, `anular_venta`, `registrar_devolucion`, `ver_factura_hoja`, `ver_recibo_hoja`, `ver_factura`, `_contexto_cartera`, `ver_cartera`, `registrar_abono_proveedor`, `registrar_deuda_inicial`, `registrar_gasto_operativo`, `editar_gasto_operativo`, `eliminar_gasto_operativo`, `_pagina_error_pdf`, `_entero_opcional`, `_filtro_desde_url`, `_parametros_filtro`, `_url_analitica`, `ver_analitica`, `exportar_analitica_csv`, `_contexto_garantias`, `ver_garantias`, `registrar_garantia`, `actualizar_garantia`
-- **`perfil.py`** · 310 líneas — Rutas del perfil financiero y del cambio de contraseña.
+- **`perfil.py`** · 321 líneas — Rutas del perfil financiero y del cambio de contraseña.
   - Funciones: `_formatear_porcentaje`, `_contexto_perfil`, `ver_perfil`, `guardar_perfil`, `cambiar_contrasena`
-- **`presupuesto.py`** · 468 líneas — Rutas del planificador de ahorro y metas (SRS v1.3, bloque 3).
+- **`presupuesto.py`** · 469 líneas — Rutas del planificador de ahorro y metas (SRS v1.3, bloque 3).
   - Funciones: `_fecha_del_formulario`, `_meses_del_formulario`, `_contexto`, `ver_presupuesto`, `crear_proyeccion`, `eliminar_proyeccion`, `extender_meta`, `crear_deduccion_fija`, `editar_deduccion_fija`, `eliminar_deduccion_fija`
 - **`pwa.py`** · 56 líneas — Recursos PWA: manifiesto, service worker y favicon.
   - Funciones: `manifiesto`, `service_worker`, `favicon`
@@ -192,7 +193,7 @@ Principios que explican el resto del código:
 - **`acceso_google.py`** · 123 líneas — Inicio de sesión con Google (cuenta de Gmail) mediante OAuth 2.0 (ADR-48).
   - Clases: `AccesoGoogleError`
   - Funciones: `google_activo`, `url_autorizacion`, `_leer_json`, `intercambiar_codigo`
-- **`ahorro.py`** · 863 líneas — Planificador de ahorro y metas del usuario (SRS v1.3, bloque 3).
+- **`ahorro.py`** · 868 líneas — Planificador de ahorro y metas del usuario (SRS v1.3, bloque 3).
   - Clases: `MesMeta`, `MetaResumen`
   - Funciones: `etiqueta_quincena`, `valor_por_pago`, `_normalizar_modo_ambas`, `valor_mensual_efectivo`, `_mover_mes`, `_etiqueta_mes`, `_validar_duracion`, `crear_proyeccion`, `listar_proyecciones`, `_posicion`, `eliminar_proyeccion`, `extender_proyeccion`, `historial_metas`, `_detalle_pagos`, `meses_de_la_meta`, `_estado_mes`, `resumen_metas`, `saldo_libre_total`, `diagnostico`
 - **`analitica.py`** · 910 líneas — Analítica de OLB_BYTE: reportes, clientes VIP, costos y tablas exportables.
@@ -203,19 +204,19 @@ Principios que explican el resto del código:
 - **`auxilio.py`** · 146 líneas — Evaluación del derecho al auxilio de transporte (SRS RF-07).
   - Clases: `EvaluacionAuxilio`
   - Funciones: `evaluar_auxilio_transporte`, `evaluar_auxilio_salarial`
-- **`capacidad.py`** · 949 líneas — Capacidad de endeudamiento y proyección a doce meses (SRS v1.7, bloque F).
+- **`capacidad.py`** · 983 líneas — Capacidad de endeudamiento y proyección a doce meses (SRS v1.7, bloque F).
   - Clases: `Capacidad`
-  - Funciones: `repartir_libre`, `es_credito`, `_porcentaje`, `agrupar_por_categoria`, `resumen_categorias`, `_arcos_categoria`, `_arcos_categoria_global`, `_repartir_arcos`, `_meses_equivalentes`, `_etiqueta_mes`, `_mover_mes`, `meses_siguientes`, `deudas_por_terminar`, `proyeccion_capacidad`, `_mensaje_semaforo`, `capacidad_trabajos`, `capacidad_endeudamiento`
+  - Funciones: `base_minima_de`, `repartir_libre`, `es_credito`, `_porcentaje`, `agrupar_por_categoria`, `resumen_categorias`, `_arcos_categoria`, `_arcos_categoria_global`, `_repartir_arcos`, `_meses_equivalentes`, `_etiqueta_mes`, `_mover_mes`, `meses_siguientes`, `deudas_por_terminar`, `proyeccion_capacidad`, `_mensaje_semaforo`, `capacidad_trabajos`, `capacidad_endeudamiento`
 - **`chancucos.py`** · 321 líneas — Referencias de pago rápido ("Chancucos").
   - Funciones: `_normalizar_dia`, `_normalizar_dias`, `normalizar_enlace_pago`, `_validar_url`, `crear_chancuco`, `actualizar_chancuco`, `listar_chancucos`, `alternar_favorito`, `eliminar_chancuco`
 - **`comercial.py`** · 1893 líneas — Operación comercial de OLB_BYTE: ventas a crédito, cartera y deuda con proveedor.
   - Clases: `LineaVenta`, `PagoInicial`
   - Funciones: `etiqueta_tipo_movimiento`, `ahora_tienda`, `normalizar_telefono`, `_dinero`, `_sumar_meses`, `_texto_garantia`, `_validar_linea`, `_cliente_para_venta`, `_siguiente_numero_orden`, `deuda_proveedor`, `desglose_deuda_proveedor`, `_registrar_movimiento_proveedor`, `registrar_cliente`, `listar_clientes`, `buscar_clientes`, `registrar_venta`, `obtener_venta`, `_venta_activa`, `_recalcular_estado_pago`, `_validar_metodo`, `registrar_abono`, `_devuelto`, `_registrar_devolucion`, `anular_venta`, `registrar_devolucion`, `pendiente_devolver`, `obtener_abono`, `abonos_de_venta`, `buscar_cartera`, `registrar_abono_proveedor`, `registrar_deuda_inicial`, `listar_movimientos_proveedor`, `listar_movimientos_con_orden`, `_fecha_gasto`, `registrar_gasto_operativo`, `actualizar_gasto_operativo`, `eliminar_gasto_operativo`, `listar_gastos_operativos`, `total_gastos_operativos`, `_texto_busqueda`, `filtrar_ventas`, `listar_ventas`, `cartera`, `resumen_cartera`, `estado_garantia`, `clasificar_saldo`, `_barra_divergente`, `balance_tres_bloques`, `barras_balance`, `segmentos_dona`, `etiqueta_producto`, `opciones_garantia`, `registrar_garantia`, `actualizar_estado_garantia`, `listar_garantias`, `garantia_vigente_al_reclamo`, `ranking_fallas`, `formatear_pesos`, `texto_compartir_factura`, `enlace_whatsapp_factura`, `enlace_whatsapp_recibo`, `enlace_whatsapp_cobro`, `_enlace_wa`
-- **`consejero.py`** · 878 líneas — Consejero financiero del excedente mensual (SRS v1.8).
+- **`consejero.py`** · 889 líneas — Consejero financiero del excedente mensual (SRS v1.8).
   - Clases: `Consejo`, `_EstadoDeuda`
   - Funciones: `_cuotas_mensuales`, `_estados`, `_ordenar`, `_simular`, `_altura`, `_serie_comparada`, `_fecha_cierre`, `_fecha_cierre_corta`, `_palabra_plazo`, `_datos_cierre`, `_consejo_deuda`, `_consejo_ahorro`, `consejo_financiero`
-- **`correo.py`** · 261 líneas — Envío de correos del sistema: APIs transaccionales HTTPS o SMTP (SRS v3.1).
-  - Funciones: `_destinatario`, `_enviar_por_api`, `enviar_correo`, `configuracion_valida`, `enviar_recuperacion`
+- **`correo.py`** · 323 líneas — Envío de correos del sistema: APIs transaccionales HTTPS o SMTP (SRS v3.1).
+  - Funciones: `_destinatario`, `_enviar_por_api`, `enviar_correo`, `configuracion_valida`, `enviar_recuperacion`, `enviar_recuperacion_token`
 - **`deducciones_fijas.py`** · 335 líneas — Deducciones fijas del salario (SRS v1.4, REQ-08; vinculación SRS v1.9).
   - Funciones: `_validar`, `_deuda_vinculable`, `crear_deduccion`, `actualizar_deduccion`, `eliminar_deduccion`, `listar_deducciones`, `listar_vigentes`, `sin_vinculo`, `total_creditos_sin_vinculo`, `vinculadas_activas`, `cuota_de_vinculadas`, `total_por_quincena`
 - **`deudas.py`** · 948 líneas — Pasivos del usuario y amortización automática ("Registro y Detalles de deudas").
@@ -235,7 +236,7 @@ Principios que explican el resto del código:
   - Funciones: `_obtener_parametros`, `_validar_no_negativo`, `calcular_valor_hora_ordinaria`, `calcular_deducciones_ley`, `calcular_recargo`, `calcular_recargos`, `calcular_total_devengado`, `liquidar_periodo`
 - **`pagos_metas.py`** · 713 líneas — Metas de ahorro convertidas en gastos fijos con check de pago (SRS v1.6).
   - Funciones: `_posicion`, `_desde_posicion`, `_rango_del_mes`, `_gastos_de_meta_en_mes`, `_quincenas_de_la_meta`, `_meses_a_generar`, `_valor_vigente`, `asegurar_gastos_de_metas`, `sincronizar_abono`, `sincronizar_gasto`, `propagar_valor`, `marcar_pagado`, `desmarcar_pagado`, `registrar_abono_manual`, `registrar_abono_meta`, `limpiar_checks`, `inhabilitar_gasto`, `omitir_pago`, `habilitar_gasto`, `quitar_gasto`
-- **`perfiles.py`** · 392 líneas — Perfil financiero del usuario (onboarding).
+- **`perfiles.py`** · 416 líneas — Perfil financiero del usuario (onboarding).
   - Funciones: `obtener_perfil`, `perfil_configurado`, `_validar_porcentaje`, `parsear_dia_quincena`, `validar_dias_quincena`, `dias_quincena`, `etiquetas_quincena`, `validar_quincenas`, `calcular_quincenas_desde_neto`, `guardar_perfil`, `porcentajes_quincena`, `sueldo_del_periodo`
 - **`periodos.py`** · 191 líneas — Persistencia y consulta de periodos de nómina.
   - Funciones: `obtener_periodo`, `listar_periodos`, `horas_del_periodo`, `guardar_liquidacion`, `eliminar_periodo`
@@ -246,6 +247,8 @@ Principios que explican el resto del código:
   - Funciones: `nombre_archivo_recibo`, `texto_compartir_recibo`, `datos_recibo`
 - **`registro_incapacidades.py`** · 201 líneas — Persistencia de incapacidades y consulta de sus tramos mensuales.
   - Funciones: `registrar_incapacidad`, `tramos_del_mes`, `descuento_del_mes`, `listar_incapacidades`, `eliminar_incapacidad`
+- **`tokens_recuperacion.py`** · 199 líneas — Tokens de recuperación de contraseña de un solo uso (SRS §6).
+  - Funciones: `agora_utc`, `hash_token`, `generar_token`, `invalidar_previos`, `crear_registro`, `solicitar_token`, `_no_vencido`, `buscar_valido`, `restablecer`
 - **`trabajos.py`** · 1008 líneas — Ingresos independientes ("Trabajos Extras").
   - Funciones: `_posicion`, `_desde_posicion`, `_rango_del_mes`, `_fecha_con_dia`, `_normalizar_contrato`, `_normalizar_frecuencia`, `_normalizar_quincena`, `_monto_opcional`, `_porcentaje_opcional`, `reparto_por_porcentajes`, `reparto_quincenal`, `porcentaje_del_total`, `valor_del_pago`, `crear_trabajo`, `listar_trabajos`, `cambiar_estado`, `eliminar_trabajo`, `gastos_fijos_trabajo`, `crear_gasto_trabajo`, `_pagos_del_mes`, `_meses_a_generar`, `_crear_pagos_del_mes`, `asegurar_pagos_trabajos`, `_periodos_del_trabajo`, `pagos_del_mes`, `libre_neto_mes`, `extras_cobrados_mes`, `resumen_trabajos`, `reparar_pagos_duplicados`
 - **`usuarios.py`** · 359 líneas — Repositorio de usuarios sobre SQLAlchemy (Fase 2).
@@ -257,7 +260,7 @@ Principios que explican el resto del código:
 
 #### `backend/app/static/css/`
 
-- **`estilos.css`** · 7591 líneas — Fondo y superficies
+- **`estilos.css`** · 7598 líneas — Fondo y superficies
 - **`factura-olb.css`** · 764 líneas — SRS v4.44: el retorno de la factura es «Volver a Ventas» en todos los
 
 #### `backend/app/static/js/`
@@ -303,6 +306,7 @@ Principios que explican el resto del código:
 - **`login.html`** · 95 líneas — Plantilla: Iniciar sesión
 - **`olvide_contrasena.html`** · 35 líneas — Plantilla: Recuperar contraseña
 - **`registro.html`** · 68 líneas — Plantilla: Crear cuenta
+- **`reset_password.html`** · 38 líneas — Plantilla: Nueva contraseña
 - **`restablecer_contrasena.html`** · 37 líneas — Plantilla: Nueva contraseña
 
 #### `backend/app/templates/admin/`
@@ -366,7 +370,7 @@ Principios que explican el resto del código:
 
 #### `backend/app/templates/perfil/`
 
-- **`index.html`** · 265 líneas — Saludo de onboarding: usa el alias capturado en el registro (SRS v1.2).
+- **`index.html`** · 284 líneas — Saludo de onboarding: usa el alias capturado en el registro (SRS v1.2).
 
 #### `backend/app/templates/presupuesto/`
 
@@ -585,13 +589,22 @@ enlace (`_cuenta_del_enlace`), exigen 8 caracteres y coincidencia, cambian la co
 y redirigen a `/login?restablecida=1` con auditoría `CONTRASENA_RESTABLECIDA`. Los enlaces
 usan `APP_URL` si está configurada.
 
+SRS §6 (flujo aditivo, sin tocar el Login ni el flujo anterior):
+`POST /auth/forgot-password` crea un token de un solo uso de 20 minutos y envía
+el correo en `BackgroundTasks`; `POST /auth/reset-password` lo valida y cambia la
+clave con PBKDF2. La URL del enlace se toma de `FRONTEND_URL`, o de `APP_URL`, o
+de la petición. `GET/POST /reset-password` ofrecen la misma operación desde el
+navegador con la plantilla `reset_password.html`.
+
 ### `backend/app/routers/perfil.py`
 
 Onboarding y mantenimiento del perfil financiero. `ver_perfil` muestra el
 formulario (con modo bienvenida); `guardar_perfil` valida sueldo, modalidad y
 quincenas —caso A: porcentajes Q1/Q2 y quincena de deducciones; caso B: neto sin
 deducciones y porcentajes por descarte— y redirige a `/?guardado=1`.
-`cambiar_contrasena` exige la actual y audita el cambio.
+`cambiar_contrasena` exige la actual y audita el cambio. SRS §5: el formulario
+incluye `monto_minimo_liquidez`, que se conserva en los errores de validación y
+se envía al servicio tanto en modalidad mensual como quincenal.
 
 ### `backend/app/routers/admin.py`
 
@@ -747,7 +760,10 @@ usuario solo conoce el neto de una quincena; `guardar_perfil` hace upsert;
 liquidación y las quincenas. SRS v1.9: `parsear_dia_quincena` acepta solo dígitos
 de 1 a 31; `validar_dias_quincena` exige que la quincena 2 sea posterior a la 1;
 `dias_quincena` devuelve 15 y 30 cuando no hay dato, y `etiquetas_quincena`
-arma los rótulos «Quincena N · día X» que usan los formularios.
+arma los rótulos «Quincena N · día X» que usan los formularios. SRS §5:
+`guardar_perfil` persiste `monto_minimo_liquidez` (NUMERIC(12,2), no negativo);
+si el formulario no lo envía conserva el valor anterior y solo usa $300.000 como
+respaldo cuando el perfil no tenía ninguno.
 
 ### `backend/app/servicios/quincenas.py`
 
@@ -798,8 +814,10 @@ mitad de la cuota. SRS v1.7: `valor_por_pago` respeta `modo_ambas` (`DIVIDIR` o
 SRS v1.6: el abono ya no se digita; `resumen_metas` lo lee de
 los pagos y clasifica cada mes (`MesMeta.estado`: `registrado`, `no_pagado` o
 `pendiente`) con `_estado_mes`. `saldo_libre_total` y `diagnostico` disparan la
-alerta de liquidez (`UMBRAL_ALERTA = 300000`) y devuelven `metas_mes` para el
-banner.
+alerta de liquidez (`UMBRAL_ALERTA` es el respaldo de $300.000) y devuelven
+`metas_mes` para el banner. SRS §5: `diagnostico` obtiene el umbral real con
+`servicio_capacidad.base_minima_de(perfil)` y lo expone en `umbral`, de modo que
+la alerta, la plantilla y el Consejero usen la misma cifra elegida por el usuario.
 
 ### `backend/app/servicios/pagos_metas.py`
 
@@ -831,8 +849,9 @@ cartera.
 Capacidad de endeudamiento y proyección a doce meses (SRS v1.7, bloque F; base
 mínima en v1.8). `capacidad_endeudamiento` suma el ingreso de las quincenas y los
 extras cobrados, resta gastos fijos, deducciones y cuota mensual de deudas;
-`repartir_libre` separa el libre en `BASE_MINIMA_LIQUIDEZ` ($300.000) y el
-disponible para abonar. `_repartir_arcos` dibuja cuatro arcos («Gastos fijos»,
+`repartir_libre` separa el libre en la base mínima configurada y el disponible
+para abonar; `base_minima_de(perfil)` lee `perfil.monto_minimo_liquidez` y usa
+$300.000 solo si el perfil no tiene valor (SRS §5). `_repartir_arcos` dibuja cuatro arcos («Gastos fijos»,
 «Cuota de deudas», «Base mínima de liquidez», «Disponible para abonar») que
 siempre cierran en 100,0 %. El semáforo usa el porcentaje de deuda sobre el
 ingreso (`UMBRAL_VERDE = 20`, `UMBRAL_AMBAR = 35`). `deudas_por_terminar` lista
@@ -845,7 +864,9 @@ hardcodeadas, de modo que dentro de cada dona no se repite ningún HEX.
 ### `backend/app/servicios/consejero.py`
 
 Consejero del excedente (SRS v1.8, ADR-53). Solo se activa si el libre supera
-`BASE_MINIMA_LIQUIDEZ = 300000`; trabaja con el remanente. Con deudas simula doce
+la base mínima del perfil (`umbral`, con respaldo de $300.000); trabaja con el
+remanente. SRS §5: `consejo_financiero` acepta `umbral` y lo propaga a
+`_consejo_deuda` y `_consejo_ahorro` para que cifras y texto coincidan. Con deudas simula doce
 meses de cuotas mínimas frente a un escenario que aplica todo el excedente y
 ordena por liberación de flujo de caja (`_ordenar`): primero la deuda que el
 excedente cancela completa con más cuotas por delante; si no alcanza, la de menor
@@ -1087,7 +1108,21 @@ producción solo registra el fallo, sin contenido ni enlaces. SRS v3.0: timeout 
 `_enviar_por_api` prioriza Resend → Brevo → SendGrid por HTTPS con `urllib.request`
 (sin dependencias nuevas) y registra el código HTTP exacto; si no hay API, usa
 SMTP SSL en 465 con timeout de 15 s (Gmail con contraseña de aplicación) o
-STARTTLS en el puerto configurado.
+STARTTLS en el puerto configurado. SRS §6: `RESEND_FROM` sustituye al remitente
+histórico solo cuando se envía por Resend; `_enviar_por_api` añade el HTML cuando
+se entrega y `enviar_recuperacion_token()` despacha el enlace de 20 minutos del
+flujo `/auth/forgot-password`. No se agregó el paquete `resend`: se usa la misma
+llamada HTTPS stdlib de siempre.
+
+### `backend/app/servicios/tokens_recuperacion.py`
+
+Tokens de un solo uso de la SRS §6. El token en claro solo vive en el correo: en
+`password_reset_tokens` se guarda su SHA-256 (`hash_token`), la expiración de
+20 minutos y la marca `used`. `solicitar_token()` valida la cuenta activa e
+invalida los enlaces anteriores; `buscar_valido()` normaliza fechas conscientes y
+naivas para que el vencimiento funcione igual en SQLite y PostgreSQL;
+`restablecer()` delega el hash de la contraseña a `servicios.usuarios` (PBKDF2)
+y consume el enlace. Sin dependencias nuevas.
 
 ### `backend/app/static/js/factura.js`
 
@@ -1145,6 +1180,13 @@ neutro tras enviarlo, y un enlace de regreso al login.
 
 Formulario de nueva contraseña (contraseña y repetición, mínimo 8 caracteres). Si el enlace
 no es válido o venció, muestra el aviso y el enlace para pedir uno nuevo.
+
+### `backend/app/templates/reset_password.html`
+
+Vista del enlace `/reset-password?token=...` generado por `/auth/forgot-password`
+(SRS §6). Solicita y confirma la nueva contraseña, avisa de que el enlace es de un
+solo uso y publica a `procesar_reset_password`; con un token inválido muestra el
+aviso y la opción de pedir uno nuevo. No toca el Login.
 
 ### `backend/app/servicios/analitica.py`
 
@@ -1309,7 +1351,10 @@ Formulario del perfil financiero: alias, sueldo, modalidad y bloque quincenal.
 En modalidad `MENSUAL` el bloque se oculta con aviso; en `QUINCENAL` pide caso A
 (porcentajes + quincena de deducciones) o caso B (neto sin deducciones). Los
 porcentajes se escriben y se muestran con «%» y coma decimal. Incluye cambio de
-contraseña y, para el administrador, acceso a Usuarios.
+contraseña y, para el administrador, acceso a Usuarios. SRS §5: junto a la
+configuración de quincenas se pide «Monto mínimo que deseas mantener libre para
+imprevistos o gastos del día a día.», con la etiqueta «Digita el valor:» y el
+campo numérico `monto_minimo_liquidez` (mínimo 0, sugerencia 300000).
 
 ### `backend/app/templates/finanzas/index.html`
 

@@ -113,12 +113,14 @@ Plataforma web/móvil híbrida (PWA) con backend y frontend **100% Python**, arq
         │   ├── consejero.py            # Liberación de flujo de caja y metas (v1.8)
         │   ├── comercial.py            # Inventario, ventas y cartera
         │   ├── auditoria.py
-        │   └── usuarios.py             # Repositorio de usuarios sobre BD
+        │   ├── usuarios.py             # Repositorio de usuarios sobre BD
+        │   └── tokens_recuperacion.py  # Tokens SHA-256 de un solo uso (SRS §6)
         ├── templates/                  # Vistas Jinja2
         │   ├── base.html
         │   ├── _categorias.html       # Selector cerrado + vinculación condicional
         │   ├── login.html
         │   ├── registro.html
+        │   ├── reset_password.html     # Vista del enlace /reset-password?token=...
         │   ├── dashboard.html
         │   ├── perfil/index.html
         │   ├── admin/usuarios.html
@@ -615,6 +617,8 @@ La configuración vive en `.vscode/launch.json`. También existe **Pruebas (pyte
 90. **Gesto táctil sin salto en Deudas (ADR-168):** se conservan ambos ejes; se añade `-webkit-overflow-scrolling: touch` y una guarda en `deudas.js` que cancela el gesto solo en el tope vertical con movimiento vertical dominante. La cabecera opaca, `contain: paint`, el modal y los cálculos no cambian.
 91. **Separación en Pagos de Trabajos Extras (ADR-169):** `.panel--resultado + .bloque-tabla-pagos` lleva `margin-top: 16px`, para que «Pago mensual/quincenal» y su valor no toquen el borde de «Resultado del periodo». No cambia el contenido ni los cálculos.
 92. **Paneles de Trabajos Extras a la misma altura (ADR-170):** `rejilla-paneles--trabajos` anula el `margin-top` genérico de `.panel--tabla`, de modo que «Nuevo trabajo» y «Contratos registrados» arrancan alineados en escritorio. Móvil y contenido intactos.
+93. **Liquidez personalizable (ADR-171):** la base mínima se lee de `perfiles_financieros.monto_minimo_liquidez` (`NUMERIC(12,2) NOT NULL DEFAULT 300000`); la constante `$300.000` queda solo como respaldo. Dona, diagnóstico, banner y Consejero comparten el mismo `umbral`. Trabajos Extras no reserva colchón. Cuentas previas conservan 300000 sin nulos.
+94. **Recuperación con tokens (ADR-172):** `password_reset_tokens` guarda solo SHA-256, con vigencia de 20 minutos y un solo uso. `POST /auth/forgot-password` y `POST /auth/reset-password` son aditivos: no se modifica el Login, ni `/olvide-contrasena`/`/restablecer-contrasena`, ni el hash PBKDF2. `RESEND_FROM` y `FRONTEND_URL` se leen del entorno; sin paquetes nuevos.
 
 - [x] **Crear cuenta acomodada (ADR-161):** verificado en 1280 px y 390 px con ondas, campos uniformes y registro funcional (`/login?registrado=1`); sin desbordes. 1003 pruebas en verde, `sw.js` en `olb-finanzas-v195`, documentación sincronizada.
 - [x] **Línea neón en títulos de formularios (ADR-162):** 16 títulos de formularios en 12 plantillas con `.form-header-white`; Playwright 1280/390 px sin desbordes y con el degradado exacto. 1003 pruebas en verde, `sw.js` en `olb-finanzas-v196`, documentación sincronizada.
@@ -625,3 +629,5 @@ La configuración vive en `.vscode/launch.json`. También existe **Pruebas (pyte
 - [x] **Gesto táctil sin salto en Deudas (ADR-168):** verificado en 390 px con 12 filas: la guarda cancela el gesto solo en los topes verticales, ambos ejes siguen funcionando, cabecera opaca y modal centrado. 1003 pruebas en verde, `sw.js` en `olb-finanzas-v203`, documentación sincronizada.
 - [x] **Separación en Pagos de Trabajos Extras (ADR-169):** verificado en 1280/390 px con 16 px exactos entre «Resultado del periodo» y «Pago mensual/quincenal». 1003 pruebas en verde, documentación sincronizada.
 - [x] **Paneles de Trabajos Extras a la misma altura (ADR-170):** verificado en 1280 px con ambos paneles en `top = 916` y altura 695; 390 px apilado sin desbordes. 1003 pruebas en verde, `sw.js` en `olb-finanzas-v204`, documentación sincronizada.
+- [x] **Base mínima de liquidez personalizable (ADR-171):** columna `NUMERIC(12,2) NOT NULL DEFAULT 300000` migrada en SQLite y PostgreSQL, backfill verificado sobre base antigua, campo en el onboarding y cálculo unificado en dona/diagnóstico/Consejero. **1012 pruebas** en verde.
+- [x] **Recuperación con tokens de un solo uso y Resend (ADR-172):** tabla `password_reset_tokens`, endpoints `/auth/forgot-password` y `/auth/reset-password`, vista `/reset-password?token=...`, `RESEND_FROM` y `FRONTEND_URL`. **1012 pruebas**, `compileall` y `generar_guia.py --verificar` en verde. Sin tocar Login, fondo, botones de OLB BYTE ni línea neón.

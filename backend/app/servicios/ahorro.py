@@ -59,8 +59,9 @@ MODO_DUPLICAR = "DUPLICAR"
 MODOS_AMBAS = (MODO_DIVIDIR, MODO_DUPLICAR)
 # Ventana de comparación para los gastos fijos indefinidos, que no tienen final.
 MESES_VENTANA_FIJA = 12
-# SRS v1.8: la alerta de liquidez comparte la base mínima del consejero, de modo
-# que ambos módulos hablan del mismo monto.
+# SRS v1.8 y §5: la alerta de liquidez comparte la base mínima del consejero.
+# La constante sigue siendo el respaldo para perfiles sin valor guardado; el
+# umbral real se lee del perfil en `diagnostico()`.
 UMBRAL_ALERTA = servicio_capacidad.BASE_MINIMA_LIQUIDEZ
 # SRS v1.6: estado con el que queda archivada una meta en el historial.
 ESTADO_CUMPLIDA = "CUMPLIDA"
@@ -823,7 +824,8 @@ def diagnostico(
         Presupuestos (la cuota vinculada ya se descontó en las quincenas);
         `extras_mes` es el saldo **neto** de Trabajos Extras (SRS v4.4).
         `disponible` es el «Total libre consolidado» que consume el Consejero.
-        `alerta` indica que el disponible quedó por debajo de $300.000.
+        `alerta` indica que el disponible quedó por debajo de la base mínima
+        configurada por el usuario (o $300.000 si el perfil es antiguo).
         `metas_mes` es informativo: ya está restado en el saldo porque cada meta
         vive como gasto fijo (SRS v1.6).
     """
@@ -851,12 +853,15 @@ def diagnostico(
     metas_mes = redondear_dinero(
         sum((valor_computable(gasto) for gasto in gastos_meta), start=CERO)
     )
+    # SRS §5: el colchón lo elige cada usuario. Se expone en `umbral` para que
+    # la plantilla y el Consejero usen exactamente la misma cifra.
+    umbral = servicio_capacidad.base_minima_de(perfil)
     return {
         "saldo_libre": saldo,
         "cuota_deudas": cuota_deudas,
         "extras_mes": extras,
         "disponible": disponible,
-        "alerta": disponible < UMBRAL_ALERTA,
-        "umbral": UMBRAL_ALERTA,
+        "alerta": disponible < umbral,
+        "umbral": umbral,
         "metas_mes": metas_mes,
     }

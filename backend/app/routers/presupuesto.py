@@ -113,6 +113,7 @@ def _contexto(
                 usuario.id_usuario,
                 usuario.alias,
                 diagnostico["disponible"],
+                umbral=diagnostico["umbral"],
             ),
             "metas": ahorro.resumen_metas(bd, usuario.id_usuario),
             "capacidad": capacidad.capacidad_endeudamiento(

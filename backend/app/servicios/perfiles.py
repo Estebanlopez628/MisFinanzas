@@ -36,6 +36,9 @@ QUINCENAS_VALIDAS = (QUINCENA_PRIMERA, QUINCENA_SEGUNDA)
 CIEN = Decimal("100")
 CERO = Decimal("0")
 UN_CENTAVO = Decimal("0.01")
+# SRS §5: respaldo para cuentas anteriores al campo personalizable. El perfil
+# nuevo trae el mismo valor predeterminado en la base de datos.
+MONTO_MINIMO_LIQUIDEZ_PREDETERMINADO = Decimal("300000")
 
 
 def obtener_perfil(bd: Session, id_usuario: str) -> PerfilFinanciero | None:
@@ -268,6 +271,7 @@ def guardar_perfil(
     quincena_deducciones: int | str | None = None,
     dia_quincena_1: int | str | None = None,
     dia_quincena_2: int | str | None = None,
+    monto_minimo_liquidez: Decimal | str | None = None,
 ) -> PerfilFinanciero:
     """Crea o actualiza el perfil financiero.
 
@@ -285,14 +289,22 @@ def guardar_perfil(
             modalidad QUINCENAL; si se omite, se usa el día 15.
         dia_quincena_2: Día del mes en que cae la quincena 2. Si se omite, se
             usa el día 30.
+        monto_minimo_liquidez: Colchón que desea mantener libre. Si se omite,
+            se conserva el valor anterior; si no existía, se usa $300.000.
 
     Returns:
         El perfil persistido.
 
     Raises:
         ValueError: Si el sueldo es negativo, la modalidad no es válida, los
-            porcentajes no suman 100 % o los días de quincena no son válidos.
+            porcentajes no suman 100 %, los días de quincena no son válidos o
+            el colchón es negativo.
     """
+    reserva_solicitada: Decimal | None = None
+    if monto_minimo_liquidez not in (None, ""):
+        reserva_solicitada = redondear_dinero(parsear_monto(str(monto_minimo_liquidez)))
+        if reserva_solicitada < CERO:
+            raise ValueError("El monto mínimo de liquidez no puede ser negativo.")
     sueldo = redondear_dinero(parsear_monto(str(sueldo_basico)))
     if sueldo < CERO:
         raise ValueError("El sueldo básico no puede ser negativo.")
@@ -342,6 +354,15 @@ def guardar_perfil(
         perfil = PerfilFinanciero(id_usuario=id_usuario, sueldo_basico=sueldo)
         bd.add(perfil)
 
+    # Si el campo no viene en el formulario, se conserva el valor ya guardado;
+    # solo una cuenta sin valor recibe el respaldo de $300.000.
+    if reserva_solicitada is not None:
+        reserva = reserva_solicitada
+    elif getattr(perfil, "monto_minimo_liquidez", None) is not None:
+        reserva = redondear_dinero(perfil.monto_minimo_liquidez)
+    else:
+        reserva = MONTO_MINIMO_LIQUIDEZ_PREDETERMINADO
+
     perfil.sueldo_basico = sueldo
     perfil.modalidad_pago = modalidad_normalizada
     perfil.porcentaje_quincena_1 = primero
@@ -350,6 +371,9 @@ def guardar_perfil(
     if dia_1 is not None:
         perfil.dia_quincena_1 = dia_1
         perfil.dia_quincena_2 = dia_2
+    # SRS §5: se guarda siempre, incluso en modalidad mensual, para que la
+    # dona, el diagnóstico y el Consejero lean la misma cifra del usuario.
+    perfil.monto_minimo_liquidez = reserva
     perfil.auxilio_transporte_habilitado = habilitado
     bd.commit()
     bd.refresh(perfil)

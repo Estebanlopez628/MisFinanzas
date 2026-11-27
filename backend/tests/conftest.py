@@ -67,6 +67,7 @@ from app.modelos import (
     ProyeccionAhorro,
     RegistroHorasExtra,
     SaldoIncapacidad,
+    TokenRecuperacion,
     TrabajoExtra,
     Venta,
     VentaDetalle,
@@ -108,6 +109,7 @@ MODELOS_TRANSACCIONALES = (
     TrabajoExtra,
     PerfilFinanciero,
     FeedbackUsuario,
+    TokenRecuperacion,
     Auditoria,
 )
 

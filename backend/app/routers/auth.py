@@ -17,8 +17,9 @@ import secrets
 
 from typing import Annotated
 
-from fastapi import APIRouter, BackgroundTasks, Depends, Form, Request, status
+from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.core.base_datos import obtener_bd
@@ -35,8 +36,32 @@ from app.dependencias import NOMBRE_COOKIE, UsuarioSesion, usuario_opcional
 from app.routers.vistas import contexto_base, plantillas
 from app.servicios import acceso_google, auditoria, usuarios
 from app.servicios import correo as servicio_correo
+from app.servicios import tokens_recuperacion as servicio_tokens
 
 router = APIRouter(tags=["Autenticación"])
+
+
+class SolicitudRecuperacion(BaseModel):
+    """Cuerpo JSON de `POST /auth/forgot-password` (SRS §6).
+
+    Attributes:
+        email: Correo de la cuenta. Se valida como texto para no añadir la
+            dependencia `email-validator` que exige `EmailStr`.
+    """
+
+    email: str
+
+
+class RestablecimientoConToken(BaseModel):
+    """Cuerpo JSON de `POST /auth/reset-password` (SRS §6).
+
+    Attributes:
+        token: Token en claro recibido en el enlace.
+        new_password: Nueva contraseña, de al menos ocho caracteres.
+    """
+
+    token: str = Field(..., min_length=10)
+    new_password: str = Field(..., min_length=8)
 
 # Se expone la lista del repositorio para que la vista y las pruebas usen la
 # misma fuente; en producción se retirará de la pantalla de login.
@@ -590,5 +615,182 @@ def procesar_restablecer_contrasena(
     except ValueError as fallo:
         return _pagina_restablecer(request, token, str(fallo), 400)
     auditoria.registrar(bd, cuenta.id_usuario, "CONTRASENA_RESTABLECIDA", "usuarios", "Contraseña cambiada por recuperación")
+    return RedirectResponse(url="/login?restablecida=1", status_code=status.HTTP_303_SEE_OTHER)
+
+
+# ---------------------------------------------------------------------------
+# SRS §6 — Recuperación con tokens de un solo uso enviados por Resend.
+# El flujo histórico (`/olvide-contrasena`) sigue intacto: estos endpoints son
+# aditivos y no cambian la lógica del Login ni la del cambio autenticado.
+# ---------------------------------------------------------------------------
+
+MENSAJE_RECUPERACION_TOKEN = (
+    "Si el correo existe en el sistema, te hemos enviado un enlace de recuperación."
+)
+
+
+def _url_base_recuperacion(request: Request) -> str:
+    """Devuelve la URL pública que precede al enlace de restablecimiento.
+
+    Args:
+        request: Petición HTTP de origen.
+
+    Returns:
+        `FRONTEND_URL`, o `APP_URL`, o la base de la petición, sin barra final.
+    """
+    configuracion = obtener_configuracion()
+    return (
+        configuracion.frontend_url.rstrip("/")
+        or configuracion.app_url.rstrip("/")
+        or str(request.base_url).rstrip("/")
+    )
+
+
+@router.post("/auth/forgot-password", name="forgot_password")
+def forgot_password(
+    payload: SolicitudRecuperacion,
+    tareas: BackgroundTasks,
+    request: Request,
+    bd: Session = Depends(obtener_bd),
+) -> dict[str, str]:
+    """Solicita un enlace de recuperación sin revelar si la cuenta existe.
+
+    Se invalida cualquier token anterior, se genera uno seguro con 20 minutos
+    de vigencia y se envía por Resend (u otro proveedor configurado) en segundo
+    plano. La respuesta siempre es neutra.
+
+    Args:
+        payload: Correo digitado.
+        tareas: Tareas de fondo de FastAPI.
+        request: Petición HTTP, usada para construir la URL si no hay configuración.
+        bd: Sesión de base de datos.
+
+    Returns:
+        Mensaje neutral en un diccionario JSON.
+    """
+    resultado = servicio_tokens.solicitar_token(bd, payload.email)
+    if resultado is None:
+        correo = (payload.email or "").strip().lower()[:254]
+        auditoria.registrar(
+            bd, None, "RECUPERACION_SOLICITADA", "usuarios",
+            f"Solicitud sin cuenta activa: {correo[:120]}",
+        )
+        return {"message": MENSAJE_RECUPERACION_TOKEN}
+
+    token, correo, id_usuario = resultado
+    enlace = f"{_url_base_recuperacion(request)}/reset-password?token={token}"
+    tareas.add_task(servicio_correo.enviar_recuperacion_token, correo, enlace)
+    auditoria.registrar(
+        bd, id_usuario, "RECUPERACION_SOLICITADA", "usuarios",
+        "Enlace de recuperación de un solo uso enviado",
+    )
+    return {"message": MENSAJE_RECUPERACION_TOKEN}
+
+
+@router.post("/auth/reset-password", name="reset_password_api")
+def reset_password_api(
+    payload: RestablecimientoConToken,
+    bd: Session = Depends(obtener_bd),
+) -> dict[str, str]:
+    """Cambia la contraseña con un token vigente y lo marca como usado.
+
+    Args:
+        payload: Token del enlace y nueva contraseña.
+        bd: Sesión de base de datos.
+
+    Returns:
+        Mensaje de confirmación.
+
+    Raises:
+        HTTPException: 400 si el enlace no existe, venció, ya se usó o la
+            contraseña no cumple la longitud mínima.
+    """
+    try:
+        id_usuario, _correo = servicio_tokens.restablecer(
+            bd, payload.token, payload.new_password
+        )
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+    auditoria.registrar(
+        bd, id_usuario, "CONTRASENA_RESTABLECIDA", "usuarios",
+        "Contraseña cambiada por enlace de un solo uso",
+    )
+    return {"message": "Contraseña actualizada correctamente. Ya puedes iniciar sesión."}
+
+
+def _pagina_reset(
+    request: Request, token: str, error: str | None = None, codigo: int = 200
+) -> HTMLResponse:
+    """Renderiza la vista `/reset-password?token=...`.
+
+    Args:
+        request: Petición HTTP.
+        token: Token válido, o cadena vacía si el enlace no sirve.
+        error: Mensaje de error opcional.
+        codigo: Código HTTP de la respuesta.
+
+    Returns:
+        Página de nueva contraseña.
+    """
+    contexto = contexto_base(None)
+    contexto.update({"titulo_pagina": "Nueva contraseña", "token": token, "error": error})
+    return plantillas.TemplateResponse(
+        request, "reset_password.html", contexto, status_code=codigo
+    )
+
+
+@router.get("/reset-password", response_class=HTMLResponse, name="ver_reset_password", response_model=None)
+def ver_reset_password(
+    request: Request,
+    token: str = "",
+    bd: Session = Depends(obtener_bd),
+) -> HTMLResponse:
+    """Muestra el formulario solo si el token está vigente y sin usar.
+
+    Args:
+        request: Petición HTTP.
+        token: Token del enlace enviado por correo.
+        bd: Sesión de base de datos.
+
+    Returns:
+        Formulario de nueva contraseña o aviso de enlace inválido.
+    """
+    if servicio_tokens.buscar_valido(bd, token) is None:
+        return _pagina_reset(
+            request, "", "El enlace no es válido, ya se usó o ha expirado. Solicita uno nuevo.", 400
+        )
+    return _pagina_reset(request, token)
+
+
+@router.post("/reset-password", response_class=HTMLResponse, name="procesar_reset_password", response_model=None)
+def procesar_reset_password(
+    request: Request,
+    token: Annotated[str, Form()] = "",
+    contrasena: Annotated[str, Form()] = "",
+    confirmacion: Annotated[str, Form()] = "",
+    bd: Session = Depends(obtener_bd),
+) -> HTMLResponse | RedirectResponse:
+    """Aplica la nueva contraseña desde el formulario del enlace.
+
+    Args:
+        request: Petición HTTP.
+        token: Token del enlace.
+        contrasena: Nueva contraseña.
+        confirmacion: Repetición de la contraseña.
+        bd: Sesión de base de datos.
+
+    Returns:
+        Redirección al login o el formulario con el error correspondiente.
+    """
+    if contrasena != confirmacion:
+        return _pagina_reset(request, token, "Las contraseñas no coinciden.", 400)
+    try:
+        id_usuario, _correo = servicio_tokens.restablecer(bd, token, contrasena)
+    except ValueError as error:
+        return _pagina_reset(request, "", str(error), 400)
+    auditoria.registrar(
+        bd, id_usuario, "CONTRASENA_RESTABLECIDA", "usuarios",
+        "Contraseña cambiada por enlace de un solo uso",
+    )
     return RedirectResponse(url="/login?restablecida=1", status_code=status.HTTP_303_SEE_OTHER)
 

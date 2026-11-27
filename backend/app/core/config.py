@@ -189,8 +189,14 @@ class ConfiguracionApp:
     # SRS v3.1, punto 3: APIs transaccionales por HTTPS (puerto 443, sin bloqueo
     # de firewall en Render). Se prueban en este orden antes que SMTP.
     resend_api_key: str = field(default_factory=lambda: os.getenv("RESEND_API_KEY", "").strip())
+    # SRS §6: remitente verificado de Resend (por ejemplo onboarding@resend.dev).
+    # Si no se define, se usa el remitente SMTP de siempre.
+    resend_from: str = field(default_factory=lambda: os.getenv("RESEND_FROM", "").strip())
     brevo_api_key: str = field(default_factory=lambda: os.getenv("BREVO_API_KEY", "").strip())
     sendgrid_api_key: str = field(default_factory=lambda: os.getenv("SENDGRID_API_KEY", "").strip())
+    # SRS §6: URL pública que precede al enlace `/reset-password?token=...`.
+    # Si falta, se usa APP_URL y, en último caso, la base de la petición.
+    frontend_url: str = field(default_factory=lambda: os.getenv("FRONTEND_URL", "").strip())
     app_url: str = field(default_factory=lambda: os.getenv("APP_URL", "").strip())
     google_client_id: str = field(default_factory=lambda: os.getenv("GOOGLE_CLIENT_ID", "").strip())
     google_client_secret: str = field(

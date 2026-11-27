@@ -44,9 +44,11 @@ En el modal de edición de un gasto fijo, de una deducción de «Créditos y Obl
 
 El saldo de «Deudas registradas», la dona y el Consejero se actualizan solos porque todos leen el mismo saldo de la deuda. Si el abono lleva el saldo a cero, la deuda pasa a «PAGADA» y su cuota deja de contarse en los totales.
 
-## 4. ¿Por qué el Consejero reserva $300.000 COP?
+## 4. ¿Por qué el Consejero reserva una base mínima de liquidez?
 
-MisFinanzas protege automáticamente una **Base mínima de liquidez de $300.000 COP** en tu bolsillo para cubrir imprevistos, transporte o emergencias del mes sin dejarte en ceros. Aunque tengas dinero libre después de pagar tus gastos fijos, el Consejero descuenta primero ese colchón y solo te sugiere abonos extra a tus deudas o metas con el excedente real que lo supere.
+MisFinanzas protege automáticamente una **Base mínima de liquidez** en tu bolsillo para cubrir imprevistos, transporte o emergencias del mes sin dejarte en ceros. Aunque tengas dinero libre después de pagar tus gastos fijos, el Consejero descuenta primero ese colchón y solo te sugiere abonos extra a tus deudas o metas con el excedente real que lo supere.
+
+El monto no es fijo: al crear tu perfil (primer inicio de sesión) verás el título «Monto mínimo que deseas mantener libre para imprevistos o gastos del día a día.» y el campo «Digita el valor:», que viene con la sugerencia de $300.000 y puedes cambiar. Ese mismo valor se usa en la dona de capacidad, en la alerta de «Gastos y Presupuestos» y en el Consejero. Si no escribiste uno, se mantiene $300.000. Trabajos Extras no reserva colchón. Puedes consultarlo o ajustarlo en «Mi Perfil».
 
 ## 5. Categorías y gráfico de dona
 
@@ -99,6 +101,8 @@ Dentro de «Ayuda y comentarios» encontrarás **Mis reportes enviados**: el his
 ### Recuperación de contraseña
 
 El enlace «¿Olvidaste tu contraseña?» está únicamente en la pantalla de inicio de sesión. Dentro de la app, en «Mi Perfil», solo está el cambio de contraseña autenticado.
+
+Además del enlace clásico, el sistema puede enviarte un enlace de un solo uso que vence en **20 minutos**. Al abrirlo verás la pantalla «Nueva contraseña», donde escribes y confirmas la nueva clave (mínimo 8 caracteres). El enlace deja de servir en cuanto lo usas o si pides otro; por eso cada correo nuevo invalida los anteriores. Si no fuiste tú quien lo pidió, ignora el correo.
 
 > Los textos completos y literales de las guías y la política de privacidad están en la sección «Ayuda y comentarios» de la aplicación (`/ayuda`).
 

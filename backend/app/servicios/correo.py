@@ -48,7 +48,13 @@ def _destinatario(configuracion) -> str:
     ).strip()
 
 
-def _enviar_por_api(configuracion, destino: str, asunto: str, cuerpo: str) -> bool | None:
+def _enviar_por_api(
+    configuracion,
+    destino: str,
+    asunto: str,
+    cuerpo: str,
+    html: str | None = None,
+) -> bool | None:
     """Intenta enviar por la primera API transaccional configurada.
 
     Args:
@@ -56,6 +62,7 @@ def _enviar_por_api(configuracion, destino: str, asunto: str, cuerpo: str) -> bo
         destino: Correo del destinatario.
         asunto: Asunto del mensaje.
         cuerpo: Texto plano del mensaje.
+        html: Contenido HTML opcional (SRS §6, correo de recuperación).
 
     Returns:
         `True`/`False` si se intentó un proveedor; `None` si no hay ninguno.
@@ -70,12 +77,17 @@ def _enviar_por_api(configuracion, destino: str, asunto: str, cuerpo: str) -> bo
         proveedor = "Resend"
         url = "https://api.resend.com/emails"
         cabeceras["Authorization"] = f"Bearer {configuracion.resend_api_key}"
+        # SRS §6: RESEND_FROM manda solo para Resend; los demás proveedores
+        # conservan el remitente histórico del proyecto.
+        remitente = getattr(configuracion, "resend_from", "").strip() or remitente
         datos = {
             "from": remitente,
             "to": [destino],
             "subject": asunto,
             "text": cuerpo,
         }
+        if html:
+            datos["html"] = html
     elif getattr(configuracion, "brevo_api_key", ""):
         proveedor = "Brevo"
         url = "https://api.brevo.com/v3/smtp/email"
@@ -86,15 +98,20 @@ def _enviar_por_api(configuracion, destino: str, asunto: str, cuerpo: str) -> bo
             "subject": asunto,
             "textContent": cuerpo,
         }
+        if html:
+            datos["htmlContent"] = html
     elif getattr(configuracion, "sendgrid_api_key", ""):
         proveedor = "SendGrid"
         url = "https://api.sendgrid.com/v3/mail/send"
         cabeceras["Authorization"] = f"Bearer {configuracion.sendgrid_api_key}"
+        contenido = [{"type": "text/plain", "value": cuerpo}]
+        if html:
+            contenido.append({"type": "text/html", "value": html})
         datos = {
             "personalizations": [{"to": [{"email": destino}]}],
             "from": {"email": remitente},
             "subject": asunto,
-            "content": [{"type": "text/plain", "value": cuerpo}],
+            "content": contenido,
         }
 
     if proveedor is None:
@@ -137,20 +154,21 @@ def _enviar_por_api(configuracion, destino: str, asunto: str, cuerpo: str) -> bo
         return False
 
 
-def enviar_correo(destino: str, asunto: str, cuerpo: str) -> bool:
-    """Envía un correo de texto plano por API HTTPS o SMTP.
+def enviar_correo(destino: str, asunto: str, cuerpo: str, html: str | None = None) -> bool:
+    """Envía un correo de texto plano (y HTML opcional) por API HTTPS o SMTP.
 
     Args:
         destino: Dirección del destinatario.
         asunto: Asunto del mensaje.
         cuerpo: Texto del mensaje.
+        html: Alternativa HTML para APIs que la soportan (SRS §6).
 
     Returns:
         `True` si se entregó al proveedor (o se registró en desarrollo);
         `False` si falló.
     """
     configuracion = obtener_configuracion()
-    por_api = _enviar_por_api(configuracion, destino, asunto, cuerpo)
+    por_api = _enviar_por_api(configuracion, destino, asunto, cuerpo, html)
     if por_api is not None:
         return por_api
 
@@ -172,7 +190,11 @@ def enviar_correo(destino: str, asunto: str, cuerpo: str) -> bool:
     mensaje["Subject"] = asunto
     mensaje["From"] = _destinatario(configuracion) or configuracion.smtp_user
     mensaje["To"] = destino
-    mensaje.set_content(cuerpo)
+    if html:
+        mensaje.set_content(cuerpo)
+        mensaje.add_alternative(html, subtype="html")
+    else:
+        mensaje.set_content(cuerpo)
     try:
         if configuracion.smtp_port == 465:
             servidor = smtplib.SMTP_SSL(
@@ -255,6 +277,46 @@ def enviar_recuperacion(destino: str, alias: str, enlace: str) -> bool:
             "No se pudo enviar el correo de recuperación a %s. "
             "Revisa RESEND_API_KEY/BREVO_API_KEY/SENDGRID_API_KEY o SMTP_HOST, "
             "SMTP_PORT, SMTP_USER y la contraseña de aplicación.",
+            destino,
+        )
+    return enviado
+
+
+# SRS §6: vigencia del enlace de un solo uso generado por `/auth/forgot-password`.
+MINUTOS_TOKEN_RECUPERACION = 20
+
+
+def enviar_recuperacion_token(destino: str, enlace: str) -> bool:
+    """Envía el enlace de restablecimiento de 20 minutos con Resend u otro proveedor.
+
+    Args:
+        destino: Correo de la cuenta.
+        enlace: URL `/reset-password?token=...` con el token en claro.
+
+    Returns:
+        `True` si el proveedor aceptó el correo; `False` si falló.
+    """
+    cuerpo = (
+        "Hola,\n\n"
+        "Recibimos una solicitud para restablecer tu contraseña.\n"
+        f"Abre este enlace: {enlace}\n"
+        f"(el enlace vence en {MINUTOS_TOKEN_RECUPERACION} minutos).\n\n"
+        "Si no pediste este cambio, ignora este correo."
+    )
+    html = (
+        "<p>Hola,</p><p>Recibimos una solicitud para restablecer tu contraseña.</p>"
+        f"<p><a href='{enlace}'>Haz clic aquí para restablecer tu contraseña</a> "
+        f"(el enlace vence en {MINUTOS_TOKEN_RECUPERACION} minutos).</p>"
+    )
+    enviado = enviar_correo(
+        destino, "Recupera tu contraseña · OLB BYTE", cuerpo, html=html
+    )
+    if enviado:
+        registro.info("Enlace de recuperación de un solo uso enviado a %s.", destino)
+    else:
+        registro.error(
+            "No se pudo enviar el enlace de recuperación a %s. "
+            "Revisa RESEND_API_KEY y RESEND_FROM (o el proveedor de correo alternativo).",
             destino,
         )
     return enviado

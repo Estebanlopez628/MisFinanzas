@@ -314,6 +314,9 @@ _COLUMNAS_PERFIL_NUEVAS = {
     "quincena_deducciones": "SMALLINT",
     "dia_quincena_1": "SMALLINT",
     "dia_quincena_2": "SMALLINT",
+    # SRS (Documento Único Integrado, §5): columna nueva con valor por defecto
+    # para que los perfiles ya existentes conserven exactamente $300.000.
+    "monto_minimo_liquidez": "NUMERIC(12, 2) NOT NULL DEFAULT 300000",
 }
 
 # SRS v1.9: los perfiles anteriores no tenían día de quincena. Se les asigna el
@@ -979,6 +982,38 @@ def _migrar_tipos_hora_2026() -> None:
             )
 
 
+def _migrar_monto_minimo_liquidez() -> None:
+    """Asegura la base mínima personalizada en SQLite y PostgreSQL (SRS §5).
+
+    Los perfiles creados antes de este requerimiento no tenían el campo. Se
+    agrega con `NOT NULL DEFAULT 300000` para que ninguna cuenta previa quede
+    con un nulo, un error de cálculo o un colchón distinto al que ya usaba.
+
+    Returns:
+        None. La migración es idempotente y no modifica valores ya guardados.
+    """
+    with motor.begin() as conexion:
+        if _conexion_sqlite:
+            columnas = conexion.exec_driver_sql(
+                "PRAGMA table_info(perfiles_financieros)"
+            ).fetchall()
+            if columnas and "monto_minimo_liquidez" not in {fila[1] for fila in columnas}:
+                conexion.exec_driver_sql(
+                    "ALTER TABLE perfiles_financieros "
+                    "ADD COLUMN monto_minimo_liquidez NUMERIC(12, 2) NOT NULL DEFAULT 300000"
+                )
+        else:
+            conexion.exec_driver_sql(
+                "ALTER TABLE perfiles_financieros ADD COLUMN IF NOT EXISTS "
+                "monto_minimo_liquidez NUMERIC(12, 2) NOT NULL DEFAULT 300000"
+            )
+        # Defensivo: si una base intermedia llegó a crear la columna nullable.
+        conexion.exec_driver_sql(
+            "UPDATE perfiles_financieros SET monto_minimo_liquidez = 300000 "
+            "WHERE monto_minimo_liquidez IS NULL"
+        )
+
+
 def aplicar_migraciones() -> None:
     """Ejecuta todas las migraciones idempotentes del esquema.
 
@@ -1001,6 +1036,7 @@ def aplicar_migraciones() -> None:
     _migrar_feedback_resolucion()
     _migrar_tipo_deuda_inicial()
     _migrar_tipos_hora_2026()
+    _migrar_monto_minimo_liquidez()
 
 
 def inicializar_base_datos() -> None:
