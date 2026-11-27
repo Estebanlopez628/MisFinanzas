@@ -2860,7 +2860,7 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Consecuencias.** `monto_minimo_liquidez` pasa a `NOT NULL DEFAULT 0`; la migración en SQLite/PostgreSQL rellena nulos con 0 y convierte a 0 los 300000 predeterminados de la versión intermedia, conservando cualquier valor escrito. `BASE_MINIMA_LIQUIDEZ`, `UMBRAL_ALERTA` y `UMBRAL_ACTIVACION` valen 0 como respaldo. `base_minima_de()` sigue leyendo el perfil; la dona solo muestra «Base mínima de liquidez» si el valor es mayor que 0 y el banner del Consejero cambia el texto cuando no hay monto digitado. `cartera.html` añade `panel__titulo--centrado` al `<h2>` (la clase ya existía en `estilos.css`). Las pruebas históricas que suponían 300000 por defecto ahora fijan ese valor explícitamente para preservar su escenario.
 
-**Verificación.** Suite completa en verde (**1016 pruebas**), incluidas dos pruebas nuevas: sin valor digitado el Consejero usa los $345.204 íntegros y con $450.000 digitados el texto dice «Ya se reservaron $450.000». Sin desbordes ni cambios en el resto de flujos.
+**Verificación.** Suite completa en verde (**1017 pruebas**), incluidas tres pruebas nuevas: sin valor digitado el Consejero usa los $345.204 íntegros y se guarda 0; con $450.000 digitados el texto dice «Ya se reservaron $450.000». Sin desbordes ni cambios en el resto de flujos.
 
 ### 2026-11-26 — Base mínima de liquidez personalizable (ADR-171)
 
@@ -2868,7 +2868,7 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Consecuencias.** El onboarding pide «Monto mínimo que deseas mantener libre para imprevistos o gastos del día a día.», con «Digita el valor:» y el campo `monto_minimo_liquidez` (vacío, con `placeholder="300000"` y `data-moneda`). `guardar_perfil()` persiste el valor, `capacidad.base_minima_de(perfil)` lo lee, `repartir_libre()` lo reserva, `ahorro.diagnostico()` lo expone como `umbral` y `consejo_financiero(..., umbral=...)` lo propaga a sus dos ramas. Sin valor digitado el umbral es 0. La plantilla del banner usa `diagnostico.umbral | cop`. Trabajos Extras sigue sin colchón. ADR-173 ajustó el campo, el dona y el título de Cartera.
 
-**Verificación.** Migración probada sobre una base SQLite con esquema antiguo: la columna se agrega y la fila previa queda en 300000. Nuevas pruebas en `test_srs_liquidez_recuperacion.py` (tipo, backfill, onboarding, cálculos). Suite completa en verde (1012 pruebas). Sin cambios en el fondo, botones de OLB BYTE ni línea neón.
+**Verificación.** Migración probada sobre una base SQLite con esquema antiguo: la columna se agrega y la fila previa queda en 0 (ADR-173). Nuevas pruebas en `test_srs_liquidez_recuperacion.py` (tipo, backfill, onboarding, cálculos). Sin cambios en el fondo, botones de OLB BYTE ni línea neón.
 
 ### 2026-11-26 — Recuperación con tokens de un solo uso y Resend (ADR-172)
 

@@ -159,6 +159,7 @@ def test_onboarding_guarda_monto_digitado(cliente_usuario, bd, monkeypatch) -> N
     assert 'value=""' in etiqueta
     assert 'placeholder="300000"' in etiqueta
     assert "data-moneda" in etiqueta
+    assert "required" not in etiqueta  # se puede dejar vacío: sin reserva
     assert "Digita el valor:" in html
 
     respuesta = cliente_usuario.post(
@@ -175,6 +176,31 @@ def test_onboarding_guarda_monto_digitado(cliente_usuario, bd, monkeypatch) -> N
     perfil = perfiles.obtener_perfil(bd, id_usuario)
     assert perfil is not None
     assert perfil.monto_minimo_liquidez == Decimal("450000.00")
+
+
+def test_onboarding_sin_valor_guarda_cero(cliente_usuario, bd) -> None:
+    """Dejar el campo vacío es válido: se guarda 0 y no se reserva colchón."""
+    id_usuario = _id_usuario()
+    with FabricaSesiones() as sesion:
+        sesion.query(PerfilFinanciero).filter(
+            PerfilFinanciero.id_usuario == id_usuario
+        ).delete()
+        sesion.commit()
+
+    respuesta = cliente_usuario.post(
+        "/perfil",
+        data={
+            "alias": "Usuario",
+            "sueldo_basico": "3.000.000",
+            "modalidad_pago": perfiles.MODALIDAD_MENSUAL,
+            "monto_minimo_liquidez": "",
+        },
+        follow_redirects=False,
+    )
+    assert respuesta.status_code == 303
+    perfil = perfiles.obtener_perfil(bd, id_usuario)
+    assert perfil is not None
+    assert perfil.monto_minimo_liquidez == Decimal("0.00")
 
 
 def test_liquidez_configurada_alimenta_calculos(bd) -> None:
