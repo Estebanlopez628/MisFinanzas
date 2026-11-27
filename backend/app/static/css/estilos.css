@@ -3976,6 +3976,10 @@ strong.valor-negativo.recibo__cifra--saldo {
 
 .fila-entrada .boton {
   white-space: nowrap;
+  /* Misma altura y radio que el campo de celular, sin ensanchar el botón. */
+  align-self: stretch;
+  min-height: 50px;
+  border-radius: var(--radio-md);
 }
 
 .acciones-orden > details[open] {

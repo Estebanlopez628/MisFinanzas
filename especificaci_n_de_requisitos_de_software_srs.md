@@ -1969,3 +1969,9 @@ Línea base v4.44. Ajusta la sección 69. Alcance exclusivo: Mis Finanzas (`/fin
 
 - Playwright 1280 px y 390 px: fondo 200 y centrado, botones con el degradado azul, icono WhatsApp, KPI sin ondas y campos de horas vacíos con placeholder; sin desbordes ni errores de consola.
 - Suite completa en verde. `sw.js` en `olb-finanzas-v189`. Documentación sincronizada.
+
+## 91. Botón Pegar número uniforme (ADR-156)
+
+- En Registrar Venta, el botón del celular adopta la altura y el radio del campo (`align-self: stretch`, `min-height: 50px`, `border-radius: var(--radio-md)`), sin cambiar su ancho, color ni función; el icono de WhatsApp y el rótulo dinámico siguen intactos.
+- Nota: el SRS decía «y títulos» en el encabezado, pero no llegó ninguna instrucción de borde para títulos en el cuerpo; no se aplicó ninguno.
+- Verificado en 1280 px y 390 px: campo y botón a 50 px con radio 14 px, sin desbordes. Suite completa en verde. `sw.js` en `olb-finanzas-v190`.

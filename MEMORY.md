@@ -2854,6 +2854,16 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v156`. Gate `qa_v4_56.py` **6/6**: separación de 18 px medida entre quincenas y atajos, `clientHeight 325 / scrollHeight 386` en 1280 px, `370 / 439` en 375 px y bordes inferiores iguales en web. Suite completa **1002 pruebas** en verde y 20 gates sin regresiones propias.
 
+### 2026-11-26 — Botón Pegar número uniforme (ADR-156)
+
+**Decisión (ADR-156).** Igualar la altura y el radio del botón «Pegar número» a los del campo de celular en Registrar Venta, sin cambiar su ancho ni su función.
+
+**Consecuencias.** En `estilos.css`, `.fila-entrada .boton` usa `align-self: stretch`, `min-height: 50px` y `border-radius: var(--radio-md)`. Solo afecta a ese botón (`.fila-entrada` existe únicamente en `olb_byte/index.html`). El SVG de WhatsApp y el rótulo dinámico quedan intactos.
+
+**Nota de alcance.** El SRS decía «y títulos» en el encabezado, pero el cuerpo recibido solo contenía el punto del fondo; no llegó ninguna instrucción de borde para títulos y por eso no se aplicó ninguno.
+
+**Verificación.** Playwright 1280 px: campo y botón miden 50 px y comparten radio de 14 px, sin desbordes. Suite completa en verde. `sw.js` en `olb-finanzas-v190`.
+
 ### 2026-11-26 — Nuevos ajustes OLB BYTE, fondo y horas extras (ADR-155)
 
 **Decisión (ADR-155).** Alcance estricto de los dos SRS entregados: fondo con `Ondas azules futuristas luminosas.png`, botones azules en Cuentas por cobrar, Gestión y control de ventas y Registrar Venta, KPIs sobrios, icono de WhatsApp en «Pegar número» y ceros de Horas extras como placeholder (nota adicional del propietario).
