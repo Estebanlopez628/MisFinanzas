@@ -62,7 +62,7 @@ body:not(.pagina-acceso) {
     radial-gradient(1200px 600px at 15% -10%, rgba(2, 132, 199, 0.22), transparent 60%),
     radial-gradient(900px 500px at 110% 10%, rgba(16, 185, 129, 0.14), transparent 55%),
     linear-gradient(rgba(15, 23, 42, 0.62), rgba(15, 23, 42, 0.62)),
-    url("/estaticos/img/fondo-ondas.png") center / cover no-repeat fixed,
+    url("/estaticos/img/fondo-ondas-futuristas.png") center center / cover no-repeat fixed,
     var(--bg-primary);
 }
 
@@ -7478,4 +7478,20 @@ body:not(.pagina-acceso) form.liquidacion-bloques {
   background: transparent;
   border: 0;
   box-shadow: none;
+}
+
+/* Tarjetas de indicadores de «Gestión y control de ventas»: mismo azul noche
+   del selector Año, sin ondas ni destellos. Los colores de los montos siguen
+   siendo los semánticos y los cálculos no se tocan. */
+body:not(.pagina-acceso) .panel--kpis .kpi {
+  background: rgba(4, 18, 42, 0.68);
+  border-color: rgba(56, 189, 248, 0.3);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: none;
+}
+
+body:not(.pagina-acceso) .panel--kpis .kpi::before,
+body:not(.pagina-acceso) .panel--kpis .kpi::after {
+  content: none;
 }

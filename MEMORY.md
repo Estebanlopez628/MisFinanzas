@@ -2854,6 +2854,14 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v156`. Gate `qa_v4_56.py` **6/6**: separación de 18 px medida entre quincenas y atajos, `clientHeight 325 / scrollHeight 386` en 1280 px, `370 / 439` en 375 px y bordes inferiores iguales en web. Suite completa **1002 pruebas** en verde y 20 gates sin regresiones propias.
 
+### 2026-11-26 — Nuevos ajustes OLB BYTE, fondo y horas extras (ADR-155)
+
+**Decisión (ADR-155).** Alcance estricto de los dos SRS entregados: fondo con `Ondas azules futuristas luminosas.png`, botones azules en Cuentas por cobrar, Gestión y control de ventas y Registrar Venta, KPIs sobrios, icono de WhatsApp en «Pegar número» y ceros de Horas extras como placeholder (nota adicional del propietario).
+
+**Consecuencias.** Se copia la imagen a `static/img/fondo-ondas-futuristas.png` y se usa en `body:not(.pagina-acceso)` con `center center / cover no-repeat fixed` sobre `#050f24`; el Login sigue con su fondo original. En OLB BYTE, los botones Buscar, Aplicar, los seis Descargar CSV, Guardar y Pegar Numero pasan a `boton--primario` (mismo degradado azul que «Volver a Ventas»/«Volver al inicio»); Pegar Numero incluye el SVG de WhatsApp al lado del rótulo que conserva `data-rotulo-numero`. Las cuatro tarjetas `.panel--kpis .kpi` usan `rgba(4,18,42,.68)` e igual borde que el selector Año, sin `::before`/`::after`. En `finanzas/index.html`, los campos de horas en cero se renderizan vacíos con `placeholder="0"` (valores no nulos se conservan); el backend sigue interpretando vacío como 0 y la lógica no cambió.
+
+**Verificación.** Playwright 1280 px y 390 px: fondo 200 y centrado, botones con el mismo degradado azul, SVG de WhatsApp presente, KPI con el mismo fondo que Año y sin ondas, campos de horas vacíos con placeholder «0», sin desbordes ni errores de consola. Suite completa en verde. `sw.js` en `olb-finanzas-v189`.
+
 ### 2026-11-26 — Fondo del envoltorio de Liquidación (ADR-154)
 
 **Decisión (ADR-154).** Ajuste al punto anterior: el hueco entre los dos paneles seguía mostrando azul porque el `<form class="formulario liquidacion-bloques">` heredaba el fondo de la regla general `.formulario`.

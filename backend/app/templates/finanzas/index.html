@@ -426,6 +426,10 @@ contenido %}
           <legend class="sr-only">Horas extras y recargos</legend>
           <div class="cuadricula-horas">
             {% for tipo in tipos_hora %}
+            {# El cero es solo una referencia visual: si no hay horas, el campo
+               queda vacío con placeholder «0» para poder escribir sin borrar. #}
+            {% set horas_actuales = valores.get('horas_' ~ tipo.clave, '0') | string %}
+            {% set horas_es_cero = horas_actuales.replace(',', '.') | float == 0 %}
             <label class="campo campo--horas">
               <span class="campo__etiqueta campo__etiqueta--suave"
                 >{{ tipo.etiqueta }}</span
@@ -438,7 +442,8 @@ contenido %}
                 step="0.01"
                 inputmode="decimal"
                 autocomplete="off"
-                value="{{ valores.get('horas_' ~ tipo.clave, '0') }}"
+                value="{{ '' if horas_es_cero else horas_actuales }}"
+                placeholder="0"
                 data-entrada
               />
             </label>

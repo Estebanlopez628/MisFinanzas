@@ -257,7 +257,7 @@ Principios que explican el resto del código:
 
 #### `backend/app/static/css/`
 
-- **`estilos.css`** · 7477 líneas — Fondo y superficies
+- **`estilos.css`** · 7498 líneas — Fondo y superficies
 - **`factura-olb.css`** · 764 líneas — SRS v4.44: el retorno de la factura es «Volver a Ventas» en todos los
 
 #### `backend/app/static/js/`
@@ -333,7 +333,7 @@ Principios que explican el resto del código:
 - **`_capacidad.html`** · 143 líneas
 - **`_gasto_fijo.html`** · 197 líneas
 - **`_subnav.html`** · 27 líneas — Subnavegación interna del módulo "Mis Finanzas" (SRS v1.3, bloque 1).
-- **`index.html`** · 744 líneas — Plantilla: Mis Finanzas
+- **`index.html`** · 749 líneas — Plantilla: Mis Finanzas
 
 #### `backend/app/templates/gastos/`
 
@@ -360,7 +360,7 @@ Principios que explican el resto del código:
 - **`cobro.html`** · 94 líneas — Plantilla: Gestionar cobro
 - **`factura.html`** · 42 líneas — Plantilla: Factura No.
 - **`garantias.html`** · 155 líneas — Plantilla: Soporte y garantías
-- **`index.html`** · 506 líneas — Plantilla: OLB BYTE
+- **`index.html`** · 507 líneas — Plantilla: OLB BYTE
 - **`pendientes.html`** · 120 líneas — Plantilla: Cuentas por cobrar
 - **`recibo.html`** · 23 líneas — Plantilla: Recibo de abono · No.
 

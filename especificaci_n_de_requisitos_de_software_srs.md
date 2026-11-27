@@ -1952,3 +1952,20 @@ Línea base v4.44. Ajusta la sección 69. Alcance exclusivo: Mis Finanzas (`/fin
 
 - El hueco de 18 px mostraba azul porque el `<form class="formulario liquidacion-bloques">` heredaba el fondo de `.formulario`. Se cambia la regla a `body:not(.pagina-acceso) form.liquidacion-bloques` con `background: transparent`, `border: 0` y `box-shadow: none`, suficiente para ganar por especificidad.
 - El formulario sigue siendo uno solo: no se separaron los envíos ni los botones. Verificado en 1280 px y 390 px con paneles visualmente independientes, gap de 18 px y recálculo intacto. Suite completa en verde. `sw.js` en `olb-finanzas-v188`.
+
+## 90. Nuevos ajustes OLB BYTE, fondo y horas extras (ADR-155)
+
+**Regla suprema.** Alcance estricto a los puntos entregados; Login, iconos no solicitados, tablas, modales, flujos y cálculos intactos.
+
+### 90.1 Ajustes aplicados
+
+1. Fondo de pantallas autenticadas: `Ondas azules futuristas luminosas.png` copiada a `static/img/` y servida desde `/estaticos/img/` con `center center / cover no-repeat fixed` y respaldo `#050f24`.
+2. Botones Buscar, Aplicar, Descargar CSV, Guardar y Pegar Numero usan `boton--primario`, el mismo azul de «Volver a Ventas»/«Volver al inicio».
+3. Pegar Numero incluye el SVG de WhatsApp junto al rótulo (`data-rotulo-numero` conservado).
+4. Las cuatro tarjetas `.panel--kpis .kpi` usan `rgba(4,18,42,.68)` con borde del selector Año, sin `::before`/`::after`.
+5. Los campos de Horas extras en cero se renderizan vacíos con `placeholder="0"`; los valores no nulos se conservan. El backend interpreta vacío como 0.
+
+### 90.2 Verificación y cierre documental
+
+- Playwright 1280 px y 390 px: fondo 200 y centrado, botones con el degradado azul, icono WhatsApp, KPI sin ondas y campos de horas vacíos con placeholder; sin desbordes ni errores de consola.
+- Suite completa en verde. `sw.js` en `olb-finanzas-v189`. Documentación sincronizada.

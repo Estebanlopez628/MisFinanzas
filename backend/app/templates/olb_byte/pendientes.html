@@ -26,7 +26,7 @@
         <input class="campo__control" type="search" name="q" value="{{ q }}" placeholder="Ana, 3001234567 o 12" />
       </label>
       <div class="acciones-formulario">
-        <button class="boton boton--secundario boton--pequeno" type="submit">Buscar</button>
+        <button class="boton boton--primario boton--pequeno" type="submit">Buscar</button>
         {% if q %}
           <a class="boton boton--secundario boton--pequeno" href="{{ url_for('ver_pendientes') }}">Ver todos</a>
         {% endif %}
