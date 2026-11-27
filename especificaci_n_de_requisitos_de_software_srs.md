@@ -2022,3 +2022,8 @@ Línea base v4.44. Ajusta la sección 69. Alcance exclusivo: Mis Finanzas (`/fin
 
 - Se conservan ambos ejes de desplazamiento de `.tabla-contenedor--deudas` en móvil. Se añade `-webkit-overflow-scrolling: touch` para inercia nativa en iOS. `deudas.js` cancela el gesto (`preventDefault`) únicamente cuando el movimiento es vertical dominante y la caja ya está en el tope superior o inferior, de modo que la página no se arrastra; los gestos horizontales y el scroll a mitad de la tabla siguen intactos.
 - Verificado en 390 px con 12 filas: en ambos topes se cancelan todos los `touchmove` y `scrollY` no cambia; a mitad no se cancela ninguno; un gesto horizontal en el tope mueve las columnas. Cabecera opaca, sin desbordes y modal centrado desde `<body>`. Suite completa en verde. `sw.js` en `olb-finanzas-v203`.
+
+## 101. Paneles de Trabajos Extras a la misma altura (ADR-170)
+
+- La rejilla de `trabajos/index.html` usa `rejilla-paneles--trabajos` y `.rejilla-paneles--trabajos > .panel--tabla { margin-top: 0; }` anula el margen genérico de `.panel--tabla`, de modo que «Nuevo trabajo» y «Contratos registrados» arrancan alineados en escritorio y comparten altura por `stretch` de la grilla. En móvil siguen apilados. No cambian campos, tablas ni cálculos.
+- Verificado en 1280 px: ambos paneles con `top = 916` y `height = 695`; en 390 px apilados con margen 0 y sin desbordes. Suite completa en verde. `sw.js` en `olb-finanzas-v204`.

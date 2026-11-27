@@ -2421,6 +2421,13 @@ textarea.campo__control {
   margin-top: 0;
 }
 
+/* ADR-170: en Trabajos Extras «Nuevo trabajo» y «Contratos registrados» deben
+   arrancar a la misma altura. Se anula solo aquí el margen genérico de
+   `.panel--tabla`, sin tocar los demás módulos. */
+.rejilla-paneles--trabajos > .panel--tabla {
+  margin-top: 0;
+}
+
 .tabla-contenedor {
   overflow-x: auto;
   border: 1px solid var(--borde-suave);

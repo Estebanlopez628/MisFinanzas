@@ -2854,6 +2854,14 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v156`. Gate `qa_v4_56.py` **6/6**: separación de 18 px medida entre quincenas y atajos, `clientHeight 325 / scrollHeight 386` en 1280 px, `370 / 439` en 375 px y bordes inferiores iguales en web. Suite completa **1002 pruebas** en verde y 20 gates sin regresiones propias.
 
+### 2026-11-26 — Paneles de Trabajos Extras a la misma altura (ADR-170)
+
+**Decisión (ADR-170).** El propietario pidió que, en Trabajos Extras, «Nuevo trabajo» y «Contratos registrados» arranquen a la misma altura; «Contratos registrados» estaba 18 px más abajo.
+
+**Consecuencias.** La rejilla de `trabajos/index.html` lleva ahora el modificador `rejilla-paneles--trabajos` y se añade `.rejilla-paneles--trabajos > .panel--tabla { margin-top: 0; }` para anular solo allí el margen genérico de `.panel--tabla`. Los demás módulos y el contenido de Trabajos Extras no cambian.
+
+**Verificación.** Playwright 1280 px: ambos paneles con `top = 916` y `height = 695`; en 390 px apilados con margen 0. Sin desbordes. Suite completa en verde. `sw.js` en `olb-finanzas-v204`.
+
 ### 2026-11-26 — Separación en Pagos de Trabajos Extras (ADR-169)
 
 **Decisión (ADR-169).** El propietario reportó que en «Pagos de <mes>» el encabezado «Pago mensual/quincenal» y su badge de valor quedaban pegados al borde inferior del panel «Resultado del periodo».
