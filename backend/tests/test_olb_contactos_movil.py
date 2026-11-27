@@ -39,9 +39,10 @@ def test_movil_abre_whatsapp_y_el_campo_limpia_lo_pegado() -> None:
     """El botón móvil abre WhatsApp y el campo quita espacios e indicativo al pegar."""
     js = javascript_leido()
     movil = js.split("function agregarNumeroMovil() {", 1)[1].split("}", 1)[0]
-    assert 'window.open(' in movil
-    assert '"https://wa.me/?text="' in movil
-    assert '"noopener,noreferrer"' in movil
+    assert 'window.location.href = "whatsapp://send?text="' in movil
+    assert "window.open(" in js
+    assert '"https://wa.me/?text="' in js
+    assert '"noopener,noreferrer"' in js
     assert "navigator.contacts.select" not in js
     assert "data-elegir-contacto" not in js
     assert "data-abrir-whatsapp" not in js

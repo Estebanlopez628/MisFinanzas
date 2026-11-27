@@ -568,12 +568,18 @@
    * @returns {void}
    */
   function agregarNumeroMovil() {
-    var mensaje = "Hola";
-    window.open(
-      "https://wa.me/?text=" + encodeURIComponent(mensaje),
-      "_blank",
-      "noopener,noreferrer"
-    );
+    var texto = encodeURIComponent("Hola");
+    // Igual que «Invitar amigos»: en móvil se salta al esquema nativo sobre la
+    // ventana actual para no dejar una pestaña web en blanco.
+    if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+      window.location.href = "whatsapp://send?text=" + texto;
+    } else {
+      window.open(
+        "https://wa.me/?text=" + texto,
+        "_blank",
+        "noopener,noreferrer"
+      );
+    }
   }
 
   /**

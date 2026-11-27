@@ -6020,7 +6020,9 @@ dialog.detalle-orden {
   padding: 2px;
   border: 0;
   background: none;
-  color: var(--text-muted);
+  /* «Ayuda y comentarios» y «Invitar amigos» comparten el mismo azul suave,
+     también cuando el enlace ya fue visitado. */
+  color: #60A5FA;
   font-size: 0.86rem;
   font-weight: 600;
   text-decoration: none;

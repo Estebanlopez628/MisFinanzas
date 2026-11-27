@@ -327,7 +327,14 @@
       var mensaje =
         "Acabo de probar esta aplicación y es súper buena, quiero invitarte a que la utilices y lleves el control de tus finanzas: " +
         window.location.origin;
-      window.open("https://wa.me/?text=" + encodeURIComponent(mensaje), "_blank");
+      var texto = encodeURIComponent(mensaje);
+      // En móvil se usa el esquema nativo sobre la ventana actual: así no
+      // queda una pestaña web en blanco esperando a que WhatsApp tome control.
+      if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+        window.location.href = "whatsapp://send?text=" + texto;
+      } else {
+        window.open("https://wa.me/?text=" + texto, "_blank", "noopener,noreferrer");
+      }
     }
   });
 

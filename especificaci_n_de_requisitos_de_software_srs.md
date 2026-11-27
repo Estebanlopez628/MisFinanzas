@@ -1981,3 +1981,14 @@ Línea base v4.44. Ajusta la sección 69. Alcance exclusivo: Mis Finanzas (`/fin
 - `agregarNumeroMovil()` usa `https://wa.me/?text=Hola` con `window.open(..., "_blank", "noopener,noreferrer")`, la misma lógica que «Invitar amigos»: sin destinatario, WhatsApp abre la lista de contactos para elegir y copiar el número. El escritorio mantiene el portapapeles.
 - `.apoyo-cafe` usa `rgba(4,18,42,.68)`, el mismo fondo de `.campo__control`; borde y sombra no cambian.
 - Verificado en 390 px y 1280 px, sin desbordes. Suite completa en verde. `sw.js` en `olb-finanzas-v191`.
+
+## 93. Sin pestaña en blanco en Invitar/Pegar número (ADR-158)
+
+- En móvil, ambos botones usan `whatsapp://send?text=…` vía `window.location.href`, sobre la ventana actual, igual que la solución ya aplicada en la factura. En escritorio conservan `https://wa.me/?text=…` con `window.open(..., "_blank", "noopener,noreferrer")`.
+- Verificado con UA de iPhone: `window.open` no se invoca y el contexto mantiene una sola pestaña. Suite completa en verde. `sw.js` en `olb-finanzas-v192`.
+
+## 94. Texto del café y color de Invitar amigos (ADR-159)
+
+- `base.html`: «Si prefieres, aporta lo que quieras.» → «Si prefieres, aporta lo que salga de tu corazón.»
+- `.ayuda-inicio__enlace` usa `#60A5FA`, de modo que «Ayuda y comentarios» e «Invitar amigos» comparten color también tras visitar el enlace.
+- Verificado en 390 px con `USER_FINANZAS`; sin desbordes. Suite completa en verde. `sw.js` en `olb-finanzas-v193`.

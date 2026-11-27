@@ -2854,6 +2854,22 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v156`. Gate `qa_v4_56.py` **6/6**: separación de 18 px medida entre quincenas y atajos, `clientHeight 325 / scrollHeight 386` en 1280 px, `370 / 439` en 375 px y bordes inferiores iguales en web. Suite completa **1002 pruebas** en verde y 20 gates sin regresiones propias.
 
+### 2026-11-26 — Texto del café y color de Invitar amigos (ADR-159)
+
+**Decisión (ADR-159).** Ajustes de texto y color pedidos por el propietario: frase del diálogo de apoyo y color del botón «Invitar amigos».
+
+**Consecuencias.** En `base.html`, «Si prefieres, aporta lo que quieras.» pasa a «Si prefieres, aporta lo que salga de tu corazón.». En `estilos.css`, `.ayuda-inicio__enlace` usa `#60A5FA`, por lo que «Ayuda y comentarios» y «Invitar amigos» comparten el mismo azul también cuando el enlace fue visitado.
+
+**Verificación.** Playwright 390 px con `USER_FINANZAS`: ambos enlaces devuelven `rgb(96,165,250)` y el diálogo muestra la frase nueva; sin desbordes. Suite completa en verde. `sw.js` en `olb-finanzas-v193`.
+
+### 2026-11-26 — Sin pestaña en blanco en Invitar/Pegar número (ADR-158)
+
+**Decisión (ADR-158).** El propietario reportó que «Invitar amigos» dejaba una pestaña web en blanco y pidió lo mismo para «Pegar número». Se vuelve a la solución ya usada en la factura: en móvil, esquema nativo sobre la ventana actual; en escritorio, `window.open` con `noopener,noreferrer`.
+
+**Consecuencias.** En `app.js`, el handler de `[data-invitar-amigos]` usa `whatsapp://send?text=<mensaje>` vía `window.location.href` cuando el UA es móvil, y `https://wa.me/?text=...` en escritorio. En `olb_byte.js`, `agregarNumeroMovil()` aplica el mismo patrón con el texto «Hola». Se actualiza `test_olb_contactos_movil.py`.
+
+**Verificación.** Playwright con UA iPhone: al pulsar ambos botones `window.open` no se llama y el contexto mantiene una sola pestaña; sin errores de consola. Suite completa en verde. `sw.js` en `olb-finanzas-v192`.
+
 ### 2026-11-26 — WhatsApp universal en Pegar número y fondo de Invítame un café (ADR-157)
 
 **Decisión (ADR-157).** Aplicar al botón móvil de celular la misma lógica que «Invitar amigos» y oscurecer el módulo de apoyo con el color de los cuadros de texto.
