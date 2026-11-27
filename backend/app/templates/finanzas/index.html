@@ -260,34 +260,33 @@ contenido %}
   y resultados. #} {#
   ------------------------------------------------------------------ #}
   <div class="columna-finanzas columna-finanzas--liquidacion" id="liquidacion">
-    <section class="panel panel--liquidacion">
-      <h2 class="panel__titulo">Liquidación del periodo</h2>
-      <p class="panel__descripcion">
-        Base legal de {{ parametros.horas_mensuales | int }} horas mensuales.
-      </p>
+    <form
+      class="formulario liquidacion-bloques"
+      method="post"
+      action="{{ url_for('procesar_finanzas') }}"
+      data-calculadora
+      data-proteccion
+      novalidate
+    >
+      <section class="panel panel--liquidacion">
+        <h2 class="panel__titulo">Liquidación del periodo</h2>
+        <p class="panel__descripcion">
+          Base legal de {{ parametros.horas_mensuales | int }} horas mensuales.
+        </p>
 
-      {# Errores servidos por el POST clásico (respaldo sin JavaScript). #} {%
-      if errores %}
-      <div class="alerta alerta--error" role="alert">
-        <strong>Revisa los datos:</strong>
-        <ul>
-          {% for error in errores %}
-          <li>{{ error }}</li>
-          {% endfor %}
-        </ul>
-      </div>
-      {% endif %} {# Bloque que la mejora progresiva rellena con los errores del
-      endpoint JSON. #}
-      <div class="alerta alerta--error" data-errores role="alert" hidden></div>
-
-      <form
-        class="formulario"
-        method="post"
-        action="{{ url_for('procesar_finanzas') }}"
-        data-calculadora
-        data-proteccion
-        novalidate
-      >
+        {# Errores servidos por el POST clásico (respaldo sin JavaScript). #} {%
+        if errores %}
+        <div class="alerta alerta--error" role="alert">
+          <strong>Revisa los datos:</strong>
+          <ul>
+            {% for error in errores %}
+            <li>{{ error }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% endif %} {# Bloque que la mejora progresiva rellena con los errores del
+        endpoint JSON. #}
+        <div class="alerta alerta--error" data-errores role="alert" hidden></div>
         {# Botón por defecto para Enter: recalcula en vivo y nunca guarda. #}
         <button type="submit" hidden tabindex="-1" aria-hidden="true"></button>
         {# SRS v1.3: año, mes y quincena dejan de mostrarse en la cabecera, pero
@@ -416,11 +415,15 @@ contenido %}
           value="{{ valores.get('deduccion_incapacidad', '0') }}"
           data-entrada
         />
+      </section>
+
+      <section class="panel panel--liquidacion">
+        <h2 class="panel__titulo">Horas extras y recargos</h2>
 
         {# ---------------- Horas extras y recargos (2 × 3)
         -------------- #}
         <fieldset class="grupo-horas grupo-horas--cuadricula">
-          <legend class="campo__etiqueta">Horas extras y recargos</legend>
+          <legend class="sr-only">Horas extras y recargos</legend>
           <div class="cuadricula-horas">
             {% for tipo in tipos_hora %}
             <label class="campo campo--horas">
@@ -460,8 +463,8 @@ contenido %}
           </button>
         </div>
         <p class="ayuda" data-aviso-cambios hidden>Hay cambios sin guardar.</p>
-      </form>
-    </section>
+      </section>
+    </form>
 
     {# ------------------------ Desglose de recargos -------------------- #}
     <section class="panel panel--tabla" aria-labelledby="titulo-detalle">

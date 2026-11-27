@@ -2854,6 +2854,14 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v156`. Gate `qa_v4_56.py` **6/6**: separación de 18 px medida entre quincenas y atajos, `clientHeight 325 / scrollHeight 386` en 1280 px, `370 / 439` en 375 px y bordes inferiores iguales en web. Suite completa **1002 pruebas** en verde y 20 gates sin regresiones propias.
 
+### 2026-11-26 — Separación visual de Liquidación y Horas extras (ADR-153)
+
+**Decisión (ADR-153).** Separar visualmente Mis Finanzas en dos recuadros con 18 px fijos: el primero «Liquidación del periodo» termina en «Total de deducciones de ley» y su nota; el segundo «Horas extras y recargos» contiene la rejilla de horas y los botones. Solo cambio visual; el `<form>` sigue siendo uno solo.
+
+**Consecuencias.** En `finanzas/index.html` el formulario pasa a ser `formulario liquidacion-bloques` y contiene dos `<section class="panel panel--liquidacion">` hermanas. El `<legend>` del fieldset de horas pasa a `sr-only` para no duplicar el título visible. En `estilos.css`, `.liquidacion-bloques` usa `display: flex; flex-direction: column; gap: 18px`, el mismo espacio estable de módulos y columnas. No se cambiaron rutas, servicios, cálculos, `finanzas.js`, botones ni campos.
+
+**Verificación.** Playwright 1280 px y 390 px: dos paneles con el mismo fondo/borde/radio, separación exacta de 18 px, 7 campos de horas, botones «Guardar periodo»/«Limpiar» y recálculo en vivo funcionando (`$3.681.955` al escribir 10 horas extra); sin desbordes ni errores de consola. Suite completa en verde. `sw.js` en `olb-finanzas-v187`.
+
 ### 2026-11-26 — Causa real del resplandor invisible: height heredado (ADR-152)
 
 **Decisión (ADR-152).** Corrección del punto 1.1: el resplandor no se veía porque la regla base `.tarjeta::before` conserva `height: 3px` (antigua franja superior). La regla nueva ponía `inset: 0` pero no `height`, por lo que el degradado quedaba comprimido en una franja de 3 px en lo alto de la tarjeta.

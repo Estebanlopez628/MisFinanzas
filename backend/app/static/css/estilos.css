@@ -7466,3 +7466,11 @@ body:not(.pagina-acceso) .impacto-deudas__nota {
   margin-inline: auto;
   text-align: center;
 }
+
+/* Separación visual estable (18 px) entre los dos bloques de Liquidación,
+   la misma que separa los módulos y paneles del resto de la aplicación. */
+.liquidacion-bloques {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}

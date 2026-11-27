@@ -309,4 +309,5 @@ Principios innegociables. Toda especificación, plan y tarea debe cumplirlos de 
     - El desenfoque no se aplica a contenedores que envuelvan modales, para no alterar su posicionamiento.
     - Todas las tarjetas llevan un resplandor radial en la esquina superior izquierda y una doble onda SVG en la base, con degradado y crestas en su color de acento, sin franjas superiores ni fondos grises.
     - Las tarjetas de gráficas de Gastos y Presupuesto y la comparativa de cierre de deuda son excepciones sobrias: sin ondas ni marcos externos.
+    - «Liquidación del periodo» y «Horas extras y recargos» se presentan como dos paneles con el mismo estilo y separación estable de 18 px, dentro de un único formulario.
     - No se modifican iconos, medidas de campos, márgenes, cálculos ni flujos. La factura y el recibo (PDF e imagen) quedan fuera del ámbito.

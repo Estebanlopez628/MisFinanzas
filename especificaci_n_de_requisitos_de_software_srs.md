@@ -1933,3 +1933,17 @@ Línea base v4.44. Ajusta la sección 69. Alcance exclusivo: Mis Finanzas (`/fin
 
 - `.tarjeta::before` conservaba `height: 3px` de la antigua franja superior; con `inset: 0` el degradado quedaba comprimido en esa franja. Se añade `height: auto`, por lo que el `radial-gradient(80% 60% at 15% 12%, --wave-glow-dark …)` ocupa toda la tarjeta en Web y Móvil.
 - Verificado en 1280 px y 390 px: resplandor visible en las cinco tarjetas, doble onda intacta, sin desbordes. Suite completa en verde. `sw.js` en `olb-finanzas-v186`.
+
+## 88. Separación visual de Liquidación del periodo (ADR-153)
+
+**Regla suprema.** Solo separación visual dentro de Mis Finanzas; el formulario, sus rutas, cálculos y botones quedan intactos.
+
+### 88.1 Ajuste aplicado
+
+- `finanzas/index.html`: el formulario pasa a `formulario liquidacion-bloques` y contiene dos `<section class="panel panel--liquidacion">` hermanas. La primera termina en «Total de deducciones de ley» y su nota; la segunda se titula «Horas extras y recargos» y contiene la rejilla de horas y los botones. El `<legend>` del fieldset pasa a `sr-only`.
+- `estilos.css`: `.liquidacion-bloques` usa `display: flex; flex-direction: column; gap: 18px`, la misma separación estable de los módulos.
+
+### 88.2 Verificación y cierre documental
+
+- Playwright 1280 px y 390 px: dos paneles con el mismo fondo/borde/radio, gap exacto de 18 px, 7 campos de horas, botones y recálculo en vivo funcionando; sin desbordes ni errores de consola.
+- Suite completa en verde. `sw.js` en `olb-finanzas-v187`. Documentación sincronizada.
