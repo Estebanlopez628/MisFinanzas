@@ -2017,3 +2017,8 @@ Línea base v4.44. Ajusta la sección 69. Alcance exclusivo: Mis Finanzas (`/fin
 
 - En `@media (max-width: 640px)`, `.tabla-contenedor--deudas` usa `max-height: 460px`, `overflow-y: auto` y `overscroll-behavior: contain`: se ven seis deudas completas y las demás se alcanzan con scroll vertical dentro de la caja. La cabecera `thead th` conserva su fondo opaco `var(--bg-primary)` con `position: sticky; top: 0; z-index: 2`. Se mantiene `contain: paint` y el portal del modal de edición al `<body>`. Escritorio intacto (340 px / cuatro filas).
 - Verificado en 390 px con 12 filas: seis completas, `scrollTop` interno con `scrollY = 0` de la página, cabecera fija y sin desbordamiento horizontal; modal centrado. Suite completa en verde. `sw.js` en `olb-finanzas-v200`.
+
+## 100. Gesto táctil sin salto en Deudas (ADR-168)
+
+- Se conservan ambos ejes de desplazamiento de `.tabla-contenedor--deudas` en móvil. Se añade `-webkit-overflow-scrolling: touch` para inercia nativa en iOS. `deudas.js` cancela el gesto (`preventDefault`) únicamente cuando el movimiento es vertical dominante y la caja ya está en el tope superior o inferior, de modo que la página no se arrastra; los gestos horizontales y el scroll a mitad de la tabla siguen intactos.
+- Verificado en 390 px con 12 filas: en ambos topes se cancelan todos los `touchmove` y `scrollY` no cambia; a mitad no se cancela ninguno; un gesto horizontal en el tope mueve las columnas. Cabecera opaca, sin desbordes y modal centrado desde `<body>`. Suite completa en verde. `sw.js` en `olb-finanzas-v203`.

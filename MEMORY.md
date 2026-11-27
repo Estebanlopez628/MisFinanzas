@@ -2854,6 +2854,16 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v156`. Gate `qa_v4_56.py` **6/6**: separación de 18 px medida entre quincenas y atajos, `clientHeight 325 / scrollHeight 386` en 1280 px, `370 / 439` en 375 px y bordes inferiores iguales en web. Suite completa **1002 pruebas** en verde y 20 gates sin regresiones propias.
 
+### 2026-11-26 — Gesto táctil sin salto en Deudas (ADR-168)
+
+**Decisión (ADR-168).** El propietario reportó que la tabla «salta en todo el contenedor» al moverla con el dedo. Se conservan **ambos ejes** de desplazamiento (elección del propietario): la tabla sigue siendo más ancha que el móvil y las columnas se alcanzan en horizontal.
+
+**Diagnóstico.** Con `touch-action: auto`, un arrastre diagonal mueve `scrollTop` y `scrollLeft` a la vez (medido: 109 en cada eje), por lo que las columnas se desplazan lateralmente. Además, al llegar al tope vertical, iOS puede encadenar el gesto a la página y mover todo el contenedor.
+
+**Consecuencias.** En el bloque móvil de `.tabla-contenedor--deudas` se añade `-webkit-overflow-scrolling: touch` para inercia nativa en iOS, sin tocar `contain: paint` ni la cabecera opaca `sticky`. En `deudas.js` se agrega una guarda `touchstart`/`touchmove`/`touchend`: solo cancela el gesto (`preventDefault`) cuando el movimiento es **vertical dominante** y la caja ya está en el tope superior o inferior; el desplazamiento horizontal queda intacto. No se cambian cálculos, filas, modales ni el portal al `<body>`.
+
+**Verificación.** Playwright móvil con 12 filas: en el tope inferior y superior los siete eventos `touchmove` quedan cancelados y `scrollY` de la página no cambia; a mitad de la tabla no se cancela ninguno y el scroll vertical funciona; un gesto horizontal dominante en el tope no se cancela y mueve las columnas (`scrollLeft = 105`). Cabecera fija opaca, sin desbordamiento y modal centrado desde `<body>`. `node --check` correcto, suite completa en verde. `sw.js` en `olb-finanzas-v203`.
+
 ### 2026-11-26 — Botón «Buscar» azul en Órdenes registradas (ADR-167)
 
 **Decisión (ADR-167).** El propietario pidió que el botón «Buscar» de «Órdenes registradas» tenga el mismo azul de «+ Agregar otro producto».

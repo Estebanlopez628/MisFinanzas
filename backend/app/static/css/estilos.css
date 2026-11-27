@@ -595,6 +595,12 @@ a.tarjeta:focus-visible {
   margin-bottom: 16px;
 }
 
+/* Trabajos Extras: el encabezado «Pago mensual/quincenal» y su valor no deben
+   tocar el borde inferior del panel «Resultado del periodo» que lo precede. */
+.panel--resultado + .bloque-tabla-pagos {
+  margin-top: 16px;
+}
+
 .bloque-gastos__subtitulo {
   margin: 0 0 10px;
   color: var(--text-muted);
@@ -5712,10 +5718,12 @@ p,
   min-width: 0;
 }
 
-/* En móvil se muestran todas las deudas y todas las columnas, sin desplazamiento
-   vertical dentro de la tabla: la caja solo desplaza en horizontal y la página en
-   vertical. `contain: paint` evita que la tabla ensanche el layout móvil (ADR-62)
-   y el modal de edición se saca de la caja al abrirse (`deudas.js`). */
+/* En móvil se muestran seis deudas y el resto se alcanza desplazando la caja en
+   vertical; el desplazamiento horizontal se conserva para ver todas las columnas.
+   `-webkit-overflow-scrolling: touch` da inercia nativa en iOS y `deudas.js`
+   evita que el gesto se encadene a la página al llegar al tope (ADR-168).
+   `contain: paint` mantiene la tabla ancha dentro del layout (ADR-62) y el
+   modal de edición se saca de la caja al abrirse (`deudas.js`). */
 @media (max-width: 640px) {
   .tabla-contenedor--deudas {
     /* 74 px de cabecera + 6 filas de ~64 px: se ven seis deudas completas y el
@@ -5723,6 +5731,7 @@ p,
     max-height: 460px;
     overflow-y: auto;
     overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
     /* Sin `contain: paint`, el desbordamiento interno de la tabla (más de
        800 px) hace que Chrome móvil ensanche el layout aunque la caja recorte:
        `window.innerWidth` pasa de 390 a 827, la página entera se desplaza y el

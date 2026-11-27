@@ -374,4 +374,45 @@
       }, 150);
     });
   }
+
+  // ADR-168: la caja desplaza en dos ejes porque la tabla es más ancha que el
+  // móvil. En iOS, al llegar al tope vertical el navegador encadena el gesto a
+  // la página y parece que todo el contenedor salta. Solo se cancela el gesto
+  // cuando el dedo ya está en el borde y el movimiento es vertical dominante;
+  // el desplazamiento horizontal de columnas queda intacto.
+  var cajaDeudas = document.querySelector(".tabla-contenedor--deudas");
+  if (cajaDeudas) {
+    var inicioY = null;
+    var inicioX = null;
+
+    cajaDeudas.addEventListener("touchstart", function (evento) {
+      if (!esMovil() || evento.touches.length !== 1) {
+        inicioY = inicioX = null;
+        return;
+      }
+      inicioY = evento.touches[0].clientY;
+      inicioX = evento.touches[0].clientX;
+    }, { passive: true });
+
+    cajaDeudas.addEventListener("touchmove", function (evento) {
+      if (inicioY === null || evento.touches.length !== 1) {
+        return;
+      }
+      var dy = evento.touches[0].clientY - inicioY;
+      var dx = evento.touches[0].clientX - inicioX;
+      if (Math.abs(dy) <= Math.abs(dx)) {
+        return;
+      }
+      var enTope = dy < 0
+        ? cajaDeudas.scrollTop + cajaDeudas.clientHeight >= cajaDeudas.scrollHeight - 1
+        : cajaDeudas.scrollTop <= 0;
+      if (enTope) {
+        evento.preventDefault();
+      }
+    }, { passive: false });
+
+    cajaDeudas.addEventListener("touchend", function () {
+      inicioY = inicioX = null;
+    }, { passive: true });
+  }
 })();
