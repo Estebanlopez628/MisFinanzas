@@ -7468,9 +7468,14 @@ body:not(.pagina-acceso) .impacto-deudas__nota {
 }
 
 /* Separación visual estable (18 px) entre los dos bloques de Liquidación,
-   la misma que separa los módulos y paneles del resto de la aplicación. */
-.liquidacion-bloques {
+   la misma que separa los módulos y paneles del resto de la aplicación.
+   El envoltorio del formulario no debe pintar fondo: si lo hace, el azul
+   aparece en el hueco y los dos paneles parecen uno solo. */
+body:not(.pagina-acceso) form.liquidacion-bloques {
   display: flex;
   flex-direction: column;
   gap: 18px;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
 }

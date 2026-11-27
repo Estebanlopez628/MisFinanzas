@@ -1947,3 +1947,8 @@ Línea base v4.44. Ajusta la sección 69. Alcance exclusivo: Mis Finanzas (`/fin
 
 - Playwright 1280 px y 390 px: dos paneles con el mismo fondo/borde/radio, gap exacto de 18 px, 7 campos de horas, botones y recálculo en vivo funcionando; sin desbordes ni errores de consola.
 - Suite completa en verde. `sw.js` en `olb-finanzas-v187`. Documentación sincronizada.
+
+## 89. Envoltorio transparente entre bloques de Liquidación (ADR-154)
+
+- El hueco de 18 px mostraba azul porque el `<form class="formulario liquidacion-bloques">` heredaba el fondo de `.formulario`. Se cambia la regla a `body:not(.pagina-acceso) form.liquidacion-bloques` con `background: transparent`, `border: 0` y `box-shadow: none`, suficiente para ganar por especificidad.
+- El formulario sigue siendo uno solo: no se separaron los envíos ni los botones. Verificado en 1280 px y 390 px con paneles visualmente independientes, gap de 18 px y recálculo intacto. Suite completa en verde. `sw.js` en `olb-finanzas-v188`.

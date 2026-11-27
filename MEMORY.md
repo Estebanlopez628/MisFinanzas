@@ -2854,6 +2854,14 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v156`. Gate `qa_v4_56.py` **6/6**: separación de 18 px medida entre quincenas y atajos, `clientHeight 325 / scrollHeight 386` en 1280 px, `370 / 439` en 375 px y bordes inferiores iguales en web. Suite completa **1002 pruebas** en verde y 20 gates sin regresiones propias.
 
+### 2026-11-26 — Fondo del envoltorio de Liquidación (ADR-154)
+
+**Decisión (ADR-154).** Ajuste al punto anterior: el hueco entre los dos paneles seguía mostrando azul porque el `<form class="formulario liquidacion-bloques">` heredaba el fondo de la regla general `.formulario`.
+
+**Consecuencias.** La regla pasa a `body:not(.pagina-acceso) form.liquidacion-bloques` con `background: transparent`, `border: 0` y `box-shadow: none`, conservando `display: flex`, `flex-direction: column` y `gap: 18px`. La mayor especificidad es necesaria porque `.formulario` tiene `(0,2,1)` y ganaba sobre una clase simple. El formulario sigue siendo uno solo; no se separó en dos.
+
+**Verificación.** Playwright 1280 px y 390 px: envoltorio con fondo transparente, gap de 18 px y paneles independientes visualmente, con cálculo y botones intactos; sin desbordes. Suite completa en verde. `sw.js` en `olb-finanzas-v188`.
+
 ### 2026-11-26 — Separación visual de Liquidación y Horas extras (ADR-153)
 
 **Decisión (ADR-153).** Separar visualmente Mis Finanzas en dos recuadros con 18 px fijos: el primero «Liquidación del periodo» termina en «Total de deducciones de ley» y su nota; el segundo «Horas extras y recargos» contiene la rejilla de horas y los botones. Solo cambio visual; el `<form>` sigue siendo uno solo.
