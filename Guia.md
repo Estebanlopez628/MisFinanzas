@@ -257,7 +257,7 @@ Principios que explican el resto del código:
 
 #### `backend/app/static/css/`
 
-- **`estilos.css`** · 7544 líneas — Fondo y superficies
+- **`estilos.css`** · 7582 líneas — Fondo y superficies
 - **`factura-olb.css`** · 764 líneas — SRS v4.44: el retorno de la factura es «Volver a Ventas» en todos los
 
 #### `backend/app/static/js/`
@@ -302,7 +302,7 @@ Principios que explican el resto del código:
 - **`dashboard.html`** · 96 líneas — Plantilla: Panel principal
 - **`login.html`** · 95 líneas — Plantilla: Iniciar sesión
 - **`olvide_contrasena.html`** · 35 líneas — Plantilla: Recuperar contraseña
-- **`registro.html`** · 73 líneas — Plantilla: Crear cuenta
+- **`registro.html`** · 68 líneas — Plantilla: Crear cuenta
 - **`restablecer_contrasena.html`** · 37 líneas — Plantilla: Nueva contraseña
 
 #### `backend/app/templates/admin/`

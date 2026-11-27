@@ -2854,6 +2854,14 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v156`. Gate `qa_v4_56.py` **6/6**: separación de 18 px medida entre quincenas y atajos, `clientHeight 325 / scrollHeight 386` en 1280 px, `370 / 439` en 375 px y bordes inferiores iguales en web. Suite completa **1002 pruebas** en verde y 20 gates sin regresiones propias.
 
+### 2026-11-26 — Línea neón extendida a todos los encabezados (ADR-166)
+
+**Decisión (ADR-166).** El propietario indicó que la línea neón de ADR-162 se había quedado corta y enumeró los encabezados que debían llevarla: secciones de Mis Finanzas (horas extras, desglose, auxilio, incapacidades, resultado, atajos, quincenas mensuales y quincenales), Presupuesto (diagnóstico, capacidad, consejero), Atajos guardados, Registros cronológicos, y todos los paneles y tablas de OLB BYTE (productos, órdenes, búsqueda, cartera, movimientos, gastos operativos, garantías y analítica), además de Deudas y Trabajos Extras. También pidió pasar «ESTADO DE CARTERA» a minúsculas: ahora «Estado de cartera».
+
+**Consecuencias.** La clase `.form-header-white` conserva el trazo de 2 px y el degradado cian→índigo. Se quitó `width: 100%` de la regla base (los títulos dentro de `.panel__cabecera` y `.quincena__cabecera` son flex items y un ancho fijo empujaba el botón o el badge a otra línea) y se agregaron dos variantes: `.form-header-white--inline` (ancho al texto, sin margen inferior, para quincenas y badges) y `.form-header-white--compact` (para la etiqueta-buscar). Se añadió `justify-content: center` cuando el título es `.panel__titulo--centrado` o vive en `.panel.capacidad`, para preservar el centrado original. La macro `panel_capacidad` aplica la línea a los dos títulos que genera («Capacidad de endeudamiento» e «Ingresos extras»). Sigue excluido el Login y los modales de edición.
+
+**Verificación.** Playwright Chromium 1280 px y 390 px sobre las 8 vistas de finanzas y las 5 de OLB BYTE, con ambos roles: todos los títulos solicitados presentan `::after` de 2 px con degradado, ninguno sale del viewport y no hay desbordamiento horizontal. Se actualizaron las dos pruebas que fijaban «ESTADO DE CARTERA» y las dos que comparaban la clase exacta de las quincenas. Suite completa **1003 pruebas** en verde; `compileall` y `node --check` correctos. `sw.js` en `olb-finanzas-v200`.
+
 ### 2026-11-26 — Seis deudas visibles en móvil con cabecera opaca (ADR-165)
 
 **Decisión (ADR-165).** El propietario pidió que, en «Registro y Detalles de deudas» → «Deudas registradas», la vista móvil muestre solo seis deudas y que las demás se alcancen desplazando verticalmente, sin volver la cabecera transparente.
