@@ -7010,6 +7010,9 @@ body:not(.pagina-acceso) .impacto-deuda::before {
   content: "";
   position: absolute;
   inset: 0;
+  /* La regla base deja `height: 3px` para la franja superior; sin esto el
+     degradado queda comprimido en 3 px y el resplandor no se ve. */
+  height: auto;
   z-index: 1;
   pointer-events: none;
   background: radial-gradient(75% 58% at 10% 6%, var(--card-accent-soft) 0%, transparent 68%);

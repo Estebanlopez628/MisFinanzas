@@ -1928,3 +1928,8 @@ Línea base v4.44. Ajusta la sección 69. Alcance exclusivo: Mis Finanzas (`/fin
 **Ajuste.** `--wave-glow-dark` por módulo (verde `rgba(6,78,59,.34)`, cian `rgba(12,74,110,.36)`, rojo `rgba(127,29,29,.32)`, ámbar `rgba(120,53,15,.34)`, reportes `rgba(131,24,67,.32)`) y `::before` con `radial-gradient(80% 60% at 15% 12%, … 0%, transparent 72%)` a `opacity: 1` en Web y Móvil. La doble onda en `::after` no se modificó.
 
 **Verificación.** Playwright 1280 px y 390 px: cinco tarjetas con su resplandor y onda intacta, sin desbordes. Suite completa en verde. `sw.js` en `olb-finanzas-v185`.
+
+## 87. Causa real del resplandor invisible (ADR-152)
+
+- `.tarjeta::before` conservaba `height: 3px` de la antigua franja superior; con `inset: 0` el degradado quedaba comprimido en esa franja. Se añade `height: auto`, por lo que el `radial-gradient(80% 60% at 15% 12%, --wave-glow-dark …)` ocupa toda la tarjeta en Web y Móvil.
+- Verificado en 1280 px y 390 px: resplandor visible en las cinco tarjetas, doble onda intacta, sin desbordes. Suite completa en verde. `sw.js` en `olb-finanzas-v186`.

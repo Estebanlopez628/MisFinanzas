@@ -2854,6 +2854,14 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v156`. Gate `qa_v4_56.py` **6/6**: separación de 18 px medida entre quincenas y atajos, `clientHeight 325 / scrollHeight 386` en 1280 px, `370 / 439` en 375 px y bordes inferiores iguales en web. Suite completa **1002 pruebas** en verde y 20 gates sin regresiones propias.
 
+### 2026-11-26 — Causa real del resplandor invisible: height heredado (ADR-152)
+
+**Decisión (ADR-152).** Corrección del punto 1.1: el resplandor no se veía porque la regla base `.tarjeta::before` conserva `height: 3px` (antigua franja superior). La regla nueva ponía `inset: 0` pero no `height`, por lo que el degradado quedaba comprimido en una franja de 3 px en lo alto de la tarjeta.
+
+**Consecuencias.** Se añade `height: auto` a la regla conjunta de `body:not(.pagina-acceso) .tarjeta::before, .panel--kpis .kpi::before, .impacto-deuda::before`. El pseudo-elemento mide ahora toda la tarjeta (250 px en escritorio) y el `radial-gradient(80% 60% at 15% 12%, --wave-glow-dark …)` se dibuja completo. La doble onda en `::after` sigue intacta.
+
+**Verificación.** Playwright 1280 px y 390 px: `::before` con altura completa y resplandor visible en verde/cian/rojo/ámbar/fucsia; sin desbordes. Suite completa en verde. `sw.js` en `olb-finanzas-v186`.
+
 ### 2026-11-26 — Resplandor profundo en tarjetas de módulos (ADR-151)
 
 **Decisión (ADR-151).** Punto 1.1 del SRS Consolidado Final v3: resplandor superior izquierdo sutil y oscurecido, del mismo color de la onda de cada tarjeta. No se recibieron los puntos 1.2 a 1.5, por lo que no se tocaron altri componentes.
