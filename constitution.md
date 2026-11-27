@@ -308,4 +308,5 @@ Principios innegociables. Toda especificación, plan y tarea debe cumplirlos de 
     - Todos los modales y alertas usan el mismo azul marino/cian translúcido; el login conserva su diálogo legal original.
     - El desenfoque no se aplica a contenedores que envuelvan modales, para no alterar su posicionamiento.
     - Todas las tarjetas llevan un resplandor radial en la esquina superior izquierda y una doble onda SVG en la base, con degradado y crestas en su color de acento, sin franjas superiores ni fondos grises.
+    - Las tarjetas de gráficas de Gastos y Presupuesto y la comparativa de cierre de deuda son excepciones sobrias: sin ondas ni marcos externos.
     - No se modifican iconos, medidas de campos, márgenes, cálculos ni flujos. La factura y el recibo (PDF e imagen) quedan fuera del ámbito.

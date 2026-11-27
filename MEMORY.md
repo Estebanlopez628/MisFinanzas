@@ -2854,6 +2854,14 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v156`. Gate `qa_v4_56.py` **6/6**: separación de 18 px medida entre quincenas y atajos, `clientHeight 325 / scrollHeight 386` en 1280 px, `370 / 439` en 375 px y bordes inferiores iguales en web. Suite completa **1002 pruebas** en verde y 20 gates sin regresiones propias.
 
+### 2026-11-26 — Ajustes puntuales finales v3 (ADR-149)
+
+**Decisión (ADR-149).** Alcance quirúrgico estricto sobre cinco puntos: resplandor superior izquierdo, contador compacto de reportes, tarjetas de gráficas sin ondas, marcos externos de la comparativa y unificación tipográfica de sus encabezados. No se tocó nada más.
+
+**Consecuencias.** En `estilos.css`: el resplandor pasa a `radial-gradient(75% 58% at 10% 6%)` con opacidad .65 (.60 móvil); `.card-reportes .report-counter-badge` queda como píldora gris de 24 px de alto, `fit-content`, borde sutil y `z-index: 4`; las tarjetas de gráficas de Gastos y Presupuesto (`.consejero__cifras .tarjeta` y `.impacto-deudas .impacto-deuda`) pierden `::before`/`::after` y usan el fondo sobrio de los velocímetros; `.cierre-deuda` y `.impacto-deudas` quedan sin borde, fondo ni sombra; los encabezados de ambas secciones comparten tipografía (20 px/800 blanco y 16 px/700 esmeralda) también en móvil. En `dashboard.html` se añadieron las clases `card-reportes` y `report-counter-badge`.
+
+**Verificación.** Playwright 1280 px y 390 px: los cinco puntos miden como lo solicitado (badge 25→40 px al crecer de 0 a 125, sin marcos externos, encabezados equivalentes, tarjetas de gráficas sin onda), sin desbordes. Suite completa en verde. `sw.js` en `olb-finanzas-v183`.
+
 ### 2026-11-26 — Boceto 2 fiel: resplandor superior y doble onda (ADR-148)
 
 **Decisión (ADR-148).** El propietario pidió ajustar las tarjetas al Boceto 2 exacto: resplandor radial en la esquina superior izquierda y dos ondas luminosas superpuestas en la base, sin invadir «Abrir módulo →» ni el contador de reportes.

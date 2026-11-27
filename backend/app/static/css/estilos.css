@@ -7012,8 +7012,8 @@ body:not(.pagina-acceso) .impacto-deuda::before {
   inset: 0;
   z-index: 1;
   pointer-events: none;
-  background: radial-gradient(85% 65% at 12% 8%, var(--card-accent-soft) 0%, transparent 70%);
-  opacity: 0.75;
+  background: radial-gradient(75% 58% at 10% 6%, var(--card-accent-soft) 0%, transparent 68%);
+  opacity: 0.65;
 }
 
 /* Doble onda inferior: una trasera difusa y una delantera con cresta marcada.
@@ -7343,4 +7343,99 @@ body:not(.pagina-acceso) .abonos-scroll {
   max-width: 100%;
   box-sizing: border-box;
   border-radius: var(--radio-md, 14px);
+}
+
+/* --- SRS Ajustes Puntuales Finales v3: cinco puntos, nada más --- */
+
+/* 2. Contador compacto y dinámico en la esquina superior derecha. */
+body:not(.pagina-acceso) .card-reportes .report-counter-badge,
+body:not(.pagina-acceso) .card-reportes .report-counter-badge.tarjeta__badge--activo {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 8px;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.22);
+  color: #f8fafc;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* 3. Tarjetas de gráficas de Gastos y Presupuesto: sin olas ni resplandor,
+   con el mismo fondo sobrio que los velocímetros. */
+body:not(.pagina-acceso) .consejero__cifras .tarjeta,
+body:not(.pagina-acceso) .impacto-deudas .impacto-deuda {
+  background: rgba(4, 18, 42, 0.62);
+  border: 1px solid rgba(56, 189, 248, 0.18);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: none;
+}
+
+body:not(.pagina-acceso) .consejero__cifras .tarjeta::before,
+body:not(.pagina-acceso) .consejero__cifras .tarjeta::after,
+body:not(.pagina-acceso) .impacto-deudas .impacto-deuda::before,
+body:not(.pagina-acceso) .impacto-deudas .impacto-deuda::after {
+  content: none;
+}
+
+body:not(.pagina-acceso) .consejero__cifras .tarjeta {
+  padding-bottom: 22px;
+}
+
+/* 4. Sin marcos externos en la comparativa de cierre de deuda. */
+body:not(.pagina-acceso) .cierre-deuda,
+body:not(.pagina-acceso) .impacto-deudas {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* 5. Unificación tipográfica de encabezados de la comparativa. */
+body:not(.pagina-acceso) .cierre-deuda__titulo {
+  margin: 0 0 8px;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+}
+
+/* 5 (complemento). Mismo formato en web y móvil, por encima de los media
+   queries que ainda ajustaban estos encabezados por separado. */
+body:not(.pagina-acceso) .cierre-deuda__titulo,
+body:not(.pagina-acceso) .impacto-deudas__titulo {
+  margin: 0 0 8px !important;
+  font-size: 20px !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.02em !important;
+  color: #ffffff !important;
+  text-align: center !important;
+}
+
+body:not(.pagina-acceso) .cierre-deuda__pill,
+body:not(.pagina-acceso) .impacto-deudas__subtitulo {
+  width: auto !important;
+  max-width: none !important;
+  margin: 0 0 18px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: #34d399 !important;
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  line-height: 1.35 !important;
+  text-align: center !important;
 }

@@ -1896,3 +1896,20 @@ Línea base v4.44. Ajusta la sección 69. Alcance exclusivo: Mis Finanzas (`/fin
 
 - Playwright 1280 px y 390 px: doble onda con el color propio de cada tarjeta, resplandor superior izquierdo, enlace y badge por encima de la onda, sin desbordes ni errores de consola.
 - Suite completa en verde. `sw.js` en `olb-finanzas-v182`. Documentación sincronizada.
+
+## 84. SRS Ajustes Puntuales Finales v3 (ADR-149)
+
+**Regla suprema.** Alcance quirúrgico sobre cinco puntos; no se tocó ningún otro componente, flujo, icono ni cálculo.
+
+### 84.1 Puntos aplicados
+
+1. Resplandor superior izquierdo `radial-gradient(75% 58% at 10% 6%)` con opacidad .65 (.60 en móvil), conservando la doble onda.
+2. Badge de Comentarios y Reportes como píldora gris compacta arriba a la derecha (24 px de alto, `fit-content`, crece con el número).
+3. Tarjetas de gráficas de Gastos y Presupuesto sin `::before`/`::after`, con el fondo de los velocímetros.
+4. `.cierre-deuda` y `.impacto-deudas` sin borde, fondo ni sombra externos.
+5. Encabezados de la comparativa unificados: 20 px/800 blanco y 16 px/700 esmeralda, también en móvil.
+
+### 84.2 Verificación y cierre documental
+
+- Playwright 1280 px y 390 px sobre los cinco puntos, sin desbordes; login, iconos, modales, tablas y flujos intactos.
+- Suite completa en verde. `sw.js` en `olb-finanzas-v183`. Documentación sincronizada.

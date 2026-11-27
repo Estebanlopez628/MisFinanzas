@@ -21,7 +21,7 @@
     <div class="rejilla-tarjetas">
       {% for tarjeta in tarjetas %}
         {% if tarjeta.disponible %}
-          <a class="tarjeta tarjeta--{{ tarjeta.acento }}" href="{{ tarjeta.url }}">
+          <a class="tarjeta tarjeta--{{ tarjeta.acento }}{% if tarjeta.clave == 'comentarios' %} card-reportes{% endif %}" href="{{ tarjeta.url }}">
             <span class="tarjeta__icono" aria-hidden="true">
               {%- if tarjeta.icono_archivo -%}
                 <img class="tarjeta__icono-imagen" src="{{ url_for('estaticos', path=tarjeta.icono_archivo) }}"
@@ -35,7 +35,7 @@
             <span class="tarjeta__accion">Abrir módulo →</span>
             {% if tarjeta.clave == 'comentarios' %}
               {# SRS v2.0, sección 5.5: badge circular con los pendientes. #}
-              <span class="tarjeta__badge{% if comentarios_pendientes > 0 %} tarjeta__badge--activo{% endif %}"
+              <span class="tarjeta__badge report-counter-badge{% if comentarios_pendientes > 0 %} tarjeta__badge--activo{% endif %}"
                     data-contador-comentarios
                     aria-label="{{ comentarios_pendientes }} solicitudes pendientes">{{ comentarios_pendientes }}</span>
             {% endif %}
