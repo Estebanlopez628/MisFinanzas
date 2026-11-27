@@ -2854,6 +2854,14 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v156`. Gate `qa_v4_56.py` **6/6**: separación de 18 px medida entre quincenas y atajos, `clientHeight 325 / scrollHeight 386` en 1280 px, `370 / 439` en 375 px y bordes inferiores iguales en web. Suite completa **1002 pruebas** en verde y 20 gates sin regresiones propias.
 
+### 2026-11-26 — Botón «Buscar» azul en Órdenes registradas (ADR-167)
+
+**Decisión (ADR-167).** El propietario pidió que el botón «Buscar» de «Órdenes registradas» tenga el mismo azul de «+ Agregar otro producto».
+
+**Consecuencias.** En `templates/olb_byte/index.html` el botón pasa de `boton boton--secundario boton--pequeno` a `boton boton--primario boton--pequeno`. Conserva su tamaño pequeño y hereda el degradado azul luminoso y el borde de los botones primarios del módulo. No se tocan los campos, la tabla, la búsqueda ni el comportamiento del formulario.
+
+**Verificación.** Playwright 1280 px: «Buscar» y «+ Agregar otro producto» comparten el mismo `background-image` (`linear-gradient(135deg, rgba(2,132,199,.92), rgba(56,189,248,.92))`), borde `rgba(125,211,252,.6)` y texto `rgb(248,252,255)`. Suite completa **1003 pruebas** en verde. `sw.js` en `olb-finanzas-v201`.
+
 ### 2026-11-26 — Línea neón extendida a todos los encabezados (ADR-166)
 
 **Decisión (ADR-166).** El propietario indicó que la línea neón de ADR-162 se había quedado corta y enumeró los encabezados que debían llevarla: secciones de Mis Finanzas (horas extras, desglose, auxilio, incapacidades, resultado, atajos, quincenas mensuales y quincenales), Presupuesto (diagnóstico, capacidad, consejero), Atajos guardados, Registros cronológicos, y todos los paneles y tablas de OLB BYTE (productos, órdenes, búsqueda, cartera, movimientos, gastos operativos, garantías y analítica), además de Deudas y Trabajos Extras. También pidió pasar «ESTADO DE CARTERA» a minúsculas: ahora «Estado de cartera».
