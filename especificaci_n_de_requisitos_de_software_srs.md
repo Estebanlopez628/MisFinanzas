@@ -1992,3 +1992,8 @@ Línea base v4.44. Ajusta la sección 69. Alcance exclusivo: Mis Finanzas (`/fin
 - `base.html`: «Si prefieres, aporta lo que quieras.» → «Si prefieres, aporta lo que salga de tu corazón.»
 - `.ayuda-inicio__enlace` usa `#60A5FA`, de modo que «Ayuda y comentarios» e «Invitar amigos» comparten color también tras visitar el enlace.
 - Verificado en 390 px con `USER_FINANZAS`; sin desbordes. Suite completa en verde. `sw.js` en `olb-finanzas-v193`.
+
+## 95. Conflicto que ocultaba el fondo futurista (ADR-160)
+
+- La imagen cargaba correctamente, pero un velo al 62 %, dos radiales y `background-attachment: fixed` la dejaban invisible. Se sustituye por `linear-gradient(rgba(5,15,36,.34))` sobre la imagen centrada con `cover`, sin `fixed`, y respaldo `#050f24`.
+- Verificado en 1280 px y 390 px: ondas visibles, contraste conservado y sin desbordes. Suite completa en verde. `sw.js` en `olb-finanzas-v194`.

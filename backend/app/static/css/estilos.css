@@ -55,15 +55,14 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Fondo de ondas azules con velo oscuro en toda la aplicación, excepto el login:
-   `pagina-acceso` conserva su fondo original y su tarjeta de acceso intacta. */
+/* Fondo de ondas azules futuristas en toda la aplicación, excepto el login.
+   El velo anterior al 62 % y los radiales tapaban la imagen; se reduce a un
+   filtro ligero para que se vea sin perder contraste en tarjetas y textos. */
 body:not(.pagina-acceso) {
   background:
-    radial-gradient(1200px 600px at 15% -10%, rgba(2, 132, 199, 0.22), transparent 60%),
-    radial-gradient(900px 500px at 110% 10%, rgba(16, 185, 129, 0.14), transparent 55%),
-    linear-gradient(rgba(15, 23, 42, 0.62), rgba(15, 23, 42, 0.62)),
-    url("/estaticos/img/fondo-ondas-futuristas.png") center center / cover no-repeat fixed,
-    var(--bg-primary);
+    linear-gradient(rgba(5, 15, 36, 0.34), rgba(5, 15, 36, 0.34)),
+    url("/estaticos/img/fondo-ondas-futuristas.png") center center / cover no-repeat,
+    #050f24;
 }
 
 /* ------------------------------ Estructura ------------------------------ */

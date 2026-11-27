@@ -2854,6 +2854,14 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v156`. Gate `qa_v4_56.py` **6/6**: separación de 18 px medida entre quincenas y atajos, `clientHeight 325 / scrollHeight 386` en 1280 px, `370 / 439` en 375 px y bordes inferiores iguales en web. Suite completa **1002 pruebas** en verde y 20 gates sin regresiones propias.
 
+### 2026-11-26 — Conflicto que ocultaba el fondo futurista (ADR-160)
+
+**Decisión (ADR-160).** El usuario reportó que el fondo no se veía. Diagnóstico: la imagen cargaba (HTTP 200) y la regla aplicaba, pero encima tenía `linear-gradient(rgba(15,23,42,.62))` más dos degradados radiales y `background-attachment: fixed`, que la dejaban casi invisible y podían fallar en iOS.
+
+**Consecuencias.** `body:not(.pagina-acceso)` usa ahora `linear-gradient(rgba(5,15,36,.34))` sobre `url("/estaticos/img/fondo-ondas-futuristas.png") center center / cover no-repeat` con respaldo `#050f24`. Se eliminaron los radiales y el `fixed`. El Login sigue con su fondo original.
+
+**Verificación.** Playwright 1280 px y 390 px: ondas futuristas visibles, texto y tarjetas con contraste, una sola pestaña y sin desbordes. Suite completa en verde. `sw.js` en `olb-finanzas-v194`.
+
 ### 2026-11-26 — Texto del café y color de Invitar amigos (ADR-159)
 
 **Decisión (ADR-159).** Ajustes de texto y color pedidos por el propietario: frase del diálogo de apoyo y color del botón «Invitar amigos».
