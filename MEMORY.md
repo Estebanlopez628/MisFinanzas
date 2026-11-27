@@ -2854,6 +2854,14 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v156`. Gate `qa_v4_56.py` **6/6**: separación de 18 px medida entre quincenas y atajos, `clientHeight 325 / scrollHeight 386` en 1280 px, `370 / 439` en 375 px y bordes inferiores iguales en web. Suite completa **1002 pruebas** en verde y 20 gates sin regresiones propias.
 
+### 2026-11-26 — Separación en Pagos de Trabajos Extras (ADR-169)
+
+**Decisión (ADR-169).** El propietario reportó que en «Pagos de <mes>» el encabezado «Pago mensual/quincenal» y su badge de valor quedaban pegados al borde inferior del panel «Resultado del periodo».
+
+**Consecuencias.** En `estilos.css` se añade `.panel--resultado + .bloque-tabla-pagos { margin-top: 16px; }`. El selector solo alcanza al primer bloque de pagos que sigue al resultado, así que no se acumula con el `margin-bottom: 16px` que ya separa bloques consecutivos. No se tocan textos, colores, cálculos ni los gastos fijos del contrato.
+
+**Verificación.** Playwright 1280 px y 390 px: la separación medida entre el borde inferior de `.panel--resultado` y el inicio del encabezado es exactamente 16 px en ambos tamaños. Suite completa **1003 pruebas** en verde. `sw.js` en `olb-finanzas-v203`.
+
 ### 2026-11-26 — Gesto táctil sin salto en Deudas (ADR-168)
 
 **Decisión (ADR-168).** El propietario reportó que la tabla «salta en todo el contenedor» al moverla con el dedo. Se conservan **ambos ejes** de desplazamiento (elección del propietario): la tabla sigue siendo más ancha que el móvil y las columnas se alcanzan en horizontal.

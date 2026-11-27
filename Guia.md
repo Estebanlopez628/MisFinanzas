@@ -257,7 +257,7 @@ Principios que explican el resto del código:
 
 #### `backend/app/static/css/`
 
-- **`estilos.css`** · 7582 líneas — Fondo y superficies
+- **`estilos.css`** · 7591 líneas — Fondo y superficies
 - **`factura-olb.css`** · 764 líneas — SRS v4.44: el retorno de la factura es «Volver a Ventas» en todos los
 
 #### `backend/app/static/js/`
@@ -271,7 +271,7 @@ Principios que explican el resto del código:
 - **`comentarios.js`** · 46 líneas — Cambio de estado en el panel administrativo de reportes (SRS v2.0, 5.5).
 - **`consejero.js`** · 80 líneas — Tooltip táctil de la gráfica «Comparativa de cierre de deuda» (SRS v3.7).
   - Funciones: `mostrar`
-- **`deudas.js`** · 378 líneas — Interacción de filas con modal centrado (SRS v1.9, secciones 2.3 y 3.3).
+- **`deudas.js`** · 419 líneas — Interacción de filas con modal centrado (SRS v1.9, secciones 2.3 y 3.3).
   - Funciones: `esMovil`, `sacarDeLaTabla`, `devolverALaTabla`, `sacarAtajoDelContexto`, `vigilarPortabilidad`, `cerrarOtras`, `conectarFilas`, `pendienteDeDeuda`, `numeroDeuda`, `validarPlan`, `numero`, `validarEdicion`
 - **`dona.js`** · 122 líneas — Interacción de las gráficas tipo dona (capacidad de endeudamiento y cartera).
   - Funciones: `centro`, `mostrar`, `restaurar`, `iniciar`
