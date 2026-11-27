@@ -1975,3 +1975,9 @@ Línea base v4.44. Ajusta la sección 69. Alcance exclusivo: Mis Finanzas (`/fin
 - En Registrar Venta, el botón del celular adopta la altura y el radio del campo (`align-self: stretch`, `min-height: 50px`, `border-radius: var(--radio-md)`), sin cambiar su ancho, color ni función; el icono de WhatsApp y el rótulo dinámico siguen intactos.
 - Nota: el SRS decía «y títulos» en el encabezado, pero no llegó ninguna instrucción de borde para títulos en el cuerpo; no se aplicó ninguno.
 - Verificado en 1280 px y 390 px: campo y botón a 50 px con radio 14 px, sin desbordes. Suite completa en verde. `sw.js` en `olb-finanzas-v190`.
+
+## 92. WhatsApp universal y café oscurecido (ADR-157)
+
+- `agregarNumeroMovil()` usa `https://wa.me/?text=Hola` con `window.open(..., "_blank", "noopener,noreferrer")`, la misma lógica que «Invitar amigos»: sin destinatario, WhatsApp abre la lista de contactos para elegir y copiar el número. El escritorio mantiene el portapapeles.
+- `.apoyo-cafe` usa `rgba(4,18,42,.68)`, el mismo fondo de `.campo__control`; borde y sombra no cambian.
+- Verificado en 390 px y 1280 px, sin desbordes. Suite completa en verde. `sw.js` en `olb-finanzas-v191`.

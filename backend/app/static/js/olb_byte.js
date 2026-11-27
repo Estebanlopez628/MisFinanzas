@@ -560,14 +560,20 @@
   }
 
   /**
-   * Abre WhatsApp en el celular para que el usuario busque el contacto y copie su número.
-   * La página no puede leer la libreta de WhatsApp; el usuario pega el número en el campo
-   * y el evento `input` lo deja limpio (sin espacios ni indicativo 57).
+   * Abre WhatsApp en el celular con el mismo enlace universal que «Invitar amigos»:
+   * `wa.me` sin destinatario abre directamente la lista de contactos para elegir uno
+   * y copiar su número. La página no puede leer la libreta de WhatsApp; el usuario
+   * pega el número en el campo y el evento `input` lo deja limpio.
    *
    * @returns {void}
    */
   function agregarNumeroMovil() {
-    window.location.href = "whatsapp://";
+    var mensaje = "Hola";
+    window.open(
+      "https://wa.me/?text=" + encodeURIComponent(mensaje),
+      "_blank",
+      "noopener,noreferrer"
+    );
   }
 
   /**

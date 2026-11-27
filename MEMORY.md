@@ -2854,6 +2854,14 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v156`. Gate `qa_v4_56.py` **6/6**: separación de 18 px medida entre quincenas y atajos, `clientHeight 325 / scrollHeight 386` en 1280 px, `370 / 439` en 375 px y bordes inferiores iguales en web. Suite completa **1002 pruebas** en verde y 20 gates sin regresiones propias.
 
+### 2026-11-26 — WhatsApp universal en Pegar número y fondo de Invítame un café (ADR-157)
+
+**Decisión (ADR-157).** Aplicar al botón móvil de celular la misma lógica que «Invitar amigos» y oscurecer el módulo de apoyo con el color de los cuadros de texto.
+
+**Consecuencias.** En `olb_byte.js`, `agregarNumeroMovil()` deja `whatsapp://` y usa `window.open("https://wa.me/?text=" + encodeURIComponent("Hola"), "_blank", "noopener,noreferrer")`, igual que `app.js` con Invitar: el enlace sin destinatario abre la lista de contactos de WhatsApp en el celular. El usuario copia el número y el evento `input` lo normaliza; el escritorio sigue usando portapapeles. Se actualiza `test_olb_contactos_movil.py`. En `estilos.css`, `.apoyo-cafe` pasa a `rgba(4,18,42,.68)`, el mismo fondo de `.campo__control`, conservando borde y sombra.
+
+**Verificación.** Playwright 390 px: `window.open` interceptado recibe `https://wa.me/?text=Hola`, `_blank`, `noopener,noreferrer`; rótulo móvil intacto. Playwright 1280 px con `USER_FINANZAS`: café y campo ambos `rgba(4,18,42,.68)`, sin desbordes. Suite completa en verde. `sw.js` en `olb-finanzas-v191`.
+
 ### 2026-11-26 — Botón Pegar número uniforme (ADR-156)
 
 **Decisión (ADR-156).** Igualar la altura y el radio del botón «Pegar número» a los del campo de celular en Registrar Venta, sin cambiar su ancho ni su función.
