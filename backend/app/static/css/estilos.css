@@ -475,7 +475,7 @@ a.tarjeta:focus-visible {
   color: #ffffff;
   padding-bottom: 12px;
   margin-bottom: 18px;
-  width: 100%;
+  min-width: 0;
   box-sizing: border-box;
 }
 
@@ -504,6 +504,28 @@ a.tarjeta:focus-visible {
   .form-header-white {
     padding-bottom: 10px;
   }
+}
+
+/* Variante para títulos que comparten fila con un badge o un botón: la línea
+   se ajusta al ancho del texto y no empuja el resto de la fila. */
+.form-header-white--inline {
+  flex: 0 1 auto;
+  width: auto;
+  margin-bottom: 0;
+  padding-bottom: 8px;
+}
+
+/* Variante compacta para etiquetas que hacen de encabezado dentro de un
+   formulario de búsqueda. */
+.form-header-white--compact {
+  margin-bottom: 6px;
+  padding-bottom: 6px;
+}
+
+/* Los títulos centrados conservan su alineación al convertirse en flex. */
+.panel__titulo--centrado.form-header-white,
+.panel.capacidad .panel__titulo.form-header-white {
+  justify-content: center;
 }
 
 .panel__descripcion {
@@ -5696,7 +5718,11 @@ p,
    y el modal de edición se saca de la caja al abrirse (`deudas.js`). */
 @media (max-width: 640px) {
   .tabla-contenedor--deudas {
-    max-height: none;
+    /* 74 px de cabecera + 6 filas de ~64 px: se ven seis deudas completas y el
+       resto se alcanza con scroll vertical dentro de la caja. */
+    max-height: 460px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
     /* Sin `contain: paint`, el desbordamiento interno de la tabla (más de
        800 px) hace que Chrome móvil ensanche el layout aunque la caja recorte:
        `window.innerWidth` pasa de 390 a 827, la página entera se desplaza y el
@@ -5705,7 +5731,11 @@ p,
   }
 
   .tabla-contenedor--deudas thead th {
-    position: static;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: var(--bg-primary);
+    box-shadow: 0 1px 0 var(--borde-suave);
   }
 }
 

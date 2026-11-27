@@ -507,8 +507,8 @@ def test_pagos_quincenales_muestran_dos_tablas(cliente_admin, bd) -> None:
 
     html = cliente_admin.get("/trabajos-extras").text
 
-    assert 'quincena__titulo">Quincena 1 · día 15' in html
-    assert 'quincena__titulo">Quincena 2 · día 30' in html
+    assert 'quincena__titulo form-header-white form-header-white--inline">Quincena 1 · día 15' in html
+    assert 'quincena__titulo form-header-white form-header-white--inline">Quincena 2 · día 30' in html
     assert "Mes completo" not in html
 
 

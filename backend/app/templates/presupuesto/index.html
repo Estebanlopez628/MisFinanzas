@@ -32,7 +32,7 @@
 
   {# ------------------------- Banner de diagnóstico ------------------------ #}
   <section class="panel panel--diagnostico" aria-live="polite">
-    <h2 class="panel__titulo">Diagnóstico del mes</h2>
+    <h2 class="panel__titulo form-header-white">Diagnóstico del mes</h2>
 
     {% if diagnostico.disponible >= 0 %}
       <p class="diagnostico__mensaje">
@@ -91,7 +91,7 @@
   {# ---------------------- Consejero financiero (SRS v1.8) ---------------------- #}
   {% if consejo.activo %}
     <section class="panel consejero">
-      <h2 class="panel__titulo">🧭 Consejero financiero</h2>
+      <h2 class="panel__titulo form-header-white">🧭 Consejero financiero</h2>
       <p class="consejero__saludo">{{ consejo.titulo }}</p>
       <p class="diagnostico__mensaje">{{ consejo.mensaje }}</p>
       {# SRS v4.20, sección 3.2: jerarquía mayor en el banner de liquidez. #}
@@ -387,7 +387,7 @@
     {# SRS v1.8: por debajo de la base mínima de liquidez el consejo se apaga
        con una invitación a crear una meta de emergencia. #}
     <section class="panel consejero consejero--inactivo">
-      <h2 class="panel__titulo">🧭 Consejero financiero</h2>
+      <h2 class="panel__titulo form-header-white">🧭 Consejero financiero</h2>
       <p class="consejero__saludo">{{ consejo.titulo }}</p>
       <div class="alerta alerta--aviso" role="status">{{ consejo.mensaje }}</div>
       <p class="ayuda">

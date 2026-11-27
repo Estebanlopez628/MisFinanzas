@@ -85,7 +85,7 @@ def test_campo_bloqueado_con_candado() -> None:
 def test_titulos_nuevos_de_cartera(cliente_admin: TestClient) -> None:
     """El panel usa los títulos aprobados y el principal va centrado."""
     html = cliente_admin.get("/olb-byte/cartera").text
-    assert "ESTADO DE CARTERA" in html
+    assert "Estado de cartera" in html
     assert "panel__titulo--centrado" in html
     assert "CUENTAS POR COBRAR Y PAGAR" in html
     assert "FLUJO DE CAJA DISPONIBLE" in html

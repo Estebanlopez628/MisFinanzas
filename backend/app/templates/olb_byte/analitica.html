@@ -103,7 +103,7 @@
 
   <section class="panel panel--tabla">
     <div class="panel__cabecera">
-      <h2 class="panel__titulo">Mes a mes · {{ anio }}</h2>
+      <h2 class="panel__titulo form-header-white">Mes a mes · {{ anio }}</h2>
       <a class="boton boton--primario boton--pequeno" href="{{ url_csv.mensual }}">Descargar CSV</a>
     </div>
     <div class="tabla-contenedor">
@@ -150,7 +150,7 @@
 
   <section class="panel panel--tabla">
     <div class="panel__cabecera">
-      <h2 class="panel__titulo">Ventas por producto{% if nombre_mes %} · {{ nombre_mes }} {{ anio }}{% else %} · {{ anio }}{% endif %}</h2>
+      <h2 class="panel__titulo form-header-white">Ventas por producto{% if nombre_mes %} · {{ nombre_mes }} {{ anio }}{% else %} · {{ anio }}{% endif %}</h2>
       <a class="boton boton--primario boton--pequeno" href="{{ url_csv.ventas }}">Descargar CSV</a>
     </div>
     <p class="ayuda">Una fila por producto vendido. El saldo y los abonos de cada orden se reparten entre sus productos en proporción a su total.</p>
@@ -199,7 +199,7 @@
 
   <section class="panel panel--tabla">
     <div class="panel__cabecera">
-      <h2 class="panel__titulo">Año tras año</h2>
+      <h2 class="panel__titulo form-header-white">Año tras año</h2>
       <a class="boton boton--primario boton--pequeno" href="{{ url_csv.anual }}">Descargar CSV</a>
     </div>
     {% if anual %}
@@ -249,7 +249,7 @@
   <div class="rejilla-paneles">
     <section class="panel panel--tabla">
       <div class="panel__cabecera">
-        <h2 class="panel__titulo">Clientes VIP</h2>
+        <h2 class="panel__titulo form-header-white">Clientes VIP</h2>
         <a class="boton boton--primario boton--pequeno" href="{{ url_csv.vip }}">Descargar CSV</a>
       </div>
       {% if vip %}
@@ -285,7 +285,7 @@
 
     <section class="panel panel--tabla">
       <div class="panel__cabecera">
-        <h2 class="panel__titulo">Alertas de costo</h2>
+        <h2 class="panel__titulo form-header-white">Alertas de costo</h2>
         <a class="boton boton--primario boton--pequeno" href="{{ url_csv.alertas }}">Descargar CSV</a>
       </div>
       <p class="panel__descripcion">
@@ -332,7 +332,7 @@
 
   <section class="panel panel--tabla">
     <div class="panel__cabecera">
-      <h2 class="panel__titulo">Último costo y margen por producto</h2>
+      <h2 class="panel__titulo form-header-white">Último costo y margen por producto</h2>
       <a class="boton boton--primario boton--pequeno" href="{{ url_csv.costos }}">Descargar CSV</a>
     </div>
     {% if alertas.costos %}

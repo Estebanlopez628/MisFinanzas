@@ -29,7 +29,7 @@
   {# SRS v2.0, sección 4: tarjeta única con tres bloques. En escritorio A y B
      van lado a lado y C ocupa toda la fila inferior; en móvil se apilan. #}
   <section class="panel panel--balance-cartera">
-    <h2 class="panel__titulo panel__titulo--centrado">ESTADO DE CARTERA</h2>
+    <h2 class="panel__titulo panel__titulo--centrado form-header-white">Estado de cartera</h2>
     <p class="panel__descripcion">Análisis de lo que tienes en la calle y tu dinero en caja.</p>
 
     <div class="balance-cartera">
@@ -92,7 +92,7 @@
   {# Comparativa temporal cartera/deuda: se conserva el indicador histórico de
      la vista (dona y balance con signo) junto al panel de tres bloques. #}
   <section class="panel panel--dona-cartera">
-    <h2 class="panel__titulo">Cartera frente a deuda</h2>
+    <h2 class="panel__titulo form-header-white">Cartera frente a deuda</h2>
     {% if segmentos %}
       <div class="dona-contenedor" data-dona-contenedor>
         <div class="dona">
@@ -170,7 +170,7 @@
     </section>
 
     <section class="panel panel--tabla">
-      <h2 class="panel__titulo">Movimientos con el proveedor</h2>
+      <h2 class="panel__titulo form-header-white">Movimientos con el proveedor</h2>
       {% if movimientos %}
         {# SRS v4.44, §7.3: seis filas visibles y desplazamiento vertical; el
            encabezado queda fijo y opaco. Columnas: Fecha | Tipo | Cliente | Producto | Concepto | Monto | Saldo. #}
@@ -297,7 +297,7 @@
   {# SRS v4.44, §8.2: historial de gastos operativos con edición y borrado. #}
   <section class="panel panel--tabla">
     <div class="panel__cabecera">
-      <h2 class="panel__titulo">Historial de gastos operativos</h2>
+      <h2 class="panel__titulo form-header-white">Historial de gastos operativos</h2>
       <span class="panel__total">
         Total: <strong>{{ total_gastos_operativos | cop }}</strong>
       </span>

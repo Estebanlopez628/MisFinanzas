@@ -2012,3 +2012,8 @@ Línea base v4.44. Ajusta la sección 69. Alcance exclusivo: Mis Finanzas (`/fin
 
 - Se elimina de `registro.html` el párrafo «El rol de administrador OLB BYTE no se puede obtener por auto-registro: lo asigna el propietario del sistema.». No se tocan campos, validaciones, `action="/registro"` ni el enlace de inicio de sesión.
 - Suite completa en verde. `sw.js` en `olb-finanzas-v198`.
+
+## 99. Seis deudas en móvil con cabecera opaca (ADR-165)
+
+- En `@media (max-width: 640px)`, `.tabla-contenedor--deudas` usa `max-height: 460px`, `overflow-y: auto` y `overscroll-behavior: contain`: se ven seis deudas completas y las demás se alcanzan con scroll vertical dentro de la caja. La cabecera `thead th` conserva su fondo opaco `var(--bg-primary)` con `position: sticky; top: 0; z-index: 2`. Se mantiene `contain: paint` y el portal del modal de edición al `<body>`. Escritorio intacto (340 px / cuatro filas).
+- Verificado en 390 px con 12 filas: seis completas, `scrollTop` interno con `scrollY = 0` de la página, cabecera fija y sin desbordamiento horizontal; modal centrado. Suite completa en verde. `sw.js` en `olb-finanzas-v200`.

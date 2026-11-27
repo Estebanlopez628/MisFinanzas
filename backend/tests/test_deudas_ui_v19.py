@@ -148,18 +148,23 @@ def test_los_paneles_de_escritorio_comparten_la_misma_altura() -> None:
     assert "var(--bg-card)" not in cabecera
     assert "position: sticky;" in cabecera
 
-    # En móvil se muestran todas las deudas, sin altura máxima ni desplazamiento
-    # vertical dentro de la tabla (ADR-62). La contención vive solo en el bloque móvil.
+    # En móvil se muestran seis deudas completas y las demás se alcanzan con
+    # scroll vertical dentro de la caja; la cabecera permanece opaca y fija (ADR-165).
     movil_tabla = (
         "@media (max-width: 640px) {\n"
         "  .tabla-contenedor--deudas {\n"
-        "    max-height: none;"
     )
     assert movil_tabla in css
-    bloque_movil = css[css.index(movil_tabla) : css.index("\n}\n", css.index(movil_tabla))]
+    inicio_movil = css.index(movil_tabla)
+    bloque_movil = css[inicio_movil : css.index("\n}\n", inicio_movil)]
+    assert "max-height: 460px;" in bloque_movil
+    assert "overflow-y: auto;" in bloque_movil
     assert "contain: paint;" in bloque_movil
     assert "contain: paint;" not in tabla
     assert "max-height: 227px" not in css
+    cabecera_movil = css[css.index(".tabla-contenedor--deudas thead th {", inicio_movil) :]
+    assert "position: sticky;" in cabecera_movil.split("}", 1)[0]
+    assert "background: var(--bg-primary);" in cabecera_movil.split("}", 1)[0]
 
 
 def test_el_modal_sale_de_la_tabla_contenida_al_abrirse() -> None:

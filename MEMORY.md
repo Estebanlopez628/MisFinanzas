@@ -2854,6 +2854,14 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v156`. Gate `qa_v4_56.py` **6/6**: separación de 18 px medida entre quincenas y atajos, `clientHeight 325 / scrollHeight 386` en 1280 px, `370 / 439` en 375 px y bordes inferiores iguales en web. Suite completa **1002 pruebas** en verde y 20 gates sin regresiones propias.
 
+### 2026-11-26 — Seis deudas visibles en móvil con cabecera opaca (ADR-165)
+
+**Decisión (ADR-165).** El propietario pidió que, en «Registro y Detalles de deudas» → «Deudas registradas», la vista móvil muestre solo seis deudas y que las demás se alcancen desplazando verticalmente, sin volver la cabecera transparente.
+
+**Consecuencias.** En `@media (max-width: 640px)`, `.tabla-contenedor--deudas` pasa de `max-height: none` a `max-height: 460px` (74 px de cabecera + seis filas de ~64 px), con `overflow-y: auto` y `overscroll-behavior: contain`. La cabecera `thead th` vuelve a `position: sticky; top: 0; z-index: 2` sobre fondo opaco `var(--bg-primary)` con separador inferior. Se conserva `contain: paint` (ADR-62) y el portal del modal de edición al `<body>` (`deudas.js`). El escritorio no cambia: sigue a 340 px y cuatro filas.
+
+**Verificación.** Playwright 390 px con 12 filas: seis completas visibles, `scrollTop` interno 379 con `scrollY = 0` de la página, cabecera fija en `top: 1` y fondo `rgb(15, 23, 42)`, sin desbordamiento horizontal; el modal de edición abre centrado desde `<body>`. En 1280 px la caja sigue a 340 px. Suite completa en verde. `sw.js` en `olb-finanzas-v200`.
+
 ### 2026-11-26 — Retiro de nota de rol en Crear cuenta (ADR-164)
 
 **Decisión (ADR-164).** El propietario pidió retirar del formulario de registro el texto «El rol de administrador OLB BYTE no se puede obtener por auto-registro: lo asigna el propietario del sistema.».

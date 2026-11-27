@@ -93,7 +93,7 @@ def test_vista_cartera_muestra_los_tres_bloques(cliente_admin: TestClient) -> No
     """La tarjeta reemplaza al antiguo panel de barras de balance."""
     html = cliente_admin.get("/olb-byte/cartera").text
     # SRS v3.0, punto 10: títulos actualizados del panel de tres bloques.
-    assert "ESTADO DE CARTERA" in html
+    assert "Estado de cartera" in html
     assert "Análisis de lo que tienes en la calle y tu dinero en caja." in html
     assert "CUENTAS POR COBRAR Y PAGAR" in html
     assert "FLUJO DE CAJA DISPONIBLE" in html

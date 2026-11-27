@@ -16,7 +16,7 @@
      consolidada; la dona de Trabajos Extras conserva el suyo. #}
   {%- set porcentaje_centro = capacidad.porcentaje_libre if solo_trabajos else capacidad.porcentaje_libre_global -%}
   <section class="panel capacidad" aria-labelledby="capacidad-titulo">
-    <h2 class="panel__titulo" id="capacidad-titulo">{{ titulo }}</h2>
+    <h2 class="panel__titulo form-header-white" id="capacidad-titulo">{{ titulo }}</h2>
     <p class="ayuda">{{ descripcion }}</p>
 
     {% if capacidad.ingreso <= 0 and solo_trabajos %}

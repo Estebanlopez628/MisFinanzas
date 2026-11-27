@@ -11,7 +11,7 @@
 {% macro tabla_periodo(trabajo, periodo, hoy, primero=false) -%}
   <div class="bloque-tabla-pagos">
     <header class="quincena__cabecera">
-      <h3 class="quincena__titulo">{{ periodo.etiqueta }}</h3>
+      <h3 class="quincena__titulo form-header-white form-header-white--inline">{{ periodo.etiqueta }}</h3>
       <span class="badge badge--publico">
         Pago {{ periodo.valor | cop }}{% if periodo.porcentaje is not none %} · {{ periodo.porcentaje }} %{% endif %}
       </span>
@@ -232,7 +232,7 @@
     </section>
 
     <section class="panel panel--tabla">
-      <h2 class="panel__titulo">Contratos registrados</h2>
+      <h2 class="panel__titulo form-header-white">Contratos registrados</h2>
       {% if trabajos %}
         <div class="tabla-contenedor">
           <table class="tabla">
@@ -286,7 +286,7 @@
 
   <section class="panel panel--quincena" aria-live="polite">
     <header class="quincena__cabecera">
-      <h2 class="quincena__titulo">Pagos de {{ mes_visible }}</h2>
+      <h2 class="quincena__titulo form-header-white form-header-white--inline">Pagos de {{ mes_visible }}</h2>
       <span class="badge badge--publico">{{ extras_mes | cop }} disponible al diagnóstico</span>
     </header>
 
@@ -300,7 +300,7 @@
           </h4>
 
           <section class="panel panel--resultado">
-            <h2 class="panel__titulo">Resultado del periodo</h2>
+            <h2 class="panel__titulo form-header-white">Resultado del periodo</h2>
             <p class="panel__descripcion">{{ mes_visible }}</p>
             <div class="resultado-principal">
               <span class="resultado-principal__etiqueta">Saldo para el bolsillo</span>

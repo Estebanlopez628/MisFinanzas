@@ -85,7 +85,7 @@ contenido %}
           id="bloque-quincena-2"
         {% endif %}
       >
-        <h3 class="quincena__titulo">{{ quincena.etiqueta }}</h3>
+        <h3 class="quincena__titulo form-header-white form-header-white--inline">{{ quincena.etiqueta }}</h3>
         {% if quincena.numero %}
         <span class="badge badge--publico"
           >{{ quincena.porcentaje | porcentaje }} del sueldo</span
@@ -206,7 +206,7 @@ contenido %}
       id="atajos"
       aria-labelledby="titulo-atajos"
     >
-      <h3 id="titulo-atajos" class="panel__titulo">🔗 Atajos de pago</h3>
+      <h3 id="titulo-atajos" class="panel__titulo form-header-white">🔗 Atajos de pago</h3>
       <p class="panel__descripcion">
         Referencias ya configuradas, listas para copiar y pagar sin salir de Mis
         Finanzas.
@@ -418,7 +418,7 @@ contenido %}
       </section>
 
       <section class="panel panel--liquidacion">
-        <h2 class="panel__titulo">Horas extras y recargos</h2>
+        <h2 class="panel__titulo form-header-white">Horas extras y recargos</h2>
 
         {# ---------------- Horas extras y recargos (2 × 3)
         -------------- #}
@@ -473,7 +473,7 @@ contenido %}
 
     {# ------------------------ Desglose de recargos -------------------- #}
     <section class="panel panel--tabla" aria-labelledby="titulo-detalle">
-      <h2 id="titulo-detalle" class="panel__titulo">
+      <h2 id="titulo-detalle" class="panel__titulo form-header-white">
         Desglose de horas extras y recargos
       </h2>
       <div class="tabla-contenedor tabla-contenedor--compacta">
@@ -517,7 +517,7 @@ contenido %}
     </section>
     {# ------------------ Auxilio de transporte (2 SMMLV) --------------- #}
     <section class="panel panel--auxilio" aria-live="polite">
-      <h2 class="panel__titulo">Auxilio de transporte</h2>
+      <h2 class="panel__titulo form-header-white">Auxilio de transporte</h2>
       <div class="auxilio__valor">
         <span class="auxilio__etiqueta">Valor del auxilio</span>
         <strong class="auxilio__monto" data-auxilio-valor>
@@ -547,7 +547,7 @@ contenido %}
       class="panel panel--incapacidad"
       aria-labelledby="titulo-incapacidad"
     >
-      <h2 id="titulo-incapacidad" class="panel__titulo">Incapacidades</h2>
+      <h2 id="titulo-incapacidad" class="panel__titulo form-header-white">Incapacidades</h2>
       <p class="panel__descripcion">
         Días 1 y 2 al 100 % (empleador); desde el día 3, al 66,67 %. El número de
         días se calcula solo con las fechas.
@@ -634,7 +634,7 @@ contenido %}
 
     {# --------------------------- Resultado en vivo -------------------- #}
     <section class="panel panel--resultado" aria-live="polite">
-      <h2 class="panel__titulo">Resultado del periodo</h2>
+      <h2 class="panel__titulo form-header-white">Resultado del periodo</h2>
       <p class="panel__descripcion">{{ entrada.etiqueta_periodo }}</p>
 
       <div class="resultado-principal">
