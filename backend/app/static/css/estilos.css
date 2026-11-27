@@ -1373,11 +1373,14 @@ a.tarjeta:focus-visible {
   color: var(--accent-green);
 }
 
-/* SRS v4.44: cuatro KPI en una fila en web y 2 × 2 en móvil. */
+/* SRS v4.44: cuatro KPI en una fila en web y 2 × 2 en móvil.
+   Ajuste visual: menos separación entre tarjetas y un poco más de ancho útil
+   para que etiquetas y montos no se vean apretados. */
 .panel--kpis {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 16px;
+  gap: 10px;
+  padding: 16px;
   align-items: stretch;
 }
 
@@ -1389,6 +1392,8 @@ a.tarjeta:focus-visible {
 
 .panel--kpis .kpi {
   min-width: 0;
+  min-height: 58px;
+  padding: 10px 8px;
   text-align: center;
 }
 
@@ -1399,14 +1404,14 @@ a.tarjeta:focus-visible {
 
 .kpi__etiqueta {
   display: block;
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   color: var(--text-muted);
 }
 
 .kpi__valor {
   display: block;
   margin-top: 4px;
-  font-size: 1.4rem;
+  font-size: 1.5rem;
   line-height: 1.2;
 }
 

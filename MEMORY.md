@@ -2854,6 +2854,14 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v156`. Gate `qa_v4_56.py` **6/6**: separación de 18 px medida entre quincenas y atajos, `clientHeight 325 / scrollHeight 386` en 1280 px, `370 / 439` en 375 px y bordes inferiores iguales en web. Suite completa **1002 pruebas** en verde y 20 gates sin regresiones propias.
 
+### 2026-11-27 — KPI de Analítica más anchos (ADR-174)
+
+**Decisión (ADR-174).** El propietario reportó que las cuatro tarjetas de indicadores de «Gestión y control de ventas» se veían apretadas. Se ensanchan sin cambiar la cantidad ni el orden: `.panel--kpis` pasa a `gap: 10px` y `padding: 16px`, y cada `.kpi` a `min-height: 58px`, `padding: 10px 8px`, con etiqueta de 0,8 rem y valor de 1,5 rem.
+
+**Consecuencias.** Medido en Chromium: 1280 px → cuatro tarjetas de 254 × 75 px; 390 px → 159 × 75 px, sin desbordamiento horizontal. Los colores semánticos, los cálculos, las tablas, el CSV, el Login y el resto de módulos no cambian. `sw.js` en `olb-finanzas-v205`.
+
+**Verificación.** Suite completa en verde (1017 pruebas) y capturas en 1280/390 px.
+
 ### 2026-11-26 — Campo vacío, dona y título centrado (ADR-173)
 
 **Decisión (ADR-173).** El propietario ajustó el ADR-171 tras verlo funcionando: (1) el campo del colchón no debe nacer con 300000 ni con 0 visible, sino vacío, para que baste con empezar a escribir; (2) si no se digita ningún valor, **no se reserva nada** y el Consejero toma todo el dinero libre; (3) cuando se digita, el valor aparece en la dona y se asigna a la variable que lee el Consejero; (4) el campo usa el formato de miles del proyecto (`data-moneda`), como los demás campos de dinero; (5) el título «Cartera frente a deuda» se centra en pantalla.

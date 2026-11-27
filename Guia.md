@@ -961,7 +961,10 @@ elemento flex centrado y scroll propio; los `<dialog>` nativos conservan el
 centrado del navegador con el mismo nivel de capa. El recibo de abono usa fondo
 `#f8fafc`, texto `#111827` y valores verdes `#16a34a` con cabecera azul.
 Incluye estilos de impresión de la factura y
-del historial.
+del historial. ADR-174: `.panel--kpis` usa `gap: 10px` y `padding: 16px`, y sus
+`.kpi` tienen `min-height: 58px` y `padding: 10px 8px`, para que los cuatro
+indicadores de Analítica se vean más anchos y con la información menos apretada;
+`sw.js` en `olb-finanzas-v205`.
 
 ### `backend/app/static/js/deudas.js`
 
