@@ -2854,6 +2854,14 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v156`. Gate `qa_v4_56.py` **6/6**: separación de 18 px medida entre quincenas y atajos, `clientHeight 325 / scrollHeight 386` en 1280 px, `370 / 439` en 375 px y bordes inferiores iguales en web. Suite completa **1002 pruebas** en verde y 20 gates sin regresiones propias.
 
+### 2026-11-26 — Retiro de nota de rol en Crear cuenta (ADR-164)
+
+**Decisión (ADR-164).** El propietario pidió retirar del formulario de registro el texto «El rol de administrador OLB BYTE no se puede obtener por auto-registro: lo asigna el propietario del sistema.».
+
+**Consecuencias.** Se elimina ese párrafo de `registro.html`. No se tocan campos, validaciones, `action="/registro"` ni el enlace «¿Ya tienes cuenta? Inicia sesión».
+
+**Verificación.** La plantilla ya no contiene el texto; suite completa en verde. `sw.js` en `olb-finanzas-v198`.
+
 ### 2026-11-26 — Fondo único con encuadre fijo (ADR-163)
 
 **Decisión (ADR-163).** El propietario reportó que el fondo mostraba un modelo o posición distinta al cambiar de pestaña o módulo. La causa era `background-size: cover` aplicado al `body`, cuyo alto cambia entre vistas: la imagen se recortaba de forma diferente en cada página.

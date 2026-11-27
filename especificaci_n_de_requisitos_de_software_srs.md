@@ -2007,3 +2007,8 @@ Línea base v4.44. Ajusta la sección 69. Alcance exclusivo: Mis Finanzas (`/fin
 
 - La imagen futurista se pinta en `body:not(.pagina-acceso)::before` con `position: fixed; inset: 0; z-index: -1`, el mismo degradado y `center center / cover`. El `body` solo conserva `background-color: #050f24`, de modo que el recorte no depende del alto de cada módulo.
 - Verificado en 1280 px en Inicio, Mis Finanzas, OLB BYTE y Analítica: capa fija idéntica y mismo píxel de fondo; sin desbordes. Suite completa en verde. `sw.js` en `olb-finanzas-v197`.
+
+## 98. Retiro de nota de rol en Crear cuenta (ADR-164)
+
+- Se elimina de `registro.html` el párrafo «El rol de administrador OLB BYTE no se puede obtener por auto-registro: lo asigna el propietario del sistema.». No se tocan campos, validaciones, `action="/registro"` ni el enlace de inicio de sesión.
+- Suite completa en verde. `sw.js` en `olb-finanzas-v198`.
