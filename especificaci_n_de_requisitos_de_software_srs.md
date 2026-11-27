@@ -1913,3 +1913,18 @@ Línea base v4.44. Ajusta la sección 69. Alcance exclusivo: Mis Finanzas (`/fin
 
 - Playwright 1280 px y 390 px sobre los cinco puntos, sin desbordes; login, iconos, modales, tablas y flujos intactos.
 - Suite completa en verde. `sw.js` en `olb-finanzas-v183`. Documentación sincronizada.
+
+## 85. Nota de proyección educativa centrada (ADR-150)
+
+- El párrafo «Proyección educativa: supone el mismo ingreso, los mismos gastos fijos y las mismas cuotas. No reemplaza una asesoría financiera.» de Gastos y Presupuesto recibe la clase `impacto-deudas__nota` y se centra con `width: 100%`, `margin-inline: auto` y `text-align: center` en Web y Móvil. Ningún otro texto o componente se modificó.
+- Suite completa en verde. `sw.js` en `olb-finanzas-v184`. Documentación sincronizada.
+
+## 86. SRS Consolidado Final v3 — Punto 1.1: resplandor profundo (ADR-151)
+
+**Nota de alcance.** Solo se recibió el punto 1.1 del documento; los puntos 1.2 a 1.5 no fueron enviados y no se implementaron ni inventaron.
+
+**Diagnóstico.** El resplandor previo usaba `color-mix` al 30 % más `opacity: .65/.6`, lo que lo dejaba apenas visible sobre el fondo azul marino.
+
+**Ajuste.** `--wave-glow-dark` por módulo (verde `rgba(6,78,59,.34)`, cian `rgba(12,74,110,.36)`, rojo `rgba(127,29,29,.32)`, ámbar `rgba(120,53,15,.34)`, reportes `rgba(131,24,67,.32)`) y `::before` con `radial-gradient(80% 60% at 15% 12%, … 0%, transparent 72%)` a `opacity: 1` en Web y Móvil. La doble onda en `::after` no se modificó.
+
+**Verificación.** Playwright 1280 px y 390 px: cinco tarjetas con su resplandor y onda intacta, sin desbordes. Suite completa en verde. `sw.js` en `olb-finanzas-v185`.

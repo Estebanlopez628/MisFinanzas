@@ -2854,6 +2854,24 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v156`. Gate `qa_v4_56.py` **6/6**: separación de 18 px medida entre quincenas y atajos, `clientHeight 325 / scrollHeight 386` en 1280 px, `370 / 439` en 375 px y bordes inferiores iguales en web. Suite completa **1002 pruebas** en verde y 20 gates sin regresiones propias.
 
+### 2026-11-26 — Resplandor profundo en tarjetas de módulos (ADR-151)
+
+**Decisión (ADR-151).** Punto 1.1 del SRS Consolidado Final v3: resplandor superior izquierdo sutil y oscurecido, del mismo color de la onda de cada tarjeta. No se recibieron los puntos 1.2 a 1.5, por lo que no se tocaron altri componentes.
+
+**Diagnóstico.** El resplandor anterior usaba `--card-accent-soft` (color-mix al 30 % con transparente) más `opacity: .65` en web y `.6` en móvil: doble atenuación que lo dejaba casi invisible sobre el fondo azul marino.
+
+**Consecuencias.** Se mapea `--wave-glow-dark` en `.tarjeta--verde/azul/rojo/ambar/destacada` con tonos profundos (rgba 6/78/59 .34, 12/74/110 .36, 127/29/29 .32, 120/53/15 .34) y fucsia (131/24/67 .32) para Comentarios. `::before` de las tarjetas de módulos usa `radial-gradient(80% 60% at 15% 12%, var(--wave-glow-dark) 0%, transparent 72%)` con `opacity: 1` también en móvil. La doble onda en `::after` queda intacta.
+
+**Verificación.** Playwright 1280 px y 390 px: el cinco tarjetas muestran el resplandor profundo con su color y conservan la máscara SVG de la onda; sin desbordes. Suite completa en verde. `sw.js` en `olb-finanzas-v185`.
+
+### 2026-11-26 — Nota de proyección educativa centrada (ADR-150)
+
+**Decisión (ADR-150).** Centrar en pantalla el texto «Proyección educativa: supone el mismo ingreso, los mismos gastos fijos y las mismas cuotas. No reemplaza una asesoría financiera.» de Gastos y Presupuesto.
+
+**Consecuencias.** En `presupuesto/index.html` el párrafo recibe la clase `impacto-deudas__nota`; en `estilos.css` se centra con `width: 100%`, `margin-inline: auto` y `text-align: center` bajo `body:not(.pagina-acceso)`. No se tocó ningún otro texto ni componente.
+
+**Verificación.** Playwright 1280 px: párrafo con `text-align: center` y ancho completo, visualmente centrado bajo la comparativa. Suite completa en verde. `sw.js` en `olb-finanzas-v184`.
+
 ### 2026-11-26 — Ajustes puntuales finales v3 (ADR-149)
 
 **Decisión (ADR-149).** Alcance quirúrgico estricto sobre cinco puntos: resplandor superior izquierdo, contador compacto de reportes, tarjetas de gráficas sin ondas, marcos externos de la comparativa y unificación tipográfica de sus encabezados. No se tocó nada más.

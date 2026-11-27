@@ -361,11 +361,11 @@ body:not(.pagina-acceso) {
   opacity: 0.9;
 }
 
-.tarjeta--verde { --acento: var(--accent-green); }
-.tarjeta--azul { --acento: var(--accent-blue); }
-.tarjeta--rojo { --acento: var(--accent-red); }
-.tarjeta--ambar { --acento: var(--accent-amber); }
-.tarjeta--destacada { --acento: var(--accent-amber); }
+.tarjeta--verde { --acento: var(--accent-green); --wave-glow-dark: rgba(6, 78, 59, 0.34); }
+.tarjeta--azul { --acento: var(--accent-blue); --wave-glow-dark: rgba(12, 74, 110, 0.36); }
+.tarjeta--rojo { --acento: var(--accent-red); --wave-glow-dark: rgba(127, 29, 29, 0.32); }
+.tarjeta--ambar { --acento: var(--accent-amber); --wave-glow-dark: rgba(120, 53, 15, 0.34); }
+.tarjeta--destacada { --acento: var(--accent-amber); --wave-glow-dark: rgba(120, 53, 15, 0.34); }
 
 a.tarjeta:hover,
 a.tarjeta:focus-visible {
@@ -7016,6 +7016,23 @@ body:not(.pagina-acceso) .impacto-deuda::before {
   opacity: 0.65;
 }
 
+/* Tarjetas de módulos: resplandor profundo del mismo color de la onda, sin la
+   doble atenuación que lo hacía invisible. La doble onda (::after) no cambia. */
+body:not(.pagina-acceso) .tarjeta::before {
+  background: radial-gradient(80% 60% at 15% 12%, var(--wave-glow-dark, rgba(12, 74, 110, 0.34)) 0%, transparent 72%);
+  opacity: 1;
+}
+
+body:not(.pagina-acceso) .tarjeta:has(.tarjeta__badge)::before {
+  background: radial-gradient(80% 60% at 15% 12%, rgba(131, 24, 67, 0.32) 0%, transparent 72%);
+}
+
+@media (max-width: 767px) {
+  body:not(.pagina-acceso) .tarjeta::before {
+    opacity: 1 !important;
+  }
+}
+
 /* Doble onda inferior: una trasera difusa y una delantera con cresta marcada.
    Una sola máscara SVG con cuatro trazos mantiene el degradado y las crestas
    alineadas; el fondo aplica el acento de cada tarjeta. */
@@ -7438,4 +7455,11 @@ body:not(.pagina-acceso) .impacto-deudas__subtitulo {
   font-weight: 700 !important;
   line-height: 1.35 !important;
   text-align: center !important;
+}
+
+/* Nota de proyección educativa centrada en Web y Móvil. */
+body:not(.pagina-acceso) .impacto-deudas__nota {
+  width: 100%;
+  margin-inline: auto;
+  text-align: center;
 }
