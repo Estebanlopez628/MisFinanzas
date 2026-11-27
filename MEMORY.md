@@ -2854,6 +2854,14 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v156`. Gate `qa_v4_56.py` **6/6**: separación de 18 px medida entre quincenas y atajos, `clientHeight 325 / scrollHeight 386` en 1280 px, `370 / 439` en 375 px y bordes inferiores iguales en web. Suite completa **1002 pruebas** en verde y 20 gates sin regresiones propias.
 
+### 2026-11-26 — Acomodo visual de Crear cuenta (ADR-161)
+
+**Decisión (ADR-161).** El propietario pidió acomodar el menú de «Crear cuenta», que usaba el componente antiguo `.acceso__panel` y se veía apretado frente al Login.
+
+**Consecuencias.** `registro.html` adopta la estructura de `login.html`: `clase_cuerpo = pagina-acceso`, `.acceso-nuevo` / `.acceso-nuevo__tarjeta`, ondas SVG superior e inferior, cabecera con marca, título y subtítulo, formulario `.acceso-nuevo__formulario`, botón primario a ancho completo y dos párrafos `.acceso-nuevo__legal` para el enlace de inicio de sesión y la nota del rol de administrador. Se conservan los cuatro campos, sus `name`, `placeholder`, `value`, `required`, la alerta de errores y `action="/registro"`. No se modificó `login.html` ni la lógica de `auth.py`.
+
+**Verificación.** Playwright 1280 px y 390 px: tarjeta a todo el ancho con ondas, campos y botón uniformes, sin desbordes ni errores de consola; envío real creó la cuenta y redirigió a `/login?registrado=1` con el aviso de éxito. Suite completa en verde. `sw.js` en `olb-finanzas-v195`.
+
 ### 2026-11-26 — Conflicto que ocultaba el fondo futurista (ADR-160)
 
 **Decisión (ADR-160).** El usuario reportó que el fondo no se veía. Diagnóstico: la imagen cargaba (HTTP 200) y la regla aplicaba, pero encima tenía `linear-gradient(rgba(15,23,42,.62))` más dos degradados radiales y `background-attachment: fixed`, que la dejaban casi invisible y podían fallar en iOS.

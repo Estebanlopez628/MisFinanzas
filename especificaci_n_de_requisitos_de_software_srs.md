@@ -1997,3 +1997,8 @@ Línea base v4.44. Ajusta la sección 69. Alcance exclusivo: Mis Finanzas (`/fin
 
 - La imagen cargaba correctamente, pero un velo al 62 %, dos radiales y `background-attachment: fixed` la dejaban invisible. Se sustituye por `linear-gradient(rgba(5,15,36,.34))` sobre la imagen centrada con `cover`, sin `fixed`, y respaldo `#050f24`.
 - Verificado en 1280 px y 390 px: ondas visibles, contraste conservado y sin desbordes. Suite completa en verde. `sw.js` en `olb-finanzas-v194`.
+
+## 96. Acomodo visual de Crear cuenta (ADR-161)
+
+- `registro.html` adopta `.acceso-nuevo` / `.acceso-nuevo__tarjeta` con ondas, `clase_cuerpo = pagina-acceso`, campos uniformes y botón primario a ancho completo. Se conservan los cuatro campos, `action="/registro"`, validaciones y alertas. No se modificó `login.html` ni `auth.py`.
+- Verificado en 1280 px y 390 px; envío real redirigió a `/login?registrado=1` con aviso de éxito. Suite completa en verde. `sw.js` en `olb-finanzas-v195`.
