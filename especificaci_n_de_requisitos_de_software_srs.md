@@ -2038,7 +2038,7 @@ Línea base v4.44. Ajusta la sección 69. Alcance exclusivo: Mis Finanzas (`/fin
 
 1. `perfiles_financieros.monto_minimo_liquidez NUMERIC(12,2) NOT NULL DEFAULT 0` con `CHECK (>= 0)` (diccionario §2 y §49). Se documenta en el perfil porque allí vive la configuración de quincenas; no se crea la columna en `usuarios`.
 2. Migración idempotente `_migrar_monto_minimo_liquidez()` en SQLite y PostgreSQL: rellena nulos con 0 y convierte a 0 los 300000 predeterminados de una versión intermedia, sin tocar valores escritos.
-3. Onboarding: título «Monto mínimo que deseas mantener libre para imprevistos o gastos del día a día.», etiqueta «Digita el valor:» y campo `monto_minimo_liquidez` **vacío** (ni 0 ni 300000 precargados), con `placeholder="300000"` y `data-moneda` (separadores de miles al escribir). No es obligatorio: se puede dejar vacío. En perfiles existentes con valor se muestra con puntos. Si no se digita, queda en 0 y no se reserva nada.
+3. Onboarding: título «Monto mínimo que deseas mantener libre para imprevistos o gastos del día a día.», etiqueta «Digita el valor:» y campo `monto_minimo_liquidez` **vacío** (ni 0 ni 300000 precargados), con `placeholder="0"` y `data-moneda` (separadores de miles al escribir). No es obligatorio: se puede dejar vacío. En perfiles existentes con valor se muestra con puntos. Si no se digita, queda en 0 y no se reserva nada.
 4. `base_minima_de()`, `repartir_libre(libre, base_minima)`, `diagnostico()["umbral"]` y `consejo_financiero(..., umbral=...)` sustituyen a la constante. La dona solo muestra «Base mínima de liquidez» si el valor es mayor que 0. Trabajos Extras sigue sin reservar colchón.
 
 ### 102.4 Ajuste visual (ADR-173)

@@ -1360,7 +1360,7 @@ contraseña y, para el administrador, acceso a Usuarios. SRS §5: junto a la
 configuración de quincenas se pide «Monto mínimo que deseas mantener libre para
 imprevistos o gastos del día a día.», con la etiqueta «Digita el valor:» y el
 campo `monto_minimo_liquidez` con `data-moneda`: nace vacío (ni 0 ni 300000
-precargados), `placeholder="300000"` como sugerencia y separadores de miles
+precargados), `placeholder="0"` como sugerencia y separadores de miles
 mientras se escribe. En un perfil existente muestra su valor con puntos.
 
 ### `backend/app/templates/finanzas/index.html`

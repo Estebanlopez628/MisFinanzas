@@ -48,7 +48,7 @@ El saldo de «Deudas registradas», la dona y el Consejero se actualizan solos p
 
 MisFinanzas protege automáticamente una **Base mínima de liquidez** en tu bolsillo para cubrir imprevistos, transporte o emergencias del mes sin dejarte en ceros. Aunque tengas dinero libre después de pagar tus gastos fijos, el Consejero descuenta primero ese colchón y solo te sugiere abonos extra a tus deudas o metas con el excedente real que lo supere.
 
-El monto no es fijo: al crear tu perfil (primer inicio de sesión) verás el título «Monto mínimo que deseas mantener libre para imprevistos o gastos del día a día.» y el campo «Digita el valor:», que nace vacío (el 300000 que ves debajo es solo una sugerencia) y separa los miles con puntos mientras escribes. Ese mismo valor se usa en la dona de capacidad, en la alerta de «Gastos y Presupuestos» y en el Consejero.
+El monto no es fijo: al crear tu perfil (primer inicio de sesión) verás el título «Monto mínimo que deseas mantener libre para imprevistos o gastos del día a día.» y el campo «Digita el valor:», que nace vacío (el 0 que ves debajo es solo una sugerencia) y separa los miles con puntos mientras escribes. Ese mismo valor se usa en la dona de capacidad, en la alerta de «Gastos y Presupuestos» y en el Consejero.
 
 Si **no escribes ningún monto**, no reservamos nada: el Consejero usa todo el dinero que te queda libre. Cuando escribes un valor, aparece en la dona como «Base mínima de liquidez» y esa cifra es la que respeta el Consejero. Trabajos Extras no reserva colchón. Puedes consultarlo o ajustarlo en «Mi Perfil».
 

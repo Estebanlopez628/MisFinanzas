@@ -157,7 +157,7 @@ def test_onboarding_guarda_monto_digitado(cliente_usuario, bd, monkeypatch) -> N
     # es solo el placeholder y el campo usa el formato de miles del proyecto.
     assert 'name="monto_minimo_liquidez"' in etiqueta
     assert 'value=""' in etiqueta
-    assert 'placeholder="300000"' in etiqueta
+    assert 'placeholder="0"' in etiqueta
     assert "data-moneda" in etiqueta
     assert "required" not in etiqueta  # se puede dejar vacío: sin reserva
     assert "Digita el valor:" in html
