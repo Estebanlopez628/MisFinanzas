@@ -1227,7 +1227,9 @@ y tabla del último costo por producto, limitada a cinco filas con desplazamient
 y cabecera fija. Las variaciones y márgenes se muestran sin signo ni color, porque el
 signo de RF-10 aplica solo al módulo de cartera. «Mes a mes», «Año tras año» y «Ventas
 por producto» añaden columnas «D. migración» con el detalle de las ventas anteriores al
-sistema; «Ganancia neta» ya incluye esa ganancia.
+sistema; «Ganancia neta» ya incluye esa ganancia. En móvil, las tablas de productos y
+último costo confinan el gesto al contenedor (`touch-action`, `overscroll-behavior` y una
+guarda en `app.js`) para que no salten de lado a lado.
 
 ### `backend/app/templates/olb_byte/cartera.html`
 

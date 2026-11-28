@@ -1502,6 +1502,21 @@ a.tarjeta:focus-visible {
   background: var(--bg-primary);
 }
 
+/* En móvil estas tablas desplazan en dos ejes: se confina el gesto para que el
+   dedo no encadene el movimiento a la página y la caja parezca saltar de lado. */
+@media (max-width: 767px) {
+  .tabla-contenedor--productos,
+  .tabla-contenedor--costos {
+    overflow: auto;
+    overscroll-behavior: contain;
+    overscroll-behavior-x: contain;
+    overscroll-behavior-y: contain;
+    touch-action: pan-x pan-y;
+    -webkit-overflow-scrolling: touch;
+    contain: paint;
+  }
+}
+
 /* Ventas: cinco órdenes visibles y cabecera opaca. */
 .tabla-contenedor--ordenes {
   max-height: 252px;

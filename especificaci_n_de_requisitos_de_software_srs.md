@@ -2126,3 +2126,7 @@ A petición del propietario, para que la contabilidad sepa de dónde viene cada 
 5. `sw.js` en `olb-finanzas-v210`. Verificación: 1043 pruebas en verde.
 
 Si solo se conoce el total (ADR-182), se crea la línea «Saldo pendiente migrado» con precio unitario $0 y `subtotal_item = total`; en «Ventas por producto» salen vacías `Cantidad - D. migración` y `Precio - D. migración`, y todo lo cobrado aparece en `Total - D. migración` y `Ganancia - D. migración`, sumándose a `Ganancia neta`.
+
+### 103.11 Gesto táctil contenido (ADR-183)
+
+«Mes a mes» solo desplaza en horizontal (`overflow-x: auto`) y el panel permanece en su lugar. «Ventas por producto» y «Último costo y margen por producto» desplazan en dos ejes; en móvil se añadió `touch-action: pan-x pan-y`, `-webkit-overflow-scrolling: touch`, `contain: paint` y `overscroll-behavior-x/y: contain`, más una guarda en `app.js` que cancela el gesto solo al llegar al borde dominante. Así la tabla no salta de lado a lado ni arrastra la página. `sw.js` en `olb-finanzas-v211`.

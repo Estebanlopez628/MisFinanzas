@@ -1582,4 +1582,50 @@
         });
     });
   });
+
+  /**
+   * Evita que el gesto táctil se encadene a la página en las tablas de analítica
+   * que desplazan en dos ejes (productos y último costo). Solo cancela el gesto
+   * cuando el dedo ya está en un borde y el movimiento es dominante en ese eje;
+   * el desplazamiento horizontal de columnas y el vertical de filas siguen activos.
+   */
+  function confinarGesto(caja) {
+    var inicioX = null;
+    var inicioY = null;
+    caja.addEventListener("touchstart", function (evento) {
+      if (!window.matchMedia("(max-width: 767px)").matches || evento.touches.length !== 1) {
+        inicioX = inicioY = null;
+        return;
+      }
+      inicioX = evento.touches[0].clientX;
+      inicioY = evento.touches[0].clientY;
+    }, { passive: true });
+
+    caja.addEventListener("touchmove", function (evento) {
+      if (inicioX === null || evento.touches.length !== 1) {
+        return;
+      }
+      var dx = evento.touches[0].clientX - inicioX;
+      var dy = evento.touches[0].clientY - inicioY;
+      var horizontal = Math.abs(dx) > Math.abs(dy);
+      var enBorde = horizontal
+        ? (dx < 0
+          ? caja.scrollLeft + caja.clientWidth >= caja.scrollWidth - 1
+          : caja.scrollLeft <= 0)
+        : (dy < 0
+          ? caja.scrollTop + caja.clientHeight >= caja.scrollHeight - 1
+          : caja.scrollTop <= 0);
+      if (enBorde) {
+        evento.preventDefault();
+      }
+    }, { passive: false });
+
+    caja.addEventListener("touchend", function () {
+      inicioX = inicioY = null;
+    }, { passive: true });
+  }
+
+  document
+    .querySelectorAll(".tabla-contenedor--productos, .tabla-contenedor--costos")
+    .forEach(confinarGesto);
 })();

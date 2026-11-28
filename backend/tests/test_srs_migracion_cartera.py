@@ -331,6 +331,20 @@ def test_historial_de_gastos_cabe_en_la_tarjeta() -> None:
     assert "text-align: center" in cabecera_acciones
 
 
+def test_el_gesto_tactil_se_confina_en_tablas_de_analitica() -> None:
+    """Las tablas de dos ejes no encadenan el gesto a la página en móvil."""
+    css = (RUTA / "static/css/estilos.css").read_text(encoding="utf-8")
+    js = (RUTA / "static/js/app.js").read_text(encoding="utf-8")
+    bloque = css.split("@media (max-width: 767px) {\n  .tabla-contenedor--productos,", 1)[1].split("}", 1)[0]
+    assert "touch-action: pan-x pan-y" in bloque
+    assert "overscroll-behavior-y: contain" in bloque
+    assert "-webkit-overflow-scrolling: touch" in bloque
+    assert "contain: paint" in bloque
+    assert ".tabla-contenedor--productos, .tabla-contenedor--costos" in js
+    assert "evento.preventDefault()" in js
+    assert "caja.scrollLeft" in js and "caja.scrollTop" in js
+
+
 def test_solo_total_conocido_deja_vacios_cantidad_y_precio(bd) -> None:
     """Sin detalle, no se inventa precio: solo se suma lo cobrado como ganancia."""
     venta = comercial.registrar_venta_migrada(

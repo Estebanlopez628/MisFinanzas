@@ -2874,6 +2874,8 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Caso sin detalle (ADR-182).** Cuando solo se conoce el valor total, se crea la línea «Saldo pendiente migrado» con precio unitario $0 y `subtotal_item` igual a la deuda, para no inventar un precio ni una cantidad. En «Ventas por producto» las columnas `Cantidad - D. migración` y `Precio - D. migración` salen vacías (`—`), mientras `Total - D. migración`, `Costo - D. migración` y `Ganancia - D. migración` muestran lo reconocido al cobrar y se suman a `Ganancia neta`. `sw.js` en `olb-finanzas-v210`.
 
+**Gesto táctil en tablas de analítica (ADR-183).** «Mes a mes» solo tiene `overflow-x: auto`, por eso el dedo desplaza columnas sin mover el panel. «Ventas por producto» y «Último costo» tienen además `max-height`, `overflow-y`, cabecera fija y `overscroll-behavior: contain`; en móvil ese doble eje hacía que el gesto se encadenara a la página y la tabla pareciera saltar de lado a lado. Se añadió `touch-action: pan-x pan-y`, `-webkit-overflow-scrolling: touch`, `contain: paint` y una guarda en `app.js` que cancela el gesto solo en el borde dominante. `sw.js` en `olb-finanzas-v211`.
+
 **Verificación.** **1038 pruebas** en verde (21 de la SRS), `compileall`, `node --check` de los dos scripts y `generar_guia.py --verificar` correcto (119 fichas). Sin desbordes en las vistas nuevas comprobadas por las pruebas HTTP; paleta, COP, íconos y scroll heredados intactos.
 
 ### 2026-11-27 — KPI de Analítica más anchos (ADR-174)
