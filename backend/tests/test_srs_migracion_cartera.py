@@ -54,7 +54,8 @@ def test_venta_migrada_sin_abono_se_ve_con_saldo_en_productos(bd) -> None:
     assert fila["saldo_migrado"] == Decimal("150000")
     assert fila["fecha_compra"] == date(2025, 7, 7)
     julio = analitica.reporte_mensual(bd, 2025)[6]
-    assert julio["ventas_migradas"] == 0
+    assert julio["ventas_migradas"] == 1
+    assert julio["pendiente_migrado"] == Decimal("150000")
     assert julio["ingresos_migrados"] == Decimal("0")
 
 
@@ -443,6 +444,7 @@ def test_las_columnas_de_migracion_aparecen_en_tablas_y_csv(bd) -> None:
     encabezados_mes, filas_mes = analitica.tabla_csv(bd, "mensual", analitica.Filtro(), date(2025, 4, 1))
     for titulo in (
         "Ventas - D. migración",
+        "Pendiente por pagar - D. migración",
         "Ingresos - D. migración",
         "Costo - D. migración",
         "Ganancia - D. migración",
@@ -572,7 +574,9 @@ def test_migracion_no_infla_reportes_hasta_el_recaudo(bd) -> None:
     )
     antes = analitica.reporte_mensual(bd, 2025)[2]
     assert antes["ventas"] == 0 and antes["ingresos"] == Decimal("0") and antes["ganancia"] == Decimal("0")
-    assert antes["ventas_migradas"] == 0
+    assert antes["ventas_migradas"] == 2
+    assert antes["pendiente_migrado"] == Decimal("300000")
+    assert antes["ganancia_migrada"] == Decimal("0")
 
     comercial.registrar_abono(
         bd,
@@ -589,6 +593,7 @@ def test_migracion_no_infla_reportes_hasta_el_recaudo(bd) -> None:
     abril = analitica.reporte_mensual(bd, 2025)[3]
     assert abril["ventas"] == 0 and abril["ingresos"] == Decimal("0")
     assert abril["ventas_migradas"] == 2
+    assert analitica.reporte_mensual(bd, 2025)[2]["pendiente_migrado"] == Decimal("160000")
     assert abril["ingresos_migrados"] == Decimal("140000")
     assert abril["costos_migrados"] == Decimal("20000")
     assert abril["ganancia_migrada"] == Decimal("120000")

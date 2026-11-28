@@ -116,6 +116,7 @@
             <th scope="col">Costos</th>
             <th scope="col">Ganancia</th>
             <th scope="col">Ventas -<br />D. migración</th>
+            <th scope="col">Pendiente por pagar -<br />D. migración</th>
             <th scope="col">Ingresos -<br />D. migración</th>
             <th scope="col">Costo -<br />D. migración</th>
             <th scope="col">Ganancia -<br />D. migración</th>
@@ -135,6 +136,7 @@
               <td class="tabla__numero">{{ fila.costos | cop }}</td>
               <td class="tabla__numero">{{ fila.ganancia | cop }}</td>
               <td class="tabla__numero">{{ fila.ventas_migradas }}</td>
+              <td class="tabla__numero">{{ fila.pendiente_migrado | cop }}</td>
               <td class="tabla__numero">{{ fila.ingresos_migrados | cop }}</td>
               <td class="tabla__numero">{{ fila.costos_migrados | cop }}</td>
               <td class="tabla__numero">{{ fila.ganancia_migrada | cop }}</td>
@@ -254,6 +256,7 @@
                 <td class="tabla__numero">{{ fila.costos | cop }}</td>
                 <td class="tabla__numero">{{ fila.ganancia | cop }}</td>
                 <td class="tabla__numero">{{ fila.ventas_migradas }}</td>
+                <td class="tabla__numero">{{ fila.pendiente_migrado | cop }}</td>
                 <td class="tabla__numero">{{ fila.ingresos_migrados | cop }}</td>
                 <td class="tabla__numero">{{ fila.costos_migrados | cop }}</td>
                 <td class="tabla__numero">{{ fila.ganancia_migrada | cop }}</td>

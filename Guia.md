@@ -1232,7 +1232,8 @@ sistema; «Ganancia neta» ya incluye esa ganancia. En móvil, las tablas de pro
 guarda en `app.js`) para que no salten de lado a lado; si el dedo empieza en la cabecera,
 solo hay desplazamiento horizontal (ADR-183/184). Con el panel vacío, «Guardar» agrega la
 fila de saldo global y avisa (ADR-185/186). Las ventas migradas sin abono se listan con su
-saldo en «Ventas por producto» (ADR-187/188).
+saldo en «Ventas por producto» (ADR-187/188). Mes a mes y Año tras año añaden «Pendiente por
+pagar - D. migración»; al cobrar, el valor pasa a «Ganancia - D. migración» (ADR-189).
 
 ### `backend/app/templates/olb_byte/cartera.html`
 

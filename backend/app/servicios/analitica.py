@@ -242,11 +242,7 @@ def _acumular(lineas: list[Linea]) -> _Acumulado:
         Totales del periodo; las órdenes se cuentan una sola vez por origen.
     """
     normales = {linea.id_venta for linea in lineas if linea.origen != comercial.ORIGEN_MIGRACION_CARTERA}
-    migradas = {
-        linea.id_venta
-        for linea in lineas
-        if linea.origen == comercial.ORIGEN_MIGRACION_CARTERA and linea.abonado > CERO
-    }
+    migradas = {linea.id_venta for linea in lineas if linea.origen == comercial.ORIGEN_MIGRACION_CARTERA}
     acumulado = _Acumulado(ventas=len(normales), ventas_migradas=len(migradas))
     for linea in lineas:
         if linea.origen == comercial.ORIGEN_MIGRACION_CARTERA:
@@ -547,6 +543,14 @@ def reporte_mensual(bd: Session, anio: int, filtro: Filtro | None = None) -> lis
     }
 
     maximo = max((p.ingresos_totales for p in periodos.values()), default=CERO)
+    pendiente_mes = {mes: CERO for mes in range(1, 13)}
+    for linea in lineas:
+        if (
+            linea.origen == comercial.ORIGEN_MIGRACION_CARTERA
+            and linea.fecha_compra is not None
+            and linea.fecha_compra.year == anio
+        ):
+            pendiente_mes[linea.fecha_compra.month] += linea.saldo
     gastos_mes = _gastos_operativos_por_mes(bd, anio)
     saldos = _saldos_pasivo_antiguo(bd)
     filas: list[dict[str, object]] = []
@@ -566,6 +570,7 @@ def reporte_mensual(bd: Session, anio: int, filtro: Filtro | None = None) -> lis
                 "costos": redondear_dinero(datos.costos),
                 # ADR-181: todo lo migrado se muestra en columnas propias.
                 "ventas_migradas": datos.ventas_migradas,
+                "pendiente_migrado": redondear_dinero(pendiente_mes[mes]),
                 "ingresos_migrados": redondear_dinero(datos.ingresos_migrados),
                 "costos_migrados": redondear_dinero(datos.costos_migrados),
                 "ganancia_migrada": redondear_dinero(datos.ganancia_migrada),
@@ -606,6 +611,15 @@ def reporte_anual(bd: Session, filtro: Filtro | None = None) -> list[dict[str, o
         for linea in _lineas(bd)
         if seleccion.de_cliente_y_producto(linea) and seleccion.en_mes_global(linea.fecha)
     ]
+    pendiente_anio: dict[int, Decimal] = {}
+    for linea in _lineas(bd):
+        if (
+            linea.origen == comercial.ORIGEN_MIGRACION_CARTERA
+            and linea.fecha_compra is not None
+            and seleccion.de_cliente_y_producto(linea)
+        ):
+            anio_compra = linea.fecha_compra.year
+            pendiente_anio[anio_compra] = pendiente_anio.get(anio_compra, CERO) + linea.saldo
     periodos: dict[int, list[Linea]] = {}
     for linea in lineas:
         periodos.setdefault(linea.fecha.year, []).append(linea)
@@ -634,6 +648,7 @@ def reporte_anual(bd: Session, filtro: Filtro | None = None) -> list[dict[str, o
                 # Costos es solo costo de ventas normal; el pasivo antiguo va aparte.
                 "costos": redondear_dinero(datos.costos),
                 "ventas_migradas": datos.ventas_migradas,
+                "pendiente_migrado": redondear_dinero(pendiente_anio.get(anio, CERO)),
                 "ingresos_migrados": redondear_dinero(datos.ingresos_migrados),
                 "costos_migrados": redondear_dinero(datos.costos_migrados),
                 "ganancia_migrada": redondear_dinero(datos.ganancia_migrada),
@@ -934,7 +949,8 @@ def tabla_csv(
     if nombre == "mensual":
         encabezados = [
             "Mes", "Ventas", "Ingresos", "Costos", "Ganancia",
-            "Ventas - D. migración", "Ingresos - D. migración",
+            "Ventas - D. migración", "Pendiente por pagar - D. migración",
+            "Ingresos - D. migración",
             "Costo - D. migración", "Ganancia - D. migración",
             "Ingresos totales", "Costos totales", "Ganancia total",
             PASIVO_ANTIGUO_LABEL,
@@ -948,6 +964,7 @@ def tabla_csv(
                 _csv_dinero(fila["costos"]),
                 _csv_dinero(fila["ganancia"]),
                 str(fila["ventas_migradas"]),
+                _csv_dinero(fila["pendiente_migrado"]),
                 _csv_dinero(fila["ingresos_migrados"]),
                 _csv_dinero(fila["costos_migrados"]),
                 _csv_dinero(fila["ganancia_migrada"]),
@@ -964,7 +981,8 @@ def tabla_csv(
     elif nombre == "anual":
         encabezados = [
             "Año", "Ventas", "Ingresos", "Costos", "Ganancia",
-            "Ventas - D. migración", "Ingresos - D. migración",
+            "Ventas - D. migración", "Pendiente por pagar - D. migración",
+            "Ingresos - D. migración",
             "Costo - D. migración", "Ganancia - D. migración",
             "Ingresos totales", "Costos totales", "Ganancia total",
             PASIVO_ANTIGUO_LABEL,
@@ -979,6 +997,7 @@ def tabla_csv(
                 _csv_dinero(fila["costos"]),
                 _csv_dinero(fila["ganancia"]),
                 str(fila["ventas_migradas"]),
+                _csv_dinero(fila["pendiente_migrado"]),
                 _csv_dinero(fila["ingresos_migrados"]),
                 _csv_dinero(fila["costos_migrados"]),
                 _csv_dinero(fila["ganancia_migrada"]),
