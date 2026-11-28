@@ -606,6 +606,13 @@ class Venta(Base):
     )
     cliente_nombre: Mapped[str] = mapped_column(String(120), nullable=False)
     cliente_telefono: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    # SRS Migración de Cartera: distingue las órdenes nacidas en la app de las
+    # ventas cargadas como saldo histórico. `fecha_compra` conserva el día real
+    # de la compra cuando la venta se migró (la fecha de venta es la de registro).
+    origen: Mapped[str] = mapped_column(
+        String(30), nullable=False, default="VENTA_NORMAL", server_default="VENTA_NORMAL"
+    )
+    fecha_compra: Mapped[date | None] = mapped_column(Date, nullable=True)
     fecha_venta: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
@@ -718,6 +725,11 @@ class MovimientoProveedor(Base):
     concepto: Mapped[str] = mapped_column(String(200), nullable=False)
     monto: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False)
     saldo_resultante: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False)
+    # SRS Migración de Cartera: datos opcionales de la deuda anterior al sistema.
+    # Se guardan solo para trazabilidad; no alteran el saldo ni la imputación.
+    proveedor_nombre: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    fecha_deuda: Mapped[date | None] = mapped_column(Date, nullable=True)
+    referencia_factura: Mapped[str | None] = mapped_column(String(120), nullable=True)
 
 
 class GastoOperativo(Base):

@@ -21,7 +21,7 @@ from typing import Annotated
 from urllib.parse import urlencode
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request, Response, status
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -297,6 +297,7 @@ def ver_olb_byte(
     bd: Session = Depends(obtener_bd),
     guardado: int = 0,
     q: str = "",
+    wa_auto: str = "",
 ) -> HTMLResponse:
     """Muestra el panel comercial.
 
@@ -305,6 +306,8 @@ def ver_olb_byte(
         usuario: Administrador autenticado.
         bd: Sesión de base de datos.
         guardado: Bandera de éxito.
+        q: Filtro de búsqueda de órdenes.
+        wa_auto: Identificador de la orden recién guardada que debe abrir WhatsApp.
 
     Returns:
         HTML del panel.
@@ -313,9 +316,32 @@ def ver_olb_byte(
         HTTPException: 403 si el usuario no es administrador.
     """
     exigir_olb_byte(usuario)
-    return plantillas.TemplateResponse(
-        request, "olb_byte/index.html", _contexto(usuario, bd, guardado=bool(guardado), busqueda=q)
-    )
+    contexto = _contexto(usuario, bd, guardado=bool(guardado), busqueda=q)
+    # SRS Migración §4: el salto automático en móvil ocurre después de recargar
+    # la lista, para que el usuario vea la orden nueva al volver de WhatsApp.
+    contexto["wa_auto_enlace"] = ""
+    if wa_auto:
+        venta = comercial.obtener_venta(bd, wa_auto)
+        if venta is not None and comercial.normalizar_telefono(venta.cliente_telefono):
+            contexto["wa_auto_enlace"] = comercial.enlace_whatsapp_factura(venta)
+    return plantillas.TemplateResponse(request, "olb_byte/index.html", contexto)
+
+
+def _telefono_seguro(texto: str) -> str | None:
+    """Normaliza un celular; un número inválido se trata como si no se escribiera.
+
+    Args:
+        texto: Número tal como llegó del formulario.
+
+    Returns:
+        Los 10 dígitos, o `None` si está vacío o no es válido.
+    """
+    if not texto.strip():
+        return None
+    try:
+        return comercial.normalizar_telefono(texto)
+    except ValueError:
+        return None
 
 
 def _datos_pago(formulario) -> dict[str, str]:
@@ -380,10 +406,14 @@ async def registrar_venta(
         bd: Sesión de base de datos.
 
     Returns:
-        Redirección al panel o vista con error y datos repoblados.
+        Redirección al panel o vista con error y datos repoblados. Con la cabecera
+        `X-OLB-AJAX: 1` devuelve JSON con el enlace de WhatsApp de la orden nueva.
     """
     exigir_olb_byte(usuario)
     formulario = await request.form()
+    es_ajax = request.headers.get("x-olb-ajax") == "1" or str(
+        formulario.get("respuesta", "")
+    ).lower() == "json"
     cliente_nombre = str(formulario.get("cliente_nombre", "")).strip()
     cliente_telefono = str(formulario.get("cliente_telefono", "")).strip()
     filas = _filas_del_formulario(formulario)
@@ -400,13 +430,32 @@ async def registrar_venta(
             raise ValueError("La venta debe tener al menos un producto.")
         pago = _pago_desde_datos(datos_pago)
         venta = comercial.registrar_venta(
-            bd, cliente_nombre, cliente_telefono or None, lineas, pago_inicial=pago
+            bd, cliente_nombre, _telefono_seguro(cliente_telefono), lineas, pago_inicial=pago
         )
         auditoria.registrar(
             bd, usuario.id_usuario, "VENTA_REGISTRADA", "ventas", f"No. {venta.numero_orden}"
         )
     except (ValueError, ArithmeticError) as error:
+        if es_ajax:
+            return JSONResponse(
+                {"ok": False, "error": str(error)}, status_code=status.HTTP_400_BAD_REQUEST
+            )
         return _pagina_con_error(request, bd, usuario, str(error), borrador)
+    if es_ajax:
+        return JSONResponse(
+            {
+                "ok": True,
+                "id_venta": venta.id_venta,
+                "numero_orden": venta.numero_orden,
+                "cliente_telefono": venta.cliente_telefono or "",
+                "enlace_whatsapp": (
+                    comercial.enlace_whatsapp_factura(venta)
+                    if comercial.normalizar_telefono(venta.cliente_telefono)
+                    else ""
+                ),
+            },
+            status_code=status.HTTP_201_CREATED,
+        )
     return RedirectResponse(url="/olb-byte?guardado=1", status_code=status.HTTP_303_SEE_OTHER)
 
 
@@ -764,6 +813,225 @@ def ver_factura(
         }
     )
     return plantillas.TemplateResponse(request, "olb_byte/factura.html", contexto)
+
+
+def _contexto_migracion(
+    usuario: UsuarioSesion,
+    bd: Session,
+    *,
+    error: str | None = None,
+    guardado: str = "",
+    borrador: dict[str, object] | None = None,
+) -> dict[str, object]:
+    """Prepara la vista de Migración de Cartera (SRS Migración, sección 2).
+
+    Args:
+        usuario: Administrador autenticado.
+        bd: Sesión de base de datos.
+        error: Mensaje de error opcional.
+        guardado: `venta` o `deuda` según lo registrado.
+        borrador: Datos del formulario para repoblarlo tras un error.
+
+    Returns:
+        Diccionario listo para Jinja2.
+    """
+    hoy = datetime.now(comercial.ZONA_TIENDA).date()
+    contexto = contexto_base(usuario)
+    contexto.update(
+        {
+            "titulo_pagina": "Migración de Cartera · OLB BYTE",
+            "hoy_iso": hoy.isoformat(),
+            "hoy_texto": hoy.strftime("%m/%d/%Y"),
+            "clientes": comercial.listar_clientes(bd),
+            "resumen": comercial.resumen_migracion(bd),
+            "filas": comercial.filas_migracion(bd),
+            "deudas_iniciales": [
+                fila
+                for fila in comercial.listar_movimientos_con_orden(bd)
+                if fila["tipo"] == comercial.TIPO_DEUDA_INICIAL
+            ],
+            "meses_defecto": comercial.GARANTIA_MESES_DEFECTO,
+            "error": error,
+            "guardado": guardado,
+            "borrador": borrador or {},
+        }
+    )
+    return contexto
+
+
+@router.get("/olb-byte/migracion", response_class=HTMLResponse, name="ver_migracion")
+def ver_migracion(
+    request: Request,
+    usuario: UsuarioSesion = Depends(obtener_usuario_actual),
+    bd: Session = Depends(obtener_bd),
+    guardado: str = "",
+) -> HTMLResponse:
+    """Muestra la pestaña de Migración de Cartera.
+
+    Args:
+        request: Petición HTTP.
+        usuario: Administrador autenticado.
+        bd: Sesión de base de datos.
+        guardado: Bandera de éxito (`venta` o `deuda`).
+
+    Returns:
+        HTML de la vista de migración.
+
+    Raises:
+        HTTPException: 403 si el usuario no es administrador.
+    """
+    exigir_olb_byte(usuario)
+    return plantillas.TemplateResponse(
+        request, "olb_byte/migracion.html", _contexto_migracion(usuario, bd, guardado=guardado)
+    )
+
+
+@router.post("/olb-byte/migracion/ventas", name="registrar_venta_migrada", response_model=None)
+async def registrar_venta_migrada(
+    request: Request,
+    usuario: UsuarioSesion = Depends(obtener_usuario_actual),
+    bd: Session = Depends(obtener_bd),
+) -> HTMLResponse | RedirectResponse:
+    """Carga una venta histórica como cartera pendiente, sin factura ni WhatsApp.
+
+    Args:
+        request: Petición HTTP con el formulario de migración.
+        usuario: Administrador autenticado.
+        bd: Sesión de base de datos.
+
+    Returns:
+        Redirección a la migración o la misma vista con el error y los datos.
+
+    Raises:
+        HTTPException: 403 si el usuario no es administrador.
+    """
+    exigir_olb_byte(usuario)
+    formulario = await request.form()
+    borrador: dict[str, object] = {
+        "cliente_nombre": str(formulario.get("cliente_nombre", "")).strip(),
+        "cliente_telefono": str(formulario.get("cliente_telefono", "")).strip(),
+        "fecha_compra": str(formulario.get("fecha_compra", "")).strip(),
+        "total": str(formulario.get("total", "")).strip(),
+        "filas": _filas_del_formulario(formulario),
+    }
+    try:
+        lineas = _lineas_desde_filas(borrador["filas"])
+        venta = comercial.registrar_venta_migrada(
+            bd,
+            str(borrador["cliente_nombre"]),
+            _telefono_seguro(str(borrador["cliente_telefono"])),
+            str(borrador["total"]),
+            str(borrador["fecha_compra"]) or None,
+            lineas,
+        )
+        auditoria.registrar(
+            bd, usuario.id_usuario, "VENTA_MIGRADA", "ventas", f"No. {venta.numero_orden}"
+        )
+    except (ValueError, ArithmeticError) as error:
+        bd.rollback()
+        return plantillas.TemplateResponse(
+            request,
+            "olb_byte/migracion.html",
+            _contexto_migracion(usuario, bd, error=str(error), borrador=borrador),
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+    return RedirectResponse(
+        url="/olb-byte/migracion?guardado=venta", status_code=status.HTTP_303_SEE_OTHER
+    )
+
+
+@router.post(
+    "/olb-byte/migracion/deudas-iniciales",
+    name="registrar_deuda_inicial_migracion",
+    response_model=None,
+)
+def registrar_deuda_inicial_migracion(
+    request: Request,
+    usuario: UsuarioSesion = Depends(obtener_usuario_actual),
+    bd: Session = Depends(obtener_bd),
+    concepto: Annotated[str, Form()] = "",
+    monto: Annotated[str, Form()] = "",
+    proveedor_nombre: Annotated[str, Form()] = "",
+    fecha_deuda: Annotated[str, Form()] = "",
+    referencia_factura: Annotated[str, Form()] = "",
+) -> HTMLResponse | RedirectResponse:
+    """Registra una deuda anterior al sistema con datos opcionales del proveedor.
+
+    Args:
+        request: Petición HTTP.
+        usuario: Administrador autenticado.
+        bd: Sesión de base de datos.
+        concepto: Descripción de la deuda.
+        monto: Valor adeudado.
+        proveedor_nombre: Proveedor; opcional.
+        fecha_deuda: Fecha real; vacía usa hoy.
+        referencia_factura: Referencia o factura; opcional.
+
+    Returns:
+        Redirección a la migración o la misma vista con el error.
+
+    Raises:
+        HTTPException: 403 si el usuario no es administrador.
+    """
+    exigir_olb_byte(usuario)
+    try:
+        movimiento = comercial.registrar_deuda_inicial(
+            bd,
+            monto,
+            concepto,
+            proveedor_nombre,
+            fecha_deuda,
+            referencia_factura,
+        )
+        auditoria.registrar(
+            bd,
+            usuario.id_usuario,
+            "DEUDA_INICIAL_PROVEEDOR",
+            "movimientos_proveedor",
+            movimiento.id_movimiento,
+        )
+    except (ValueError, ArithmeticError) as error:
+        bd.rollback()
+        return plantillas.TemplateResponse(
+            request,
+            "olb_byte/migracion.html",
+            _contexto_migracion(usuario, bd, error=str(error)),
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+    return RedirectResponse(
+        url="/olb-byte/migracion?guardado=deuda", status_code=status.HTTP_303_SEE_OTHER
+    )
+
+
+@router.get(
+    "/olb-byte/migracion/exportar.csv",
+    name="exportar_migracion_csv",
+    response_model=None,
+)
+def exportar_migracion_csv(
+    usuario: UsuarioSesion = Depends(obtener_usuario_actual),
+    bd: Session = Depends(obtener_bd),
+) -> Response:
+    """Descarga el detalle de la migración con origen y fechas de compra y recaudo.
+
+    Args:
+        usuario: Administrador autenticado.
+        bd: Sesión de base de datos.
+
+    Returns:
+        CSV con separador `;` y BOM UTF-8.
+
+    Raises:
+        HTTPException: 403 si el usuario no es administrador.
+    """
+    exigir_olb_byte(usuario)
+    encabezados, filas = analitica.tabla_csv_migracion(bd)
+    contenido = analitica.serializar_csv(encabezados, filas)
+    return Response(
+        content=contenido,
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": 'attachment; filename="migracion_cartera.csv"'},
+    )
 
 
 def _contexto_cartera(usuario: UsuarioSesion, bd: Session, *, error: str | None = None) -> dict[str, object]:

@@ -317,3 +317,10 @@ Principios innegociables. Toda especificación, plan y tarea debe cumplirlos de 
     - La base mínima de liquidez es un dato del perfil (`monto_minimo_liquidez NUMERIC(12,2) NOT NULL DEFAULT 0`), elegido en el onboarding; si no se digita, no hay reserva y el Consejero usa todo el libre. El valor digitado aparece en la dona y lo leen diagnóstico, banner y Consejero. Sin nulos.
     - La recuperación por olvido dispone además de tokens SHA-256 de un solo uso con vigencia de 20 minutos en `password_reset_tokens`, con `RESEND_FROM` y `FRONTEND_URL`. Los endpoints `/auth/forgot-password` y `/auth/reset-password` son aditivos: no alteran el Login, el flujo histórico ni el hash PBKDF2.
     - El alcance de este documento se limita a estas dos secciones; el fondo, los botones de OLB BYTE y la línea neón ya aprobados no se modifican.
+
+67. **Migración de Cartera y borrado integral de metas (SRS de migración, ADR-175):**
+    - La pestaña «Migración de Cartera» va junto a Registro de ventas; carga ventas históricas (`origen = MIGRACION_CARTERA`, `fecha_compra`) y deudas iniciales del proveedor (`proveedor_nombre`, `fecha_deuda`, `referencia_factura`) sin factura ni WhatsApp automático.
+    - Con costo cero, cada abono se reconoce 100 % como utilidad; con costo, se reparte en utilidad y pago proporcional al proveedor. Los CSV incluyen `origen`, `fecha_compra` y `fecha_recaudo`.
+    - Cartera queda en grilla 2 × 2 simétrica; el historial de gastos operativos muestra seis filas, cabecera opaca `#0b1e3d` y, en móvil, oculta Acciones abriendo el modal al tocar la fila.
+    - «Pegar Numero» abre WhatsApp directamente en ambos formularios. Registrar una venta normal guarda, refresca la lista y abre el chat de la orden; si no hay celular válido no se abre nada y el botón manual sigue de respaldo.
+    - Al eliminar una meta se borran todas sus filas de `gastos` por `id_proyeccion` (Q1 y Q2), se saneen las huérfanas y se recalculan metas, gastos y liquidez. Los títulos nuevos y reubicados conservan `.form-header-white`.

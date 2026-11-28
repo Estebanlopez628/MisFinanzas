@@ -2854,6 +2854,14 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Verificación.** `sw.js` en `olb-finanzas-v156`. Gate `qa_v4_56.py` **6/6**: separación de 18 px medida entre quincenas y atajos, `clientHeight 325 / scrollHeight 386` en 1280 px, `370 / 439` en 375 px y bordes inferiores iguales en web. Suite completa **1002 pruebas** en verde y 20 gates sin regresiones propias.
 
+### 2026-11-27 — Migración de Cartera, grilla 2 × 2, auto-WhatsApp y metas (ADR-175)
+
+**Decisión (ADR-175).** SRS de cinco bloques: (1) pestaña «Migración de Cartera» junto a Registro de ventas con dos formularios; (2) grilla 2 × 2 en Cartera; (3) «Pegar Numero» directo a WhatsApp y salto automático tras registrar una venta normal; (4) borrado integral de los gastos fijos de una meta en ambas quincenas; (5) línea neón en todos los títulos nuevos o reubicados. Alcance quirúrgico: no se tocan Login, fondo general, cálculos laborales ni módulos ajenos.
+
+**Consecuencias.** `ventas` gana `origen` (`VENTA_NORMAL` / `MIGRACION_CARTERA`) y `fecha_compra`; `movimientos_proveedor` gana `proveedor_nombre`, `fecha_deuda` y `referencia_factura` (la tabla `deudas` del SQL de referencia no existe en este modelo: el libro de proveedor es `movimientos_proveedor`). Se reutiliza `total_costo` en lugar de crear `costo_total_migrado`, para no duplicar el mismo dato. La migración no genera factura ni WhatsApp, no crea deuda con el proveedor al registrar y reconoce la utilidad por abono: 100 % si el costo es cero, `Abono − Abono × (costo / total)` si no. El CSV propio y el detallado de analítica incluyen `origen`, `fecha_compra` y `fecha_recaudo`. La venta normal pasa por `fetch` con `X-OLB-AJAX: 1`, preabre ventana en escritorio y recarga con `wa_auto` en móvil; el botón manual de WhatsApp sigue como respaldo. `ahorro.eliminar_proyeccion()` borra **todas** las filas por `id_proyeccion` (Q1 y Q2, pagadas o no) y conserva la fecha de pago en el abono del mes; `limpiar_gastos_huerfanos()` sanea las filas históricas sin meta padre. `sw.js` en `olb-finanzas-v206`.
+
+**Verificación.** **1031 pruebas** en verde (14 nuevas de la SRS), `compileall`, `node --check` de los dos scripts y `generar_guia.py --verificar` correcto (119 fichas). Sin desbordes en las vistas nuevas comprobadas por las pruebas HTTP; paleta, COP, íconos y scroll heredados intactos.
+
 ### 2026-11-27 — KPI de Analítica más anchos (ADR-174)
 
 **Decisión (ADR-174).** El propietario reportó que las cuatro tarjetas de indicadores de «Gestión y control de ventas» se veían apretadas. Se ensanchan sin cambiar la cantidad ni el orden: `.panel--kpis` pasa a `gap: 10px` y `padding: 16px`, y cada `.kpi` a `min-height: 58px`, `padding: 10px 8px`, con etiqueta de 0,8 rem y valor de 1,5 rem.

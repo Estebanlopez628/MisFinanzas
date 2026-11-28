@@ -38,7 +38,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.numeros import redondear_dinero
-from app.modelos import GastoOperativo, MovimientoProveedor, Venta, VentaDetalle
+from app.modelos import Abono, GastoOperativo, MovimientoProveedor, Venta, VentaDetalle
+from app.servicios import comercial
 from app.servicios.comercial import (
     CERO,
     ESTADO_ACTIVA,
@@ -160,6 +161,9 @@ class Linea:
         saldo: Parte del saldo pendiente de la orden que corresponde a la línea.
         abonado: Parte de los abonos de la orden que corresponde a la línea.
         garantia_fin: Vencimiento de la garantía de la línea, o `None`.
+        origen: `VENTA_NORMAL` o `MIGRACION_CARTERA`.
+        fecha_compra: Día real de la compra migrada, o `None`.
+        fecha_recaudo: Fecha del último abono de la orden, o `None`.
     """
 
     id_detalle: str
@@ -180,6 +184,9 @@ class Linea:
     saldo: Decimal
     abonado: Decimal
     garantia_fin: date | None
+    origen: str = "VENTA_NORMAL"
+    fecha_compra: date | None = None
+    fecha_recaudo: date | None = None
 
 
 @dataclass
@@ -268,6 +275,10 @@ def _lineas(bd: Session, *, incluir_anuladas: bool = False) -> list[Linea]:
     for detalle, venta in bd.execute(consulta).all():
         grupos.setdefault(venta.id_venta, []).append((detalle, venta))
 
+    ultimos: dict[str, datetime] = {}
+    for abono in bd.scalars(select(Abono).order_by(Abono.fecha_abono)):
+        ultimos[abono.id_venta] = abono.fecha_abono
+
     lineas: list[Linea] = []
     for grupo in grupos.values():
         venta = grupo[0][1]
@@ -298,6 +309,9 @@ def _lineas(bd: Session, *, incluir_anuladas: bool = False) -> list[Linea]:
                     saldo=saldo,
                     abonado=abonado,
                     garantia_fin=detalle.garantia_fecha_fin or venta.garantia_fecha_fin,
+                    origen=venta.origen,
+                    fecha_compra=venta.fecha_compra,
+                    fecha_recaudo=ultimos.get(venta.id_venta),
                 )
             )
     lineas.sort(key=lambda linea: (linea.fecha, linea.numero_orden))
@@ -727,6 +741,9 @@ def tabla_ventas(bd: Session, filtro: Filtro | None, hoy: date) -> list[dict[str
             "ganancia": redondear_dinero(linea.ganancia),
             "garantia_fin": linea.garantia_fin,
             "garantia": estado_garantia_fila(linea.garantia_fin, hoy),
+            "origen": linea.origen,
+            "fecha_compra": linea.fecha_compra,
+            "fecha_recaudo": linea.fecha_recaudo,
         }
         for linea in lineas
     ]
@@ -890,6 +907,7 @@ def tabla_csv(
         encabezados = [
             "No. de orden", "Cliente", "Categoría", "Producto", "Costo", "Total",
             "Saldo pendiente", "Abonos realizados", "Ganancia", "Garantía",
+            "Origen", "Fecha de compra", "Fecha de recaudo",
         ]
         filas = [
             [
@@ -903,7 +921,59 @@ def tabla_csv(
                 _csv_dinero(fila["abonado"]),
                 _csv_dinero(fila["ganancia"]),
                 str(fila["garantia"]),
+                str(fila["origen"]),
+                _csv_fecha(fila["fecha_compra"]),
+                _csv_fecha(fila["fecha_recaudo"]),
             ]
             for fila in tabla_ventas(bd, filtro, hoy)
         ]
+    return encabezados, filas
+
+
+def tabla_csv_migracion(bd: Session) -> tuple[list[str], list[list[str]]]:
+    """Prepara el CSV propio de la Migración de Cartera (SRS Migración §2.3).
+
+    Cada fila conserva el origen, la fecha de compra y la fecha del último
+    recaudo, además del desglose de costos y de la utilidad reconocida en
+    proporción a lo cobrado.
+
+    Args:
+        bd: Sesión de base de datos.
+
+    Returns:
+        Tupla `(encabezados, filas)` con separador `;` y BOM al serializar.
+    """
+    encabezados = [
+        "No. de orden", "Cliente", "Celular", "Fecha de compra", "Origen",
+        "Productos", "Costo total", "Total adeudado", "Abonado", "Saldo pendiente",
+        "Utilidad reconocida", "Pago al proveedor", "Fecha de recaudo",
+    ]
+    filas: list[list[str]] = []
+    for fila in comercial.filas_migracion(bd):
+        venta = fila["venta"]
+        productos = ", ".join(
+            f"{detalle.producto_nombre} × {detalle.cantidad}"
+            for detalle in bd.scalars(
+                select(VentaDetalle)
+                .where(VentaDetalle.id_venta == venta.id_venta)
+                .order_by(VentaDetalle.id_detalle)
+            )
+        )
+        filas.append(
+            [
+                str(venta.numero_orden),
+                str(venta.cliente_nombre),
+                str(venta.cliente_telefono or ""),
+                _csv_fecha(venta.fecha_compra),
+                str(venta.origen),
+                productos,
+                _csv_dinero(venta.total_costo),
+                _csv_dinero(venta.total),
+                _csv_dinero(venta.total_abonado),
+                _csv_dinero(venta.saldo_pendiente),
+                _csv_dinero(fila["utilidad"]),
+                _csv_dinero(fila["pago_proveedor"]),
+                _csv_fecha(fila["ultimo_recaudo"]),
+            ]
+        )
     return encabezados, filas

@@ -1,0 +1,288 @@
+{% extends "base.html" %}
+{% block clase_cuerpo %}olb-translucido{% endblock %}
+{% block titulo %}Migración de Cartera · OLB BYTE{% endblock %}
+
+{# Catálogo estándar de 12 categorías, el mismo de Registro de ventas (ADR-130). #}
+{% set categorias_producto = [
+  "Smartwatch", "Audífonos", "Parlantes", "Energía y carga",
+  "Cables y adaptadores", "Accesorios celular", "Almacenamiento",
+  "Periféricos PC", "Hogar y LED", "Gaming", "Combos", "Otros"
+] %}
+
+{% macro fila_producto(fila) -%}
+  <tr data-fila-producto>
+    <td>
+      <input class="campo__control" type="text" name="producto_nombre"
+             value="{{ fila.producto_nombre|default('', true) }}" placeholder="Audífonos Bluetooth" />
+    </td>
+    <td>
+      <input class="campo__control" type="text" name="categoria" list="categorias-migracion"
+             value="{{ fila.categoria|default('', true) }}" placeholder="Categoría" />
+    </td>
+    <td>
+      <input class="campo__control" type="number" min="1" name="cantidad"
+             value="{{ fila.cantidad|default(1, true) }}" />
+    </td>
+    <td>
+      <input class="campo__control" type="text" inputmode="decimal" name="precio_unitario"
+             value="{{ fila.precio_unitario|default('', true) }}" placeholder="0" data-moneda />
+    </td>
+    <td>
+      <input class="campo__control" type="text" inputmode="decimal" name="costo_unitario"
+             value="{{ fila.costo_unitario|default('0', true) }}" placeholder="0" data-moneda />
+    </td>
+    <td>
+      <button class="boton boton--peligro boton--pequeno" type="button" data-eliminar-producto>Quitar</button>
+    </td>
+  </tr>
+{%- endmacro %}
+
+{% block contenido %}
+  <section class="heroe heroe--compacto">
+    <h1 class="heroe__titulo form-header-white">🧾 Migración de Cartera</h1>
+    <p class="heroe__subtitulo">Carga de saldos y deudas anteriores al sistema OLB BYTE.</p>
+  </section>
+
+  <div class="acciones-formulario acciones-volver">
+    <a class="boton boton--primario boton--pequeno" href="{{ url_for('ver_olb_byte') }}">← Volver a Ventas</a>
+  </div>
+
+  {% set seccion = 'migracion' %}
+  {% include "olb_byte/_subnav.html" with context %}
+
+  {% if guardado == 'venta' %}
+    <div class="alerta alerta--exito" role="status">Venta anterior registrada en Cuentas por cobrar.</div>
+  {% elif guardado == 'deuda' %}
+    <div class="alerta alerta--exito" role="status">Deuda anterior al sistema registrada.</div>
+  {% endif %}
+  {% if error %}
+    <div class="alerta alerta--error" role="alert">{{ error }}</div>
+  {% endif %}
+
+  <div class="rejilla-tarjetas">
+    <article class="tarjeta tarjeta--azul">
+      <span class="tarjeta__icono" aria-hidden="true">🧾</span>
+      <h3 class="tarjeta__titulo">{{ resumen.ordenes }} orden(es)</h3>
+      <p class="tarjeta__descripcion">Ventas migradas a cartera.</p>
+    </article>
+    <article class="tarjeta tarjeta--rojo">
+      <span class="tarjeta__icono" aria-hidden="true">⏳</span>
+      <h3 class="tarjeta__titulo">{{ resumen.saldo | cop }}</h3>
+      <p class="tarjeta__descripcion">Saldo pendiente de cobro.</p>
+    </article>
+    <article class="tarjeta tarjeta--verde">
+      <span class="tarjeta__icono" aria-hidden="true">💰</span>
+      <h3 class="tarjeta__titulo">{{ resumen.utilidad | cop }}</h3>
+      <p class="tarjeta__descripcion">Utilidad reconocida por los abonos.</p>
+    </article>
+  </div>
+
+  {# ---------------------- Bloque 1: ventas anteriores ---------------------- #}
+  <section class="panel">
+    <h2 class="panel__titulo form-header-white">Ventas realizadas antes del sistema</h2>
+    <p class="panel__descripcion">
+      El saldo queda pendiente en «Cuentas por cobrar». No se genera factura ni se abre WhatsApp.
+    </p>
+
+    <form class="formulario" method="post" action="{{ url_for('registrar_venta_migrada') }}" data-migracion-form>
+      <div class="fila-campos">
+        <label class="campo">
+          <span class="campo__etiqueta">Nombre del cliente</span>
+          <input class="campo__control" type="text" name="cliente_nombre" required
+                 list="clientes-migracion" autocomplete="off"
+                 value="{{ borrador.cliente_nombre|default('', true) }}" />
+          <span class="ayuda">Si el cliente ya existe, se completa su celular.</span>
+        </label>
+        <label class="campo">
+          <span class="campo__etiqueta">Teléfono (WhatsApp)</span>
+          <span class="fila-entrada">
+            <input class="campo__control" type="tel" name="cliente_telefono" inputmode="numeric"
+                   autocomplete="tel" placeholder="3001234567"
+                   value="{{ borrador.cliente_telefono|default('', true) }}" data-cliente-telefono />
+            <button class="boton boton--primario boton--pequeno" type="button" data-pegar-numero>
+              <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.4-.7-1.6-.8s-.4-.1-.5.1-.6.8-.8.9-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.6-1.2.1-.2 0-.3 0-.4l-.7-1.8c-.2-.4-.4-.4-.5-.4h-.5a.9.9 0 0 0-.6.3 2.7 2.7 0 0 0-.8 2 4.7 4.7 0 0 0 1 2.5 10.7 10.7 0 0 0 4.1 3.6c1.5.7 2.1.7 2.9.6a2.4 2.4 0 0 0 1.6-1.1 2 2 0 0 0 .1-1.1c0-.1-.2-.2-.4-.3z"/></svg>
+              <span>Pegar Numero</span>
+            </button>
+          </span>
+        </label>
+      </div>
+
+      <datalist id="clientes-migracion">
+        {% for cliente in clientes %}
+          <option value="{{ cliente.nombre }}" data-telefono="{{ cliente.telefono_whatsapp or '' }}"></option>
+        {% endfor %}
+      </datalist>
+      <datalist id="categorias-migracion">
+        {% for categoria in categorias_producto %}
+          <option value="{{ categoria }}"></option>
+        {% endfor %}
+      </datalist>
+
+      <div class="fila-campos">
+        <label class="campo">
+          <span class="campo__etiqueta">Fecha de compra</span>
+          <input class="campo__control" type="date" name="fecha_compra" required
+                 value="{{ borrador.fecha_compra|default(hoy_iso, true) }}" />
+        </label>
+        <label class="campo">
+          <span class="campo__etiqueta">Valor total adeudado (COP)</span>
+          <input class="campo__control" type="text" inputmode="decimal" name="total" required
+                 value="{{ borrador.total|default('', true) }}" placeholder="500.000" data-moneda />
+          <span class="ayuda">Si no tienes el detalle, deja los productos vacíos y carga solo el saldo.</span>
+        </label>
+      </div>
+
+      <h3 class="subtitulo-seccion form-header-white">Productos (opcional)</h3>
+      <div class="tabla-contenedor">
+        <table class="tabla tabla--tarjetas tabla--compacta">
+          <thead>
+            <tr>
+              <th scope="col">Producto</th>
+              <th scope="col">Categoría</th>
+              <th scope="col">Cant.</th>
+              <th scope="col">Precio unitario</th>
+              <th scope="col">Costo</th>
+              <th scope="col">Acciones</th>
+            </tr>
+          </thead>
+          <tbody data-lista-productos>
+            {% for fila in borrador.filas|default([], true) %}
+              {{ fila_producto(fila) }}
+            {% endfor %}
+          </tbody>
+        </table>
+        <p class="tabla__vacia" data-lista-vacia {% if borrador.filas %}hidden{% endif %}>
+          Sin detalle de productos: se cargará el total adeudado como saldo global.
+        </p>
+      </div>
+
+      <template data-plantilla-producto>
+        {{ fila_producto({'producto_nombre': '', 'categoria': '', 'cantidad': 1, 'precio_unitario': '', 'costo_unitario': '0'}) }}
+      </template>
+
+      <div class="acciones-venta">
+        <button class="boton boton--primario boton--venta" type="button" data-agregar-producto>+ Agregar otro producto</button>
+        <button class="boton boton--primario boton--venta" type="submit">Registrar venta</button>
+      </div>
+    </form>
+  </section>
+
+  {# ---------------------- Bloque 2: deudas anteriores ---------------------- #}
+  <section class="panel">
+    <h2 class="panel__titulo form-header-white">Deudas al proveedor anteriores al sistema</h2>
+    <p class="panel__descripcion">
+      Suman al saldo adeudado y quedan en el libro como «Deuda inicial». Los registros previos se conservan.
+    </p>
+    <form class="formulario" method="post" action="{{ url_for('registrar_deuda_inicial_migracion') }}">
+      <div class="fila-campos">
+        <label class="campo">
+          <span class="campo__etiqueta">Concepto</span>
+          <input class="campo__control" type="text" name="concepto" maxlength="200"
+                 placeholder="Deuda anterior al sistema" required />
+        </label>
+        <label class="campo">
+          <span class="campo__etiqueta">Valor adeudado (COP)</span>
+          <input class="campo__control" type="text" name="monto" inputmode="decimal"
+                 placeholder="100.000" required data-moneda />
+        </label>
+      </div>
+      <div class="fila-campos">
+        <label class="campo">
+          <span class="campo__etiqueta">Proveedor (opcional)</span>
+          <input class="campo__control" type="text" name="proveedor_nombre" maxlength="120"
+                 placeholder="Nombre del proveedor" />
+        </label>
+        <label class="campo">
+          <span class="campo__etiqueta">Fecha de la deuda</span>
+          <input class="campo__control" type="date" name="fecha_deuda" value="{{ hoy_iso }}" />
+        </label>
+        <label class="campo">
+          <span class="campo__etiqueta">Referencia / N.º de factura (opcional)</span>
+          <input class="campo__control" type="text" name="referencia_factura" maxlength="120"
+                 placeholder="Factura o nota" />
+        </label>
+      </div>
+      <button class="boton boton--primario" type="submit">Registrar deuda</button>
+    </form>
+
+    {% if deudas_iniciales %}
+      <h3 class="subtitulo-seccion form-header-white">Deudas iniciales registradas</h3>
+      <div class="tabla-contenedor tabla-contenedor--movimientos">
+        <table class="tabla tabla--compacta">
+          <thead>
+            <tr>
+              <th scope="col">Fecha</th>
+              <th scope="col">Concepto</th>
+              <th scope="col">Proveedor</th>
+              <th scope="col">Referencia</th>
+              <th scope="col">Valor</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for deuda in deudas_iniciales %}
+              <tr>
+                <td>{{ deuda.fecha.strftime('%d/%m/%Y') }}</td>
+                <td>{{ deuda.concepto }}</td>
+                <td>{{ deuda.proveedor_nombre or '—' }}</td>
+                <td>{{ deuda.referencia_factura or '—' }}</td>
+                <td class="tabla__numero">{{ deuda.monto | cop }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% endif %}
+  </section>
+
+  {# ---------------------- Métricas y exportación ---------------------- #}
+  <section class="panel panel--tabla">
+    <div class="panel__cabecera">
+      <h2 class="panel__titulo form-header-white">Ventas migradas y recaudos</h2>
+      <a class="boton boton--primario boton--pequeno"
+         href="{{ url_for('exportar_migracion_csv') }}">Descargar CSV</a>
+    </div>
+    <p class="panel__descripcion">
+      Cobrado: <strong>{{ resumen.abonado | cop }}</strong> ·
+      Utilidad reconocida: <strong>{{ resumen.utilidad | cop }}</strong> ·
+      Pago al proveedor proporcional: <strong>{{ resumen.pago_proveedor | cop }}</strong>.
+    </p>
+    {% if filas %}
+      <div class="tabla-contenedor tabla-contenedor--movimientos">
+        <table class="tabla tabla--compacta">
+          <thead>
+            <tr>
+              <th scope="col">No.</th>
+              <th scope="col">Cliente</th>
+              <th scope="col">Fecha compra</th>
+              <th scope="col">Origen</th>
+              <th scope="col">Total</th>
+              <th scope="col">Abonado</th>
+              <th scope="col">Utilidad</th>
+              <th scope="col">Último recaudo</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for fila in filas %}
+              <tr>
+                <td>{{ fila.venta.numero_orden }}</td>
+                <td>{{ fila.venta.cliente_nombre }}</td>
+                <td>{{ fila.venta.fecha_compra.strftime('%d/%m/%Y') if fila.venta.fecha_compra else '—' }}</td>
+                <td>{{ fila.venta.origen }}</td>
+                <td class="tabla__numero">{{ fila.venta.total | cop }}</td>
+                <td class="tabla__numero">{{ fila.venta.total_abonado | cop }}</td>
+                <td class="tabla__numero valor-positivo">{{ fila.utilidad | cop }}</td>
+                <td>{{ fila.ultimo_recaudo.strftime('%d/%m/%Y') if fila.ultimo_recaudo else '—' }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="tabla__vacia">Aún no hay ventas migradas registradas.</p>
+    {% endif %}
+  </section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('estaticos', path='js/migracion.js') }}" defer></script>
+{% endblock %}

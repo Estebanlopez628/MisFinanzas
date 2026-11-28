@@ -34,18 +34,23 @@ def test_ranking_muestra_siete_filas_con_cabecera_opaca() -> None:
     assert "tabla-contenedor--ranking" in plantilla
 
 
-def test_historial_gastos_muestra_cinco_filas_con_cabecera_opaca() -> None:
-    """Historial: cinco filas en web y móvil, cabecera sin transparencia."""
+def test_historial_gastos_muestra_seis_filas_con_cabecera_opaca() -> None:
+    """Historial: seis filas en web y móvil, cabecera sólida azul oscura."""
     css = _css()
     bloque = css.split(".tabla-contenedor--gastos {", 1)[1].split("}", 1)[0]
-    assert "max-height: 252px" in bloque
+    assert "max-height: 265px" in bloque
     cabecera = css.split(".tabla-contenedor--gastos .tabla thead th {", 1)[1].split("}", 1)[0]
-    assert "background: var(--bg-primary)" in cabecera
+    assert "background-color: #0b1e3d" in cabecera
     movil = css.split(".ordenes-moviles--gastos {", 1)[1].split("}", 1)[0]
-    assert "max-height: 210px" in movil
+    assert "max-height: 265px" in movil
+    grilla = css.split(".rejilla-paneles--cartera {", 1)[1].split("}", 1)[0]
+    assert "grid-template-columns: repeat(2, minmax(0, 1fr))" in grilla
     plantilla = (RUTA / "templates/olb_byte/cartera.html").read_text(encoding="utf-8")
     assert "tabla-contenedor--gastos" in plantilla
-    assert "ordenes-moviles--gastos" in plantilla
+    assert "historial-gastos-table" in plantilla
+    assert "col-acciones" in plantilla
+    assert 'action="/olb-byte/proveedor/deudas-iniciales"' not in plantilla
+    assert 'action="/olb-byte/migracion/deudas-iniciales"' not in plantilla
 
 
 def test_analitica_muestra_seis_productos_con_cabecera_opaca() -> None:

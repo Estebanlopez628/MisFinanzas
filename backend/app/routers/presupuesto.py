@@ -97,6 +97,8 @@ def _contexto(
         Diccionario listo para Jinja2.
     """
     hoy = date.today()
+    if ahorro.limpiar_gastos_huerfanos(bd, usuario.id_usuario):
+        bd.commit()
     pagos_metas.asegurar_gastos_de_metas(bd, usuario.id_usuario, hoy.year, hoy.month)
     # SRS v1.9: las cuotas de las libranzas bajan al abrir esta vista, no solo en Deudas.
     deudas.aplicar_cuotas_vencidas(bd, usuario.id_usuario)
@@ -302,6 +304,8 @@ def extender_meta(
         bd, usuario.id_usuario, "META_EXTENDIDA", "proyecciones_ahorro", id_proyeccion
     )
     hoy = date.today()
+    if ahorro.limpiar_gastos_huerfanos(bd, usuario.id_usuario):
+        bd.commit()
     pagos_metas.asegurar_gastos_de_metas(bd, usuario.id_usuario, hoy.year, hoy.month)
     return RedirectResponse(url="/presupuesto?guardado=1", status_code=status.HTTP_303_SEE_OTHER)
 

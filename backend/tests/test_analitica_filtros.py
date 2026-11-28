@@ -16,7 +16,7 @@ from app.servicios import analitica, comercial
 
 COLUMNAS_VENTAS = (
     "No. de orden;Cliente;Categoría;Producto;Costo;Total;Saldo pendiente;"
-    "Abonos realizados;Ganancia;Garantía"
+    "Abonos realizados;Ganancia;Garantía;Origen;Fecha de compra;Fecha de recaudo"
 )
 
 

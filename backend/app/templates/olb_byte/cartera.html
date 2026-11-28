@@ -146,7 +146,7 @@
   </section>
 
   {# SRS v4.44, §7.2: ambas tarjetas miden lo mismo en escritorio (50 % / 50 %). #}
-  <div class="rejilla-paneles rejilla-paneles--proveedor">
+  <div class="rejilla-paneles rejilla-paneles--proveedor rejilla-paneles--cartera">
     <section class="panel">
       <h2 class="panel__titulo form-header-white">Pago al proveedor</h2>
       <p class="panel__descripcion">
@@ -250,27 +250,7 @@
   </div>
 
   {# SRS v4.44, §8.1: dos tarjetas gemelas, mismo ancho y misma altura. #}
-  <div class="rejilla-paneles rejilla-paneles--proveedor">
-    <section class="panel">
-      <h2 class="panel__titulo form-header-white">Deudas al proveedor anteriores al sistema</h2>
-      <p class="panel__descripcion">
-        Suman al saldo total adeudado y quedan en el libro como «Deuda inicial».
-      </p>
-      <form class="formulario" method="post" action="{{ url_for('registrar_deuda_inicial') }}">
-        <label class="campo">
-          <span class="campo__etiqueta">Concepto</span>
-          <input class="campo__control" type="text" name="concepto" maxlength="200"
-                 placeholder="Deuda anterior al sistema" required />
-        </label>
-        <label class="campo">
-          <span class="campo__etiqueta">Valor adeudado (COP)</span>
-          <input class="campo__control" type="text" name="monto" inputmode="decimal"
-                 placeholder="100.000" required data-moneda />
-        </label>
-        <button class="boton boton--primario" type="submit">Registrar deuda</button>
-      </form>
-    </section>
-
+  <div class="rejilla-paneles rejilla-paneles--proveedor rejilla-paneles--cartera">
     <section class="panel">
       <h2 class="panel__titulo form-header-white">Gastos operativos</h2>
       <p class="panel__descripcion">
@@ -292,10 +272,9 @@
         <button class="boton boton--primario" type="submit">Registrar gasto</button>
       </form>
     </section>
-  </div>
 
-  {# SRS v4.44, §8.2: historial de gastos operativos con edición y borrado. #}
-  <section class="panel panel--tabla">
+    {# SRS Migración §3: el historial sube a la mitad derecha de la segunda fila. #}
+    <section class="panel panel--tabla">
     <div class="panel__cabecera">
       <h2 class="panel__titulo form-header-white">Historial de gastos operativos</h2>
       <span class="panel__total">
@@ -303,13 +282,13 @@
       </span>
     </div>
     {% if gastos_operativos %}
-      <div class="tabla-contenedor tabla-escritorio tabla-contenedor--gastos">
-        <table class="tabla">
+      <div class="tabla-contenedor tabla-escritorio tabla-contenedor--gastos historial-gastos-scroll">
+        <table class="tabla historial-gastos-table">
           <thead>
             <tr>
               <th scope="col">Fecha</th>
               <th scope="col">Monto</th>
-              <th scope="col">Acciones</th>
+              <th scope="col" class="col-acciones">Acciones</th>
             </tr>
           </thead>
           <tbody>
@@ -317,7 +296,7 @@
               <tr>
                 <td>{{ gasto.fecha.strftime('%m/%d/%Y') }}</td>
                 <td class="tabla__numero">{{ gasto.monto | cop }}</td>
-                <td class="tabla-gastos__acciones">
+                <td class="tabla-gastos__acciones col-acciones">
                   <button type="button" class="boton boton--secundario boton--pequeno"
                           data-abrir-dialogo="gasto-{{ gasto.id_gasto_operativo }}">Editar</button>
                   <form method="post"
@@ -380,5 +359,6 @@
     {% else %}
       <p class="tabla__vacia">Aún no hay gastos operativos registrados.</p>
     {% endif %}
-  </section>
+    </section>
+  </div>
 {% endblock %}

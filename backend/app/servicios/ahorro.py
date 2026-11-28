@@ -24,10 +24,10 @@ Reglas:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import date
+from datetime import date, datetime, time, timezone
 from decimal import Decimal
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from app.core.numeros import redondear_dinero
@@ -431,12 +431,14 @@ def eliminar_proyeccion(
     id_proyeccion: str,
     hoy: date | None = None,
 ) -> bool:
-    """Archiva una meta: conserva su historial y retira sus cuotas futuras.
+    """Archiva una meta y retira TODOS sus gastos fijos de ambas quincenas.
 
     SRS v1.6: la meta sale de la lista activa, pero queda en la base de datos
     con su inicio, su fin, el total recogido y si se cumplió o se eliminó antes.
-    Se quitan los gastos de meses futuros que no están pagados; los pagos ya
-    registrados se conservan como historial.
+    Corrección SRS Migración §5: antes solo se borraban los gastos no pagados
+    desde el mes actual, de modo que el pago de la segunda quincena (o uno ya
+    marcado) quedaba activo. Ahora se eliminan todas las filas vinculadas por
+    `id_proyeccion`, sin importar la quincena ni el estado del check.
 
     Args:
         bd: Sesión de base de datos.
@@ -454,22 +456,68 @@ def eliminar_proyeccion(
     referencia = hoy or date.today()
     anio_fin, mes_fin = meses_de_la_meta(proyeccion)[-1]
     cumplida = _posicion(referencia.year, referencia.month) > _posicion(anio_fin, mes_fin)
-    inicio_del_mes = date(referencia.year, referencia.month, 1)
-    futuros = bd.scalars(
-        select(Gasto).where(
-            Gasto.id_proyeccion == id_proyeccion,
-            Gasto.pagado.is_(False),
-            Gasto.fecha >= inicio_del_mes,
+    # Antes de borrar las filas se conserva la fecha de pago en el abono del mes:
+    # el historial de la meta archivada debe seguir mostrando cuándo se pagó.
+    gastos_meta = list(
+        bd.scalars(
+            select(Gasto).where(
+                Gasto.id_usuario == id_usuario,
+                Gasto.id_proyeccion == id_proyeccion,
+            )
         )
     )
-    for gasto in list(futuros):
-        bd.delete(gasto)
+    for abono in bd.scalars(
+        select(AbonoProyeccion).where(AbonoProyeccion.id_proyeccion == id_proyeccion)
+    ):
+        pagos = [
+            gasto.pagado_en
+            for gasto in gastos_meta
+            if gasto.pagado
+            and gasto.pagado_en is not None
+            and gasto.fecha.year == abono.anio
+            and gasto.fecha.month == abono.mes
+        ]
+        if pagos:
+            abono.fecha_registro = datetime.combine(max(pagos), time(12, 0), tzinfo=timezone.utc)
+    # Borrado integral: una sola sentencia por id_proyeccion cubre Q1, Q2 y
+    # «Ambas quincenas», también para gastos ya marcados o de meses anteriores.
+    bd.execute(
+        delete(Gasto).where(
+            Gasto.id_usuario == id_usuario,
+            Gasto.id_proyeccion == id_proyeccion,
+        )
+    )
+    limpiar_gastos_huerfanos(bd, id_usuario)
 
     proyeccion.activo = False
     proyeccion.archivada_en = referencia
     proyeccion.estado_final = ESTADO_CUMPLIDA if cumplida else ESTADO_ELIMINADA
     bd.commit()
     return True
+
+
+def limpiar_gastos_huerfanos(bd: Session, id_usuario: str) -> int:
+    """Elimina gastos fijos cuya meta padre ya no existe (SRS Migración §5).
+
+    Es el saneamiento de seguridad para los registros que quedaron de eliminaciones
+    anteriores al correctivo. Solo toca gastos del usuario indicado y vinculados
+    a una meta; nunca borra gastos fijos normales ni de trabajos.
+
+    Args:
+        bd: Sesión de base de datos.
+        id_usuario: Dueño de los gastos.
+
+    Returns:
+        Cantidad de filas eliminadas.
+    """
+    resultado = bd.execute(
+        delete(Gasto).where(
+            Gasto.id_usuario == id_usuario,
+            Gasto.id_proyeccion.is_not(None),
+            Gasto.id_proyeccion.notin_(select(ProyeccionAhorro.id_proyeccion)),
+        )
+    )
+    return resultado.rowcount or 0
 
 
 def extender_proyeccion(
@@ -591,15 +639,19 @@ def _detalle_pagos(bd: Session, proyeccion: ProyeccionAhorro) -> list[dict[str, 
     Returns:
         Lista de diccionarios con `etiqueta`, `estado`, `valor` y `fecha`.
     """
-    abonos = {
-        (abono.anio, abono.mes): abono.valor
-        for abono in bd.scalars(
+    abonos_filas = list(
+        bd.scalars(
             select(AbonoProyeccion).where(
                 AbonoProyeccion.id_proyeccion == proyeccion.id_proyeccion
             )
         )
+    )
+    abonos = {(abono.anio, abono.mes): abono.valor for abono in abonos_filas}
+    fechas: dict[tuple[int, int], date] = {
+        (abono.anio, abono.mes): abono.fecha_registro.date()
+        for abono in abonos_filas
+        if abono.fecha_registro is not None
     }
-    fechas: dict[tuple[int, int], date] = {}
     for gasto in bd.scalars(
         select(Gasto).where(
             Gasto.id_proyeccion == proyeccion.id_proyeccion,

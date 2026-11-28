@@ -367,12 +367,97 @@
     });
   }
 
+  /**
+   * Convierte el enlace `wa.me` del servidor al esquema nativo en móvil.
+   *
+   * @param {string} enlace URL `https://wa.me/57...`.
+   * @returns {string} Enlace `whatsapp://send` en móvil, el original en escritorio.
+   */
+  function enlaceWhatsappSegunDispositivo(enlace) {
+    if (!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+      return enlace;
+    }
+    try {
+      var url = new URL(enlace);
+      var numero = url.pathname.replace(/^\//, "");
+      return (
+        "whatsapp://send?phone=" +
+        encodeURIComponent(numero) +
+        "&text=" +
+        encodeURIComponent(url.searchParams.get("text") || "")
+      );
+    } catch (error) {
+      return enlace;
+    }
+  }
+
+  /**
+   * Apertura automática tras recargar la lista (solo móvil, SRS Migración §4).
+   */
+  var metaAuto = document.querySelector("[data-wa-auto]");
+  if (metaAuto && metaAuto.content) {
+    window.location.href = enlaceWhatsappSegunDispositivo(metaAuto.content);
+  }
+
   // Si queda un producto escrito y sin guardar al registrar la venta, se guarda antes.
+  // Con fetch, la orden se guarda y se refresca la lista antes de abrir WhatsApp.
   formulario.addEventListener("submit", function (evento) {
     if (!panel.disabled && hayDatosEnPanel() && !guardarProducto()) {
       evento.preventDefault();
       panel.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
     }
+    if (!window.fetch || !FormData) {
+      return;
+    }
+    evento.preventDefault();
+    var esMovil = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    var tieneCelular = !!(campoTelefono && normalizarTelefono(campoTelefono.value).length === 10);
+    // La ventana se abre dentro del gesto del clic: así Safari y Chrome no
+    // bloquean la apertura después de esperar la respuesta del servidor.
+    var ventanaWa = !esMovil && tieneCelular ? window.open("", "_blank") : null;
+
+    fetch(formulario.action || window.location.href, {
+      method: "POST",
+      headers: { "X-OLB-AJAX": "1" },
+      body: new FormData(formulario),
+      credentials: "same-origin",
+    })
+      .then(function (respuesta) {
+        return respuesta.json().then(function (datos) {
+          return { estado: respuesta.status, datos: datos };
+        });
+      })
+      .then(function (resultado) {
+        if (resultado.estado >= 400 || !resultado.datos.ok) {
+          if (ventanaWa) {
+            ventanaWa.close();
+          }
+          if (typeof window.mostrarAvisoApp === "function") {
+            window.mostrarAvisoApp(resultado.datos.error || "No se pudo registrar la venta.");
+          }
+          return;
+        }
+        var enlace = resultado.datos.enlace_whatsapp || "";
+        if (esMovil && enlace && tieneCelular) {
+          // Primero se recarga la lista con la orden nueva; la página abre WhatsApp al cargar.
+          window.location.href =
+            "/olb-byte?guardado=1&wa_auto=" + encodeURIComponent(resultado.datos.id_venta);
+          return;
+        }
+        if (ventanaWa && enlace) {
+          ventanaWa.location.href = enlace;
+        }
+        window.location.href = "/olb-byte?guardado=1";
+      })
+      .catch(function () {
+        if (ventanaWa) {
+          ventanaWa.close();
+        }
+        if (typeof window.mostrarAvisoApp === "function") {
+          window.mostrarAvisoApp("No se pudo registrar la venta. Inténtalo de nuevo.");
+        }
+      });
   });
 
   // ------------------------------ Forma de pago ---------------------------------
@@ -503,74 +588,14 @@
   }
 
   var botonPegar = formulario.querySelector("[data-pegar-numero]");
-  var nota = formulario.querySelector("[data-nota-contactos]");
 
   /**
-   * Muestra una nota junto al campo de celular.
-   *
-   * @param {string} texto Mensaje para el usuario; vacío la oculta.
+   * Abre WhatsApp directamente para que el usuario busque el contacto y copie
+   * el número. Sin libreta nativa ni portapapeles: la página no puede leer la
+   * agenda del teléfono (SRS Migración §4).
    */
-  function mostrarNotaContactos(texto) {
-    if (!nota) {
-      return;
-    }
-    var textoNota = nota.querySelector("[data-nota-contactos-texto]");
-    if (textoNota) {
-      textoNota.textContent = texto;
-    }
-    nota.hidden = !texto;
-    if (texto) {
-      nota.classList.add("nota-contactos--aviso");
-    } else {
-      nota.classList.remove("nota-contactos--aviso");
-    }
-  }
-
-  /**
-   * Toma el número que el usuario copió (por ejemplo, desde Contactos) y lo pone en el campo.
-   * En iPhone el navegador pide confirmar «Pegar» la primera vez.
-   */
-  function pegarNumero() {
-    if (!navigator.clipboard || !navigator.clipboard.readText) {
-      mostrarNotaContactos(
-        "Este navegador no puede leer el portapapeles. Mantén presionado el campo de celular y toca Pegar."
-      );
-      return;
-    }
-    navigator.clipboard
-      .readText()
-      .then(function (copiado) {
-        var numero = normalizarTelefono(copiado);
-        if (numero.length !== 10) {
-          mostrarNotaContactos(
-            "Lo copiado no es un celular de 10 dígitos. Copia el número del contacto e inténtalo de nuevo."
-          );
-          return;
-        }
-        if (campoTelefono) {
-          campoTelefono.value = numero;
-        }
-        mostrarNotaContactos("");
-      })
-      .catch(function () {
-        mostrarNotaContactos(
-          "No se pudo leer el portapapeles. Mantén presionado el campo de celular y toca Pegar."
-        );
-      });
-  }
-
-  /**
-   * Abre WhatsApp en el celular con el mismo enlace universal que «Invitar amigos»:
-   * `wa.me` sin destinatario abre directamente la lista de contactos para elegir uno
-   * y copiar su número. La página no puede leer la libreta de WhatsApp; el usuario
-   * pega el número en el campo y el evento `input` lo deja limpio.
-   *
-   * @returns {void}
-   */
-  function agregarNumeroMovil() {
+  function abrirWhatsappNumero() {
     var texto = encodeURIComponent("Hola");
-    // Igual que «Invitar amigos»: en móvil se salta al esquema nativo sobre la
-    // ventana actual para no dejar una pestaña web en blanco.
     if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
       window.location.href = "whatsapp://send?text=" + texto;
     } else {
@@ -582,47 +607,8 @@
     }
   }
 
-  /**
-   * En móvil abre contactos; en escritorio conserva el portapapeles sin cambios.
-   *
-   * @returns {void}
-   */
-  function manejarBotonNumero() {
-    if (window.matchMedia && window.matchMedia("(max-width: 767px)").matches) {
-      agregarNumeroMovil();
-      return;
-    }
-    pegarNumero();
-  }
-
-  var rotuloNumero = botonPegar ? botonPegar.querySelector("[data-rotulo-numero]") : null;
-
-  /**
-   * Deja un solo rótulo en el DOM: móvil «Agregar Numero», web «Pegar número».
-   *
-   * @returns {void}
-   */
-  function sincronizarRotuloNumero() {
-    if (!rotuloNumero || !window.matchMedia) {
-      return;
-    }
-    rotuloNumero.textContent = window.matchMedia("(max-width: 767px)").matches
-      ? "Agregar Numero"
-      : "Pegar número";
-  }
-
-  sincronizarRotuloNumero();
-  if (window.matchMedia) {
-    var mediaNumero = window.matchMedia("(max-width: 767px)");
-    if (mediaNumero.addEventListener) {
-      mediaNumero.addEventListener("change", sincronizarRotuloNumero);
-    } else if (mediaNumero.addListener) {
-      mediaNumero.addListener(sincronizarRotuloNumero);
-    }
-  }
-
   if (botonPegar) {
-    botonPegar.addEventListener("click", manejarBotonNumero);
+    botonPegar.addEventListener("click", abrirWhatsappNumero);
   }
 
   // ----------------------------------- Arranque ---------------------------------

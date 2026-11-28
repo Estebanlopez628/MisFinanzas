@@ -1022,6 +1022,57 @@ def _migrar_monto_minimo_liquidez() -> None:
         )
 
 
+def _migrar_migracion_cartera() -> None:
+    """Agrega las columnas de la Migración de Cartera (SRS Migración, sección 2).
+
+    - `ventas.origen`: `VENTA_NORMAL` para las órdenes de la app y
+      `MIGRACION_CARTERA` para los saldos históricos cargados a mano.
+    - `ventas.fecha_compra`: día real de la compra migrada.
+    - `movimientos_proveedor.proveedor_nombre`, `fecha_deuda` y
+      `referencia_factura`: datos opcionales de la deuda anterior al sistema.
+
+    Es idempotente en SQLite y PostgreSQL; corre después de la reconstrucción de
+    `movimientos_proveedor` para que las columnas nuevas no se pierdan.
+    """
+    columnas_ventas = {
+        "origen": "VARCHAR(30) NOT NULL DEFAULT 'VENTA_NORMAL'",
+        "fecha_compra": "DATE",
+    }
+    columnas_proveedor = {
+        "proveedor_nombre": "VARCHAR(120)",
+        "fecha_deuda": "DATE",
+        "referencia_factura": "VARCHAR(120)",
+    }
+    if _conexion_sqlite:
+        with motor.begin() as conexion:
+            for tabla, columnas in (
+                ("ventas", columnas_ventas),
+                ("movimientos_proveedor", columnas_proveedor),
+            ):
+                existentes = {
+                    fila[1]
+                    for fila in conexion.exec_driver_sql(
+                        f"PRAGMA table_info({tabla})"
+                    ).fetchall()
+                }
+                for columna, tipo in columnas.items():
+                    if existentes and columna not in existentes:
+                        conexion.exec_driver_sql(
+                            f"ALTER TABLE {tabla} ADD COLUMN {columna} {tipo}"
+                        )
+    else:
+        with motor.begin() as conexion:
+            for tabla, columnas in (
+                ("ventas", columnas_ventas),
+                ("movimientos_proveedor", columnas_proveedor),
+            ):
+                for columna, tipo in columnas.items():
+                    tipo_postgres = tipo.replace("DATETIME", "TIMESTAMPTZ")
+                    conexion.exec_driver_sql(
+                        f"ALTER TABLE {tabla} ADD COLUMN IF NOT EXISTS {columna} {tipo_postgres}"
+                    )
+
+
 def aplicar_migraciones() -> None:
     """Ejecuta todas las migraciones idempotentes del esquema.
 
@@ -1043,6 +1094,7 @@ def aplicar_migraciones() -> None:
     _migrar_categorias_y_vinculos()
     _migrar_feedback_resolucion()
     _migrar_tipo_deuda_inicial()
+    _migrar_migracion_cartera()
     _migrar_tipos_hora_2026()
     _migrar_monto_minimo_liquidez()
 

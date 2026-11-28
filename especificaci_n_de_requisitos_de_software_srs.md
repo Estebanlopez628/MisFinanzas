@@ -2056,3 +2056,35 @@ El `<h2 class="panel__titulo form-header-white">Cartera frente a deuda</h2>` lle
 
 - 12 pruebas nuevas; suite completa **1017 pruebas** en verde, `compileall` y `generar_guia.py --verificar` correctos (117 fichas).
 - Actualizados `AGENTS.md` (ADR-171/172), `MEMORY.md`, `Guia.md`, `diccionario_datos.md`, `constitution.md`, `USER_GUIDE.md` y esta SRS.
+
+---
+
+## 103. Migración de Cartera, grilla 2 × 2, auto-WhatsApp y metas (ADR-175)
+
+**Alcance.** Cinco bloques entregados el 27 de noviembre de 2026. Quedan fuera el Login, el fondo general, la nómina, las donas, los consejeros, la factura y cualquier módulo no nombrado.
+
+### 103.1 Migración de Cartera
+
+1. Pestaña nueva «Migración de Cartera» inmediatamente después de «Registro de ventas», con el mismo submenú y `.form-header-white` en su encabezado y en los dos bloques.
+2. «Ventas realizadas antes del sistema»: cliente, teléfono con «Pegar Numero», fecha de compra precargada con hoy y editable, valor total adeudado, productos opcionales (producto, cantidad, precio, costo) con «+ Agregar otro producto». `POST /olb-byte/migracion/ventas` crea una orden `origen = MIGRACION_CARTERA` en Cuentas por cobrar, sin factura ni WhatsApp. Si no se detallan productos, se genera una línea «Saldo pendiente migrado»; si la suma es menor al total, la diferencia se registra como «Saldo pendiente sin detallar».
+3. «Deudas al proveedor anteriores al sistema»: se traslada desde Cartera, conserva Concepto y Valor adeudado y añade Proveedor, Fecha y Referencia. `POST /olb-byte/migracion/deudas-iniciales` alimenta `movimientos_proveedor` con `DEUDA_INICIAL`.
+4. Columnas `ventas.origen`, `ventas.fecha_compra` y `movimientos_proveedor.proveedor_nombre`, `fecha_deuda`, `referencia_factura`; migración idempotente `_migrar_migracion_cartera()` en SQLite y PostgreSQL. El costo se guarda en `total_costo` (no se crea `costo_total_migrado`) y el libro de proveedor sigue siendo `movimientos_proveedor` (no existe tabla `deudas`).
+5. Con costo cero, el 100 % de cada abono es utilidad y no hay pago al proveedor. Con costo, `Pago al proveedor = Abono × (costo / total)` y `Utilidad = Abono − pago`. `GET /olb-byte/migracion/exportar.csv` y el CSV detallado de analítica incluyen `Origen`, `Fecha de compra` y `Fecha de recaudo`.
+
+### 103.2 Cartera 2 × 2
+
+- `rejilla-paneles--cartera`: fila 1 «Pago al proveedor» | «Movimientos con el proveedor»; fila 2 «Gastos operativos» | «Historial de gastos operativos». El contenedor inferior ancho desaparece; en móvil una sola columna.
+- Historial con `.historial-gastos-scroll` (265 px) y `.historial-gastos-table`: seis filas visibles, cabecera `sticky` opaca `#0b1e3d`, columna `.col-acciones` oculta y modal al tocar la fila en móvil.
+
+### 103.3 «Pegar Numero» y salto automático
+
+- El botón abre WhatsApp directamente en móvil (`whatsapp://send`) y escritorio (`wa.me` en pestaña nueva), sin Contact Picker ni portapapeles, en Registro de ventas y en Migración.
+- El alta normal envía por `fetch` con `X-OLB-AJAX: 1` y recibe JSON con `enlace_whatsapp`. En escritorio se preabre la ventana dentro del clic; en móvil se recarga `/olb-byte?guardado=1&wa_auto=<id>` y la página abre el esquema nativo. Si el teléfono no es válido se guarda igual, sin enlace. El botón manual de «Compartir por WhatsApp» queda como respaldo. La migración no realiza este salto.
+
+### 103.4 Metas
+
+- `ahorro.eliminar_proyeccion()` elimina **todas** las filas de `gastos` vinculadas por `id_proyeccion`, sin importar quincena ni estado del check, antes de archivar la meta. `limpiar_gastos_huerfanos()` sanea las filas sin meta padre y se ejecuta al eliminar y al cargar los contextos de Mis Finanzas y Gastos y Presupuesto, de modo que ambas quincenas y la liquidez se recalculan al recargar. La fecha de pago se conserva en `abonos_proyeccion.fecha_registro` para el historial.
+
+### 103.5 Verificación
+
+- 14 pruebas nuevas en `test_srs_migracion_cartera.py`; suite completa **1031 pruebas** en verde; `compileall`, `node --check` y `generar_guia.py --verificar` correctos (119 fichas). `sw.js` en `olb-finanzas-v206`. Documentación sincronizada: `AGENTS.md`, `MEMORY.md`, `Guia.md`, `diccionario_datos.md`, `constitution.md`, `USER_GUIDE.md` y esta SRS.

@@ -253,7 +253,7 @@ def test_pago_inhabilitado_no_resta_en_su_quincena(bd) -> None:
 
 
 def test_eliminar_meta_la_archiva_y_conserva_el_historial(bd) -> None:
-    """Eliminar archiva la meta: sale de la lista, pero su pago y su historial quedan."""
+    """Eliminar archiva la meta, retira todas sus cuotas y conserva el historial."""
     id_usuario = _id_admin(bd)
     meta = _crear_meta(bd, id_usuario, "100.000")
     gastos_mes = _gastos_de_la_meta(bd, id_usuario, meta.id_proyeccion, 2026, 11)
@@ -265,7 +265,9 @@ def test_eliminar_meta_la_archiva_y_conserva_el_historial(bd) -> None:
 
     bd.expire_all()
     assert ahorro.listar_proyecciones(bd, id_usuario) == []
-    assert bd.get(Gasto, id_pagado) is not None
+    # SRS Migración §5: se borran TODAS las cuotas, incluida la pagada, en
+    # ambas quincenas. La fecha de pago sobrevive en el abono del mes.
+    assert bd.get(Gasto, id_pagado) is None
     assert bd.get(Gasto, id_futuro) is None
     historial = ahorro.historial_metas(bd, id_usuario)
     assert len(historial) == 1

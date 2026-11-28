@@ -453,10 +453,12 @@ nuevo no la consulta; la venta guarda la copia de los datos del producto.
 | `id_cliente` | `UUID` (FK) | No | Comprador. `ON DELETE RESTRICT`. |
 | `cliente_nombre` | `VARCHAR(120)` | No | Copia del nombre al vender. |
 | `cliente_telefono` | `VARCHAR(20)` | Sí | Copia del celular al vender. |
+| `origen` | `VARCHAR(30)` | No | `VENTA_NORMAL` (por defecto) o `MIGRACION_CARTERA` (ventas cargadas antes del sistema). Compatibilidad retroactiva: las órdenes previas conservan `VENTA_NORMAL`. |
+| `fecha_compra` | `DATE` | Sí | Día real de la compra cuando la orden se migra; en ventas normales queda nulo. |
 | `fecha_venta` | `TIMESTAMPTZ` | No | Fecha y hora de la venta; la garantía inicia aquí. |
 | `subtotal` | `NUMERIC(14,2)` | No | Suma de `subtotal_item`. |
 | `total` | `NUMERIC(14,2)` | No | Valor total de la orden (`total_venta` del SRS). |
-| `total_costo` | `NUMERIC(14,2)` | No | Suma de `costo_unitario × cantidad`. Es la deuda con el proveedor. |
+| `total_costo` | `NUMERIC(14,2)` | No | Suma de `costo_unitario × cantidad`. Es la deuda con el proveedor en ventas normales; en ventas migradas es solo el costo declarado para el reparto proporcional (no genera movimiento al proveedor). |
 | `ganancia_neta` | `NUMERIC(14,2)` | No | `Σ (precio − costo) × cantidad`. Cero si la orden está anulada. |
 | `total_abonado` | `NUMERIC(14,2)` | No | Suma de abonos del cliente. |
 | `saldo_pendiente` | `NUMERIC(14,2)` | No | `total − total_abonado`. Cartera viva. `CHECK (saldo_pendiente >= 0)`. |
@@ -507,6 +509,17 @@ en `devoluciones_clientes` (§10.8); los abonos originales se conservan como his
 | `concepto` | `VARCHAR(200)` | No | Descripción legible. |
 | `monto` | `NUMERIC(14,2)` | No | `CHECK (monto > 0)`. |
 | `saldo_resultante` | `NUMERIC(14,2)` | No | Deuda con el proveedor después del movimiento. |
+| `proveedor_nombre` | `VARCHAR(120)` | Sí | Proveedor de una deuda anterior al sistema; opcional. |
+| `fecha_deuda` | `DATE` | Sí | Fecha real de la deuda; por defecto el día del registro. |
+| `referencia_factura` | `VARCHAR(120)` | Sí | Factura, nota o referencia del proveedor; opcional. |
+
+**Migración de Cartera (SRS de migración, §2):** las ventas con
+`origen = MIGRACION_CARTERA` entran como cartera pendiente, sin factura ni WhatsApp
+automático. Con `total_costo = 0`, cada abono se reconoce 100 % como utilidad y no
+suma pago al proveedor. Con `total_costo > 0`, el abono se reparte en
+`Pago al proveedor = Abono × (total_costo / total)` y la utilidad es la diferencia.
+Los CSV de analítica y de migración incluyen `origen`, `fecha_compra` y
+`fecha_recaudo` (fecha del último abono de la orden).
 
 Deuda con el proveedor = Σ `COMPRA_CREDITO` + Σ `DEUDA_INICIAL` − Σ `ABONO`. Los
 movimientos no se editan ni se borran: una corrección se registra como un movimiento

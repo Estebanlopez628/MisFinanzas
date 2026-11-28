@@ -42,7 +42,7 @@ from app.core.texto import (
 from app.dependencias import UsuarioSesion, obtener_usuario_actual
 from app.modelos import DeduccionFija, PerfilFinanciero, PeriodoNomina
 from app.routers.vistas import contexto_base, plantillas
-from app.servicios import auditoria, deudas, gastos, pagos_metas, perfiles, periodos, registro_incapacidades
+from app.servicios import ahorro, auditoria, deudas, gastos, pagos_metas, perfiles, periodos, registro_incapacidades
 from app.servicios import deducciones_fijas
 from app.servicios.incapacidad import (
     LiquidacionIncapacidad,
@@ -591,6 +591,10 @@ def _contexto_calculadora(
     Returns:
         Diccionario para la plantilla.
     """
+    # SRS Migración §5: sanea primero los gastos huérfanos de metas borradas antes
+    # del correctivo, para que las dos quincenas y la liquidez no los cuenten.
+    if ahorro.limpiar_gastos_huerfanos(bd, usuario.id_usuario):
+        bd.commit()
     # SRS v1.6: las metas se muestran como gastos fijos del mes visible.
     pagos_metas.asegurar_gastos_de_metas(bd, usuario.id_usuario, entrada.anio, entrada.mes)
     perfil = perfiles.obtener_perfil(bd, usuario.id_usuario)

@@ -1322,6 +1322,27 @@ a.tarjeta:focus-visible {
   }
 }
 
+/* SRS Migración §3: grilla 2 × 2 simétrica en escritorio, una columna en móvil. */
+@media (min-width: 768px) {
+  .rejilla-paneles--cartera {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+  }
+
+  .rejilla-paneles--cartera > .panel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    margin-top: 0;
+  }
+}
+
+@media (max-width: 767px) {
+  .rejilla-paneles--cartera {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 /* SRS v4.44, §8.2: historial de gastos operativos en escritorio y móvil. */
 .tabla-gastos__acciones {
   display: flex;
@@ -1481,28 +1502,43 @@ a.tarjeta:focus-visible {
   background: var(--bg-primary);
 }
 
-/* Historial de gastos operativos: cinco filas visibles y cabecera opaca. */
+/* SRS Migración §3: seis filas visibles (42 px de cabecera + 6 × 37 px),
+   desplazamiento vertical y cabecera fija con fondo sólido idéntico al de la
+   tarjeta: nunca transparente al hacer scroll. */
+.historial-gastos-scroll,
 .tabla-contenedor--gastos {
-  max-height: 252px;
+  max-height: 265px;
   overflow-y: auto;
+  overflow-x: hidden;
   overscroll-behavior: contain;
 }
 
-.tabla-contenedor--gastos thead th,
-.tabla-contenedor--gastos tbody td {
-  height: 42px;
+.historial-gastos-table tbody td {
+  height: 37px;
 }
 
+.historial-gastos-scroll .historial-gastos-table thead th,
 .tabla-contenedor--gastos .tabla thead th {
   position: sticky;
   top: 0;
-  z-index: 1;
-  background: var(--bg-primary);
+  z-index: 5;
+  background-color: #0b1e3d;
+  border-bottom: 1px solid rgba(148, 197, 255, 0.2);
+}
+
+@media (max-width: 767px) {
+  .historial-gastos-table .col-acciones {
+    display: none;
+  }
+
+  .historial-gastos-table tbody tr {
+    cursor: pointer;
+  }
 }
 
 @media (max-width: 640px) {
   .ordenes-moviles--gastos {
-    max-height: 210px;
+    max-height: 265px;
     overflow-y: auto;
     overscroll-behavior: contain;
   }

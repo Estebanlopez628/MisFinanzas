@@ -21,7 +21,7 @@ import calendar
 import re
 import unicodedata
 from dataclasses import dataclass
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, datetime, time, timedelta, timezone
 from decimal import Decimal
 from urllib.parse import quote
 
@@ -62,6 +62,12 @@ TIPO_ABONO_PROVEEDOR = "ABONO"
 # SRS v4.44, §8.1: deuda que existía antes de usar el sistema. Suma al saldo con
 # el proveedor y se registra en el libro como «Deuda inicial».
 TIPO_DEUDA_INICIAL = "DEUDA_INICIAL"
+
+# SRS Migración de Cartera: las ventas de la app nacen como `VENTA_NORMAL`; las
+# que se cargan como saldo histórico llevan `MIGRACION_CARTERA` y no generan
+# factura ni envío automático por WhatsApp.
+ORIGEN_VENTA_NORMAL = "VENTA_NORMAL"
+ORIGEN_MIGRACION_CARTERA = "MIGRACION_CARTERA"
 
 ETIQUETAS_MOVIMIENTO = {
     TIPO_COMPRA: "Compra a crédito",
@@ -340,6 +346,10 @@ def _registrar_movimiento_proveedor(
     monto: Decimal,
     concepto: str,
     id_venta: str | None = None,
+    *,
+    proveedor_nombre: str | None = None,
+    fecha_deuda: date | None = None,
+    referencia_factura: str | None = None,
 ) -> MovimientoProveedor:
     """Agrega un movimiento al libro de la cuenta por pagar al proveedor.
 
@@ -349,6 +359,9 @@ def _registrar_movimiento_proveedor(
         monto: Valor positivo del movimiento.
         concepto: Descripción legible para el historial.
         id_venta: Orden asociada, si la hay.
+        proveedor_nombre: Proveedor de una deuda anterior al sistema.
+        fecha_deuda: Fecha real de la deuda anterior al sistema.
+        referencia_factura: Referencia o número de factura del proveedor.
 
     Returns:
         El movimiento agregado, con el saldo tras aplicarlo.
@@ -365,6 +378,9 @@ def _registrar_movimiento_proveedor(
         concepto=concepto[:200],
         monto=monto,
         saldo_resultante=redondear_dinero(saldo_nuevo),
+        proveedor_nombre=(proveedor_nombre or "").strip()[:120] or None,
+        fecha_deuda=fecha_deuda,
+        referencia_factura=(referencia_factura or "").strip()[:120] or None,
     )
     bd.add(movimiento)
     return movimiento
@@ -464,6 +480,8 @@ def registrar_venta(
     lineas: list[LineaVenta],
     fecha_venta: datetime | None = None,
     pago_inicial: PagoInicial | None = None,
+    origen: str = ORIGEN_VENTA_NORMAL,
+    fecha_compra: date | None = None,
 ) -> Venta:
     """Registra una orden de venta a crédito y la compra al proveedor.
 
@@ -478,6 +496,9 @@ def registrar_venta(
         cliente_telefono: Celular opcional; se normaliza a 10 dígitos.
         lineas: Productos de la orden; debe haber al menos uno.
         fecha_venta: Momento de la venta; por defecto ahora.
+        pago_inicial: Pago de contado o anticipo, si lo hay.
+        origen: `VENTA_NORMAL` o `MIGRACION_CARTERA`.
+        fecha_compra: Día real de la compra cuando la orden se migra.
 
     Returns:
         La orden persistida con su consecutivo.
@@ -528,6 +549,8 @@ def registrar_venta(
         cliente_nombre=nombre[:120],
         cliente_telefono=telefono,
         fecha_venta=ahora,
+        origen=origen,
+        fecha_compra=fecha_compra,
     )
     bd.add(venta)
     bd.flush()
@@ -600,6 +623,269 @@ def registrar_venta(
     bd.commit()
     bd.refresh(venta)
     return venta
+
+
+def registrar_venta_migrada(
+    bd: Session,
+    cliente_nombre: str,
+    cliente_telefono: str | None,
+    total_adeudado: Decimal | str | int | float,
+    fecha_compra: str | date | None = None,
+    lineas: list[LineaVenta] | None = None,
+) -> Venta:
+    """Carga una venta realizada antes del sistema como cartera pendiente.
+
+    SRS Migración de Cartera, bloque 1: la orden nace con `origen` igual a
+    `MIGRACION_CARTERA`, sin factura ni envío automático. El total adeudado es el
+    dato obligatorio; los productos son opcionales y solo detallan la composición.
+    Si la suma de los productos es menor que el total, la diferencia se registra
+    como «Saldo pendiente sin detallar» para que la analítica cuadre.
+
+    El costo es opcional: en cero, todo abono que se cobre se reconoce como
+    utilidad; con costo, la utilidad se reconoce en proporción a lo cobrado.
+
+    Args:
+        bd: Sesión de base de datos.
+        cliente_nombre: Nombre del comprador.
+        cliente_telefono: Celular opcional; se normaliza a 10 dígitos.
+        total_adeudado: Saldo histórico pendiente; debe ser mayor que cero.
+        fecha_compra: Día real de la compra; vacío usa hoy en hora de la tienda.
+        lineas: Productos opcionales con cantidad, precio y costo.
+
+    Returns:
+        La orden persistida con su consecutivo.
+
+    Raises:
+        ValueError: Si falta el cliente, el total no es positivo, la fecha no es
+            válida o los productos superan el total adeudado.
+    """
+    nombre = (cliente_nombre or "").strip()
+    if not nombre:
+        raise ValueError("El nombre del cliente es obligatorio.")
+    telefono = normalizar_telefono(cliente_telefono)
+    total = _dinero(total_adeudado)
+    if total <= CERO:
+        raise ValueError("El total adeudado debe ser mayor que cero.")
+    fecha = _fecha_compra(fecha_compra)
+
+    valores: list[tuple[LineaVenta, Decimal, Decimal]] = []
+    for linea in lineas or []:
+        _validar_linea(linea)
+        precio = _dinero(linea.precio_unitario)
+        costo = _dinero(linea.costo_unitario)
+        if precio < CERO or costo < CERO:
+            raise ValueError("Los precios y costos no pueden ser negativos.")
+        valores.append((linea, precio, costo))
+
+    suma_productos = sum(
+        (redondear_dinero(precio * linea.cantidad) for linea, precio, _ in valores),
+        start=CERO,
+    )
+    if suma_productos > total:
+        raise ValueError(
+            "El total adeudado no puede ser menor que la suma de los productos."
+        )
+    sin_detalle = not valores
+    if sin_detalle:
+        valores.append(
+            (LineaVenta("Saldo pendiente migrado", 1, total, CERO), total, CERO)
+        )
+
+    cliente = _cliente_para_venta(bd, nombre, telefono)
+    ahora = datetime.combine(fecha, time(12, 0), tzinfo=ZONA_TIENDA)
+    venta = Venta(
+        numero_orden=_siguiente_numero_orden(bd),
+        id_cliente=cliente.id_cliente,
+        cliente_nombre=nombre[:120],
+        cliente_telefono=telefono,
+        fecha_venta=ahora,
+        origen=ORIGEN_MIGRACION_CARTERA,
+        fecha_compra=fecha,
+    )
+    bd.add(venta)
+    bd.flush()
+
+    total_costo = CERO
+    for linea, precio, costo in valores:
+        subtotal_item = redondear_dinero(precio * linea.cantidad)
+        total_costo += redondear_dinero(costo * linea.cantidad)
+        bd.add(
+            VentaDetalle(
+                id_venta=venta.id_venta,
+                producto_nombre=linea.nombre.strip()[:120],
+                categoria=(linea.categoria or "").strip()[:60] or None,
+                cantidad=linea.cantidad,
+                costo_unitario=costo,
+                precio_unitario=precio,
+                subtotal_item=subtotal_item,
+                garantia_texto=None,
+                garantia_fecha_fin=None,
+            )
+        )
+
+    if suma_productos < total and not sin_detalle:
+        diferencia = redondear_dinero(total - suma_productos)
+        bd.add(
+            VentaDetalle(
+                id_venta=venta.id_venta,
+                producto_nombre="Saldo pendiente sin detallar",
+                categoria=None,
+                cantidad=1,
+                costo_unitario=CERO,
+                precio_unitario=diferencia,
+                subtotal_item=diferencia,
+                garantia_texto=None,
+                garantia_fecha_fin=None,
+            )
+        )
+
+    venta.subtotal = total
+    venta.total = total
+    venta.total_costo = redondear_dinero(total_costo)
+    venta.ganancia_neta = redondear_dinero(total - total_costo)
+    venta.total_abonado = CERO
+    venta.saldo_pendiente = total
+    venta.estado_pago = ESTADO_PAGO_PENDIENTE
+    venta.garantia_texto = ""
+    venta.garantia_fecha_fin = None
+
+    # El costo queda registrado solo como dato para el reparto proporcional de
+    # cada abono. No se crea deuda con el proveedor al migrar: el saldo global ya
+    # incluye ese costo en la deuda inicial del proveedor (SRS Migración §2.3).
+    bd.commit()
+    bd.refresh(venta)
+    return venta
+
+
+def _fecha_compra(texto: str | date | None) -> date:
+    """Normaliza la fecha de compra de una venta migrada.
+
+    Args:
+        texto: Fecha ISO, un `date` o vacío.
+
+    Returns:
+        La fecha indicada o el día de hoy en hora de la tienda.
+
+    Raises:
+        ValueError: Si el texto no es una fecha válida.
+    """
+    if isinstance(texto, date):
+        return texto
+    limpio = (texto or "").strip()
+    if not limpio:
+        return datetime.now(ZONA_TIENDA).date()
+    try:
+        return date.fromisoformat(limpio)
+    except ValueError as error:
+        raise ValueError("La fecha de compra no es válida.") from error
+
+
+def ventas_migradas(bd: Session) -> list[Venta]:
+    """Lista las ventas cargadas como saldo histórico, de la más antigua a la nueva.
+
+    Args:
+        bd: Sesión de base de datos.
+
+    Returns:
+        Órdenes con `origen` igual a `MIGRACION_CARTERA`.
+    """
+    consulta = (
+        select(Venta)
+        .where(Venta.origen == ORIGEN_MIGRACION_CARTERA)
+        .order_by(Venta.fecha_compra, Venta.numero_orden)
+    )
+    return list(bd.scalars(consulta))
+
+
+def _ultimo_recaudo(bd: Session) -> dict[str, datetime]:
+    """Obtiene la fecha del último abono de cada orden.
+
+    Args:
+        bd: Sesión de base de datos.
+
+    Returns:
+        Diccionario `{id_venta: fecha del último abono}`.
+    """
+    ultimos: dict[str, datetime] = {}
+    for abono in bd.scalars(select(Abono).order_by(Abono.fecha_abono)):
+        ultimos[abono.id_venta] = abono.fecha_abono
+    return ultimos
+
+
+def _utilidad_reconocida(venta: Venta) -> tuple[Decimal, Decimal]:
+    """Reparte lo cobrado entre utilidad y pago al proveedor (SRS Migración).
+
+    Con costo cero, el 100 % del abono es utilidad y no hay pago al proveedor.
+    Con costo, el abono se reparte en proporción al costo sobre el total.
+
+    Args:
+        venta: Orden migrada.
+
+    Returns:
+        Tupla `(utilidad, pago_proveedor)` reconocidos sobre lo abonado.
+    """
+    abonado = redondear_dinero(venta.total_abonado)
+    if abonado <= CERO:
+        return CERO, CERO
+    if venta.total <= CERO or venta.total_costo <= CERO:
+        return abonado, CERO
+    proporcion = min(venta.total_costo / venta.total, Decimal("1"))
+    pago = redondear_dinero(abonado * proporcion)
+    return redondear_dinero(abonado - pago), pago
+
+
+def resumen_migracion(bd: Session) -> dict[str, object]:
+    """Calcula los indicadores de la Migración de Cartera.
+
+    Args:
+        bd: Sesión de base de datos.
+
+    Returns:
+        Diccionario con la cantidad de órdenes, total histórico, cobrado, saldo,
+        utilidad reconocida y pago al proveedor proporcional.
+    """
+    ordenes = ventas_migradas(bd)
+    total = sum((venta.total for venta in ordenes), start=CERO)
+    abonado = sum((venta.total_abonado for venta in ordenes), start=CERO)
+    saldo = sum((venta.saldo_pendiente for venta in ordenes), start=CERO)
+    utilidad = CERO
+    pago_proveedor = CERO
+    for venta in ordenes:
+        parte_utilidad, parte_pago = _utilidad_reconocida(venta)
+        utilidad += parte_utilidad
+        pago_proveedor += parte_pago
+    return {
+        "ordenes": len(ordenes),
+        "total": redondear_dinero(total),
+        "abonado": redondear_dinero(abonado),
+        "saldo": redondear_dinero(saldo),
+        "utilidad": redondear_dinero(utilidad),
+        "pago_proveedor": redondear_dinero(pago_proveedor),
+    }
+
+
+def filas_migracion(bd: Session) -> list[dict[str, object]]:
+    """Prepara las ventas migradas para la tabla y el CSV de la vista.
+
+    Args:
+        bd: Sesión de base de datos.
+
+    Returns:
+        Filas ordenadas con cliente, fechas, montos, utilidad y recaudo.
+    """
+    ultimos = _ultimo_recaudo(bd)
+    filas: list[dict[str, object]] = []
+    for venta in ventas_migradas(bd):
+        utilidad, pago = _utilidad_reconocida(venta)
+        filas.append(
+            {
+                "venta": venta,
+                "utilidad": utilidad,
+                "pago_proveedor": pago,
+                "ultimo_recaudo": ultimos.get(venta.id_venta),
+            }
+        )
+    return filas
 
 
 def obtener_venta(bd: Session, id_venta: str) -> Venta | None:
@@ -955,23 +1241,31 @@ def registrar_deuda_inicial(
     bd: Session,
     monto: Decimal | str | int | float,
     concepto: str,
+    proveedor_nombre: str | None = None,
+    fecha_deuda: str | date | None = None,
+    referencia_factura: str | None = None,
 ) -> MovimientoProveedor:
     """Registra una deuda con el proveedor anterior al sistema (SRS v4.44, §8.1).
 
     Suma de inmediato al saldo adeudado y queda en el libro como `DEUDA_INICIAL`,
     sin orden asociada. Es la única forma de crear un movimiento sin venta que
-    aumenta la deuda.
+    aumenta la deuda. La SRS de Migración de Cartera añade tres datos opcionales
+    de trazabilidad: proveedor, fecha real y referencia de factura.
 
     Args:
         bd: Sesión de base de datos.
         monto: Valor adeudado; debe ser mayor que cero.
         concepto: Descripción escrita por el administrador.
+        proveedor_nombre: Nombre del proveedor; opcional.
+        fecha_deuda: Fecha real de la deuda; vacía usa hoy.
+        referencia_factura: Número o referencia de la factura; opcional.
 
     Returns:
         El movimiento persistido.
 
     Raises:
-        ValueError: Si el monto no es positivo o el concepto está vacío.
+        ValueError: Si el monto no es positivo, el concepto está vacío o la fecha
+            no es válida.
     """
     descripcion = (concepto or "").strip()
     if not descripcion:
@@ -979,8 +1273,15 @@ def registrar_deuda_inicial(
     valor = _dinero(monto)
     if valor <= CERO:
         raise ValueError("El valor adeudado debe ser mayor que cero.")
+    fecha = _fecha_compra(fecha_deuda) if fecha_deuda else None
     movimiento = _registrar_movimiento_proveedor(
-        bd, TIPO_DEUDA_INICIAL, valor, descripcion
+        bd,
+        TIPO_DEUDA_INICIAL,
+        valor,
+        descripcion,
+        proveedor_nombre=proveedor_nombre,
+        fecha_deuda=fecha,
+        referencia_factura=referencia_factura,
     )
     bd.commit()
     bd.refresh(movimiento)
@@ -1013,7 +1314,8 @@ def listar_movimientos_con_orden(bd: Session) -> list[dict[str, object]]:
     Returns:
         Lista de diccionarios ordenada del más reciente al más antiguo, con las
         claves `id_movimiento`, `fecha`, `tipo`, `cliente`, `producto`,
-        `concepto`, `monto` y `saldo_resultante`.
+        `concepto`, `monto`, `saldo_resultante`, `proveedor_nombre`,
+        `fecha_deuda` y `referencia_factura`.
     """
     movimientos = listar_movimientos_proveedor(bd)
     ids_venta = {movimiento.id_venta for movimiento in movimientos if movimiento.id_venta}
@@ -1044,6 +1346,9 @@ def listar_movimientos_con_orden(bd: Session) -> list[dict[str, object]]:
                 "concepto": movimiento.concepto,
                 "monto": movimiento.monto,
                 "saldo_resultante": movimiento.saldo_resultante,
+                "proveedor_nombre": movimiento.proveedor_nombre,
+                "fecha_deuda": movimiento.fecha_deuda,
+                "referencia_factura": movimiento.referencia_factura,
             }
         )
     return filas

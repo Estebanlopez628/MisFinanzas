@@ -1,4 +1,4 @@
-"""Pruebas del botón de número en Registrar venta (solo móvil abre WhatsApp)."""
+"""Pruebas del botón «Pegar Numero» en Registro de ventas y Migración de Cartera."""
 
 from __future__ import annotations
 
@@ -9,70 +9,86 @@ from fastapi.testclient import TestClient
 RUTA = Path(__file__).resolve().parent.parent / "app"
 
 
-def plantilla_leida() -> str:
-    """Lee la plantilla de ventas.
+def plantilla_leida(nombre: str) -> str:
+    """Lee una plantilla del módulo comercial.
+
+    Args:
+        nombre: Archivo dentro de `templates/olb_byte`.
 
     Returns:
-        Contenido de `index.html`.
+        Contenido de la plantilla.
     """
-    return (RUTA / "templates/olb_byte/index.html").read_text(encoding="utf-8")
+    return (RUTA / "templates/olb_byte" / nombre).read_text(encoding="utf-8")
 
 
-def javascript_leido() -> str:
-    """Lee el JavaScript de OLB_BYTE.
+def javascript_leido(nombre: str) -> str:
+    """Lee un JavaScript estático del módulo comercial.
+
+    Args:
+        nombre: Archivo dentro de `static/js`.
 
     Returns:
-        Contenido de `olb_byte.js`.
+        Contenido del script.
     """
-    return (RUTA / "static/js/olb_byte.js").read_text(encoding="utf-8")
+    return (RUTA / "static/js" / nombre).read_text(encoding="utf-8")
 
 
-def test_boton_tiene_un_solo_rotulo() -> None:
-    """El DOM trae solo «Agregar Numero»; el escritorio lo cambia por JS."""
-    bloque = plantilla_leida().split("data-pegar-numero>", 1)[1].split("</button>", 1)[0]
-    assert "Agregar Numero" in bloque
-    assert "Pegar número" not in bloque
-    assert "data-rotulo-numero" in bloque
+def test_ambos_formularios_tienen_el_mismo_boton() -> None:
+    """Las dos vistas muestran «Pegar Numero» con el mismo atributo."""
+    for plantilla in ("index.html", "migracion.html"):
+        texto = plantilla_leida(plantilla)
+        rotulo = texto.split("data-pegar-numero>", 1)[1].split("</button>", 1)[0]
+        assert "Pegar Numero" in rotulo
+        assert "Agregar Numero" not in rotulo
+        assert "data-rotulo-numero" not in texto
+        assert "data-nota-contactos" not in texto
 
 
-def test_movil_abre_whatsapp_y_el_campo_limpia_lo_pegado() -> None:
-    """El botón móvil abre WhatsApp y el campo quita espacios e indicativo al pegar."""
-    js = javascript_leido()
-    movil = js.split("function agregarNumeroMovil() {", 1)[1].split("}", 1)[0]
-    assert 'window.location.href = "whatsapp://send?text="' in movil
-    assert "window.open(" in js
-    assert '"https://wa.me/?text="' in js
-    assert '"noopener,noreferrer"' in js
-    assert "navigator.contacts.select" not in js
-    assert "data-elegir-contacto" not in js
-    assert "data-abrir-whatsapp" not in js
-    assert "data-pegar-portapapeles" not in js
-    assert 'campoTelefono.addEventListener("input"' in js
-    normalizar = js.split("function normalizarTelefono(texto) {", 1)[1].split("}", 1)[0]
-    assert "replace(/\\D/g" in normalizar
-    assert "digitos.slice(2)" in normalizar
+def test_el_boton_abre_whatsapp_sin_libreta_ni_portapapeles() -> None:
+    """El clic abre WhatsApp directamente en móvil y web, sin Contact Picker."""
+    for script in ("olb_byte.js", "migracion.js"):
+        js = javascript_leido(script)
+        assert 'window.location.href = "whatsapp://send?text=" + texto' in js
+        assert '"https://wa.me/?text="' in js
+        assert '"noopener,noreferrer"' in js
+        assert "navigator.contacts.select" not in js
+        assert "navigator.clipboard" not in js
+        assert "data-rotulo-numero" not in js
 
 
-def test_rotulo_de_escritorio_sigue_siendo_portapapeles() -> None:
-    """El mismo botón dice «Pegar número» en web y conserva el portapapeles."""
-    js = javascript_leido()
-    rotulo = js[js.index("function sincronizarRotuloNumero()") : js.index("if (botonPegar)")]
-    assert 'window.matchMedia("(max-width: 767px)").matches' in rotulo
-    assert '"Agregar Numero"' in rotulo and '"Pegar número"' in rotulo
-    manejar = js[js.index("function manejarBotonNumero()") : js.index("var rotuloNumero")]
-    assert "agregarNumeroMovil()" in manejar
-    assert "pegarNumero()" in manejar
+def test_autowhatsapp_solo_en_registro_de_ventas() -> None:
+    """El alta normal usa fetch y salto automático; la migración no."""
+    ventas = javascript_leido("olb_byte.js")
+    migracion = javascript_leido("migracion.js")
+
+    assert '"X-OLB-AJAX": "1"' in ventas
+    assert "data-wa-auto" in plantilla_leida("index.html")
+    assert "wa_auto=" in ventas
+    assert "data-migracion-form" in plantilla_leida("migracion.html")
+    assert "fetch(" not in migracion
+    assert "wa_auto" not in plantilla_leida("migracion.html")
 
 
-def test_vista_de_ventas_no_renderiza_los_controles_del_aviso(cliente_admin: TestClient) -> None:
-    """La plantilla no ofrece Elegir contacto ni botones de respaldo."""
-    respuesta = cliente_admin.get("/olb-byte")
-    assert respuesta.status_code == 200
-    html = respuesta.text
-    rotulo = html.split("data-pegar-numero>", 1)[1].split("</button>", 1)[0]
-    assert "Agregar Numero" in rotulo
-    assert "Pegar número" not in html
-    assert "data-elegir-contacto" not in html
-    assert "data-abrir-whatsapp" not in html
-    assert "data-pegar-portapapeles" not in html
-    assert "data-nota-contactos-texto" in html
+def test_las_vistas_renderizan_el_boton(cliente_admin: TestClient) -> None:
+    """Ambas rutas sirven el botón sin controles de contactos heredados."""
+    for ruta in ("/olb-byte", "/olb-byte/migracion"):
+        texto = cliente_admin.get(ruta).text
+        assert "data-pegar-numero" in texto
+        assert "Pegar Numero" in texto
+        assert "data-elegir-contacto" not in texto
+        assert data_no_presente(texto)
+
+
+def data_no_presente(texto: str) -> bool:
+    """Comprueba que no queden botones de respaldo del antiguo flujo.
+
+    Args:
+        texto: HTML renderizado.
+
+    Returns:
+        `True` si no aparecen los controles retirados.
+    """
+    return all(
+        marcador not in texto
+        for marcador in ("data-abrir-whatsapp", "data-pegar-portapapeles", "Agregar Numero")
+    )

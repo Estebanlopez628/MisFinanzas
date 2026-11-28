@@ -158,7 +158,7 @@ def test_vista_cartera_muestra_las_tarjetas_y_el_historial(cliente_admin: TestCl
     respuesta = cliente_admin.get("/olb-byte/cartera")
     assert respuesta.status_code == 200
     html = respuesta.text
-    assert "Deudas al proveedor anteriores al sistema" in html
+    assert 'action="/olb-byte/proveedor/deudas-iniciales"' not in html
     assert "Gastos operativos" in html
     assert "Historial de gastos operativos" in html
     assert 'name="concepto"' in html and 'name="monto"' in html

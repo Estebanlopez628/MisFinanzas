@@ -202,7 +202,7 @@ Dentro de OLB BYTE, las secciones se llaman **Registro de ventas**, **Cuentas po
 
 Los movimientos con el proveedor muestran ahora Fecha, Tipo, Cliente, Producto, Concepto, Monto y Saldo. En el celular, toca una fila para ver el detalle completo y cierra con la X.
 
-En el celular, al registrar una venta verás el botón **Agregar Numero** junto al campo del celular: al tocarlo se abre WhatsApp directamente. Busca el contacto, copia su número, vuelve a la aplicación y pégalo en el campo. El campo limpia solo los espacios y el `+57`, y deja únicamente los 10 dígitos que se guardan en la factura. En la computadora el botón sigue diciendo **Pegar número** y funciona igual que antes.
+En el celular y en la computadora, al registrar una venta verás el botón **Pegar Numero** junto al campo del celular: al tocarlo se abre WhatsApp directamente. Busca el contacto, copia su número, vuelve a la aplicación y pégalo en el campo. El campo limpia solo los espacios y el `+57`, y deja únicamente los 10 dígitos que se guardan en la factura. No hay selector de contactos: la aplicación no puede leer la libreta de WhatsApp.
 
 Cuando abras la factura o envíes por WhatsApp desde «Órdenes registradas», al volver quedarás exactamente en el mismo punto de la lista; en el celular, la factura usa «Volver a Ventas» y se reabre el detalle de la orden que estabas viendo.
 
@@ -215,5 +215,16 @@ En «Gestión y control de ventas» ya no hay línea sobre el selector de año, 
 En las tablas «Mes a mes» y «Año tras año» verás la columna **PASIVO ANTIGUO**: es el saldo pendiente de las deudas viejas con proveedores y **no está incluido en Costos**. Cuando abonas, primero se paga la deuda de las compras recientes y el sobrante baja ese pasivo; por eso el número va disminuyendo. La ganancia y la rentabilidad siguen midiendo solo las ventas. Al descargar el CSV aparece la columna **PASIVO ANTIGUO**, con tildes y formato Excel.
 
 Encima de las tablas verás cuatro indicadores: Gastos operativos, **Pago a Proveedor**, Ganancia neta y Ganancia global. Pago a Proveedor es la deuda antigua más el costo de la mercancía del periodo; Ganancia global es `Ganancia neta − Pago a Proveedor`. El número se muestra sin signo menos y el color avisa: rojo si el resultado es negativo, verde si es positivo. En el celular se muestran en dos filas: Gastos | Pago a Proveedor y, debajo, Ganancia neta | Ganancia global, con las etiquetas sin año y centradas. En el historial de gastos del celular cada fila dice «Fecha: DD/MM/AA» y «Valor del gasto: $X».
+
+### Migración de Cartera y nuevas funciones
+
+Dentro de OLB BYTE, la pestaña **Migración de Cartera** queda junto a Registro de ventas. Sirve para cargar lo que vendiste antes de usar la aplicación:
+
+- En **Ventas realizadas antes del sistema** escribes el cliente, el celular, la fecha de compra (viene con el día de hoy, pero la puedes cambiar) y el valor total adeudado. Si recuerdas los productos, puedes agregarlos uno por uno con **+ Agregar otro producto** y anotar su costo. No se genera factura ni se abre WhatsApp: la venta queda pendiente en **Cuentas por cobrar** con el sello `MIGRACION_CARTERA`.
+- En **Deudas al proveedor anteriores al sistema** escribes el concepto y el valor. Opcionalmente puedes agregar el proveedor, la fecha real y el número de factura. Las deudas que ya habías registrado siguen intactas como **Deuda inicial**.
+- La pantalla muestra cuánto se ha cobrado y la **utilidad reconocida**. Si no escribiste costos, todo lo que cobres cuenta como utilidad. Si los escribiste, la utilidad es lo cobrado menos la parte que corresponde al costo, y esa parte se muestra como pago al proveedor. Puedes descargar el detalle en CSV con el origen y las fechas de compra y de cobro.
+- **Cartera y pagos a proveedores** queda en cuatro tarjetas simétricas: Pago al proveedor y Movimientos arriba; Gastos operativos e Historial abajo. En el celular se apilan. El historial muestra seis gastos a la vez y al tocar una fila se abre la edición.
+- Al registrar una venta normal, la lista de órdenes se actualiza y se abre automáticamente el chat de WhatsApp del cliente. Si no hay un celular válido, la venta se guarda igual y no se abre nada; el botón de WhatsApp de siempre sigue disponible como respaldo. En Migración este salto automático no ocurre.
+- En Mis Finanzas, al eliminar una meta se retiran sus cuotas de **las dos quincenas** y se recalculan los gastos fijos y la liquidez. El historial de la meta conserva la fecha de sus pagos.
 
 © 2026 MisFinanzas
