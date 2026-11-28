@@ -89,17 +89,39 @@ def plantilla_ventas() -> str:
     return (RUTA / "templates/olb_byte/index.html").read_text(encoding="utf-8")
 
 
-def test_color_de_cabeceras_y_buscardor_igual_al_de_campos() -> None:
-    """Todas las cabeceras y el buscador usan el azul de los cuadros de texto."""
+def test_color_de_cabeceras_igual_al_de_campos_y_rotulo_libre() -> None:
+    """Las cabeceras usan el azul de los campos; el rótulo del buscador va libre."""
     css = _css()
     for selector in (
         ".tabla-contenedor--gastos .tabla thead th {",
         ".tabla-contenedor--ordenes .tabla thead th {",
         ".ordenes-moviles--ordenes .orden-movil--cabecera,",
-        ".formulario--buscar .campo__etiqueta {",
+        ".tabla-contenedor--pendientes .tabla thead th,",
+        ".tabla-contenedor--vip .tabla thead th {",
     ):
         bloque = css.split(selector, 1)[1].split("}", 1)[0]
         assert "rgba(4, 18, 42, 0.68)" in bloque
+    assert ".formulario--buscar .campo__etiqueta {" not in css
+
+
+def test_clientes_vip_muestra_nueve_en_web_y_seis_en_movil() -> None:
+    """Clientes VIP limita filas y mantiene cabecera fija."""
+    css = _css()
+    html = (RUTA / "templates/olb_byte/analitica.html").read_text(encoding="utf-8")
+    assert "tabla-contenedor--vip" in html
+    bloque = css.split(".tabla-contenedor--vip {", 1)[1].split("}", 1)[0]
+    assert "max-height: 420px" in bloque
+    movil = css.split("@media (max-width: 767px) {\n  .tabla-contenedor--vip {", 1)[1].split("}", 1)[0]
+    assert "max-height: 294px" in movil
+
+
+def test_fondo_de_escritorio_muestraArriba_y_abajo() -> None:
+    """Solo escritorio usa dos capas del PNG para ver arriba y abajo."""
+    css = _css()
+    bloque = css.split("@media (min-width: 768px) {\n  body:not(.pagina-acceso)::before {", 1)[1].split("}", 1)[0]
+    assert "center top / 100% auto" in bloque
+    assert "center bottom / 100% auto" in bloque
+    assert "0.2" in bloque
 
 
 def test_ajustes_finales_de_fechas_botones_y_movil() -> None:

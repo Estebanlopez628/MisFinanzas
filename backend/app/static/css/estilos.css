@@ -73,6 +73,18 @@ body:not(.pagina-acceso)::before {
     url("/estaticos/img/fondo-ondas-futuristas.png") center center / cover no-repeat;
 }
 
+/* Escritorio: el PNG es vertical y con `cover` se recortaban las figuras de
+   arriba y abajo. Se muestran ambas con dos capas del mismo archivo y velo
+   más claro. El móvil conserva el fondo original sin cambios. */
+@media (min-width: 768px) {
+  body:not(.pagina-acceso)::before {
+    background:
+      linear-gradient(rgba(5, 15, 36, 0.2), rgba(5, 15, 36, 0.2)),
+      url("/estaticos/img/fondo-ondas-futuristas.png") center top / 100% auto no-repeat,
+      url("/estaticos/img/fondo-ondas-futuristas.png") center bottom / 100% auto no-repeat;
+  }
+}
+
 /* ------------------------------ Estructura ------------------------------ */
 
 .contenedor-app {
@@ -1483,6 +1495,38 @@ a.tarjeta:focus-visible {
   background: var(--bg-primary);
 }
 
+/* Clientes VIP: nueve filas en web y seis en móvil, con cabecera fija. */
+.tabla-contenedor--vip {
+  max-height: 420px; /* cabecera 42 px + 9 filas de 42 px */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tabla-contenedor--vip thead th,
+.tabla-contenedor--vip tbody td {
+  height: 42px;
+}
+
+.tabla-contenedor--vip .tabla thead th {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background-color: rgba(4, 18, 42, 0.68);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border-bottom: 1px solid rgba(148, 197, 255, 0.2);
+}
+
+@media (max-width: 767px) {
+  .tabla-contenedor--vip {
+    max-height: 294px; /* cabecera 42 px + 6 filas */
+    touch-action: pan-x pan-y;
+    overscroll-behavior-x: contain;
+    overscroll-behavior-y: contain;
+  }
+}
+
 /* Último costo y margen: cinco productos visibles con cabecera fija opaca. */
 .tabla-contenedor--costos {
   max-height: 252px;
@@ -1544,7 +1588,9 @@ a.tarjeta:focus-visible {
   position: sticky;
   top: 0;
   z-index: 5;
-  background-color: #0b1e3d;
+  background-color: rgba(4, 18, 42, 0.68);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   border-bottom: 1px solid rgba(148, 197, 255, 0.2);
 }
 
@@ -4752,16 +4798,6 @@ strong.valor-negativo.recibo__cifra--saldo {
   padding-top: 0;
 }
 
-/* Rótulo del buscador con el mismo azul oscurecido de los cuadros de texto. */
-.formulario--buscar .campo__etiqueta {
-  background-color: rgba(4, 18, 42, 0.68);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  border: 1px solid rgba(56, 189, 248, 0.3);
-  border-radius: var(--radio-md, 12px);
-  padding: 8px 12px;
-  margin-bottom: 8px;
-}
 
 /* Total de cartera junto al buscador, en el verde de los valores positivos. */
 .cartera-total {

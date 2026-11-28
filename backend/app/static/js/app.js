@@ -1650,7 +1650,7 @@
     .querySelectorAll(
       ".tabla-contenedor--productos, .tabla-contenedor--costos, " +
         ".tabla-contenedor--ordenes, .tabla-contenedor--migracion, " +
-        ".tabla-contenedor--pendientes, .ordenes-moviles--ordenes"
+        ".tabla-contenedor--pendientes, .ordenes-moviles--ordenes, .tabla-contenedor--vip"
     )
     .forEach(confinarGesto);
 })();
