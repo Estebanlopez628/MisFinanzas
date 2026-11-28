@@ -119,8 +119,8 @@ def test_fondo_de_escritorio_muestraArriba_y_abajo() -> None:
     """Solo escritorio usa dos capas del PNG para ver arriba y abajo."""
     css = _css()
     bloque = css.split("@media (min-width: 768px) {\n  body:not(.pagina-acceso)::before {", 1)[1].split("}", 1)[0]
-    assert "center top / 100% auto" in bloque
-    assert "center bottom / 100% auto" in bloque
+    assert "center -40px / 100% auto" in bloque
+    assert "center bottom 40px / 100% auto" in bloque
     assert "0.3" in bloque
 
 
