@@ -53,7 +53,7 @@ def test_ordenes_tienen_lista_movil_y_detalle(cliente_admin, bd) -> None:
 
     html = cliente_admin.get("/olb-byte").text
 
-    assert 'class="ordenes-moviles"' in html
+    assert 'class="ordenes-moviles ordenes-moviles--ordenes"' in html
     assert f'data-abrir-dialogo="orden-{venta.id_venta}"' in html
     assert f'id="orden-{venta.id_venta}"' in html
     # SRS v4.44: el regreso se hace con la X roja uniforme.

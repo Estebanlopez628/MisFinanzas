@@ -94,7 +94,7 @@ def test_total_de_cartera_aparece_en_pendientes(cliente_admin: TestClient, bd) -
         [comercial.LineaVenta("Cable", 1, "70000", "20000")],
     )
     html = cliente_admin.get("/olb-byte/pendientes").text
-    assert "Total Cuentas por cobrar" in html
+    assert "Total cuentas por cobrar" in html
     bloque = html.split("cartera-total\">", 1)[1].split("</span>", 1)[0]
     assert "valor-positivo" in bloque
     assert "$70.000" in bloque

@@ -89,6 +89,21 @@ def plantilla_ventas() -> str:
     return (RUTA / "templates/olb_byte/index.html").read_text(encoding="utf-8")
 
 
+def test_ajustes_finales_de_fechas_botones_y_movil() -> None:
+    """Fecha DD/MM/AAAA, botones a la derecha y cinco órdenes en móvil."""
+    css = _css()
+    cartera = (RUTA / "templates/olb_byte/cartera.html").read_text(encoding="utf-8")
+    ventas = plantilla_ventas()
+    assert "%d/%m/%Y" in cartera
+    assert "%m/%d/%Y" not in cartera
+    acciones = css.split(".tabla.historial-gastos-table thead th.col-acciones,", 1)[1].split("}", 1)[0]
+    assert "width: 34%" in acciones
+    assert "ordenes-moviles--ordenes" in ventas
+    movil = css.split(".ordenes-moviles--ordenes {", 1)[1].split("}", 1)[0]
+    assert "max-height: 280px" in movil
+    assert "overflow-y: auto" in movil
+
+
 def test_modal_de_gasto_conserva_el_scroll(cliente_admin: TestClient) -> None:
     """Al abrir el modal se guarda la posición y se restaura tras la recarga."""
     js = (RUTA / "static/js/app.js").read_text(encoding="utf-8")
@@ -128,7 +143,7 @@ def test_modal_de_gasto_en_movil_tiene_actualizar_y_x(cliente_admin: TestClient)
     assert ">Actualizar</button>" in html
     assert ">Guardar</button>" not in html
     # Fila móvil limpia: fecha MM/DD/YYYY a la izquierda y monto a la derecha.
-    assert "11/01/2026" in html
+    assert "01/11/2026" in html
     assert "orden-movil__fecha" in html
     assert "Fecha:" not in html
     assert "Valor del gasto:" not in html

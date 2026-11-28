@@ -843,7 +843,7 @@ def _contexto_migracion(
         {
             "titulo_pagina": "Migración de Cartera · OLB BYTE",
             "hoy_iso": hoy.isoformat(),
-            "hoy_texto": hoy.strftime("%m/%d/%Y"),
+            "hoy_texto": hoy.strftime("%d/%m/%Y"),
             "clientes": comercial.listar_clientes(bd),
             "resumen": comercial.resumen_migracion(bd),
             "filas": comercial.filas_migracion(bd),
@@ -1069,7 +1069,7 @@ def _contexto_cartera(usuario: UsuarioSesion, bd: Session, *, error: str | None 
             # SRS v4.44, §8: deudas anteriores al sistema y gastos operativos.
             "gastos_operativos": comercial.listar_gastos_operativos(bd),
             "total_gastos_operativos": comercial.total_gastos_operativos(bd),
-            "hoy_texto": hoy.strftime("%m/%d/%Y"),
+            "hoy_texto": hoy.strftime("%d/%m/%Y"),
             "hoy_iso": hoy.isoformat(),
             "error": error,
         }

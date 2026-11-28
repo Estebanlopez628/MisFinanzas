@@ -300,7 +300,7 @@
           <tbody>
             {% for gasto in gastos_operativos %}
               <tr>
-                <td>{{ gasto.fecha.strftime('%m/%d/%Y') }}</td>
+                <td>{{ gasto.fecha.strftime('%d/%m/%Y') }}</td>
                 <td>{{ gasto.descripcion or 'Gasto operativo' }}</td>
                 <td class="tabla__numero">{{ gasto.monto | cop }}</td>
                 <td class="tabla-gastos__acciones col-acciones">
@@ -326,7 +326,7 @@
           <li>
             <button type="button" class="orden-movil orden-movil--gasto"
                     data-abrir-dialogo="gasto-{{ gasto.id_gasto_operativo }}">
-              <span class="orden-movil__fecha">{{ gasto.fecha.strftime('%m/%d/%Y') }}</span>
+              <span class="orden-movil__fecha">{{ gasto.fecha.strftime('%d/%m/%Y') }}</span>
               <span class="orden-movil__descripcion">{{ gasto.descripcion or 'Gasto operativo' }}</span>
               <span class="orden-movil__valor">{{ gasto.monto | cop }}</span>
             </button>
@@ -336,7 +336,7 @@
 
       {% for gasto in gastos_operativos %}
         <dialog class="detalle-orden" id="gasto-{{ gasto.id_gasto_operativo }}"
-                aria-label="Editar gasto operativo del {{ gasto.fecha.strftime('%m/%d/%Y') }}">
+                aria-label="Editar gasto operativo del {{ gasto.fecha.strftime('%d/%m/%Y') }}">
           <div class="detalle-orden__cuerpo">
             <button type="button" class="detalle-orden__cerrar" data-cerrar-dialogo
                     aria-label="Cerrar" title="Cerrar">×</button>
