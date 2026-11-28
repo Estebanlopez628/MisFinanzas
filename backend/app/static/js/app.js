@@ -308,6 +308,11 @@
     if (abrir) {
       var dialogo = document.getElementById(abrir.getAttribute("data-abrir-dialogo"));
       if (dialogo && typeof dialogo.showModal === "function") {
+        // Guardar la posición antes de abrir el modal: al registrar un gasto
+        // desde aquí se recarga la página y debemos volver al mismo punto.
+        if (typeof guardarScroll === "function") {
+          guardarScroll();
+        }
         dialogo.showModal();
       }
       return;
@@ -949,6 +954,10 @@
     setTimeout(function () {
       window.scrollTo({ left: objetivoX, top: objetivoY, behavior: "instant" });
     }, 500);
+    // Los diálogos pueden devolver el foco al inicio después de `load`.
+    setTimeout(function () {
+      window.scrollTo({ left: objetivoX, top: objetivoY, behavior: "instant" });
+    }, 1000);
   }
 
   if (document.readyState === "complete") {

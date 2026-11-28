@@ -69,7 +69,7 @@ def test_ventas_muestra_cinco_ordenes_con_cabecera_opaca() -> None:
     css = _css()
     bloque = css.split(".tabla-contenedor--ordenes,\n.tabla-contenedor--migracion {", 1)[1].split("}", 1)[0]
     assert "max-height: 252px" in bloque
-    cabecera = css.split(".tabla-contenedor--ordenes .tabla thead th,\n.tabla-contenedor--migracion .tabla thead th {", 1)[1].split("}", 1)[0]
+    cabecera = css.split(".tabla-contenedor--ordenes .tabla thead th {", 1)[1].split("}", 1)[0]
     assert "background-color: #0b1e3d" in cabecera
     ancho = css.split(".tabla-contenedor--ordenes .tabla {", 1)[1].split("}", 1)[0]
     assert "min-width: 0" in ancho
@@ -89,11 +89,19 @@ def plantilla_ventas() -> str:
     return (RUTA / "templates/olb_byte/index.html").read_text(encoding="utf-8")
 
 
-def test_historial_movil_es_tabla_limpia_de_dos_columnas() -> None:
-    """La fila móvil lleva FECHA | VALOR, alineados y sin prefijos ni recorte."""
+def test_modal_de_gasto_conserva_el_scroll(cliente_admin: TestClient) -> None:
+    """Al abrir el modal se guarda la posición y se restaura tras la recarga."""
+    js = (RUTA / "static/js/app.js").read_text(encoding="utf-8")
+    bloque = js.split('var abrir = objetivo.closest("[data-abrir-dialogo]");', 1)[1].split("return;", 1)[0]
+    assert "guardarScroll()" in bloque
+    assert "}, 1000);" in js
+
+
+def test_historial_movil_es_tabla_limpia_de_tres_columnas() -> None:
+    """La fila móvil lleva FECHA | DESCRIPCIÓN | VALOR, alineados y sin prefijos."""
     css = _css()
     rejilla = css.split(".ordenes-moviles--gastos .orden-movil {", 1)[1].split("}", 1)[0]
-    assert "grid-template-columns: 1fr 1fr" in rejilla
+    assert "grid-template-columns: 1fr 1.6fr 1fr" in rejilla
     limpio = css.split(".ordenes-moviles--gastos .orden-movil span {", 1)[1].split("}", 1)[0]
     assert "overflow: visible" in limpio
     assert "text-overflow: clip" in limpio
@@ -105,7 +113,7 @@ def test_historial_movil_es_tabla_limpia_de_dos_columnas() -> None:
     assert ".tabla-contenedor--gastos" in corte and "display: none" in corte
     plantilla = (RUTA / "templates/olb_byte/cartera.html").read_text(encoding="utf-8")
     lista = plantilla.split('<ul class="ordenes-moviles ordenes-moviles--gastos"', 1)[1].split("</ul>", 1)[0]
-    assert "<span>Fecha</span><span>Valor</span>" in lista
+    assert "<span>Fecha</span><span>Descripción</span><span>Valor</span>" in lista
     assert "orden-movil__fecha" in lista and "orden-movil__valor" in lista
     assert "Fecha:" not in lista and "Valor del gasto:" not in lista
 

@@ -320,15 +320,14 @@
 
       <ul class="ordenes-moviles ordenes-moviles--gastos" aria-label="Historial de gastos operativos">
         <li class="orden-movil orden-movil--cabecera orden-movil--gasto" aria-hidden="true">
-          <span>Fecha</span><span>Valor</span>
+          <span>Fecha</span><span>Descripción</span><span>Valor</span>
         </li>
         {% for gasto in gastos_operativos %}
           <li>
             <button type="button" class="orden-movil orden-movil--gasto"
                     data-abrir-dialogo="gasto-{{ gasto.id_gasto_operativo }}">
-              <span class="orden-movil__fecha">{{ gasto.fecha.strftime('%m/%d/%Y') }}
-                <small class="ayuda">{{ gasto.descripcion or 'Gasto operativo' }}</small>
-              </span>
+              <span class="orden-movil__fecha">{{ gasto.fecha.strftime('%m/%d/%Y') }}</span>
+              <span class="orden-movil__descripcion">{{ gasto.descripcion or 'Gasto operativo' }}</span>
               <span class="orden-movil__valor">{{ gasto.monto | cop }}</span>
             </button>
           </li>

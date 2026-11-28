@@ -1358,7 +1358,7 @@ a.tarjeta:focus-visible {
 /* Más específico que `.orden-movil` (definido más abajo) para imponer dos
    columnas reales a la cabecera y a las filas del historial de gastos. */
 .ordenes-moviles--gastos .orden-movil {
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1.6fr 1fr;
 }
 
 .gasto-operativo__acciones {
@@ -1631,12 +1631,19 @@ a.tarjeta:focus-visible {
   text-overflow: ellipsis;
 }
 
-.tabla-contenedor--ordenes .tabla thead th,
-.tabla-contenedor--migracion .tabla thead th {
+.tabla-contenedor--ordenes .tabla thead th {
   position: sticky;
   top: 0;
   z-index: 5;
   background-color: #0b1e3d;
+  border-bottom: 1px solid rgba(148, 197, 255, 0.2);
+}
+
+.tabla-contenedor.tabla-contenedor--migracion .tabla thead th {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background-color: var(--bg-primary);
   border-bottom: 1px solid rgba(148, 197, 255, 0.2);
 }
 

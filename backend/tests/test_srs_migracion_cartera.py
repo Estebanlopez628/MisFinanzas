@@ -72,9 +72,11 @@ def test_cinco_filas_y_cabecera_fija_en_ordenes_y_migradas() -> None:
     js = (RUTA / "static/js/app.js").read_text(encoding="utf-8")
     bloque = css.split(".tabla-contenedor--ordenes,\n.tabla-contenedor--migracion {", 1)[1].split("}", 1)[0]
     assert "max-height: 252px" in bloque
-    cabecera = css.split(".tabla-contenedor--ordenes .tabla thead th,\n.tabla-contenedor--migracion .tabla thead th {", 1)[1].split("}", 1)[0]
+    cabecera = css.split(".tabla-contenedor--ordenes .tabla thead th {", 1)[1].split("}", 1)[0]
     assert "position: sticky" in cabecera
     assert "background-color: #0b1e3d" in cabecera
+    migracion = css.split(".tabla-contenedor.tabla-contenedor--migracion .tabla thead th {", 1)[1].split("}", 1)[0]
+    assert "background-color: var(--bg-primary)" in migracion
     assert "tabla-contenedor--migracion" in (RUTA / "templates/olb_byte/migracion.html").read_text(encoding="utf-8")
     assert ".tabla-contenedor--ordenes, .tabla-contenedor--migracion" in js
     pendientes = css.split(".tabla-contenedor--pendientes,\n.ordenes-moviles--pendientes {", 1)[1].split("}", 1)[0]
