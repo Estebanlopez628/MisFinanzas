@@ -1,6 +1,6 @@
 {# Subnavegación de OLB BYTE con el mismo componente que Mis Finanzas (subnav-finanzas).
    `seccion` indica la pestaña activa: ventas, migracion, pendientes, cartera, garantias o analitica. #}
-<nav class="subnav-finanzas" aria-label="Secciones de OLB BYTE">
+<nav class="subnav-finanzas subnav-finanzas--olb" aria-label="Secciones de OLB BYTE">
   <a class="subnav-finanzas__enlace {% if seccion|default('') == 'ventas' %}subnav-finanzas__enlace--activo{% endif %}"
      href="{{ url_for('ver_olb_byte') }}"
      {% if seccion|default('') == 'ventas' %}aria-current="page"{% endif %}>

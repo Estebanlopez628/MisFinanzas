@@ -11,28 +11,24 @@
 
 {% macro fila_producto(fila) -%}
   <tr data-fila-producto>
-    <td>
-      <input class="campo__control" type="text" name="producto_nombre"
-             value="{{ fila.producto_nombre|default('', true) }}" placeholder="Audífonos Bluetooth" />
+    <td data-etiqueta="Producto">
+      <span data-vista="producto_nombre">{{ fila.producto_nombre }}</span>
+      <small class="ayuda" data-vista="categoria">{{ fila.categoria }}</small>
+      <input type="hidden" name="producto_nombre" value="{{ fila.producto_nombre }}" />
+      <input type="hidden" name="categoria" value="{{ fila.categoria }}" />
+      <input type="hidden" name="cantidad" value="{{ fila.cantidad }}" />
+      <input type="hidden" name="costo_unitario" value="{{ fila.costo_unitario }}" />
+      <input type="hidden" name="precio_unitario" value="{{ fila.precio_unitario }}" />
+      <input type="hidden" name="garantia_meses" value="{{ fila.garantia_meses|default(0, true) }}" />
     </td>
-    <td>
-      <input class="campo__control" type="text" name="categoria" list="categorias-migracion"
-             value="{{ fila.categoria|default('', true) }}" placeholder="Categoría" />
-    </td>
-    <td>
-      <input class="campo__control" type="number" min="1" name="cantidad"
-             value="{{ fila.cantidad|default(1, true) }}" />
-    </td>
-    <td>
-      <input class="campo__control" type="text" inputmode="decimal" name="precio_unitario"
-             value="{{ fila.precio_unitario|default('', true) }}" placeholder="0" data-moneda />
-    </td>
-    <td>
-      <input class="campo__control" type="text" inputmode="decimal" name="costo_unitario"
-             value="{{ fila.costo_unitario|default('0', true) }}" placeholder="0" data-moneda />
-    </td>
-    <td>
-      <button class="boton boton--peligro boton--pequeno" type="button" data-eliminar-producto>Quitar</button>
+    <td class="tabla__numero" data-etiqueta="Cant." data-vista="cantidad">{{ fila.cantidad }}</td>
+    <td class="tabla__numero" data-etiqueta="Precio" data-vista="precio_unitario">{{ fila.precio_unitario }}</td>
+    <td data-etiqueta="Garantía" data-vista="garantia_meses">{{ fila.garantia_meses|default(0, true) }} mes(es)</td>
+    <td class="celda-acciones" data-etiqueta="">
+      <div class="fila-acciones">
+        <button class="boton boton--secundario boton--pequeno" type="button" data-editar-fila>Actualizar</button>
+        <button class="boton boton--peligro boton--pequeno" type="button" data-eliminar-producto>Eliminar</button>
+      </div>
     </td>
   </tr>
 {%- endmacro %}
@@ -132,16 +128,65 @@
         </label>
       </div>
 
-      <h3 class="subtitulo-seccion form-header-white">Productos (opcional)</h3>
-      <div class="tabla-contenedor">
+      <fieldset class="bloque-producto" data-panel-producto>
+        <legend class="bloque-producto__titulo">Producto</legend>
+        <p class="ayuda">Todos los campos son opcionales: si no sabes el detalle, carga solo el saldo total.</p>
+        <div class="fila-campos">
+          <label class="campo">
+            <span class="campo__etiqueta">Categoría</span>
+            <select class="campo__control" data-campo-panel="categoria">
+              <option value="">Elige una categoría…</option>
+              {% for categoria in categorias_producto %}
+                <option value="{{ categoria }}">• {{ categoria }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <label class="campo">
+            <span class="campo__etiqueta">Nombre del producto</span>
+            <input class="campo__control" type="text" placeholder="Audífonos Bluetooth"
+                   data-campo-panel="producto_nombre" />
+          </label>
+        </div>
+        <div class="fila-campos">
+          <label class="campo">
+            <span class="campo__etiqueta">Cantidad</span>
+            <input class="campo__control" type="number" min="1" value="1" data-campo-panel="cantidad" />
+          </label>
+          <label class="campo">
+            <span class="campo__etiqueta">Costo (proveedor)</span>
+            <input class="campo__control" type="text" inputmode="decimal" placeholder="0"
+                   data-campo-panel="costo_unitario" data-moneda />
+          </label>
+          <label class="campo">
+            <span class="campo__etiqueta">Precio de venta</span>
+            <input class="campo__control" type="text" inputmode="decimal" placeholder="50.000"
+                   data-campo-panel="precio_unitario" data-moneda />
+          </label>
+          <label class="campo">
+            <span class="campo__etiqueta">Garantía (meses)</span>
+            <input class="campo__control" type="number" min="0" value="{{ meses_defecto }}"
+                   data-campo-panel="garantia_meses" />
+          </label>
+        </div>
+        <div class="subtotal-linea">
+          <span>Subtotal del producto</span><strong data-subtotal-panel>$0</strong>
+        </div>
+        <p class="alerta alerta--error" role="alert" data-error-panel hidden></p>
+        <div class="acciones-formulario acciones-formulario--izquierda">
+          <button class="boton boton--primario" type="button" data-guardar-producto>Guardar</button>
+          <span class="ayuda" data-estado-panel>Escribe el producto y pulsa Guardar, o deja los campos vacíos.</span>
+        </div>
+      </fieldset>
+
+      <h3 class="subtitulo-seccion form-header-white">Productos de esta venta (opcional)</h3>
+      <div class="tabla-contenedor tabla-contenedor--productos">
         <table class="tabla tabla--tarjetas tabla--compacta">
           <thead>
             <tr>
               <th scope="col">Producto</th>
-              <th scope="col">Categoría</th>
               <th scope="col">Cant.</th>
-              <th scope="col">Precio unitario</th>
-              <th scope="col">Costo</th>
+              <th scope="col">Precio</th>
+              <th scope="col">Garantía</th>
               <th scope="col">Acciones</th>
             </tr>
           </thead>
@@ -157,7 +202,7 @@
       </div>
 
       <template data-plantilla-producto>
-        {{ fila_producto({'producto_nombre': '', 'categoria': '', 'cantidad': 1, 'precio_unitario': '', 'costo_unitario': '0'}) }}
+        {{ fila_producto({'producto_nombre': '', 'categoria': '', 'cantidad': 1, 'costo_unitario': '0', 'precio_unitario': '', 'garantia_meses': meses_defecto}) }}
       </template>
 
       <div class="acciones-venta">

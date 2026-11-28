@@ -27,7 +27,7 @@ from dataclasses import dataclass, field
 from datetime import date, datetime, time, timezone
 from decimal import Decimal
 
-from sqlalchemy import delete, select
+from sqlalchemy import delete, or_, select
 from sqlalchemy.orm import Session
 
 from app.core.numeros import redondear_dinero
@@ -41,6 +41,10 @@ from app.servicios import trabajos as servicio_trabajos
 from app.servicios.gastos import valor_computable
 
 CERO = Decimal("0")
+# Prefijo con el que se generan los gastos fijos de una meta. Se usa también para
+# sanearen los registros antiguos que quedaron sin vínculo con su meta madre.
+PREFIJO_META = "Meta · "
+PREFIJOS_META = (PREFIJO_META, "Meta - ")
 
 DURACION_FIJA = "FIJO"
 DURACION_LIMITADA = "LIMITADO"
@@ -497,11 +501,12 @@ def eliminar_proyeccion(
 
 
 def limpiar_gastos_huerfanos(bd: Session, id_usuario: str) -> int:
-    """Elimina gastos fijos cuya meta padre ya no existe (SRS Migración §5).
+    """Elimina gastos fijos cuya meta padre ya no está activa (SRS Migración §5).
 
-    Es el saneamiento de seguridad para los registros que quedaron de eliminaciones
-    anteriores al correctivo. Solo toca gastos del usuario indicado y vinculados
-    a una meta; nunca borra gastos fijos normales ni de trabajos.
+    Sanea dos casos: filas con `id_proyeccion` apuntando a una meta inexistente o
+    archivada, y respaldo por descripción para gastos históricos que nacieron con
+    el prefijo de meta pero no llevan vínculo. Nunca toca gastos fijos normales ni
+    gastos de trabajos.
 
     Args:
         bd: Sesión de base de datos.
@@ -510,14 +515,48 @@ def limpiar_gastos_huerfanos(bd: Session, id_usuario: str) -> int:
     Returns:
         Cantidad de filas eliminadas.
     """
+    archivadas = select(ProyeccionAhorro.id_proyeccion).where(
+        ProyeccionAhorro.activo.is_(False)
+    )
     resultado = bd.execute(
         delete(Gasto).where(
             Gasto.id_usuario == id_usuario,
             Gasto.id_proyeccion.is_not(None),
-            Gasto.id_proyeccion.notin_(select(ProyeccionAhorro.id_proyeccion)),
+            or_(
+                Gasto.id_proyeccion.notin_(select(ProyeccionAhorro.id_proyeccion)),
+                Gasto.id_proyeccion.in_(archivadas),
+            ),
         )
     )
-    return resultado.rowcount or 0
+    eliminados = resultado.rowcount or 0
+
+    descripciones_activas = set(
+        bd.scalars(
+            select(ProyeccionAhorro.descripcion).where(
+                ProyeccionAhorro.id_usuario == id_usuario,
+                ProyeccionAhorro.activo.is_(True),
+            )
+        )
+    )
+    candidatos = bd.scalars(
+        select(Gasto).where(
+            Gasto.id_usuario == id_usuario,
+            Gasto.id_proyeccion.is_(None),
+            or_(*[Gasto.descripcion.startswith(prefijo) for prefijo in PREFIJOS_META]),
+        )
+    )
+    for gasto in list(candidatos):
+        descripcion = gasto.descripcion.strip()
+        sufijo = next(
+            (descripcion[len(prefijo) :].strip() for prefijo in PREFIJOS_META if descripcion.startswith(prefijo)),
+            "",
+        )
+        if sufijo and sufijo not in descripciones_activas:
+            bd.delete(gasto)
+            eliminados += 1
+    if eliminados:
+        bd.commit()
+    return eliminados
 
 
 def extender_proyeccion(

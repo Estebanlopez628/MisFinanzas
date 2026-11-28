@@ -1513,6 +1513,47 @@ a.tarjeta:focus-visible {
   overscroll-behavior: contain;
 }
 
+/* Ajuste del propietario: fecha, monto y acciones juntos y sin desplazamiento
+   horizontal dentro de la tarjeta. Dos clases ganan sobre `.tabla-contenedor`
+   (overflow-x: auto) y sobre `.tabla` (min-width: 640px), definidas más abajo. */
+.tabla-contenedor.historial-gastos-scroll,
+.tabla-contenedor.tabla-contenedor--gastos {
+  overflow-x: hidden;
+}
+
+.tabla.historial-gastos-table {
+  min-width: 0;
+  width: 100%;
+  table-layout: fixed;
+  font-size: 0.78rem;
+}
+
+.tabla.historial-gastos-table th,
+.tabla.historial-gastos-table td {
+  padding: 6px 8px;
+  white-space: nowrap;
+}
+
+.tabla.historial-gastos-table thead th:first-child,
+.tabla.historial-gastos-table tbody td:first-child {
+  width: 38%;
+}
+
+.tabla.historial-gastos-table thead th:nth-child(2),
+.tabla.historial-gastos-table tbody td:nth-child(2) {
+  width: 30%;
+}
+
+.tabla.historial-gastos-table .tabla-gastos__acciones {
+  gap: 4px;
+  justify-content: flex-end;
+}
+
+.tabla.historial-gastos-table .boton {
+  padding: 4px 7px;
+  font-size: 0.72rem;
+}
+
 .historial-gastos-table tbody td {
   height: 37px;
 }
@@ -1701,6 +1742,36 @@ a.tarjeta:focus-visible {
   border-color: rgba(56, 189, 248, 0.7);
   background: linear-gradient(135deg, rgba(2, 132, 199, 0.95), rgba(14, 116, 144, 0.95));
   box-shadow: 0 6px 16px rgba(2, 132, 199, 0.35);
+}
+
+/* Submenú de OLB BYTE: seis pestañas en 3 × 2 (2 × 3 en móvil), sin scroll
+   lateral ni texto cortado. Mis Finanzas conserva su submenú original. */
+.subnav-finanzas--olb {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  overflow-x: visible;
+  scrollbar-width: none;
+}
+
+.subnav-finanzas--olb::-webkit-scrollbar {
+  display: none;
+}
+
+.subnav-finanzas--olb .subnav-finanzas__enlace {
+  flex: 0 1 auto;
+  min-width: 0;
+  padding: 10px 8px;
+  font-size: 0.8rem;
+  white-space: normal;
+  text-align: center;
+  line-height: 1.25;
+}
+
+@media (max-width: 640px) {
+  .subnav-finanzas--olb {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 /* SRS v1.5: en móvil el submenú pasa a una cuadrícula 2 × 2, sin scroll

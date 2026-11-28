@@ -44,7 +44,7 @@ CERO = Decimal("0")
 DIAS_INHABILITADO = 15
 # SRS v4.35: omisión temporal de un gasto fijo normal (no meta).
 DIAS_OMITIDO = 10
-PREFIJO_META = "Meta · "
+PREFIJO_META = ahorro.PREFIJO_META
 ACCION_INHABILITADO = "inhabilitado"
 ACCION_ELIMINADO = "eliminado"
 

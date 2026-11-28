@@ -106,7 +106,7 @@ Principios que explican el resto del código:
 ### Resumen del inventario
 
 - **119 archivos** documentados: 57 Python, 42 plantillas Jinja2 y 20 recursos estáticos.
-- **74 clases**, **727 funciones** y **43 métodos** de clase.
+- **74 clases**, **734 funciones** y **43 métodos** de clase.
 
 ### Detalle por archivo
 
@@ -193,7 +193,7 @@ Principios que explican el resto del código:
 - **`acceso_google.py`** · 123 líneas — Inicio de sesión con Google (cuenta de Gmail) mediante OAuth 2.0 (ADR-48).
   - Clases: `AccesoGoogleError`
   - Funciones: `google_activo`, `url_autorizacion`, `_leer_json`, `intercambiar_codigo`
-- **`ahorro.py`** · 920 líneas — Planificador de ahorro y metas del usuario (SRS v1.3, bloque 3).
+- **`ahorro.py`** · 959 líneas — Planificador de ahorro y metas del usuario (SRS v1.3, bloque 3).
   - Clases: `MesMeta`, `MetaResumen`
   - Funciones: `etiqueta_quincena`, `valor_por_pago`, `_normalizar_modo_ambas`, `valor_mensual_efectivo`, `_mover_mes`, `_etiqueta_mes`, `_validar_duracion`, `crear_proyeccion`, `listar_proyecciones`, `_posicion`, `eliminar_proyeccion`, `limpiar_gastos_huerfanos`, `extender_proyeccion`, `historial_metas`, `_detalle_pagos`, `meses_de_la_meta`, `_estado_mes`, `resumen_metas`, `saldo_libre_total`, `diagnostico`
 - **`analitica.py`** · 980 líneas — Analítica de OLB_BYTE: reportes, clientes VIP, costos y tablas exportables.
@@ -260,7 +260,7 @@ Principios que explican el resto del código:
 
 #### `backend/app/static/css/`
 
-- **`estilos.css`** · 7639 líneas — Fondo y superficies
+- **`estilos.css`** · 7710 líneas — Fondo y superficies
 - **`factura-olb.css`** · 764 líneas — SRS v4.44: el retorno de la factura es «Volver a Ventas» en todos los
 
 #### `backend/app/static/js/`
@@ -284,8 +284,8 @@ Principios que explican el resto del código:
   - Funciones: `leerFormulario`, `pintarCampo`, `pintarDeduccion`, `pintarValorAuxilio`, `pintarErrores`, `pintarDetalle`, `pintarAuxilio`, `aplicarResultado`, `pintarTramos`, `pintarIncapacidad`, `pintarQuincenas`, `pintarTexto`, `calcular`, `programarCalculo`, `marcarCambios`, `aplicarPlantilla`
 - **`incapacidades.js`** · 129 líneas — Cálculo automático del módulo de incapacidades (SRS v1.5).
   - Funciones: `fechasListas`, `reemplazar`, `actualizar`, `programar`
-- **`migracion.js`** · 114 líneas — Comportamiento de la pestaña «Migración de Cartera» de OLB BYTE.
-  - Funciones: `actualizarVacia`, `agregarProducto`, `normalizarTelefono`, `abrirWhatsappNumero`
+- **`migracion.js`** · 297 líneas — Comportamiento de la pestaña «Migración de Cartera» de OLB BYTE.
+  - Funciones: `leerPanel`, `hayDatosEnPanel`, `mostrarError`, `actualizarSubtotal`, `escribirEnFila`, `actualizarVacia`, `guardarProducto`, `limpiarPanel`, `editarFila`, `normalizarTelefono`, `abrirWhatsappNumero`
 - **`moneda.js`** · 77 líneas — Formato de los campos de pesos mientras se escriben (SRS v1.9).
   - Funciones: `formatear`, `cuantosDigitos`, `posicionCursor`, `alEscribir`, `iniciar`
 - **`olb_byte.js`** · 626 líneas — Formulario de venta de OLB_BYTE: forma de pago, productos guardados y totales.
@@ -367,7 +367,7 @@ Principios que explican el resto del código:
 - **`factura.html`** · 42 líneas — Plantilla: Factura No.
 - **`garantias.html`** · 155 líneas — Plantilla: Soporte y garantías
 - **`index.html`** · 514 líneas — Plantilla: OLB BYTE
-- **`migracion.html`** · 289 líneas — Plantilla: Migración de Cartera · OLB BYTE
+- **`migracion.html`** · 334 líneas — Plantilla: Migración de Cartera · OLB BYTE
 - **`pendientes.html`** · 120 líneas — Plantilla: Cuentas por cobrar
 - **`recibo.html`** · 23 líneas — Plantilla: Recibo de abono · No.
 
@@ -1244,7 +1244,10 @@ línea neón: las ventas anteriores al sistema (cliente, teléfono, fecha de com
 total adeudado y productos opcionales con «+ Agregar otro producto») y las deudas
 al proveedor anteriores al sistema (concepto, valor, proveedor, fecha y referencia).
 Muestra los indicadores de cobro y utilidad reconocida, el detalle de las ventas
-migradas y un enlace a su CSV. No ofrece factura ni salto automático a WhatsApp.
+migradas y un enlace a su CSV. El producto se registra en un panel con los seis
+campos de Registro de venta (categoría, nombre, cantidad, costo, precio y garantía),
+todos opcionales, con «+ Agregar otro producto». No ofrece factura ni salto
+automático a WhatsApp.
 
 ### `backend/app/templates/olb_byte/garantias.html`
 
@@ -1290,10 +1293,12 @@ nueva; en móvil recarga con `wa_auto` y la página abre el esquema nativo.
 
 ### `backend/app/static/js/migracion.js`
 
-Pestaña de Migración de Cartera. «+ Agregar otro producto» clona la fila de la
-plantilla y «Quitar» la elimina; el aviso de tabla vacía se actualiza solo. Normaliza
-el celular al escribir y «Pegar Numero» abre WhatsApp directamente en móvil y web.
-No contiene reglas de negocio ni salto automático: el servidor valida y calcula todo.
+Pestaña de Migración de Cartera. Reproduce el panel de producto de Registro de venta
+(categoría, nombre, cantidad, costo, precio y garantía), todos opcionales: «Guardar»
+o «+ Agregar otro producto» pasan los datos a la tabla como campos ocultos y
+«Actualizar» vuelve a cargar una fila en el panel. Normaliza el celular al escribir
+y «Pegar Numero» abre WhatsApp directamente en móvil y web. No contiene reglas de
+negocio ni salto automático: el servidor valida y calcula todo.
 
 ### `backend/app/templates/olb_byte/_subnav.html`
 

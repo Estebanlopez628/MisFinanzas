@@ -2087,4 +2087,11 @@ El `<h2 class="panel__titulo form-header-white">Cartera frente a deuda</h2>` lle
 
 ### 103.5 Verificación
 
-- 14 pruebas nuevas en `test_srs_migracion_cartera.py`; suite completa **1031 pruebas** en verde; `compileall`, `node --check` y `generar_guia.py --verificar` correctos (119 fichas). `sw.js` en `olb-finanzas-v206`. Documentación sincronizada: `AGENTS.md`, `MEMORY.md`, `Guia.md`, `diccionario_datos.md`, `constitution.md`, `USER_GUIDE.md` y esta SRS.
+- 21 pruebas nuevas en `test_srs_migracion_cartera.py`; suite completa **1038 pruebas** en verde; `compileall`, `node --check` y `generar_guia.py --verificar` correctos (119 fichas). `sw.js` en `olb-finanzas-v207`. Documentación sincronizada: `AGENTS.md`, `MEMORY.md`, `Guia.md`, `diccionario_datos.md`, `constitution.md`, `USER_GUIDE.md` y esta SRS.
+
+### 103.6 Ajustes del propietario (ADR-176)
+
+1. El bloque 1 de Migración reproduce el panel completo de producto de Registro de venta (categoría, nombre, cantidad, costo, precio y garantía). Todos los campos son opcionales: si se dejan vacíos se carga solo el saldo total; si se diligencian, «Guardar» o «+ Agregar otro producto» los pasa a la tabla como campos ocultos, incluida la garantía, y el servidor crea las líneas de detalle.
+2. El historial de gastos operativos usa `.tabla.historial-gastos-table` con `min-width: 0`, `table-layout: fixed` y celdas de 6 × 8 px, de modo que fecha, monto y acciones se vean completos sin desplazamiento horizontal dentro de la tarjeta.
+3. El submenú de OLB BYTE añade `subnav-finanzas--olb`: grilla 3 × 2 en escritorio y 2 × 3 en móvil, sin barra de desplazamiento ni pestañas cortadas. El submenú de Mis Finanzas no cambia.
+4. `limpiar_gastos_huerfanos()` elimina también gastos de metas archivadas y gastos históricos con prefijo «Meta · » o «Meta - » sin una meta activa con esa descripción, para que no vuelvan a aparecer en la segunda quincena.

@@ -9,12 +9,15 @@ from __future__ import annotations
 
 from datetime import date
 from decimal import Decimal
+from pathlib import Path
 
 from fastapi.testclient import TestClient
 from sqlalchemy import select, text
 
 from app.modelos import Abono, Gasto, MovimientoProveedor, ProyeccionAhorro, Venta, VentaDetalle
 from app.servicios import ahorro, comercial, pagos_metas, usuarios
+
+RUTA = Path(__file__).resolve().parent.parent / "app"
 
 
 def _id_admin(bd) -> str:
@@ -224,6 +227,160 @@ def test_la_cartera_tiene_cuatro_paneles_en_dos_filas(cliente_admin: TestClient)
     for titulo in titulos[2:]:
         fragmento = html.split(f">{titulo}</h2>", 1)[0]
         assert "form-header-white" in fragmento[-80:]
+
+
+def test_el_panel_de_producto_de_migracion_es_completo_y_opcional(
+    cliente_admin: TestClient,
+) -> None:
+    """Aparecen cantidad, costo, precio y garantía, sin ser obligatorios."""
+    html = cliente_admin.get("/olb-byte/migracion").text
+    panel = html.split('data-panel-producto>', 1)[1].split("</fieldset>", 1)[0]
+    for campo in (
+        "categoria",
+        "producto_nombre",
+        "cantidad",
+        "costo_unitario",
+        "precio_unitario",
+        "garantia_meses",
+    ):
+        assert f'data-campo-panel="{campo}"' in panel
+    for etiqueta in (
+        "Categoría",
+        "Nombre del producto",
+        "Cantidad",
+        "Costo (proveedor)",
+        "Precio de venta",
+        "Garantía (meses)",
+        "Subtotal del producto",
+    ):
+        assert etiqueta in panel
+    assert "required" not in panel
+    assert "data-guardar-producto" in panel
+    assert "+ Agregar otro producto" in html
+    assert 'name="garantia_meses"' in html.split("data-plantilla-producto>", 1)[1]
+
+
+def test_producto_migrado_con_garantia_se_almacena(cliente_admin: TestClient, bd) -> None:
+    """El detalle opcional viaja a `venta_detalle` con su garantía."""
+    respuesta = cliente_admin.post(
+        "/olb-byte/migracion/ventas",
+        data={
+            "cliente_nombre": "Detalle Completo",
+            "cliente_telefono": "3201234567",
+            "fecha_compra": "2025-05-05",
+            "total": "180.000",
+            "producto_nombre": ["Audífonos"],
+            "categoria": ["Audífonos"],
+            "cantidad": ["2"],
+            "costo_unitario": ["40.000"],
+            "precio_unitario": ["90.000"],
+            "garantia_meses": ["6"],
+        },
+        follow_redirects=False,
+    )
+    assert respuesta.status_code == 303
+    detalle = bd.scalar(select(VentaDetalle))
+    assert detalle is not None
+    assert detalle.cantidad == 2
+    assert detalle.costo_unitario == Decimal("40000")
+    assert detalle.precio_unitario == Decimal("90000")
+    assert detalle.garantia_texto is None
+
+
+def test_subnav_de_olb_va_en_tres_columnas() -> None:
+    """Las seis pestañas de OLB BYTE se acomodan en 3 × 2 sin scroll lateral."""
+    html = (RUTA / "templates/olb_byte/_subnav.html").read_text(encoding="utf-8")
+    css = (RUTA / "static/css/estilos.css").read_text(encoding="utf-8")
+    assert 'class="subnav-finanzas subnav-finanzas--olb"' in html
+    bloque = css.split(".subnav-finanzas--olb {", 1)[1].split("}", 1)[0]
+    assert "grid-template-columns: repeat(3, minmax(0, 1fr))" in bloque
+    assert "overflow-x: visible" in bloque
+
+
+def test_historial_de_gastos_cabe_en_la_tarjeta() -> None:
+    """Fecha, monto y acciones quedan juntos y sin desplazamiento horizontal."""
+    css = (RUTA / "static/css/estilos.css").read_text(encoding="utf-8")
+    contenedor = css.split(".tabla-contenedor.historial-gastos-scroll,", 1)[1].split("}", 1)[0]
+    assert "overflow-x: hidden" in contenedor
+    tabla = css.split(".tabla.historial-gastos-table {", 1)[1].split("}", 1)[0]
+    assert "min-width: 0" in tabla
+    assert "table-layout: fixed" in tabla
+    celdas = css.split(".tabla.historial-gastos-table th,", 1)[1].split("}", 1)[0]
+    assert "padding: 6px 8px" in celdas
+
+
+def test_limpieza_por_descripcion_retira_gastos_de_metas_borradas(bd) -> None:
+    """Los gastos históricos sin vínculo y con prefijo de meta se saneen."""
+    id_usuario = _id_admin(bd)
+    gato_huerfano = Gasto(
+        id_usuario=id_usuario,
+        descripcion=ahorro.PREFIJO_META + "Viaje a San Andrés",
+        categoria="Otros Gastos Fijos",
+        valor=Decimal("100000"),
+        es_fijo=True,
+        fecha=date.today(),
+        quincena=2,
+    )
+    bd.add(gato_huerfano)
+    bd.commit()
+
+    assert ahorro.limpiar_gastos_huerfanos(bd, id_usuario) == 1
+    assert bd.get(Gasto, gato_huerfano.id_gasto) is None
+
+
+def test_limpieza_por_descripcion_conserva_las_metas_activas(bd) -> None:
+    """Un gasto con prefijo se conserva si su meta sigue activa."""
+    id_usuario = _id_admin(bd)
+    meta = ahorro.crear_proyeccion(
+        bd,
+        id_usuario,
+        "Ahorro",
+        "Viaje a San Andrés",
+        "100.000",
+        tipo_duracion=ahorro.DURACION_LIMITADA,
+        meses="2",
+        fecha_inicio=date.today(),
+        quincena=2,
+    )
+    gasto = Gasto(
+        id_usuario=id_usuario,
+        descripcion=ahorro.PREFIJO_META + meta.descripcion,
+        categoria="Otros Gastos Fijos",
+        valor=Decimal("100000"),
+        es_fijo=True,
+        fecha=date.today(),
+        quincena=2,
+    )
+    bd.add(gasto)
+    bd.commit()
+
+    assert ahorro.limpiar_gastos_huerfanos(bd, id_usuario) == 0
+    assert bd.get(Gasto, gasto.id_gasto) is not None
+
+
+def test_eliminar_meta_archivada_tambien_limpia_sus_gastos(bd) -> None:
+    """Una meta archivada deja de generar gastos en ninguna quincena."""
+    id_usuario = _id_admin(bd)
+    meta = ahorro.crear_proyeccion(
+        bd,
+        id_usuario,
+        "Ahorro",
+        "Meta archivada vieja",
+        "100.000",
+        tipo_duracion=ahorro.DURACION_LIMITADA,
+        meses="2",
+        fecha_inicio=date.today(),
+        quincena=ahorro.QUINCENA_AMBAS,
+    )
+    pagos_metas.asegurar_gastos_de_metas(bd, id_usuario, date.today().year, date.today().month)
+    meta.activo = False
+    meta.archivada_en = date.today()
+    bd.commit()
+
+    assert ahorro.limpiar_gastos_huerfanos(bd, id_usuario) == 4
+    assert (
+        len(bd.scalars(select(Gasto).where(Gasto.id_proyeccion == meta.id_proyeccion)).all()) == 0
+    )
 
 
 # ---------------------------------------------------------------------------
