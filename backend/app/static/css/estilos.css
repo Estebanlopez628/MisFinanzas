@@ -1568,11 +1568,14 @@ a.tarjeta:focus-visible {
   -webkit-overflow-scrolling: touch;
 }
 
-.ordenes-moviles--ordenes .orden-movil--cabecera {
+.ordenes-moviles--ordenes .orden-movil--cabecera,
+.ordenes-moviles--gastos .orden-movil--cabecera {
   position: sticky;
   top: 0;
   z-index: 5;
-  background-color: #0b1e3d;
+  background-color: rgba(4, 18, 42, 0.68);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   border-bottom: 1px solid rgba(148, 197, 255, 0.2);
 }
 
@@ -1683,8 +1686,14 @@ a.tarjeta:focus-visible {
   position: sticky;
   top: 0;
   z-index: 5;
-  background-color: #0b1e3d;
+  background-color: rgba(4, 18, 42, 0.68);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   border-bottom: 1px solid rgba(148, 197, 255, 0.2);
+}
+
+.tabla-contenedor--ordenes thead th.col-acciones {
+  padding-right: 16px;
 }
 
 .tabla-contenedor.tabla-contenedor--migracion .tabla thead th {
@@ -1707,12 +1716,24 @@ a.tarjeta:focus-visible {
 /* SRS Migración §3: seis filas visibles (42 px de cabecera + 6 × 37 px),
    desplazamiento vertical y cabecera fija con fondo sólido idéntico al de la
    tarjeta: nunca transparente al hacer scroll. */
-.historial-gastos-scroll,
-.tabla-contenedor--gastos {
-  max-height: 265px;
+.historial-gastos-scroll {
+  max-height: 412px; /* cabecera 42 px + 10 filas de 37 px */
   overflow-y: auto;
   overflow-x: hidden;
   overscroll-behavior: contain;
+}
+
+.tabla-contenedor--gastos {
+  max-height: 412px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+}
+
+@media (max-width: 767px) {
+  .tabla-contenedor--gastos {
+    max-height: 264px; /* cabecera 42 px + 6 filas de 37 px */
+  }
 }
 
 /* Ajuste del propietario: fecha, monto y acciones juntos y sin desplazamiento
@@ -1763,6 +1784,10 @@ a.tarjeta:focus-visible {
   overflow: visible;
 }
 
+.tabla.historial-gastos-table thead th.col-acciones {
+  padding-right: 16px;
+}
+
 .tabla.historial-gastos-table .tabla-gastos__acciones {
   display: table-cell;
   gap: 0;
@@ -1796,7 +1821,9 @@ a.tarjeta:focus-visible {
   position: sticky;
   top: 0;
   z-index: 5;
-  background-color: #0b1e3d;
+  background-color: rgba(4, 18, 42, 0.68);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   border-bottom: 1px solid rgba(148, 197, 255, 0.2);
 }
 
@@ -1812,7 +1839,7 @@ a.tarjeta:focus-visible {
 
 @media (max-width: 640px) {
   .ordenes-moviles--gastos {
-    max-height: 265px;
+    max-height: 264px; /* 6 filas móviles */
     overflow-y: auto;
     overscroll-behavior: contain;
   }
@@ -4723,6 +4750,17 @@ strong.valor-negativo.recibo__cifra--saldo {
   /* SRS v4.44: sin línea sobre «Buscar por cliente, celular o número de orden». */
   border-top: 0;
   padding-top: 0;
+}
+
+/* Rótulo del buscador con el mismo azul oscurecido de los cuadros de texto. */
+.formulario--buscar .campo__etiqueta {
+  background-color: rgba(4, 18, 42, 0.68);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: var(--radio-md, 12px);
+  padding: 8px 12px;
+  margin-bottom: 8px;
 }
 
 /* Total de cartera junto al buscador, en el verde de los valores positivos. */

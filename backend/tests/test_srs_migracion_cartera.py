@@ -74,7 +74,7 @@ def test_cinco_filas_y_cabecera_fija_en_ordenes_y_migradas() -> None:
     assert "max-height: 252px" in bloque
     cabecera = css.split(".tabla-contenedor--ordenes .tabla thead th {", 1)[1].split("}", 1)[0]
     assert "position: sticky" in cabecera
-    assert "background-color: #0b1e3d" in cabecera
+    assert "background-color: rgba(4, 18, 42, 0.68)" in cabecera
     migracion = css.split(".tabla-contenedor.tabla-contenedor--migracion .tabla thead th {", 1)[1].split("}", 1)[0]
     assert "background-color: var(--bg-primary)" in migracion
     assert "tabla-contenedor--migracion" in (RUTA / "templates/olb_byte/migracion.html").read_text(encoding="utf-8")

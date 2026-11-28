@@ -34,15 +34,15 @@ def test_ranking_muestra_siete_filas_con_cabecera_opaca() -> None:
     assert "tabla-contenedor--ranking" in plantilla
 
 
-def test_historial_gastos_muestra_seis_filas_con_cabecera_opaca() -> None:
-    """Historial: seis filas en web y móvil, cabecera sólida azul oscura."""
+def test_historial_gastos_muestra_diez_filas_en_web_y_seis_en_movil() -> None:
+    """Historial: diez filas en web y seis en móvil, cabecera azul oscurecido."""
     css = _css()
     bloque = css.split(".tabla-contenedor--gastos {", 1)[1].split("}", 1)[0]
-    assert "max-height: 265px" in bloque
+    assert "max-height: 412px" in bloque
     cabecera = css.split(".tabla-contenedor--gastos .tabla thead th {", 1)[1].split("}", 1)[0]
-    assert "background-color: #0b1e3d" in cabecera
+    assert "background-color: rgba(4, 18, 42, 0.68)" in cabecera
     movil = css.split(".ordenes-moviles--gastos {", 1)[1].split("}", 1)[0]
-    assert "max-height: 265px" in movil
+    assert "max-height: 264px" in movil
     grilla = css.split(".rejilla-paneles--cartera {", 1)[1].split("}", 1)[0]
     assert "grid-template-columns: repeat(2, minmax(0, 1fr))" in grilla
     plantilla = (RUTA / "templates/olb_byte/cartera.html").read_text(encoding="utf-8")
@@ -70,7 +70,7 @@ def test_ventas_muestra_cinco_ordenes_con_cabecera_opaca() -> None:
     bloque = css.split(".tabla-contenedor--ordenes,\n.tabla-contenedor--migracion {", 1)[1].split("}", 1)[0]
     assert "max-height: 252px" in bloque
     cabecera = css.split(".tabla-contenedor--ordenes .tabla thead th {", 1)[1].split("}", 1)[0]
-    assert "background-color: #0b1e3d" in cabecera
+    assert "background-color: rgba(4, 18, 42, 0.68)" in cabecera
     ancho = css.split(".tabla-contenedor--ordenes .tabla {", 1)[1].split("}", 1)[0]
     assert "min-width: 0" in ancho
     assert "table-layout: fixed" in ancho
@@ -87,6 +87,19 @@ def plantilla_ventas() -> str:
         Contenido de `index.html`.
     """
     return (RUTA / "templates/olb_byte/index.html").read_text(encoding="utf-8")
+
+
+def test_color_de_cabeceras_y_buscardor_igual_al_de_campos() -> None:
+    """Todas las cabeceras y el buscador usan el azul de los cuadros de texto."""
+    css = _css()
+    for selector in (
+        ".tabla-contenedor--gastos .tabla thead th {",
+        ".tabla-contenedor--ordenes .tabla thead th {",
+        ".ordenes-moviles--ordenes .orden-movil--cabecera,",
+        ".formulario--buscar .campo__etiqueta {",
+    ):
+        bloque = css.split(selector, 1)[1].split("}", 1)[0]
+        assert "rgba(4, 18, 42, 0.68)" in bloque
 
 
 def test_ajustes_finales_de_fechas_botones_y_movil() -> None:
