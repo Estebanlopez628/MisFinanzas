@@ -115,6 +115,10 @@
             <th scope="col">Ingresos</th>
             <th scope="col">Costos</th>
             <th scope="col">Ganancia</th>
+            <th scope="col">Ventas -<br />D. migración</th>
+            <th scope="col">Ingresos -<br />D. migración</th>
+            <th scope="col">Costo -<br />D. migración</th>
+            <th scope="col">Ganancia -<br />D. migración</th>
             <th scope="col" title="Saldo del pasivo anterior al sistema; no incluido en Costos">PASIVO ANTIGUO</th>
             <th scope="col">Gastos op.</th>
             <th scope="col">Ganancia neta</th>
@@ -130,6 +134,10 @@
               <td class="tabla__numero">{{ fila.ingresos | cop }}</td>
               <td class="tabla__numero">{{ fila.costos | cop }}</td>
               <td class="tabla__numero">{{ fila.ganancia | cop }}</td>
+              <td class="tabla__numero">{{ fila.ventas_migradas }}</td>
+              <td class="tabla__numero">{{ fila.ingresos_migrados | cop }}</td>
+              <td class="tabla__numero">{{ fila.costos_migrados | cop }}</td>
+              <td class="tabla__numero">{{ fila.ganancia_migrada | cop }}</td>
               <td class="tabla__numero">{{ fila.pasivo_antiguo | cop }}</td>
               <td class="tabla__numero">{{ fila.gastos_operativos | cop }}</td>
               <td class="tabla__numero">{{ fila.ganancia_neta | cop }}</td>
@@ -145,6 +153,8 @@
     <p class="ayuda">
       PASIVO ANTIGUO es el saldo pendiente con proveedores; no incluido en Costos.
       Los abonos se imputan primero a la deuda corriente y el sobrante reduce este pasivo.
+      Las columnas «D. migración» muestran aparte lo cobrado de ventas anteriores al
+      sistema; «Ganancia neta» ya incluye esa ganancia migrada.
     </p>
   </section>
 
@@ -169,6 +179,12 @@
               <th scope="col">Abonos realizados</th>
               <th scope="col">Ganancia</th>
               <th scope="col">Garantía</th>
+              <th scope="col">Cantidad -<br />D. migración</th>
+              <th scope="col">Precio -<br />D. migración</th>
+              <th scope="col">Costo unit. -<br />D. migración</th>
+              <th scope="col">Garantía -<br />D. migración</th>
+              <th scope="col">Total -<br />D. migración</th>
+              <th scope="col">Ganancia -<br />D. migración</th>
             </tr>
           </thead>
           <tbody>
@@ -187,6 +203,12 @@
                   {% set clase_garantia = {'Activa': 'insignia--vigente', 'Vencida': 'insignia--vencida'}.get(fila.garantia, 'insignia--sin-garantia') %}
                   <span class="insignia {{ clase_garantia }}">{{ fila.garantia }}</span>
                 </td>
+                <td class="tabla__numero">{{ fila.cantidad_migrada or '—' }}</td>
+                <td class="tabla__numero">{{ fila.precio_migrado | cop if fila.precio_migrado else '—' }}</td>
+                <td class="tabla__numero">{{ fila.costo_unitario_migrado | cop if fila.costo_unitario_migrado else '—' }}</td>
+                <td>{{ fila.garantia_migrada or '—' }}</td>
+                <td class="tabla__numero">{{ fila.total_migrado | cop if fila.total_migrado else '—' }}</td>
+                <td class="tabla__numero">{{ fila.ganancia_migrada | cop if fila.ganancia_migrada else '—' }}</td>
               </tr>
             {% endfor %}
           </tbody>
@@ -212,6 +234,10 @@
               <th scope="col">Ingresos</th>
               <th scope="col">Costos</th>
               <th scope="col">Ganancia</th>
+              <th scope="col">Ventas -<br />D. migración</th>
+              <th scope="col">Ingresos -<br />D. migración</th>
+              <th scope="col">Costo -<br />D. migración</th>
+              <th scope="col">Ganancia -<br />D. migración</th>
               <th scope="col" title="Saldo del pasivo anterior al sistema; no incluido en Costos">PASIVO ANTIGUO</th>
               <th scope="col">Gastos op.</th>
               <th scope="col">Ganancia neta</th>
@@ -227,6 +253,10 @@
                 <td class="tabla__numero">{{ fila.ingresos | cop }}</td>
                 <td class="tabla__numero">{{ fila.costos | cop }}</td>
                 <td class="tabla__numero">{{ fila.ganancia | cop }}</td>
+                <td class="tabla__numero">{{ fila.ventas_migradas }}</td>
+                <td class="tabla__numero">{{ fila.ingresos_migrados | cop }}</td>
+                <td class="tabla__numero">{{ fila.costos_migrados | cop }}</td>
+                <td class="tabla__numero">{{ fila.ganancia_migrada | cop }}</td>
                 <td class="tabla__numero">{{ fila.pasivo_antiguo | cop }}</td>
                 <td class="tabla__numero">{{ fila.gastos_operativos | cop }}</td>
                 <td class="tabla__numero">{{ fila.ganancia_neta | cop }}</td>

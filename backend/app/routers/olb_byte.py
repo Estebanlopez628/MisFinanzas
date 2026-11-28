@@ -1527,12 +1527,16 @@ def ver_analitica(
     if fila_periodo is not None:
         gastos_periodo = fila_periodo["gastos_operativos"]
         ganancia_neta_periodo = fila_periodo["ganancia_neta"]
-        costo_periodo = fila_periodo["costos"]
+        costo_periodo = fila_periodo["costos_totales"]
         pasivo_periodo = fila_periodo["pasivo_antiguo"]
+        ganancia_migrada_periodo = fila_periodo["ganancia_migrada"]
+        ingresos_migrados_periodo = fila_periodo["ingresos_migrados"]
     else:
         gastos_periodo = comercial.total_gastos_operativos(bd, filtro.anio, filtro.mes)
         ganancia_neta_periodo = -gastos_periodo
         costo_periodo = Decimal("0")
+        ganancia_migrada_periodo = Decimal("0")
+        ingresos_migrados_periodo = Decimal("0")
         saldos = analitica._saldos_pasivo_antiguo(bd)
         pasivo_periodo = analitica._pasivo_antiguo_en(
             saldos, filtro.anio, filtro.mes or 12
@@ -1566,6 +1570,8 @@ def ver_analitica(
             "anual": anual,
             "gastos_operativos_periodo": gastos_periodo,
             "ganancia_neta_periodo": ganancia_neta_periodo,
+            "ganancia_migrada_periodo": ganancia_migrada_periodo,
+            "ingresos_migrados_periodo": ingresos_migrados_periodo,
             "pasivo_antiguo_periodo": pasivo_periodo,
             "pago_proveedor_periodo": pago_proveedor_periodo,
             "ganancia_global_periodo": ganancia_global_periodo,

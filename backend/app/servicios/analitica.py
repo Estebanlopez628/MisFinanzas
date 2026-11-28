@@ -193,33 +193,66 @@ class Linea:
 class _Acumulado:
     """Totales de un periodo (un mes, un año o un cliente).
 
+    Las cifras normales y las de migración se guardan separadas para que cada
+    reporte diga de dónde viene cada valor; los totales se suman explícitamente.
+
     Attributes:
-        ventas: Número de órdenes distintas del periodo.
-        ingresos: Suma de los totales de las líneas.
-        costos: Suma de los costos de las líneas.
-        ganancia: Suma de las ganancias de las líneas.
+        ventas: Órdenes normales distintas del periodo.
+        ingresos: Ingresos de las órdenes normales.
+        costos: Costos de las órdenes normales.
+        ganancia: Ganancia de las órdenes normales.
+        ventas_migradas: Órdenes migradas distintas del periodo.
+        ingresos_migrados: Abonos cobrados de órdenes migradas.
+        costos_migrados: Costo proporcional reconocido de órdenes migradas.
+        ganancia_migrada: Utilidad reconocida de órdenes migradas.
     """
 
     ventas: int = 0
     ingresos: Decimal = CERO
     costos: Decimal = CERO
     ganancia: Decimal = CERO
+    ventas_migradas: int = 0
+    ingresos_migrados: Decimal = CERO
+    costos_migrados: Decimal = CERO
+    ganancia_migrada: Decimal = CERO
+
+    @property
+    def ingresos_totales(self) -> Decimal:
+        """Ingresos normales más los reconocidos de la migración."""
+        return redondear_dinero(self.ingresos + self.ingresos_migrados)
+
+    @property
+    def costos_totales(self) -> Decimal:
+        """Costos normales más los reconocidos de la migración."""
+        return redondear_dinero(self.costos + self.costos_migrados)
+
+    @property
+    def ganancia_total(self) -> Decimal:
+        """Ganancia normal más la reconocida de la migración."""
+        return redondear_dinero(self.ganancia + self.ganancia_migrada)
 
 
 def _acumular(lineas: list[Linea]) -> _Acumulado:
-    """Suma las líneas de un periodo.
+    """Suma las líneas de un periodo, separando la migración (ADR-181).
 
     Args:
         lineas: Líneas que pertenecen al periodo.
 
     Returns:
-        Totales del periodo; las órdenes se cuentan una sola vez.
+        Totales del periodo; las órdenes se cuentan una sola vez por origen.
     """
-    acumulado = _Acumulado(ventas=len({linea.id_venta for linea in lineas}))
+    normales = {linea.id_venta for linea in lineas if linea.origen != comercial.ORIGEN_MIGRACION_CARTERA}
+    migradas = {linea.id_venta for linea in lineas if linea.origen == comercial.ORIGEN_MIGRACION_CARTERA}
+    acumulado = _Acumulado(ventas=len(normales), ventas_migradas=len(migradas))
     for linea in lineas:
-        acumulado.ingresos += linea.total
-        acumulado.costos += linea.costo
-        acumulado.ganancia += linea.ganancia
+        if linea.origen == comercial.ORIGEN_MIGRACION_CARTERA:
+            acumulado.ingresos_migrados += linea.total
+            acumulado.costos_migrados += linea.costo
+            acumulado.ganancia_migrada += linea.ganancia
+        else:
+            acumulado.ingresos += linea.total
+            acumulado.costos += linea.costo
+            acumulado.ganancia += linea.ganancia
     return acumulado
 
 
@@ -511,15 +544,15 @@ def reporte_mensual(bd: Session, anio: int, filtro: Filtro | None = None) -> lis
         for mes in range(1, 13)
     }
 
-    maximo = max((p.ingresos for p in periodos.values()), default=CERO)
+    maximo = max((p.ingresos_totales for p in periodos.values()), default=CERO)
     gastos_mes = _gastos_operativos_por_mes(bd, anio)
     saldos = _saldos_pasivo_antiguo(bd)
     filas: list[dict[str, object]] = []
     previo: _Acumulado | None = None
     for mes in range(1, 13):
         datos = periodos[mes]
-        variacion = None if previo is None else _variacion(datos.ganancia, previo.ganancia)
-        barra = 0 if maximo == CERO else int((datos.ingresos / maximo * 100).to_integral_value())
+        variacion = None if previo is None else _variacion(datos.ganancia_total, previo.ganancia_total)
+        barra = 0 if maximo == CERO else int((datos.ingresos_totales / maximo * 100).to_integral_value())
         gastos = redondear_dinero(gastos_mes[mes])
         filas.append(
             {
@@ -527,13 +560,21 @@ def reporte_mensual(bd: Session, anio: int, filtro: Filtro | None = None) -> lis
                 "numero_mes": mes,
                 "ventas": datos.ventas,
                 "ingresos": redondear_dinero(datos.ingresos),
-                # Costos sigue siendo el costo de ventas; el pasivo antiguo va aparte.
+                # Costos sigue siendo el costo de ventas normal; el pasivo antiguo va aparte.
                 "costos": redondear_dinero(datos.costos),
+                # ADR-181: todo lo migrado se muestra en columnas propias.
+                "ventas_migradas": datos.ventas_migradas,
+                "ingresos_migrados": redondear_dinero(datos.ingresos_migrados),
+                "costos_migrados": redondear_dinero(datos.costos_migrados),
+                "ganancia_migrada": redondear_dinero(datos.ganancia_migrada),
+                "ingresos_totales": datos.ingresos_totales,
+                "costos_totales": datos.costos_totales,
+                "ganancia_total": datos.ganancia_total,
                 "pasivo_antiguo": redondear_dinero(_pasivo_antiguo_en(saldos, anio, mes)),
                 "ganancia": redondear_dinero(datos.ganancia),
                 # SRS v4.44, §8.3: gasto operativo del mes y ganancia real (neta).
                 "gastos_operativos": gastos,
-                "ganancia_neta": redondear_dinero(datos.ganancia - gastos),
+                "ganancia_neta": redondear_dinero(datos.ganancia_total - gastos),
                 "variacion": variacion,
                 "barra": barra,
             }
@@ -577,22 +618,31 @@ def reporte_anual(bd: Session, filtro: Filtro | None = None) -> list[dict[str, o
         # movimientos en este periodo.
         pasivo = redondear_dinero(_pasivo_antiguo_en(saldos, anio, 12))
         rentabilidad = (
-            (datos.ganancia / datos.costos * 100).quantize(UNO) if datos.costos > CERO else None
+            (datos.ganancia_total / datos.costos_totales * 100).quantize(UNO)
+            if datos.costos_totales > CERO
+            else None
         )
-        variacion = None if previo is None else _variacion(datos.ganancia, previo.ganancia)
+        variacion = None if previo is None else _variacion(datos.ganancia_total, previo.ganancia_total)
         gastos = redondear_dinero(gastos_anio.get(anio, CERO))
         filas.append(
             {
                 "anio": anio,
                 "ventas": datos.ventas,
                 "ingresos": redondear_dinero(datos.ingresos),
-                # Costos es solo costo de ventas; el pasivo antiguo va aparte.
+                # Costos es solo costo de ventas normal; el pasivo antiguo va aparte.
                 "costos": redondear_dinero(datos.costos),
+                "ventas_migradas": datos.ventas_migradas,
+                "ingresos_migrados": redondear_dinero(datos.ingresos_migrados),
+                "costos_migrados": redondear_dinero(datos.costos_migrados),
+                "ganancia_migrada": redondear_dinero(datos.ganancia_migrada),
+                "ingresos_totales": datos.ingresos_totales,
+                "costos_totales": datos.costos_totales,
+                "ganancia_total": datos.ganancia_total,
                 "pasivo_antiguo": pasivo,
                 "ganancia": redondear_dinero(datos.ganancia),
                 # SRS v4.44, §8.3: gasto operativo del año y ganancia real (neta).
                 "gastos_operativos": gastos,
-                "ganancia_neta": redondear_dinero(datos.ganancia - gastos),
+                "ganancia_neta": redondear_dinero(datos.ganancia_total - gastos),
                 "rentabilidad": rentabilidad,
                 "variacion": variacion,
             }
@@ -767,26 +817,45 @@ def tabla_ventas(bd: Session, filtro: Filtro | None, hoy: date) -> list[dict[str
         and seleccion.en_mes_global(linea.fecha)
     ]
     lineas.sort(key=lambda linea: (-linea.numero_orden, linea.id_detalle))
-    return [
-        {
-            "numero_orden": linea.numero_orden,
-            "id_cliente": linea.id_cliente,
-            "cliente": linea.cliente,
-            "categoria": linea.categoria or "",
-            "producto": linea.producto,
-            "costo": redondear_dinero(linea.costo),
-            "total": redondear_dinero(linea.total),
-            "saldo": redondear_dinero(linea.saldo),
-            "abonado": redondear_dinero(linea.abonado),
-            "ganancia": redondear_dinero(linea.ganancia),
-            "garantia_fin": linea.garantia_fin,
-            "garantia": estado_garantia_fila(linea.garantia_fin, hoy),
-            "origen": linea.origen,
-            "fecha_compra": linea.fecha_compra,
-            "fecha_recaudo": linea.fecha_recaudo,
-        }
-        for linea in lineas
-    ]
+    filas: list[dict[str, object]] = []
+    for linea in lineas:
+        migrada = linea.origen == comercial.ORIGEN_MIGRACION_CARTERA
+        filas.append(
+            {
+                "numero_orden": linea.numero_orden,
+                "id_cliente": linea.id_cliente,
+                "cliente": linea.cliente,
+                "categoria": linea.categoria or "",
+                "producto": linea.producto,
+                # Las columnas normales se dejan en cero para no mezclar orígenes.
+                "costo": CERO if migrada else redondear_dinero(linea.costo),
+                "total": CERO if migrada else redondear_dinero(linea.total),
+                "saldo": CERO if migrada else redondear_dinero(linea.saldo),
+                "abonado": CERO if migrada else redondear_dinero(linea.abonado),
+                "ganancia": CERO if migrada else redondear_dinero(linea.ganancia),
+                "garantia_fin": None if migrada else linea.garantia_fin,
+                "garantia": "" if migrada else estado_garantia_fila(linea.garantia_fin, hoy),
+                # ADR-181: cada dato de la migración viaja en su propia columna.
+                "origen": linea.origen,
+                "fecha_compra": linea.fecha_compra,
+                "fecha_recaudo": linea.fecha_recaudo,
+                "cantidad_migrada": linea.cantidad if migrada else 0,
+                "precio_migrado": redondear_dinero(linea.precio_unitario) if migrada else CERO,
+                "costo_unitario_migrado": redondear_dinero(linea.costo_unitario) if migrada else CERO,
+                "garantia_migrada": (
+                    f"{estado_garantia_fila(linea.garantia_fin, hoy)} · "
+                    f"{linea.garantia_fin.strftime('%d-%m-%Y') if linea.garantia_fin else '—'}"
+                    if migrada
+                    else ""
+                ),
+                "total_migrado": redondear_dinero(linea.total) if migrada else CERO,
+                "costo_reconocido_migrado": redondear_dinero(linea.costo) if migrada else CERO,
+                "ganancia_migrada": redondear_dinero(linea.ganancia) if migrada else CERO,
+                "saldo_migrado": redondear_dinero(linea.saldo) if migrada else CERO,
+                "abonado_migrado": redondear_dinero(linea.abonado) if migrada else CERO,
+            }
+        )
+    return filas
 
 
 def _csv_dinero(valor: Decimal) -> str:
@@ -862,6 +931,9 @@ def tabla_csv(
     if nombre == "mensual":
         encabezados = [
             "Mes", "Ventas", "Ingresos", "Costos", "Ganancia",
+            "Ventas - D. migración", "Ingresos - D. migración",
+            "Costo - D. migración", "Ganancia - D. migración",
+            "Ingresos totales", "Costos totales", "Ganancia total",
             PASIVO_ANTIGUO_LABEL,
             "Gastos operativos", "Ganancia neta", "Variación ganancia (%)",
         ]
@@ -872,6 +944,13 @@ def tabla_csv(
                 _csv_dinero(fila["ingresos"]),
                 _csv_dinero(fila["costos"]),
                 _csv_dinero(fila["ganancia"]),
+                str(fila["ventas_migradas"]),
+                _csv_dinero(fila["ingresos_migrados"]),
+                _csv_dinero(fila["costos_migrados"]),
+                _csv_dinero(fila["ganancia_migrada"]),
+                _csv_dinero(fila["ingresos_totales"]),
+                _csv_dinero(fila["costos_totales"]),
+                _csv_dinero(fila["ganancia_total"]),
                 _csv_dinero(fila["pasivo_antiguo"]),
                 _csv_dinero(fila["gastos_operativos"]),
                 _csv_dinero(fila["ganancia_neta"]),
@@ -882,6 +961,9 @@ def tabla_csv(
     elif nombre == "anual":
         encabezados = [
             "Año", "Ventas", "Ingresos", "Costos", "Ganancia",
+            "Ventas - D. migración", "Ingresos - D. migración",
+            "Costo - D. migración", "Ganancia - D. migración",
+            "Ingresos totales", "Costos totales", "Ganancia total",
             PASIVO_ANTIGUO_LABEL,
             "Gastos operativos", "Ganancia neta", "Rentabilidad (%)",
             "Variación ganancia (%)",
@@ -893,6 +975,13 @@ def tabla_csv(
                 _csv_dinero(fila["ingresos"]),
                 _csv_dinero(fila["costos"]),
                 _csv_dinero(fila["ganancia"]),
+                str(fila["ventas_migradas"]),
+                _csv_dinero(fila["ingresos_migrados"]),
+                _csv_dinero(fila["costos_migrados"]),
+                _csv_dinero(fila["ganancia_migrada"]),
+                _csv_dinero(fila["ingresos_totales"]),
+                _csv_dinero(fila["costos_totales"]),
+                _csv_dinero(fila["ganancia_total"]),
                 _csv_dinero(fila["pasivo_antiguo"]),
                 _csv_dinero(fila["gastos_operativos"]),
                 _csv_dinero(fila["ganancia_neta"]),
@@ -948,6 +1037,10 @@ def tabla_csv(
             "No. de orden", "Cliente", "Categoría", "Producto", "Costo", "Total",
             "Saldo pendiente", "Abonos realizados", "Ganancia", "Garantía",
             "Origen", "Fecha de compra", "Fecha de recaudo",
+            "Cantidad - D. migración", "Precio - D. migración",
+            "Costo unitario - D. migración", "Garantía - D. migración",
+            "Total - D. migración", "Costo reconocido - D. migración",
+            "Ganancia - D. migración", "Saldo - D. migración",
         ]
         filas = [
             [
@@ -964,6 +1057,14 @@ def tabla_csv(
                 str(fila["origen"]),
                 _csv_fecha(fila["fecha_compra"]),
                 _csv_fecha(fila["fecha_recaudo"]),
+                str(fila["cantidad_migrada"]),
+                _csv_dinero(fila["precio_migrado"]),
+                _csv_dinero(fila["costo_unitario_migrado"]),
+                str(fila["garantia_migrada"]),
+                _csv_dinero(fila["total_migrado"]),
+                _csv_dinero(fila["costo_reconocido_migrado"]),
+                _csv_dinero(fila["ganancia_migrada"]),
+                _csv_dinero(fila["saldo_migrado"]),
             ]
             for fila in tabla_ventas(bd, filtro, hoy)
         ]
@@ -986,7 +1087,7 @@ def tabla_csv_migracion(bd: Session) -> tuple[list[str], list[list[str]]]:
     encabezados = [
         "No. de orden", "Cliente", "Celular", "Fecha de compra", "Origen",
         "Productos", "Costo total", "Total adeudado", "Abonado", "Saldo pendiente",
-        "Utilidad reconocida", "Pago al proveedor", "Fecha de recaudo",
+        "Utilidad reconocida", "Pago al proveedor", "Garantía", "Fecha de recaudo",
     ]
     filas: list[list[str]] = []
     for fila in comercial.filas_migracion(bd):
@@ -1013,6 +1114,18 @@ def tabla_csv_migracion(bd: Session) -> tuple[list[str], list[list[str]]]:
                 _csv_dinero(venta.saldo_pendiente),
                 _csv_dinero(fila["utilidad"]),
                 _csv_dinero(fila["pago_proveedor"]),
+                "; ".join(
+                    sorted(
+                        {
+                            estado_garantia_fila(detalle.garantia_fecha_fin, date.today())
+                            for detalle in bd.scalars(
+                                select(VentaDetalle).where(
+                                    VentaDetalle.id_venta == venta.id_venta
+                                )
+                            )
+                        }
+                    )
+                ),
                 _csv_fecha(fila["ultimo_recaudo"]),
             ]
         )

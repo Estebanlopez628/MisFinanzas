@@ -106,7 +106,7 @@ Principios que explican el resto del código:
 ### Resumen del inventario
 
 - **119 archivos** documentados: 57 Python, 42 plantillas Jinja2 y 20 recursos estáticos.
-- **74 clases**, **734 funciones** y **43 métodos** de clase.
+- **74 clases**, **735 funciones** y **46 métodos** de clase.
 
 ### Detalle por archivo
 
@@ -173,7 +173,7 @@ Principios que explican el resto del código:
   - Funciones: `_etiquetas_quincena`, `_parsear_fecha`, `ver_gastos`, `api_gastos_fijos`, `crear_gasto`, `editar_gasto`, `_volver`, `eliminar_gasto`, `marcar_pagado_gasto`, `desmarcar_pagado_gasto`, `api_marcar_pagado_gasto`, `api_desmarcar_pagado_gasto`, `registrar_abono_gasto`, `api_omitir_gasto`, `api_habilitar_gasto`, `api_abonar_meta`, `limpiar_pagos_gastos`
 - **`incapacidades.py`** · 310 líneas — Rutas del módulo de incapacidades.
   - Funciones: `_valores_del_formulario`, `_parsear_fecha`, `_validar`, `_contexto`, `ver_incapacidades`, `calcular_incapacidad_formulario`, `guardar_incapacidad`, `eliminar_incapacidad`
-- **`olb_byte.py`** · 1760 líneas — Módulo comercial OLB_BYTE: ventas a crédito, cobros, anulaciones y factura.
+- **`olb_byte.py`** · 1766 líneas — Módulo comercial OLB_BYTE: ventas a crédito, cobros, anulaciones y factura.
   - Clases: `DetalleVenta`
   - Funciones: `_detalle_de_venta`, `_filas_del_formulario`, `_lineas_desde_filas`, `_contexto`, `_contexto_pendientes`, `_pagina_con_error`, `ver_olb_byte`, `_telefono_seguro`, `_datos_pago`, `_pago_desde_datos`, `registrar_venta`, `registrar_abono`, `_contexto_cobro`, `ver_cobro`, `ver_pendientes`, `ver_recibo`, `anular_venta`, `registrar_devolucion`, `ver_factura_hoja`, `ver_recibo_hoja`, `ver_factura`, `_contexto_migracion`, `ver_migracion`, `registrar_venta_migrada`, `registrar_deuda_inicial_migracion`, `exportar_migracion_csv`, `_contexto_cartera`, `ver_cartera`, `registrar_abono_proveedor`, `registrar_deuda_inicial`, `registrar_gasto_operativo`, `editar_gasto_operativo`, `eliminar_gasto_operativo`, `_pagina_error_pdf`, `_entero_opcional`, `_filtro_desde_url`, `_parametros_filtro`, `_url_analitica`, `ver_analitica`, `exportar_analitica_csv`, `_contexto_garantias`, `ver_garantias`, `registrar_garantia`, `actualizar_garantia`
 - **`perfil.py`** · 327 líneas — Rutas del perfil financiero y del cambio de contraseña.
@@ -196,9 +196,9 @@ Principios que explican el resto del código:
 - **`ahorro.py`** · 959 líneas — Planificador de ahorro y metas del usuario (SRS v1.3, bloque 3).
   - Clases: `MesMeta`, `MetaResumen`
   - Funciones: `etiqueta_quincena`, `valor_por_pago`, `_normalizar_modo_ambas`, `valor_mensual_efectivo`, `_mover_mes`, `_etiqueta_mes`, `_validar_duracion`, `crear_proyeccion`, `listar_proyecciones`, `_posicion`, `eliminar_proyeccion`, `limpiar_gastos_huerfanos`, `extender_proyeccion`, `historial_metas`, `_detalle_pagos`, `meses_de_la_meta`, `_estado_mes`, `resumen_metas`, `saldo_libre_total`, `diagnostico`
-- **`analitica.py`** · 980 líneas — Analítica de OLB_BYTE: reportes, clientes VIP, costos y tablas exportables.
+- **`analitica.py`** · 1133 líneas — Analítica de OLB_BYTE: reportes, clientes VIP, costos y tablas exportables.
   - Clases: `Filtro`, `Linea`, `_Acumulado`
-  - Funciones: `_acumular`, `_repartir`, `_lineas`, `_gastos_operativos_por_mes`, `_saldos_pasivo_antiguo`, `_pasivo_antiguo_en`, `_gastos_operativos_por_anio`, `_variacion`, `_ordenes_activas`, `anios_con_ventas`, `reporte_mensual`, `reporte_anual`, `ranking_vip`, `alertas_costos`, `estado_garantia_fila`, `tabla_ventas`, `_csv_dinero`, `_csv_numero`, `_csv_fecha`, `serializar_csv`, `tabla_csv`, `tabla_csv_migracion`
+  - Funciones: `_acumular`, `_repartir`, `_momento_recaudo`, `_lineas`, `_gastos_operativos_por_mes`, `_saldos_pasivo_antiguo`, `_pasivo_antiguo_en`, `_gastos_operativos_por_anio`, `_variacion`, `_ordenes_activas`, `anios_con_ventas`, `reporte_mensual`, `reporte_anual`, `ranking_vip`, `alertas_costos`, `estado_garantia_fila`, `tabla_ventas`, `_csv_dinero`, `_csv_numero`, `_csv_fecha`, `serializar_csv`, `tabla_csv`, `tabla_csv_migracion`
 - **`auditoria.py`** · 61 líneas — Bitácora de auditoría de acciones sensibles.
   - Funciones: `registrar`, `listar_eventos`
 - **`auxilio.py`** · 146 líneas — Evaluación del derecho al auxilio de transporte (SRS RF-07).
@@ -209,7 +209,7 @@ Principios que explican el resto del código:
   - Funciones: `base_minima_de`, `repartir_libre`, `es_credito`, `_porcentaje`, `agrupar_por_categoria`, `resumen_categorias`, `_arcos_categoria`, `_arcos_categoria_global`, `_repartir_arcos`, `_meses_equivalentes`, `_etiqueta_mes`, `_mover_mes`, `meses_siguientes`, `deudas_por_terminar`, `proyeccion_capacidad`, `_mensaje_semaforo`, `capacidad_trabajos`, `capacidad_endeudamiento`
 - **`chancucos.py`** · 321 líneas — Referencias de pago rápido ("Chancucos").
   - Funciones: `_normalizar_dia`, `_normalizar_dias`, `normalizar_enlace_pago`, `_validar_url`, `crear_chancuco`, `actualizar_chancuco`, `listar_chancucos`, `alternar_favorito`, `eliminar_chancuco`
-- **`comercial.py`** · 2198 líneas — Operación comercial de OLB_BYTE: ventas a crédito, cartera y deuda con proveedor.
+- **`comercial.py`** · 2210 líneas — Operación comercial de OLB_BYTE: ventas a crédito, cartera y deuda con proveedor.
   - Clases: `LineaVenta`, `PagoInicial`
   - Funciones: `etiqueta_tipo_movimiento`, `ahora_tienda`, `normalizar_telefono`, `_dinero`, `_sumar_meses`, `_texto_garantia`, `_validar_linea`, `_cliente_para_venta`, `_siguiente_numero_orden`, `deuda_proveedor`, `desglose_deuda_proveedor`, `_registrar_movimiento_proveedor`, `registrar_cliente`, `listar_clientes`, `buscar_clientes`, `registrar_venta`, `registrar_venta_migrada`, `_fecha_compra`, `ventas_migradas`, `_ultimo_recaudo`, `_utilidad_reconocida`, `resumen_migracion`, `filas_migracion`, `obtener_venta`, `_venta_activa`, `_recalcular_estado_pago`, `_validar_metodo`, `registrar_abono`, `_devuelto`, `_registrar_devolucion`, `anular_venta`, `registrar_devolucion`, `pendiente_devolver`, `obtener_abono`, `abonos_de_venta`, `buscar_cartera`, `registrar_abono_proveedor`, `registrar_deuda_inicial`, `listar_movimientos_proveedor`, `listar_movimientos_con_orden`, `_fecha_gasto`, `registrar_gasto_operativo`, `actualizar_gasto_operativo`, `eliminar_gasto_operativo`, `listar_gastos_operativos`, `total_gastos_operativos`, `_texto_busqueda`, `filtrar_ventas`, `listar_ventas`, `cartera`, `resumen_cartera`, `estado_garantia`, `clasificar_saldo`, `_barra_divergente`, `balance_tres_bloques`, `barras_balance`, `segmentos_dona`, `etiqueta_producto`, `opciones_garantia`, `registrar_garantia`, `actualizar_estado_garantia`, `listar_garantias`, `garantia_vigente_al_reclamo`, `ranking_fallas`, `formatear_pesos`, `texto_compartir_factura`, `enlace_whatsapp_factura`, `enlace_whatsapp_recibo`, `enlace_whatsapp_cobro`, `_enlace_wa`
 - **`consejero.py`** · 889 líneas — Consejero financiero del excedente mensual (SRS v1.8).
@@ -260,7 +260,7 @@ Principios que explican el resto del código:
 
 #### `backend/app/static/css/`
 
-- **`estilos.css`** · 7710 líneas — Fondo y superficies
+- **`estilos.css`** · 7743 líneas — Fondo y superficies
 - **`factura-olb.css`** · 764 líneas — SRS v4.44: el retorno de la factura es «Volver a Ventas» en todos los
 
 #### `backend/app/static/js/`
@@ -361,13 +361,13 @@ Principios que explican el resto del código:
 - **`_hoja_factura.html`** · 270 líneas
 - **`_recibo.html`** · 47 líneas
 - **`_subnav.html`** · 35 líneas — Subnavegación de OLB BYTE con el mismo componente que Mis Finanzas (subnav-finanzas).
-- **`analitica.html`** · 368 líneas — Plantilla: Gestión y control de ventas
+- **`analitica.html`** · 398 líneas — Plantilla: Gestión y control de ventas
 - **`cartera.html`** · 365 líneas — Plantilla: Cartera y pagos a proveedores
 - **`cobro.html`** · 94 líneas — Plantilla: Gestionar cobro
 - **`factura.html`** · 42 líneas — Plantilla: Factura No.
 - **`garantias.html`** · 155 líneas — Plantilla: Soporte y garantías
 - **`index.html`** · 514 líneas — Plantilla: OLB BYTE
-- **`migracion.html`** · 334 líneas — Plantilla: Migración de Cartera · OLB BYTE
+- **`migracion.html`** · 332 líneas — Plantilla: Migración de Cartera · OLB BYTE
 - **`pendientes.html`** · 120 líneas — Plantilla: Cuentas por cobrar
 - **`recibo.html`** · 23 líneas — Plantilla: Recibo de abono · No.
 
@@ -1213,7 +1213,11 @@ de cada compra con la anterior del mismo producto, marca los márgenes bajo
 cuentan en ingresos ni rankings, pero sí en el historial de costos. Las ventas migradas
 (`origen = MIGRACION_CARTERA`) no se contabilizan al registrar: `_lineas` las emite solo
 cuando hay abono, con fecha del recaudo e ingresos/costo/ganancia proporcionales a lo
-cobrado (ADR-180).
+cobrado (ADR-180). `_Acumulado` separa normales y migradas: `reporte_mensual` y
+`reporte_anual` exponen `ventas_migradas`, `ingresos_migrados`, `costos_migrados`,
+`ganancia_migrada` y los totales; `ganancia_neta` suma ambas ganancias menos gastos
+operativos (ADR-181). `tabla_ventas` añade cantidad, precio, costo unitario, garantía,
+total, costo reconocido y ganancia con sufijo «D. migración».
 
 ### `backend/app/templates/olb_byte/analitica.html`
 
@@ -1221,7 +1225,9 @@ Vista de analítica con selector de año: tabla mensual con barras de ingresos, 
 anual con rentabilidad, ranking de clientes VIP, alertas de subida de costo con margen
 y tabla del último costo por producto, limitada a cinco filas con desplazamiento vertical
 y cabecera fija. Las variaciones y márgenes se muestran sin signo ni color, porque el
-signo de RF-10 aplica solo al módulo de cartera.
+signo de RF-10 aplica solo al módulo de cartera. «Mes a mes», «Año tras año» y «Ventas
+por producto» añaden columnas «D. migración» con el detalle de las ventas anteriores al
+sistema; «Ganancia neta» ya incluye esa ganancia.
 
 ### `backend/app/templates/olb_byte/cartera.html`
 

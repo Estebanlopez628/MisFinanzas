@@ -331,6 +331,41 @@ def test_historial_de_gastos_cabe_en_la_tarjeta() -> None:
     assert "text-align: center" in cabecera_acciones
 
 
+def test_las_columnas_de_migracion_aparecen_en_tablas_y_csv(bd) -> None:
+    """Las cifras migradas van en columnas propias, también en las descargas."""
+    encabezados_mes, filas_mes = analitica.tabla_csv(bd, "mensual", analitica.Filtro(), date(2025, 4, 1))
+    for titulo in (
+        "Ventas - D. migración",
+        "Ingresos - D. migración",
+        "Costo - D. migración",
+        "Ganancia - D. migración",
+        "Ganancia total",
+    ):
+        assert titulo in encabezados_mes
+    assert all(len(fila) == len(encabezados_mes) for fila in filas_mes)
+
+    venta = comercial.registrar_venta_migrada(
+        bd,
+        "Producto Conocido",
+        "3009999999",
+        "180000",
+        date(2025, 1, 10),
+        [comercial.LineaVenta("Audífonos", 2, "90000", "20000", garantia_meses=6)],
+    )
+    comercial.registrar_abono(bd, venta.id_venta, "90000")
+    detalle = analitica.tabla_ventas(bd, analitica.Filtro(), date(2026, 4, 1))[0]
+    assert detalle["origen"] == comercial.ORIGEN_MIGRACION_CARTERA
+    assert detalle["cantidad_migrada"] == 2
+    assert detalle["precio_migrado"] == Decimal("90000")
+    assert detalle["costo_unitario_migrado"] == Decimal("20000")
+    assert "Vencida" in detalle["garantia_migrada"]
+    assert detalle["total_migrado"] == Decimal("90000")
+    assert detalle["ganancia"] == Decimal("0")
+    encabezados, filas = analitica.tabla_csv(bd, "ventas", analitica.Filtro(), date(2026, 4, 1))
+    assert "Garantía - D. migración" in encabezados
+    assert all(len(fila) == len(encabezados) for fila in filas)
+
+
 def test_el_ultimo_costo_muestra_cinco_productos_con_scroll() -> None:
     """La tabla de último costo limita a cinco filas visibles y cabecera fija."""
     css = (RUTA / "static/css/estilos.css").read_text(encoding="utf-8")
@@ -430,6 +465,7 @@ def test_migracion_no_infla_reportes_hasta_el_recaudo(bd) -> None:
     )
     antes = analitica.reporte_mensual(bd, 2025)[2]
     assert antes["ventas"] == 0 and antes["ingresos"] == Decimal("0") and antes["ganancia"] == Decimal("0")
+    assert antes["ventas_migradas"] == 0
 
     comercial.registrar_abono(
         bd,
@@ -444,12 +480,15 @@ def test_migracion_no_infla_reportes_hasta_el_recaudo(bd) -> None:
         fecha_abono=datetime(2025, 4, 6, 12, tzinfo=comercial.ZONA_TIENDA),
     )
     abril = analitica.reporte_mensual(bd, 2025)[3]
-    assert abril["ventas"] == 2
-    assert abril["ingresos"] == Decimal("140000")
-    assert abril["costos"] == Decimal("20000")
-    assert abril["ganancia"] == Decimal("120000")
+    assert abril["ventas"] == 0 and abril["ingresos"] == Decimal("0")
+    assert abril["ventas_migradas"] == 2
+    assert abril["ingresos_migrados"] == Decimal("140000")
+    assert abril["costos_migrados"] == Decimal("20000")
+    assert abril["ganancia_migrada"] == Decimal("120000")
+    assert abril["ganancia_neta"] == Decimal("120000")
     anual = analitica.reporte_anual(bd)[0]
-    assert anual["ingresos"] == Decimal("140000")
+    assert anual["ingresos_totales"] == Decimal("140000")
+    assert anual["ganancia_total"] == Decimal("120000")
 
 
 # ---------------------------------------------------------------------------

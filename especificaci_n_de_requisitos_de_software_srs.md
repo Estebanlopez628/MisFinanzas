@@ -2114,3 +2114,13 @@ Cuando se migran ventas con el detalle completo, `venta_detalle` conserva produc
 4. «Último costo y margen por producto» limita la vista a cinco filas con desplazamiento vertical y cabecera fija.
 
 Ejemplo: Audífonos × 2 a $90.000 c/u con costo $20.000 c/u → total $180.000. Sin cobros, Marzo queda en $0. Al cobrar $90.000 en Abril: Abril muestra Ventas 1, Ingresos $90.000, Costos $20.000, Ganancia $70.000.
+
+### 103.10 Columnas separadas «D. migración» (ADR-181)
+
+A petición del propietario, para que la contabilidad sepa de dónde viene cada peso:
+
+1. «Mes a mes» y «Año tras año» conservan `Ventas`, `Ingresos`, `Costos` y `Ganancia` **solo de ventas normales** y añaden `Ventas - D. migración`, `Ingresos - D. migración`, `Costo - D. migración` y `Ganancia - D. migración`, más `Ingresos totales`, `Costos totales` y `Ganancia total` en el CSV.
+2. `Ganancia neta = Ganancia + Ganancia - D. migración − Gastos operativos`. El KPI «Pago a Proveedor» usa `Costos totales`.
+3. «Ventas por producto» incorpora cantidad, precio, costo unitario, garantía (Activa/Vencida desde la fecha de compra), total y ganancia con sufijo «D. migración»; las columnas normales quedan en cero en esas filas.
+4. Los CSV mensual, anual y detallado, y el CSV propio de Migración, incluyen todas esas columnas y la `Garantía - D. migración`. Sin costo conocido, el abono íntegro se reconoce como ganancia migrada.
+5. `sw.js` en `olb-finanzas-v210`. Verificación: 1042 pruebas en verde.

@@ -2870,6 +2870,8 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Ajuste final 4 (ADR-180).** Integración contable de la migración en Analítica: las ventas migradas **no suman** al registrar; entran a «Mes a mes» y «Año tras año» solo con lo cobrado, en el mes del recaudo (`fecha_recaudo`), con costo y utilidad proporcionales; sin abono no aparecen en esas tablas. La garantía escrita en el panel de producto sí se aplica ahora a `venta_detalle` y a la orden (`fecha_compra + meses`), de modo que la columna Garantía de «Ventas por producto» muestra Activa/Vencida. «Último costo y margen por producto» muestra cinco filas con scroll vertical. `sw.js` en `olb-finanzas-v209`.
 
+**Columnas separadas de migración (ADR-181).** El propietario aprobó separar contablemente cada origen: «Mes a mes» y «Año tras año» añaden `Ventas - D. migración`, `Ingresos - D. migración`, `Costo - D. migración` y `Ganancia - D. migración`; `Ganancia` queda solo para ventas normales y `Ganancia neta = ganancia normal + ganancia migrada − gastos`. KPI «Pago a Proveedor» usa `costos_totales`. «Ventas por producto» incorpora cantidad, precio, costo unitario, garantía, total y ganancia con sufijo «D. migración», y el detalle CSV incluye todas esas columnas más `Garantía - D. migración`. Cuando el costo se desconoce, el abono se reconoce íntegro como ganancia migrada. `sw.js` en `olb-finanzas-v210`.
+
 **Verificación.** **1038 pruebas** en verde (21 de la SRS), `compileall`, `node --check` de los dos scripts y `generar_guia.py --verificar` correcto (119 fichas). Sin desbordes en las vistas nuevas comprobadas por las pruebas HTTP; paleta, COP, íconos y scroll heredados intactos.
 
 ### 2026-11-27 — KPI de Analítica más anchos (ADR-174)
