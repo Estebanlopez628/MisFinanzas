@@ -2123,4 +2123,6 @@ A petición del propietario, para que la contabilidad sepa de dónde viene cada 
 2. `Ganancia neta = Ganancia + Ganancia - D. migración − Gastos operativos`. El KPI «Pago a Proveedor» usa `Costos totales`.
 3. «Ventas por producto» incorpora cantidad, precio, costo unitario, garantía (Activa/Vencida desde la fecha de compra), total y ganancia con sufijo «D. migración»; las columnas normales quedan en cero en esas filas.
 4. Los CSV mensual, anual y detallado, y el CSV propio de Migración, incluyen todas esas columnas y la `Garantía - D. migración`. Sin costo conocido, el abono íntegro se reconoce como ganancia migrada.
-5. `sw.js` en `olb-finanzas-v210`. Verificación: 1042 pruebas en verde.
+5. `sw.js` en `olb-finanzas-v210`. Verificación: 1043 pruebas en verde.
+
+Si solo se conoce el total (ADR-182), se crea la línea «Saldo pendiente migrado» con precio unitario $0 y `subtotal_item = total`; en «Ventas por producto» salen vacías `Cantidad - D. migración` y `Precio - D. migración`, y todo lo cobrado aparece en `Total - D. migración` y `Ganancia - D. migración`, sumándose a `Ganancia neta`.

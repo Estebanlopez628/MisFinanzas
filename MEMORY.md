@@ -2872,6 +2872,8 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Columnas separadas de migración (ADR-181).** El propietario aprobó separar contablemente cada origen: «Mes a mes» y «Año tras año» añaden `Ventas - D. migración`, `Ingresos - D. migración`, `Costo - D. migración` y `Ganancia - D. migración`; `Ganancia` queda solo para ventas normales y `Ganancia neta = ganancia normal + ganancia migrada − gastos`. KPI «Pago a Proveedor» usa `costos_totales`. «Ventas por producto» incorpora cantidad, precio, costo unitario, garantía, total y ganancia con sufijo «D. migración», y el detalle CSV incluye todas esas columnas más `Garantía - D. migración`. Cuando el costo se desconoce, el abono se reconoce íntegro como ganancia migrada. `sw.js` en `olb-finanzas-v210`.
 
+**Caso sin detalle (ADR-182).** Cuando solo se conoce el valor total, se crea la línea «Saldo pendiente migrado» con precio unitario $0 y `subtotal_item` igual a la deuda, para no inventar un precio ni una cantidad. En «Ventas por producto» las columnas `Cantidad - D. migración` y `Precio - D. migración` salen vacías (`—`), mientras `Total - D. migración`, `Costo - D. migración` y `Ganancia - D. migración` muestran lo reconocido al cobrar y se suman a `Ganancia neta`. `sw.js` en `olb-finanzas-v210`.
+
 **Verificación.** **1038 pruebas** en verde (21 de la SRS), `compileall`, `node --check` de los dos scripts y `generar_guia.py --verificar` correcto (119 fichas). Sin desbordes en las vistas nuevas comprobadas por las pruebas HTTP; paleta, COP, íconos y scroll heredados intactos.
 
 ### 2026-11-27 — KPI de Analítica más anchos (ADR-174)

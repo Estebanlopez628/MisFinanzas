@@ -820,6 +820,7 @@ def tabla_ventas(bd: Session, filtro: Filtro | None, hoy: date) -> list[dict[str
     filas: list[dict[str, object]] = []
     for linea in lineas:
         migrada = linea.origen == comercial.ORIGEN_MIGRACION_CARTERA
+        sin_detalle = migrada and linea.producto.startswith("Saldo pendiente migrado")
         filas.append(
             {
                 "numero_orden": linea.numero_orden,
@@ -839,8 +840,8 @@ def tabla_ventas(bd: Session, filtro: Filtro | None, hoy: date) -> list[dict[str
                 "origen": linea.origen,
                 "fecha_compra": linea.fecha_compra,
                 "fecha_recaudo": linea.fecha_recaudo,
-                "cantidad_migrada": linea.cantidad if migrada else 0,
-                "precio_migrado": redondear_dinero(linea.precio_unitario) if migrada else CERO,
+                "cantidad_migrada": 0 if sin_detalle else (linea.cantidad if migrada else 0),
+                "precio_migrado": CERO if sin_detalle else (redondear_dinero(linea.precio_unitario) if migrada else CERO),
                 "costo_unitario_migrado": redondear_dinero(linea.costo_unitario) if migrada else CERO,
                 "garantia_migrada": (
                     f"{estado_garantia_fila(linea.garantia_fin, hoy)} · "

@@ -331,6 +331,39 @@ def test_historial_de_gastos_cabe_en_la_tarjeta() -> None:
     assert "text-align: center" in cabecera_acciones
 
 
+def test_solo_total_conocido_deja_vacios_cantidad_y_precio(bd) -> None:
+    """Sin detalle, no se inventa precio: solo se suma lo cobrado como ganancia."""
+    venta = comercial.registrar_venta_migrada(
+        bd, "Saldo Global", "3005555555", "180000", date(2025, 2, 3)
+    )
+    detalle = bd.scalar(select(VentaDetalle))
+    assert detalle is not None
+    assert detalle.producto_nombre == "Saldo pendiente migrado"
+    assert detalle.precio_unitario == Decimal("0")
+    assert detalle.subtotal_item == Decimal("180000")
+
+    comercial.registrar_abono(
+        bd,
+        venta.id_venta,
+        "90000",
+        fecha_abono=datetime(2025, 3, 5, 12, tzinfo=comercial.ZONA_TIENDA),
+    )
+    fila = analitica.tabla_ventas(bd, analitica.Filtro(), date(2025, 3, 1))[0]
+    assert fila["cantidad_migrada"] == 0
+    assert fila["precio_migrado"] == Decimal("0")
+    assert fila["total_migrado"] == Decimal("90000")
+    assert fila["costo_reconocido_migrado"] == Decimal("0")
+    assert fila["ganancia_migrada"] == Decimal("90000")
+
+    febrero = analitica.reporte_mensual(bd, 2025)[1]
+    assert febrero["ingresos_migrados"] == Decimal("0")
+    marzo = analitica.reporte_mensual(bd, 2025)[2]
+    assert marzo["ingresos_migrados"] == Decimal("90000")
+    assert marzo["costos_migrados"] == Decimal("0")
+    assert marzo["ganancia_migrada"] == Decimal("90000")
+    assert marzo["ganancia_neta"] == Decimal("90000")
+
+
 def test_las_columnas_de_migracion_aparecen_en_tablas_y_csv(bd) -> None:
     """Las cifras migradas van en columnas propias, también en las descargas."""
     encabezados_mes, filas_mes = analitica.tabla_csv(bd, "mensual", analitica.Filtro(), date(2025, 4, 1))

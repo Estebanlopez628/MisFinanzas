@@ -687,8 +687,10 @@ def registrar_venta_migrada(
         )
     sin_detalle = not valores
     if sin_detalle:
+        # Sin detalle conocido no se inventa un precio unitario: la línea existe
+        # solo para cuadrar el total; `subtotal_item` conserva la deuda completa.
         valores.append(
-            (LineaVenta("Saldo pendiente migrado", 1, total, CERO), total, CERO)
+            (LineaVenta("Saldo pendiente migrado", 1, CERO, CERO), CERO, CERO)
         )
 
     cliente = _cliente_para_venta(bd, nombre, telefono)
@@ -708,7 +710,11 @@ def registrar_venta_migrada(
     total_costo = CERO
     vencimientos: list[tuple[date, str]] = []
     for linea, precio, costo in valores:
-        subtotal_item = redondear_dinero(precio * linea.cantidad)
+        subtotal_item = (
+            total
+            if sin_detalle and linea.nombre == "Saldo pendiente migrado"
+            else redondear_dinero(precio * linea.cantidad)
+        )
         total_costo += redondear_dinero(costo * linea.cantidad)
         texto_garantia = _texto_garantia(linea.garantia_meses)
         vencimiento = (
