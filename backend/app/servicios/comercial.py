@@ -68,6 +68,8 @@ TIPO_DEUDA_INICIAL = "DEUDA_INICIAL"
 # factura ni envío automático por WhatsApp.
 ORIGEN_VENTA_NORMAL = "VENTA_NORMAL"
 ORIGEN_MIGRACION_CARTERA = "MIGRACION_CARTERA"
+# Fila que representa el saldo global cuando el usuario no sabe el detalle.
+NOMBRE_SALDO_MIGRADO = "Saldo pendiente migrado"
 
 ETIQUETAS_MOVIMIENTO = {
     TIPO_COMPRA: "Compra a crédito",
@@ -669,7 +671,12 @@ def registrar_venta_migrada(
     fecha = _fecha_compra(fecha_compra)
 
     valores: list[tuple[LineaVenta, Decimal, Decimal]] = []
-    for linea in lineas or []:
+    lineas_utiles = [
+        linea
+        for linea in (lineas or [])
+        if linea.nombre.strip() != NOMBRE_SALDO_MIGRADO
+    ]
+    for linea in lineas_utiles:
         _validar_linea(linea)
         precio = _dinero(linea.precio_unitario)
         costo = _dinero(linea.costo_unitario)
@@ -690,7 +697,7 @@ def registrar_venta_migrada(
         # Sin detalle conocido no se inventa un precio unitario: la línea existe
         # solo para cuadrar el total; `subtotal_item` conserva la deuda completa.
         valores.append(
-            (LineaVenta("Saldo pendiente migrado", 1, CERO, CERO), CERO, CERO)
+            (LineaVenta(NOMBRE_SALDO_MIGRADO, 1, CERO, CERO), CERO, CERO)
         )
 
     cliente = _cliente_para_venta(bd, nombre, telefono)
@@ -712,7 +719,7 @@ def registrar_venta_migrada(
     for linea, precio, costo in valores:
         subtotal_item = (
             total
-            if sin_detalle and linea.nombre == "Saldo pendiente migrado"
+            if sin_detalle and linea.nombre == NOMBRE_SALDO_MIGRADO
             else redondear_dinero(precio * linea.cantidad)
         )
         total_costo += redondear_dinero(costo * linea.cantidad)

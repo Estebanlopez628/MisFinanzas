@@ -2880,6 +2880,8 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Aviso del botón Guardar (ADR-185).** Si los seis campos del panel están vacíos o con su valor por defecto, «Guardar» no agregaba fila y parecía no responder. Ahora muestra el mensaje «Escribe los datos del producto o deja los campos vacíos y carga solo el saldo.», que desaparece al guardar un producto. El botón sigue sin ser obligatorio: se puede cargar directamente solo el saldo. `sw.js` en `olb-finanzas-v213`.
 
+**Guardar con campos vacíos (ADR-186).** El propietario pidió que «Guardar» también guarde sin datos: ahora agrega una fila «Saldo pendiente migrado» con cantidad 1, precio 0 y costo 0, y avisa «Saldo global agregado». No se duplica la fila si ya existe. El servicio ignora esa fila marcadora y crea una sola línea de detalle con `subtotal_item = total`, sin inventar precio (ADR-182). `sw.js` en `olb-finanzas-v214`.
+
 **Verificación.** **1038 pruebas** en verde (21 de la SRS), `compileall`, `node --check` de los dos scripts y `generar_guia.py --verificar` correcto (119 fichas). Sin desbordes en las vistas nuevas comprobadas por las pruebas HTTP; paleta, COP, íconos y scroll heredados intactos.
 
 ### 2026-11-27 — KPI de Analítica más anchos (ADR-174)

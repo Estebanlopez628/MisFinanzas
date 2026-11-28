@@ -230,14 +230,14 @@ def test_la_cartera_tiene_cuatro_paneles_en_dos_filas(cliente_admin: TestClient)
         assert "form-header-white" in fragmento[-80:]
 
 
-def test_el_boton_guardar_avisa_cuando_no_hay_datos() -> None:
-    """Sin datos en el panel, Guardar explica que se puede cargar solo el saldo."""
+def test_el_boton_guardar_acepta_campos_vacios() -> None:
+    """Sin datos, Guardar agrega la fila de saldo global en lugar de no hacer nada."""
     js = (RUTA / "static/js/migracion.js").read_text(encoding="utf-8")
-    assert "function mostrarEstado" in js
-    assert "Escribe los datos del producto" in js
     bloque = js.split("function guardarProducto()", 1)[1].split("var valores", 1)[0]
-    assert "mostrarEstado(" in bloque
-    assert "return false" in bloque
+    assert "Saldo pendiente migrado" in bloque
+    assert "yaEsta" in bloque
+    assert "Saldo global agregado" in bloque
+    assert "return true" in bloque
 
 
 def test_el_panel_de_producto_de_migracion_es_completo_y_opcional(
@@ -355,6 +355,34 @@ def test_el_gesto_tactil_se_confina_en_tablas_de_analitica() -> None:
     assert "caja.scrollLeft" in js and "caja.scrollTop" in js
     assert 'objetivo.closest("thead")' in js
     assert "empiezaEnCabecera && !horizontal" in js
+
+
+def test_fila_de_saldo_no_duplica_el_detalle_al_registrar(cliente_admin: TestClient, bd) -> None:
+    """La fila vacía de Guardar no genera una segunda línea de detalle."""
+    respuesta = cliente_admin.post(
+        "/olb-byte/migracion/ventas",
+        data={
+            "cliente_nombre": "Saldo Desde Guardar",
+            "cliente_telefono": "3001234567",
+            "fecha_compra": "2025-06-06",
+            "total": "65.000",
+            "producto_nombre": ["Saldo pendiente migrado"],
+            "categoria": [""],
+            "cantidad": ["1"],
+            "costo_unitario": ["0"],
+            "precio_unitario": ["0"],
+            "garantia_meses": ["0"],
+        },
+        follow_redirects=False,
+    )
+    assert respuesta.status_code == 303
+    venta = bd.scalar(select(Venta))
+    assert venta is not None and venta.total == Decimal("65000")
+    detalles = bd.scalars(select(VentaDetalle)).all()
+    assert len(detalles) == 1
+    assert detalles[0].producto_nombre == comercial.NOMBRE_SALDO_MIGRADO
+    assert detalles[0].precio_unitario == Decimal("0")
+    assert detalles[0].subtotal_item == Decimal("65000")
 
 
 def test_solo_total_conocido_deja_vacios_cantidad_y_precio(bd) -> None:

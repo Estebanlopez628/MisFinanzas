@@ -132,14 +132,37 @@
   }
 
   /**
-   * Guarda el producto del panel como una fila nueva de la tabla.
+   * Guarda el producto del panel como una fila nueva de la tabla. Con los campos
+   * vacíos guarda una fila de saldo global (sin precio inventado).
    *
-   * @returns {boolean} `true` si se agregó; `false` si no había datos que agregar.
+   * @returns {boolean} `true` si se agregó una fila.
    */
   function guardarProducto() {
-    if (!hayDatosEnPanel()) {
-      mostrarEstado("Escribe los datos del producto o deja los campos vacíos y carga solo el saldo.");
+    if (!lista || !plantilla) {
       return false;
+    }
+    if (!hayDatosEnPanel()) {
+      var yaEsta = Array.prototype.some.call(
+        lista.querySelectorAll('input[type="hidden"][name="producto_nombre"]'),
+        function (campo) { return campo.value === "Saldo pendiente migrado"; }
+      );
+      if (yaEsta) {
+        mostrarEstado("La fila de saldo global ya está en la lista.");
+        return true;
+      }
+      var filaSaldo = plantilla.content.cloneNode(true).querySelector("[data-fila-producto]");
+      escribirEnFila(filaSaldo, "producto_nombre", "Saldo pendiente migrado");
+      escribirEnFila(filaSaldo, "categoria", "");
+      escribirEnFila(filaSaldo, "cantidad", "1");
+      escribirEnFila(filaSaldo, "costo_unitario", "0");
+      escribirEnFila(filaSaldo, "precio_unitario", "0");
+      escribirEnFila(filaSaldo, "garantia_meses", "0");
+      lista.appendChild(filaSaldo);
+      mostrarError("");
+      limpiarPanel();
+      mostrarEstado("Saldo global agregado. Puedes cargar solo el valor total.");
+      actualizarVacia();
+      return true;
     }
     var valores = leerPanel();
     var nombre = valores.producto_nombre || "(sin nombre)";
