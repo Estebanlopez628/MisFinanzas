@@ -4531,6 +4531,23 @@ strong.valor-negativo.recibo__cifra--saldo {
   padding-top: 0;
 }
 
+/* Total de cartera junto al buscador, en el verde de los valores positivos. */
+.cartera-total {
+  margin-left: auto;
+  align-self: center;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+@media (max-width: 767px) {
+  .formulario--buscar .cartera-total {
+    width: 100%;
+    margin-left: 0;
+    text-align: left;
+  }
+}
+
 /* SRS v4.44: sin línea sobre el selector de Año de Analítica. */
 .formulario--filtros-analitica {
   border-top: 0;

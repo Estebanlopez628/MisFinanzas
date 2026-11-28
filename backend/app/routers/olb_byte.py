@@ -254,6 +254,8 @@ def _contexto_pendientes(
         {
             "titulo_pagina": "Cuentas por cobrar · OLB BYTE",
             "pendientes": pendientes,
+            # Total real de cartera, aunque el buscador esté filtrando filas.
+            "total_cartera": comercial.resumen_cartera(bd)["cartera_clientes"],
             "q": q,
             "metodos_pago": comercial.METODOS_PAGO,
             "error": error,

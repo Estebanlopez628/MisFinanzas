@@ -30,6 +30,9 @@
         {% if q %}
           <a class="boton boton--secundario boton--pequeno" href="{{ url_for('ver_pendientes') }}">Ver todos</a>
         {% endif %}
+        <span class="cartera-total">
+          TOTAL Cuentas por cobrar: <strong class="valor-positivo">{{ total_cartera | cop }}</strong>
+        </span>
       </div>
     </form>
 

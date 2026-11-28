@@ -2884,7 +2884,9 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Visibilidad sin cobro (ADR-187).** El propietario reportó que no veía en «Gestión y control de ventas» los datos que acababa de migrar. Causa: `_lineas()` descartaba por completo las ventas migradas sin abono. Ahora se muestran en «Ventas por producto» con `Origen`, `Fecha de compra`, `Saldo - D. migración` y garantía, pero con `Total`, `Costo` y `Ganancia - D. migración` en cero; no cuentan como `Ventas - D. migración` hasta que se cobre. En el mes de la compra los totales siguen en cero (ADR-180). ADR-188: la fila de saldo global no recibe garantía inventada; su `garantia_fecha_fin` queda nula.
 
-**Pendiente por pagar migrado (ADR-189).** El propietario pidió una columna `Pendiente por pagar - D. migración` en Mes a mes, Año tras año y sus CSV: muestra el saldo vivo de las ventas migradas agrupado por `fecha_compra`. Al registrar un abono, ese saldo baja y el valor se reconoce en `Ganancia - D. migración` (no en `Ventas - D. migración`, que solo cuenta órdenes). `sw.js` en `olb-finanzas-v214`.
+**Pendiente por pagar migrado (ADR-189).** El propietario pidió una columna `Pendiente por pagar - D. migración` en Mes a mes, Año tras año y sus CSV: muestra el saldo vivo de las ventas migradas agrupado por `fecha_compra`. Al registrar un abono, ese saldo baja y el valor se reconoce en `Ganancia - D. migración` (no en `Ventas - D. migración`, que solo cuenta órdenes). `sw.js` en `olb-finanzas-v215`.
+
+**Total de cartera en pendientes (ADR-190).** La vista «Cuentas por cobrar» muestra junto al buscador `TOTAL Cuentas por cobrar: $xxxxx` en el verde de valores positivos. El total es el saldo vivo de todas las órdenes activas, aunque el buscador esté filtrando filas.
 
 **Verificación.** **1038 pruebas** en verde (21 de la SRS), `compileall`, `node --check` de los dos scripts y `generar_guia.py --verificar` correcto (119 fichas). Sin desbordes en las vistas nuevas comprobadas por las pruebas HTTP; paleta, COP, íconos y scroll heredados intactos.
 

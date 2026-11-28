@@ -206,7 +206,7 @@ En el celular y en la computadora, al registrar una venta verás el botón **Peg
 
 Cuando abras la factura o envíes por WhatsApp desde «Órdenes registradas», al volver quedarás exactamente en el mismo punto de la lista; en el celular, la factura usa «Volver a Ventas» y se reabre el detalle de la orden que estabas viendo.
 
-En «Cuentas por cobrar», el buscador ya no tiene una línea por encima. Al tocar un cliente se abre su detalle con un solo botón, «Registrar Pago», y se cierra con la X roja de la esquina superior derecha; la lista queda exactamente donde estaba.
+En «Cuentas por cobrar», el buscador ya no tiene una línea por encima y junto a él verás **TOTAL Cuentas por cobrar: $xxxxx** en verde con la suma de todos los saldos pendientes, aunque el buscador esté filtrando. Al tocar un cliente se abre su detalle con un solo botón, «Registrar Pago», y se cierra con la X roja de la esquina superior derecha; la lista queda exactamente donde estaba.
 
 La X roja es la misma en Cartera, Pendientes y Órdenes registradas. En la factura no hay X: usas «Volver a Ventas» y vuelves al punto exacto de la lista de órdenes.
 

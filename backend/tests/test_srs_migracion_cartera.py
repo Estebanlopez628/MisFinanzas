@@ -59,6 +59,21 @@ def test_venta_migrada_sin_abono_se_ve_con_saldo_en_productos(bd) -> None:
     assert julio["ingresos_migrados"] == Decimal("0")
 
 
+def test_total_de_cartera_aparece_en_pendientes(cliente_admin: TestClient, bd) -> None:
+    """El total de cuentas por cobrar se muestra en verde junto al buscador."""
+    comercial.registrar_venta(
+        bd,
+        "Cliente Cartera",
+        "3004444444",
+        [comercial.LineaVenta("Cable", 1, "70000", "20000")],
+    )
+    html = cliente_admin.get("/olb-byte/pendientes").text
+    assert "TOTAL Cuentas por cobrar" in html
+    bloque = html.split("cartera-total\">", 1)[1].split("</span>", 1)[0]
+    assert "valor-positivo" in bloque
+    assert "$70.000" in bloque
+
+
 def test_la_pestana_de_migracion_esta_junto_a_registro_de_ventas(cliente_admin: TestClient) -> None:
     """La subnavegación incluye la pestaña nueva en segundo lugar."""
     html = cliente_admin.get("/olb-byte").text
