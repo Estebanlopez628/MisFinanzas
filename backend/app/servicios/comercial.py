@@ -697,7 +697,7 @@ def registrar_venta_migrada(
         # Sin detalle conocido no se inventa un precio unitario: la línea existe
         # solo para cuadrar el total; `subtotal_item` conserva la deuda completa.
         valores.append(
-            (LineaVenta(NOMBRE_SALDO_MIGRADO, 1, CERO, CERO), CERO, CERO)
+            (LineaVenta(NOMBRE_SALDO_MIGRADO, 1, CERO, CERO, garantia_meses=0), CERO, CERO)
         )
 
     cliente = _cliente_para_venta(bd, nombre, telefono)
@@ -739,8 +739,8 @@ def registrar_venta_migrada(
                 costo_unitario=costo,
                 precio_unitario=precio,
                 subtotal_item=subtotal_item,
-                garantia_texto=texto_garantia,
-                garantia_fecha_fin=vencimiento,
+                garantia_texto=None if sin_detalle else texto_garantia,
+                garantia_fecha_fin=None if sin_detalle else vencimiento,
             )
         )
 
@@ -769,7 +769,7 @@ def registrar_venta_migrada(
     venta.estado_pago = ESTADO_PAGO_PENDIENTE
     venta.garantia_texto = ""
     venta.garantia_fecha_fin = None
-    if vencimientos:
+    if vencimientos and not sin_detalle:
         vencimiento_orden, texto_orden = min(vencimientos, key=lambda par: par[0])
         venta.garantia_texto = texto_orden
         venta.garantia_fecha_fin = vencimiento_orden

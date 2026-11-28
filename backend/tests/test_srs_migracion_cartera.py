@@ -402,6 +402,7 @@ def test_fila_de_saldo_no_duplica_el_detalle_al_registrar(cliente_admin: TestCli
     assert detalles[0].producto_nombre == comercial.NOMBRE_SALDO_MIGRADO
     assert detalles[0].precio_unitario == Decimal("0")
     assert detalles[0].subtotal_item == Decimal("65000")
+    assert detalles[0].garantia_fecha_fin is None
 
 
 def test_solo_total_conocido_deja_vacios_cantidad_y_precio(bd) -> None:
