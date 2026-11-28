@@ -47,4 +47,4 @@ def test_etiquetas_html_y_manifiesto(cliente: TestClient) -> None:
 def test_service_worker_actualizado() -> None:
     """La caché subió para que los dispositivos descarguen el icono nuevo."""
     js = (RUTA_APP / "static/js/sw.js").read_text(encoding="utf-8")
-    assert 'var CACHE = "olb-finanzas-v225";' in js
+    assert 'var CACHE = "olb-finanzas-v226";' in js

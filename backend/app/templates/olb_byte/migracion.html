@@ -248,10 +248,20 @@
       </div>
       <button class="boton boton--primario" type="submit">Registrar deuda</button>
     </form>
+  </section>
 
+  {# ---------------------- Deudas iniciales registradas ------------------- #}
+  <section class="panel panel--tabla">
+    <div class="panel__cabecera">
+      <h2 class="panel__titulo form-header-white">Deudas iniciales registradas</h2>
+      <a class="boton boton--primario boton--pequeno"
+         href="{{ url_for('exportar_deudas_iniciales_csv') }}">Descargar CSV</a>
+    </div>
+    <p class="panel__descripcion">
+      Total de deudas iniciales: <strong class="valor-positivo">{{ total_deudas_iniciales | cop }}</strong>
+    </p>
     {% if deudas_iniciales %}
-      <h3 class="subtitulo-seccion form-header-white">Deudas iniciales registradas</h3>
-      <div class="tabla-contenedor tabla-contenedor--movimientos">
+      <div class="tabla-contenedor tabla-contenedor--migracion">
         <table class="tabla tabla--compacta">
           <thead>
             <tr>
@@ -275,6 +285,8 @@
           </tbody>
         </table>
       </div>
+    {% else %}
+      <p class="tabla__vacia">Aún no hay deudas iniciales registradas.</p>
     {% endif %}
   </section>
 

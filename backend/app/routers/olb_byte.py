@@ -26,6 +26,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.base_datos import obtener_bd
+from app.core.numeros import redondear_dinero
 from app.dependencias import UsuarioSesion, exigir_olb_byte, obtener_usuario_actual
 from app.modelos import Cliente, Venta, VentaDetalle
 from app.routers.vistas import contexto_base, plantillas
@@ -838,6 +839,11 @@ def _contexto_migracion(
         Diccionario listo para Jinja2.
     """
     hoy = datetime.now(comercial.ZONA_TIENDA).date()
+    deudas_iniciales = [
+        fila
+        for fila in comercial.listar_movimientos_con_orden(bd)
+        if fila["tipo"] == comercial.TIPO_DEUDA_INICIAL
+    ]
     contexto = contexto_base(usuario)
     contexto.update(
         {
@@ -847,11 +853,10 @@ def _contexto_migracion(
             "clientes": comercial.listar_clientes(bd),
             "resumen": comercial.resumen_migracion(bd),
             "filas": comercial.filas_migracion(bd),
-            "deudas_iniciales": [
-                fila
-                for fila in comercial.listar_movimientos_con_orden(bd)
-                if fila["tipo"] == comercial.TIPO_DEUDA_INICIAL
-            ],
+            "deudas_iniciales": deudas_iniciales,
+            "total_deudas_iniciales": redondear_dinero(
+                sum((fila["monto"] for fila in deudas_iniciales), start=Decimal("0"))
+            ),
             "meses_defecto": comercial.GARANTIA_MESES_DEFECTO,
             "error": error,
             "guardado": guardado,
@@ -1033,6 +1038,49 @@ def exportar_migracion_csv(
         content=contenido,
         media_type="text/csv; charset=utf-8",
         headers={"Content-Disposition": 'attachment; filename="migracion_cartera.csv"'},
+    )
+
+
+@router.get(
+    "/olb-byte/migracion/deudas-iniciales/exportar.csv",
+    name="exportar_deudas_iniciales_csv",
+    response_model=None,
+)
+def exportar_deudas_iniciales_csv(
+    usuario: UsuarioSesion = Depends(obtener_usuario_actual),
+    bd: Session = Depends(obtener_bd),
+) -> Response:
+    """Descarga el libro de deudas anteriores al sistema.
+
+    Args:
+        usuario: Administrador autenticado.
+        bd: Sesión de base de datos.
+
+    Returns:
+        CSV con separador `;` y BOM UTF-8.
+
+    Raises:
+        HTTPException: 403 si el usuario no es administrador.
+    """
+    exigir_olb_byte(usuario)
+    encabezados = ["Fecha", "Concepto", "Proveedor", "Referencia", "Valor"]
+    filas = []
+    for fila in comercial.listar_movimientos_con_orden(bd):
+        if fila["tipo"] == comercial.TIPO_DEUDA_INICIAL:
+            filas.append(
+                [
+                    fila["fecha"].strftime("%d-%m-%Y"),
+                    str(fila["concepto"]),
+                    str(fila["proveedor_nombre"] or ""),
+                    str(fila["referencia_factura"] or ""),
+                    analitica._csv_dinero(fila["monto"]),
+                ]
+            )
+    contenido = analitica.serializar_csv(encabezados, filas)
+    return Response(
+        content=contenido,
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": 'attachment; filename="deudas_iniciales.csv"'},
     )
 
 

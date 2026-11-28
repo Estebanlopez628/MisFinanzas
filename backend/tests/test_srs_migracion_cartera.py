@@ -136,6 +136,19 @@ def test_gasto_operativo_guarda_y_edita_la_descripcion(cliente_admin: TestClient
     assert "Descripción" in html
 
 
+def test_deudas_iniciales_es_modulo_separado_con_csv(cliente_admin: TestClient, bd) -> None:
+    """El libro de deudas iniciales tiene panel propio y descarga CSV."""
+    comercial.registrar_deuda_inicial(bd, "50000", "Deuda separada")
+    html = cliente_admin.get("/olb-byte/migracion").text
+    assert "<h2 class=\"panel__titulo form-header-white\">Deudas iniciales registradas</h2>" in html
+    assert "Total de deudas iniciales:" in html
+    assert "/olb-byte/migracion/deudas-iniciales/exportar.csv" in html
+    respuesta = cliente_admin.get("/olb-byte/migracion/deudas-iniciales/exportar.csv")
+    assert respuesta.status_code == 200
+    assert respuesta.text.startswith("\ufeff")
+    assert "Deuda separada" in respuesta.text
+
+
 def test_la_pestana_de_migracion_esta_junto_a_registro_de_ventas(cliente_admin: TestClient) -> None:
     """La subnavegación incluye la pestaña nueva en segundo lugar."""
     html = cliente_admin.get("/olb-byte").text
