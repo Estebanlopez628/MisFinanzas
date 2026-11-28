@@ -304,13 +304,15 @@
                 <td>{{ gasto.descripcion or 'Gasto operativo' }}</td>
                 <td class="tabla__numero">{{ gasto.monto | cop }}</td>
                 <td class="tabla-gastos__acciones col-acciones">
-                  <button type="button" class="boton boton--secundario boton--pequeno"
-                          data-abrir-dialogo="gasto-{{ gasto.id_gasto_operativo }}">Editar</button>
-                  <form method="post"
-                        action="{{ url_for('eliminar_gasto_operativo', id_gasto=gasto.id_gasto_operativo) }}">
-                    <button type="submit" class="boton boton--peligro boton--pequeno"
-                            data-confirmar="¿Eliminar este gasto operativo?">Eliminar</button>
-                  </form>
+                  <div class="tabla-gastos__botones">
+                    <button type="button" class="boton boton--secundario boton--pequeno"
+                            data-abrir-dialogo="gasto-{{ gasto.id_gasto_operativo }}">Editar</button>
+                    <form method="post"
+                          action="{{ url_for('eliminar_gasto_operativo', id_gasto=gasto.id_gasto_operativo) }}">
+                      <button type="submit" class="boton boton--peligro boton--pequeno"
+                              data-confirmar="¿Eliminar este gasto operativo?">Eliminar</button>
+                    </form>
+                  </div>
                 </td>
               </tr>
             {% endfor %}
