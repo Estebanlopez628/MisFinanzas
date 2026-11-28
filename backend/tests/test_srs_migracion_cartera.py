@@ -92,7 +92,7 @@ def test_total_de_cartera_aparece_en_pendientes(cliente_admin: TestClient, bd) -
         [comercial.LineaVenta("Cable", 1, "70000", "20000")],
     )
     html = cliente_admin.get("/olb-byte/pendientes").text
-    assert "- TotaL Cuentas por cobrar" in html
+    assert "Total Cuentas por cobrar" in html
     bloque = html.split("cartera-total\">", 1)[1].split("</span>", 1)[0]
     assert "valor-positivo" in bloque
     assert "$70.000" in bloque
@@ -106,6 +106,32 @@ def test_resumen_de_migracion_muestra_total_por_cobrar(cliente_admin: TestClient
     assert "Total por cobrar de deudas migradas:" in bloque
     assert "valor-positivo" in bloque
     assert "Pago al proveedor proporcional" not in bloque
+
+
+def test_gasto_operativo_guarda_y_edita_la_descripcion(cliente_admin: TestClient, bd) -> None:
+    """La descripción se registra y se puede corregir desde el historial."""
+    from app.modelos import GastoOperativo
+
+    respuesta = cliente_admin.post(
+        "/olb-byte/cartera/gastos-operativos",
+        data={"monto": "25.000", "fecha": "2026-11-20", "descripcion": "Internet del mes"},
+        follow_redirects=False,
+    )
+    assert respuesta.status_code == 303
+    gasto = bd.scalar(select(GastoOperativo))
+    assert gasto is not None and gasto.descripcion == "Internet del mes"
+
+    respuesta = cliente_admin.post(
+        f"/olb-byte/cartera/gastos-operativos/{gasto.id_gasto_operativo}/editar",
+        data={"monto": "25.000", "fecha": "2026-11-20", "descripcion": "Internet y móvil"},
+        follow_redirects=False,
+    )
+    assert respuesta.status_code == 303
+    bd.refresh(gasto)
+    assert gasto.descripcion == "Internet y móvil"
+
+    html = cliente_admin.get("/olb-byte/cartera").text
+    assert "Descripción" in html
 
 
 def test_la_pestana_de_migracion_esta_junto_a_registro_de_ventas(cliente_admin: TestClient) -> None:

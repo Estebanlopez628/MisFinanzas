@@ -1560,6 +1560,45 @@ a.tarjeta:focus-visible {
   }
 }
 
+/* Órdenes registradas: toda la tabla cabe en una sola vista. La columna
+   «Productos» se recorta con elipsis en vez de ensanchar la tabla. */
+.tabla-contenedor--ordenes .tabla {
+  min-width: 0;
+  width: 100%;
+  table-layout: fixed;
+  font-size: 0.74rem;
+}
+
+.tabla-contenedor--ordenes .tabla th,
+.tabla-contenedor--ordenes .tabla td {
+  padding: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tabla-contenedor--ordenes .tabla th:nth-child(1),
+.tabla-contenedor--ordenes .tabla td:nth-child(1) { width: 6%; }
+.tabla-contenedor--ordenes .tabla th:nth-child(2),
+.tabla-contenedor--ordenes .tabla td:nth-child(2) { width: 16%; }
+.tabla-contenedor--ordenes .tabla th:nth-child(3),
+.tabla-contenedor--ordenes .tabla td:nth-child(3) { width: 12%; }
+.tabla-contenedor--ordenes .tabla th:nth-child(4),
+.tabla-contenedor--ordenes .tabla td:nth-child(4) { width: 24%; }
+.tabla-contenedor--ordenes .tabla th:nth-child(5),
+.tabla-contenedor--ordenes .tabla td:nth-child(5) { width: 10%; }
+.tabla-contenedor--ordenes .tabla th:nth-child(6),
+.tabla-contenedor--ordenes .tabla td:nth-child(6) { width: 10%; }
+.tabla-contenedor--ordenes .tabla th:nth-child(7),
+.tabla-contenedor--ordenes .tabla td:nth-child(7) { width: 10%; }
+.tabla-contenedor--ordenes .tabla th:nth-child(8),
+.tabla-contenedor--ordenes .tabla td:nth-child(8) { width: 12%; }
+
+.tabla-contenedor--ordenes .celda-acciones-orden .acciones-orden {
+  justify-content: center;
+  gap: 4px;
+}
+
 /* Órdenes registradas y ventas migradas: cinco filas visibles en móvil y
    escritorio. La cabecera queda fija y con fondo sólido; las filas no se
    ajustan a más altura, así que siempre se ven exactamente cinco. */
@@ -1570,6 +1609,11 @@ a.tarjeta:focus-visible {
   overflow-x: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
+}
+
+/* La tabla de órdenes cabe completa: no se desplaza en horizontal. */
+.tabla-contenedor--ordenes {
+  overflow-x: hidden;
 }
 
 .tabla-contenedor--ordenes thead th,
@@ -1639,17 +1683,26 @@ a.tarjeta:focus-visible {
 
 .tabla.historial-gastos-table thead th:first-child,
 .tabla.historial-gastos-table tbody td:first-child {
-  width: 38%;
+  width: 22%;
 }
 
 .tabla.historial-gastos-table thead th:nth-child(2),
 .tabla.historial-gastos-table tbody td:nth-child(2) {
-  width: 30%;
+  width: 38%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tabla.historial-gastos-table thead th:nth-child(3),
+.tabla.historial-gastos-table tbody td:nth-child(3) {
+  width: 14%;
 }
 
 .tabla.historial-gastos-table thead th.col-acciones,
 .tabla.historial-gastos-table tbody td.col-acciones {
   text-align: center;
+  width: 26%;
 }
 
 .tabla.historial-gastos-table .tabla-gastos__acciones {

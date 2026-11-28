@@ -1073,6 +1073,34 @@ def _migrar_migracion_cartera() -> None:
                     )
 
 
+def _migrar_descripcion_gasto_operativo() -> None:
+    """Agrega `gastos_operativos.descripcion` de forma idempotente (ADR-195).
+
+    Args:
+        None.
+
+    Returns:
+        None.
+    """
+    if _conexion_sqlite:
+        with motor.begin() as conexion:
+            existentes = {
+                fila[1]
+                for fila in conexion.exec_driver_sql(
+                    "PRAGMA table_info(gastos_operativos)"
+                ).fetchall()
+            }
+            if existentes and "descripcion" not in existentes:
+                conexion.exec_driver_sql(
+                    "ALTER TABLE gastos_operativos ADD COLUMN descripcion VARCHAR(150)"
+                )
+    else:
+        with motor.begin() as conexion:
+            conexion.exec_driver_sql(
+                "ALTER TABLE gastos_operativos ADD COLUMN IF NOT EXISTS descripcion VARCHAR(150)"
+            )
+
+
 def aplicar_migraciones() -> None:
     """Ejecuta todas las migraciones idempotentes del esquema.
 
@@ -1095,6 +1123,7 @@ def aplicar_migraciones() -> None:
     _migrar_feedback_resolucion()
     _migrar_tipo_deuda_inicial()
     _migrar_migracion_cartera()
+    _migrar_descripcion_gasto_operativo()
     _migrar_tipos_hora_2026()
     _migrar_monto_minimo_liquidez()
 

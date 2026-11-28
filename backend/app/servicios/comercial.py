@@ -1407,6 +1407,7 @@ def registrar_gasto_operativo(
     bd: Session,
     monto: Decimal | str | int | float,
     fecha: str | date | None = None,
+    descripcion: str | None = None,
 ) -> GastoOperativo:
     """Registra un gasto operativo de la tienda (SRS v4.44, §8.2).
 
@@ -1416,6 +1417,7 @@ def registrar_gasto_operativo(
         bd: Sesión de base de datos.
         monto: Valor del gasto; debe ser mayor que cero.
         fecha: Fecha del gasto; vacía usa hoy en hora de la tienda.
+        descripcion: Texto libre del gasto personal; opcional.
 
     Returns:
         El gasto persistido.
@@ -1426,7 +1428,11 @@ def registrar_gasto_operativo(
     valor = _dinero(monto)
     if valor <= CERO:
         raise ValueError("El valor del gasto operativo debe ser mayor que cero.")
-    gasto = GastoOperativo(fecha=_fecha_gasto(fecha), monto=valor)
+    gasto = GastoOperativo(
+        fecha=_fecha_gasto(fecha),
+        monto=valor,
+        descripcion=(descripcion or "").strip()[:150] or None,
+    )
     bd.add(gasto)
     bd.commit()
     bd.refresh(gasto)
@@ -1438,14 +1444,16 @@ def actualizar_gasto_operativo(
     id_gasto: str,
     monto: Decimal | str | int | float,
     fecha: str | date | None = None,
+    descripcion: str | None = None,
 ) -> GastoOperativo:
-    """Corrige la fecha y el valor de un gasto operativo.
+    """Corrige la descripción, la fecha y el valor de un gasto operativo.
 
     Args:
         bd: Sesión de base de datos.
         id_gasto: Gasto a modificar.
         monto: Nuevo valor; debe ser mayor que cero.
         fecha: Nueva fecha; vacía conserva la actual.
+        descripcion: Nueva descripción; vacía conserva la actual.
 
     Returns:
         El gasto actualizado.
@@ -1463,6 +1471,8 @@ def actualizar_gasto_operativo(
     gasto.monto = valor
     if fecha not in (None, ""):
         gasto.fecha = _fecha_gasto(fecha)
+    if descripcion is not None:
+        gasto.descripcion = descripcion.strip()[:150] or None
     bd.commit()
     bd.refresh(gasto)
     return gasto

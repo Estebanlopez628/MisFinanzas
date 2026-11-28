@@ -569,6 +569,7 @@ Dinero abonado pendiente de devolver = Σ `abonos` − Σ `devoluciones_clientes
 | --- | --- | --- | --- |
 | `id_gasto_operativo` | `UUID` (PK) | No | Identificador. |
 | `fecha` | `DATE` | No | Fecha del gasto; por defecto el día del registro en hora de la tienda. |
+| `descripcion` | `VARCHAR(150)` | Sí | Texto libre del gasto personal; se muestra y edita en el historial (ADR-195). |
 | `monto` | `NUMERIC(14,2)` | No | `CHECK (monto > 0)`. Se descuenta de la ganancia al registrar, editar o borrar. |
 | `creado_en` | `TIMESTAMPTZ` | No | Momento en que se registró; ordena los desempates de `fecha`. |
 

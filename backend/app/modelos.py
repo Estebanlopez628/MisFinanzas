@@ -746,6 +746,7 @@ class GastoOperativo(Base):
         String(32), primary_key=True, default=nuevo_id
     )
     fecha: Mapped[date] = mapped_column(Date, nullable=False, index=True)
+    descripcion: Mapped[str | None] = mapped_column(String(150), nullable=True)
     monto: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False)
     creado_en: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()

@@ -1199,6 +1199,7 @@ def registrar_gasto_operativo(
     bd: Session = Depends(obtener_bd),
     monto: Annotated[str, Form()] = "",
     fecha: Annotated[str, Form()] = "",
+    descripcion: Annotated[str, Form()] = "",
 ) -> HTMLResponse | RedirectResponse:
     """Registra un gasto operativo que se descuenta de la ganancia (SRS v4.44, §8.2).
 
@@ -1208,13 +1209,14 @@ def registrar_gasto_operativo(
         bd: Sesión de base de datos.
         monto: Valor del gasto.
         fecha: Fecha en formato ISO; vacía usa hoy.
+        descripcion: Texto libre del gasto personal.
 
     Returns:
         Redirección a la cartera o la misma vista con el error.
     """
     exigir_olb_byte(usuario)
     try:
-        gasto = comercial.registrar_gasto_operativo(bd, monto, fecha)
+        gasto = comercial.registrar_gasto_operativo(bd, monto, fecha, descripcion)
         auditoria.registrar(
             bd,
             usuario.id_usuario,
@@ -1247,8 +1249,9 @@ def editar_gasto_operativo(
     bd: Session = Depends(obtener_bd),
     monto: Annotated[str, Form()] = "",
     fecha: Annotated[str, Form()] = "",
+    descripcion: Annotated[str, Form()] = "",
 ) -> HTMLResponse | RedirectResponse:
-    """Corrige la fecha y el valor de un gasto operativo (SRS v4.44, §8.2).
+    """Corrige la descripción, la fecha y el valor de un gasto operativo.
 
     Args:
         request: Petición HTTP.
@@ -1257,13 +1260,14 @@ def editar_gasto_operativo(
         bd: Sesión de base de datos.
         monto: Nuevo valor.
         fecha: Nueva fecha en formato ISO.
+        descripcion: Nueva descripción del gasto.
 
     Returns:
         Redirección a la cartera o la misma vista con el error.
     """
     exigir_olb_byte(usuario)
     try:
-        comercial.actualizar_gasto_operativo(bd, id_gasto, monto, fecha)
+        comercial.actualizar_gasto_operativo(bd, id_gasto, monto, fecha, descripcion)
         auditoria.registrar(
             bd, usuario.id_usuario, "GASTO_OPERATIVO_EDITADO", "gastos_operativos", id_gasto
         )
@@ -1543,9 +1547,9 @@ def ver_analitica(
         pasivo_periodo = analitica._pasivo_antiguo_en(
             saldos, filtro.anio, filtro.mes or 12
         )
-    # KPI «Pago a Proveedor»: deuda vieja + costo de la mercancía fiada en el periodo.
-    pago_proveedor_periodo = pasivo_periodo + costo_periodo
-    # Panorama amplio: compromisos (pasivo + costo) frente a lo realmente ganado.
+    # ADR-194: «Pago a Proveedor» muestra la deuda real pendiente, no los costos
+    # ya cancelados. Los costos del periodo se ven en su propia columna.
+    pago_proveedor_periodo = comercial.deuda_proveedor(bd)
     ganancia_global_periodo = ganancia_neta_periodo - pago_proveedor_periodo
 
     contexto = contexto_base(usuario)

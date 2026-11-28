@@ -258,6 +258,11 @@
       </p>
       <form class="formulario" method="post" action="{{ url_for('registrar_gasto_operativo') }}">
         <label class="campo">
+          <span class="campo__etiqueta">Descripción</span>
+          <input class="campo__control" type="text" name="descripcion" maxlength="150"
+                 placeholder="Ej. Internet del mes" />
+        </label>
+        <label class="campo">
           <span class="campo__etiqueta">Fecha</span>
           {# SRS v4.44, §8.1: fecha bloqueada, visible como MM/DD/AAAA. #}
           <input class="campo__control" type="text" value="{{ hoy_texto }}" readonly
@@ -287,6 +292,7 @@
           <thead>
             <tr>
               <th scope="col">Fecha</th>
+              <th scope="col">Descripción</th>
               <th scope="col">Monto</th>
               <th scope="col" class="col-acciones">Acciones</th>
             </tr>
@@ -295,6 +301,7 @@
             {% for gasto in gastos_operativos %}
               <tr>
                 <td>{{ gasto.fecha.strftime('%m/%d/%Y') }}</td>
+                <td>{{ gasto.descripcion or 'Gasto operativo' }}</td>
                 <td class="tabla__numero">{{ gasto.monto | cop }}</td>
                 <td class="tabla-gastos__acciones col-acciones">
                   <button type="button" class="boton boton--secundario boton--pequeno"
@@ -319,7 +326,9 @@
           <li>
             <button type="button" class="orden-movil orden-movil--gasto"
                     data-abrir-dialogo="gasto-{{ gasto.id_gasto_operativo }}">
-              <span class="orden-movil__fecha">{{ gasto.fecha.strftime('%m/%d/%Y') }}</span>
+              <span class="orden-movil__fecha">{{ gasto.fecha.strftime('%m/%d/%Y') }}
+                <small class="ayuda">{{ gasto.descripcion or 'Gasto operativo' }}</small>
+              </span>
               <span class="orden-movil__valor">{{ gasto.monto | cop }}</span>
             </button>
           </li>
@@ -336,6 +345,11 @@
             <form class="formulario"
                   action="{{ url_for('editar_gasto_operativo', id_gasto=gasto.id_gasto_operativo) }}"
                   method="post">
+              <label class="campo">
+                <span class="campo__etiqueta">Descripción</span>
+                <input class="campo__control" type="text" name="descripcion" maxlength="150"
+                       value="{{ gasto.descripcion or '' }}" placeholder="Gasto operativo" />
+              </label>
               <label class="campo">
                 <span class="campo__etiqueta">Fecha</span>
                 <input class="campo__control" type="date" name="fecha"

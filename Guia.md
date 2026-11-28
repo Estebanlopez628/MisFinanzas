@@ -1236,7 +1236,7 @@ saldo en «Ventas por producto» (ADR-187/188). Mes a mes y Año tras año añad
 pagar - D. migración»; al cobrar, el valor pasa a «Ganancia - D. migración» (ADR-189). «Cuentas
 por cobrar» muestra el total de cartera en verde junto al buscador (ADR-190). Órdenes y
 ventas migradas muestran cinco filas, cuentas por cobrar seis, con cabecera fija opaca
-(ADR-191).
+(ADR-191). «Pago a Proveedor» muestra la deuda real (ADR-194) y los gastos operativos registran y editan descripción (ADR-195).
 
 ### `backend/app/templates/olb_byte/cartera.html`
 

@@ -123,6 +123,15 @@ def test_kpis_de_pago_proveedor_y_ganancia_global(cliente_admin: TestClient) -> 
     assert "Ganancia global 2026" not in html
 
 
+def test_kpi_pago_proveedor_muestra_la_deuda_real(cliente_admin: TestClient, bd) -> None:
+    """El KPI Pago a Proveedor es la deuda pendiente, no pasivo más costos."""
+    deuda = comercial.deuda_proveedor(bd)
+    esperado = f"${deuda:,.0f}".replace(",", ".")
+    html = cliente_admin.get("/olb-byte/analitica").text
+    bloque = html.split("Pago a Proveedor", 1)[1].split("</article>", 1)[0]
+    assert esperado in bloque
+
+
 def test_csv_incluye_la_denominacion_exacta(cliente_admin: TestClient, bd) -> None:
     """Los CSV mensual y anual conservan BOM, tildes y el rótulo PASIVO ANTIGUO."""
     encabezados, filas = analitica.tabla_csv(bd, "mensual", analitica.Filtro(), date.today())

@@ -71,6 +71,11 @@ def test_ventas_muestra_cinco_ordenes_con_cabecera_opaca() -> None:
     assert "max-height: 252px" in bloque
     cabecera = css.split(".tabla-contenedor--ordenes .tabla thead th,\n.tabla-contenedor--migracion .tabla thead th {", 1)[1].split("}", 1)[0]
     assert "background-color: #0b1e3d" in cabecera
+    ancho = css.split(".tabla-contenedor--ordenes .tabla {", 1)[1].split("}", 1)[0]
+    assert "min-width: 0" in ancho
+    assert "table-layout: fixed" in ancho
+    sin_scroll = css.split("/* La tabla de órdenes cabe completa", 1)[1].split("}", 1)[0]
+    assert "overflow-x: hidden" in sin_scroll
     plantilla = plantilla_ventas()
     assert "tabla-contenedor--ordenes" in plantilla
 
@@ -115,7 +120,8 @@ def test_modal_de_gasto_en_movil_tiene_actualizar_y_x(cliente_admin: TestClient)
     assert ">Actualizar</button>" in html
     assert ">Guardar</button>" not in html
     # Fila móvil limpia: fecha MM/DD/YYYY a la izquierda y monto a la derecha.
-    assert ">11/01/2026</span>" in html
+    assert "11/01/2026" in html
+    assert "orden-movil__fecha" in html
     assert "Fecha:" not in html
     assert "Valor del gasto:" not in html
     assert 'class="detalle-orden__cerrar" data-cerrar-dialogo' in html

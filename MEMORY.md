@@ -2890,6 +2890,10 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Tablas con filas fijas (ADR-191).** «Órdenes registradas» y «Ventas migradas y recaudos» muestran cinco filas en móvil y escritorio; «Cuentas por cobrar» muestra seis, en tabla y en lista móvil. Cabecera `sticky` con fondo sólido `#0b1e3d`, filas de 42 px sin envolver texto y gesto confinado. `sw.js` en `olb-finanzas-v218`. ADR-192: el panel «Ventas migradas y recaudos» muestra solo `Total por cobrar de deudas migradas`. `sw.js` en `olb-finanzas-v219`.
 
+**Tabla de órdenes sin scroll horizontal (ADR-193).** La columna «Productos» se recorta con elipsis y la tabla usa `table-layout: fixed`, `min-width: 0`, celdas de 6 px y anchos por columna, de modo que las ocho columnas caben en una sola vista. `sw.js` en `olb-finanzas-v221`.
+
+**Gastos operativos con descripción (ADR-195).** Se añade `gastos_operativos.descripcion` con migración idempotente. El formulario va en orden Descripción → Fecha → Valor; el historial y su modal permiten ver y editar la descripción. Ambos paneles de la grilla mantienen la misma altura. El rótulo de cartera queda corregido como `Total Cuentas por cobrar`. ADR-194: el KPI «Pago a Proveedor» muestra la deuda real pendiente (`deuda_proveedor`), no pasivo + costos ya cancelados; `Ganancia global` se recalcula con ese valor.
+
 **Verificación.** **1038 pruebas** en verde (21 de la SRS), `compileall`, `node --check` de los dos scripts y `generar_guia.py --verificar` correcto (119 fichas). Sin desbordes en las vistas nuevas comprobadas por las pruebas HTTP; paleta, COP, íconos y scroll heredados intactos.
 
 ### 2026-11-27 — KPI de Analítica más anchos (ADR-174)
