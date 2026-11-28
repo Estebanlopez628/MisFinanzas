@@ -1234,7 +1234,9 @@ solo hay desplazamiento horizontal (ADR-183/184). Con el panel vacío, «Guardar
 fila de saldo global y avisa (ADR-185/186). Las ventas migradas sin abono se listan con su
 saldo en «Ventas por producto» (ADR-187/188). Mes a mes y Año tras año añaden «Pendiente por
 pagar - D. migración»; al cobrar, el valor pasa a «Ganancia - D. migración» (ADR-189). «Cuentas
-por cobrar» muestra el total de cartera en verde junto al buscador (ADR-190).
+por cobrar» muestra el total de cartera en verde junto al buscador (ADR-190). Órdenes y
+ventas migradas muestran cinco filas, cuentas por cobrar seis, con cabecera fija opaca
+(ADR-191).
 
 ### `backend/app/templates/olb_byte/cartera.html`
 

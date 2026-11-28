@@ -67,10 +67,10 @@ def test_analitica_muestra_seis_productos_con_cabecera_opaca() -> None:
 def test_ventas_muestra_cinco_ordenes_con_cabecera_opaca() -> None:
     """Órdenes registradas: cinco filas y cabecera sin transparencia."""
     css = _css()
-    bloque = css.split(".tabla-contenedor--ordenes {", 1)[1].split("}", 1)[0]
+    bloque = css.split(".tabla-contenedor--ordenes,\n.tabla-contenedor--migracion {", 1)[1].split("}", 1)[0]
     assert "max-height: 252px" in bloque
-    cabecera = css.split(".tabla-contenedor--ordenes .tabla thead th {", 1)[1].split("}", 1)[0]
-    assert "background: var(--bg-primary)" in cabecera
+    cabecera = css.split(".tabla-contenedor--ordenes .tabla thead th,\n.tabla-contenedor--migracion .tabla thead th {", 1)[1].split("}", 1)[0]
+    assert "background-color: #0b1e3d" in cabecera
     plantilla = plantilla_ventas()
     assert "tabla-contenedor--ordenes" in plantilla
 

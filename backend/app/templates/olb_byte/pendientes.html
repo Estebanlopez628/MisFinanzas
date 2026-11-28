@@ -31,13 +31,13 @@
           <a class="boton boton--secundario boton--pequeno" href="{{ url_for('ver_pendientes') }}">Ver todos</a>
         {% endif %}
         <span class="cartera-total">
-          TOTAL Cuentas por cobrar: <strong class="valor-positivo">{{ total_cartera | cop }}</strong>
+          - TotaL Cuentas por cobrar: <strong class="valor-positivo">{{ total_cartera | cop }}</strong>
         </span>
       </div>
     </form>
 
     {% if pendientes %}
-      <div class="tabla-contenedor tabla-escritorio">
+      <div class="tabla-contenedor tabla-escritorio tabla-contenedor--pendientes">
         <table class="tabla tabla--tarjetas tabla--compacta">
           <thead>
             <tr>
@@ -72,7 +72,7 @@
         </table>
       </div>
 
-      <ul class="ordenes-moviles" aria-label="Cuentas por cobrar">
+      <ul class="ordenes-moviles ordenes-moviles--pendientes" aria-label="Cuentas por cobrar">
         <li class="orden-movil orden-movil--tres orden-movil--cabecera" aria-hidden="true">
           <span>No.</span><span>Cliente</span><span>Saldo</span>
         </li>

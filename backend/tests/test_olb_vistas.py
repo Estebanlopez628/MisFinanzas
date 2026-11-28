@@ -235,7 +235,7 @@ def test_semaforo_de_garantia_vigente_y_vencida() -> None:
 
     sin_fecha = _Venta()
     sin_fecha.garantia_fecha_fin = None
-    assert comercial.estado_garantia(sin_fecha, hoy) == ("ROJO", 0)
+    assert comercial.estado_garantia(sin_fecha, hoy) == (comercial.ESTADO_GARANTIA_SIN, 0)
 
 
 def test_venta_muestra_semaforo_en_el_panel(cliente_admin: TestClient, bd) -> None:

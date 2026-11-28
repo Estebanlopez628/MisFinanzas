@@ -52,6 +52,7 @@ ESTADO_PAGO_PARCIAL = "PARCIAL"
 ESTADO_PAGO_PAGADA = "PAGADA"
 ESTADO_ACTIVA = "ACTIVA"
 ESTADO_ANULADA = "ANULADA"
+ESTADO_GARANTIA_SIN = "SIN_GARANTIA"
 
 # ADR-35: solo estos dos medios para los abonos nuevos.
 METODOS_PAGO = ("EFECTIVO", "TRANSFERENCIA")
@@ -1660,11 +1661,12 @@ def estado_garantia(venta: Venta, hoy: date) -> tuple[str, int]:
         hoy: Fecha local de referencia.
 
     Returns:
-        Tupla con `VERDE` si la garantía sigue vigente o `ROJO` si venció, y los
-        días restantes (negativos si ya venció). Sin fecha de fin, `ROJO` y 0 días.
+        Tupla con `VERDE` si la garantía sigue vigente, `ROJO` si venció o
+        `SIN_GARANTIA` si la orden no tiene fecha de fin; y los días restantes
+        (negativos si ya venció).
     """
     if venta.garantia_fecha_fin is None:
-        return "ROJO", 0
+        return ESTADO_GARANTIA_SIN, 0
     dias = (venta.garantia_fecha_fin - hoy).days
     return ("VERDE" if dias >= 0 else "ROJO"), dias
 

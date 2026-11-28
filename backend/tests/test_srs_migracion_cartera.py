@@ -59,6 +59,30 @@ def test_venta_migrada_sin_abono_se_ve_con_saldo_en_productos(bd) -> None:
     assert julio["ingresos_migrados"] == Decimal("0")
 
 
+def test_orden_sin_garantia_dice_sin_garantia(cliente_admin: TestClient, bd) -> None:
+    """Una orden migrada sin fecha de garantía no se etiqueta como vencida."""
+    comercial.registrar_venta_migrada(bd, "Sin Garantía", "3001010101", "50000")
+    html = cliente_admin.get("/olb-byte").text
+    assert "Sin garantía" in html
+
+
+def test_cinco_filas_y_cabecera_fija_en_ordenes_y_migradas() -> None:
+    """Órdenes y ventas migradas muestran cinco filas con cabecera opaca."""
+    css = (RUTA / "static/css/estilos.css").read_text(encoding="utf-8")
+    js = (RUTA / "static/js/app.js").read_text(encoding="utf-8")
+    bloque = css.split(".tabla-contenedor--ordenes,\n.tabla-contenedor--migracion {", 1)[1].split("}", 1)[0]
+    assert "max-height: 252px" in bloque
+    cabecera = css.split(".tabla-contenedor--ordenes .tabla thead th,\n.tabla-contenedor--migracion .tabla thead th {", 1)[1].split("}", 1)[0]
+    assert "position: sticky" in cabecera
+    assert "background-color: #0b1e3d" in cabecera
+    assert "tabla-contenedor--migracion" in (RUTA / "templates/olb_byte/migracion.html").read_text(encoding="utf-8")
+    assert ".tabla-contenedor--ordenes, .tabla-contenedor--migracion" in js
+    pendientes = css.split(".tabla-contenedor--pendientes,\n.ordenes-moviles--pendientes {", 1)[1].split("}", 1)[0]
+    assert "max-height: 294px" in pendientes
+    assert 'class="tabla-contenedor tabla-escritorio tabla-contenedor--pendientes"' in (RUTA / "templates/olb_byte/pendientes.html").read_text(encoding="utf-8")
+    assert "ordenes-moviles--pendientes" in (RUTA / "templates/olb_byte/pendientes.html").read_text(encoding="utf-8")
+
+
 def test_total_de_cartera_aparece_en_pendientes(cliente_admin: TestClient, bd) -> None:
     """El total de cuentas por cobrar se muestra en verde junto al buscador."""
     comercial.registrar_venta(
@@ -68,7 +92,7 @@ def test_total_de_cartera_aparece_en_pendientes(cliente_admin: TestClient, bd) -
         [comercial.LineaVenta("Cable", 1, "70000", "20000")],
     )
     html = cliente_admin.get("/olb-byte/pendientes").text
-    assert "TOTAL Cuentas por cobrar" in html
+    assert "- TotaL Cuentas por cobrar" in html
     bloque = html.split("cartera-total\">", 1)[1].split("</span>", 1)[0]
     assert "valor-positivo" in bloque
     assert "$70.000" in bloque

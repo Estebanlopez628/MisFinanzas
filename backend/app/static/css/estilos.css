@@ -1517,23 +1517,92 @@ a.tarjeta:focus-visible {
   }
 }
 
-/* Ventas: cinco órdenes visibles y cabecera opaca. */
-.tabla-contenedor--ordenes {
-  max-height: 252px;
+/* Cuentas por cobrar: seis filas visibles en móvil y escritorio, con cabecera
+   fija y opaca; el resto se alcanza desplazando verticalmente. */
+.tabla-contenedor--pendientes,
+.ordenes-moviles--pendientes {
+  max-height: 294px;
   overflow-y: auto;
   overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tabla-contenedor--pendientes thead th,
+.tabla-contenedor--pendientes tbody td {
+  height: 42px;
+  max-height: 42px;
+}
+
+.tabla-contenedor--pendientes tbody td {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tabla-contenedor--pendientes .tabla thead th,
+.ordenes-moviles--pendientes .orden-movil--cabecera {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background-color: #0b1e3d;
+  border-bottom: 1px solid rgba(148, 197, 255, 0.2);
+}
+
+.ordenes-moviles--pendientes .orden-movil--cabecera {
+  padding: 8px 12px;
+}
+
+@media (max-width: 767px) {
+  .tabla-contenedor--pendientes {
+    touch-action: pan-x pan-y;
+    overscroll-behavior-x: contain;
+    overscroll-behavior-y: contain;
+  }
+}
+
+/* Órdenes registradas y ventas migradas: cinco filas visibles en móvil y
+   escritorio. La cabecera queda fija y con fondo sólido; las filas no se
+   ajustan a más altura, así que siempre se ven exactamente cinco. */
+.tabla-contenedor--ordenes,
+.tabla-contenedor--migracion {
+  max-height: 252px;
+  overflow-y: auto;
+  overflow-x: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .tabla-contenedor--ordenes thead th,
-.tabla-contenedor--ordenes tbody td {
+.tabla-contenedor--migracion thead th,
+.tabla-contenedor--ordenes tbody td,
+.tabla-contenedor--migracion tbody td {
   height: 42px;
+  max-height: 42px;
 }
 
-.tabla-contenedor--ordenes .tabla thead th {
+.tabla-contenedor--ordenes tbody td,
+.tabla-contenedor--migracion tbody td {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tabla-contenedor--ordenes .tabla thead th,
+.tabla-contenedor--migracion .tabla thead th {
   position: sticky;
   top: 0;
-  z-index: 1;
-  background: var(--bg-primary);
+  z-index: 5;
+  background-color: #0b1e3d;
+  border-bottom: 1px solid rgba(148, 197, 255, 0.2);
+}
+
+@media (max-width: 767px) {
+  .tabla-contenedor--ordenes,
+  .tabla-contenedor--migracion {
+    touch-action: pan-x pan-y;
+    overscroll-behavior-x: contain;
+    overscroll-behavior-y: contain;
+  }
 }
 
 /* SRS Migración §3: seis filas visibles (42 px de cabecera + 6 × 37 px),

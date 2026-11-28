@@ -429,10 +429,12 @@
                 </td>
                 <td data-etiqueta="Garantía">
                   {% if not anulada %}
-                    <span class="semaforo semaforo--{{ 'verde' if fila.semaforo == 'VERDE' else 'rojo' }}">
-                      {{ 'Vigente' if fila.semaforo == 'VERDE' else 'Vencida' }}
+                    <span class="semaforo semaforo--{{ 'verde' if fila.semaforo == 'VERDE' else ('sin-datos' if fila.semaforo == 'SIN_GARANTIA' else 'rojo') }}">
+                      {{ 'Vigente' if fila.semaforo == 'VERDE' else ('Sin garantía' if fila.semaforo == 'SIN_GARANTIA' else 'Vencida') }}
                     </span>
-                    <small class="ayuda">Hasta {{ venta.garantia_fecha_fin.strftime('%d-%m-%Y') if venta.garantia_fecha_fin else '—' }}</small>
+                    {% if venta.garantia_fecha_fin %}
+                      <small class="ayuda">Hasta {{ venta.garantia_fecha_fin.strftime('%d-%m-%Y') }}</small>
+                    {% endif %}
                   {% else %}
                     —
                   {% endif %}
@@ -483,9 +485,9 @@
               <div>
                 <dt>Garantía</dt>
                 <dd>
-                  {% if anulada %}—{% else %}
+                  {% if anulada %}—{% elif fila.semaforo == 'SIN_GARANTIA' %}Sin garantía{% else %}
                     {{ 'Vigente' if fila.semaforo == 'VERDE' else 'Vencida' }}
-                    · hasta {{ venta.garantia_fecha_fin.strftime('%d-%m-%Y') if venta.garantia_fecha_fin else '—' }}
+                    {% if venta.garantia_fecha_fin %}· hasta {{ venta.garantia_fecha_fin.strftime('%d-%m-%Y') }}{% endif %}
                   {% endif %}
                 </dd>
               </div>
