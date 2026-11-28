@@ -1231,7 +1231,8 @@ sistema; «Ganancia neta» ya incluye esa ganancia. En móvil, las tablas de pro
 último costo confinan el gesto al contenedor (`touch-action`, `overscroll-behavior` y una
 guarda en `app.js`) para que no salten de lado a lado; si el dedo empieza en la cabecera,
 solo hay desplazamiento horizontal (ADR-183/184). Con el panel vacío, «Guardar» agrega la
-fila de saldo global y avisa (ADR-185/186).
+fila de saldo global y avisa (ADR-185/186). Las ventas migradas sin abono se listan con su
+saldo en «Ventas por producto» (ADR-187).
 
 ### `backend/app/templates/olb_byte/cartera.html`
 

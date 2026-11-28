@@ -39,6 +39,25 @@ def _id_admin(bd) -> str:
 # ---------------------------------------------------------------------------
 
 
+def test_venta_migrada_sin_abono_se_ve_con_saldo_en_productos(bd) -> None:
+    """Sin cobro no suma ingresos, pero la deuda aparece identificada en la tabla."""
+    venta = comercial.registrar_venta_migrada(
+        bd, "Deuda Sin Cobrar", "3008888888", "150000", date(2025, 7, 7)
+    )
+    fila = next(
+        fila for fila in analitica.tabla_ventas(bd, analitica.Filtro(), date(2025, 8, 1))
+        if fila["id_cliente"] == venta.id_cliente
+    )
+    assert fila["origen"] == comercial.ORIGEN_MIGRACION_CARTERA
+    assert fila["total_migrado"] == Decimal("0")
+    assert fila["ganancia_migrada"] == Decimal("0")
+    assert fila["saldo_migrado"] == Decimal("150000")
+    assert fila["fecha_compra"] == date(2025, 7, 7)
+    julio = analitica.reporte_mensual(bd, 2025)[6]
+    assert julio["ventas_migradas"] == 0
+    assert julio["ingresos_migrados"] == Decimal("0")
+
+
 def test_la_pestana_de_migracion_esta_junto_a_registro_de_ventas(cliente_admin: TestClient) -> None:
     """La subnavegación incluye la pestaña nueva en segundo lugar."""
     html = cliente_admin.get("/olb-byte").text

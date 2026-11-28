@@ -242,7 +242,11 @@ def _acumular(lineas: list[Linea]) -> _Acumulado:
         Totales del periodo; las órdenes se cuentan una sola vez por origen.
     """
     normales = {linea.id_venta for linea in lineas if linea.origen != comercial.ORIGEN_MIGRACION_CARTERA}
-    migradas = {linea.id_venta for linea in lineas if linea.origen == comercial.ORIGEN_MIGRACION_CARTERA}
+    migradas = {
+        linea.id_venta
+        for linea in lineas
+        if linea.origen == comercial.ORIGEN_MIGRACION_CARTERA and linea.abonado > CERO
+    }
     acumulado = _Acumulado(ventas=len(normales), ventas_migradas=len(migradas))
     for linea in lineas:
         if linea.origen == comercial.ORIGEN_MIGRACION_CARTERA:
@@ -338,23 +342,21 @@ def _lineas(bd: Session, *, incluir_anuladas: bool = False) -> list[Linea]:
         abonos = _repartir(venta.total_abonado, pesos)
         migrada = venta.origen == comercial.ORIGEN_MIGRACION_CARTERA
         recaudo = _momento_recaudo(ultimos.get(venta.id_venta)) if migrada else None
-        # Una venta migrada aún no cobrada no suma ventas, ingresos ni ganancia.
-        if migrada and (recaudo is None or venta.total_abonado <= CERO):
-            continue
+        sin_cobro = migrada and (recaudo is None or venta.total_abonado <= CERO)
         for (detalle, _), total, saldo, abonado in zip(grupo, pesos, saldos, abonos):
             costo = redondear_dinero(detalle.costo_unitario * detalle.cantidad)
             fecha_linea = venta.fecha_venta
             if migrada:
-                # El ingreso y la utilidad se reconocen solo sobre lo cobrado,
-                # repartiendo el costo en la misma proporción que el total.
+                # Sin abono se muestra la línea con saldo pendiente, pero sin
+                # reconocer ingresos, costo ni ganancia (SRS Migración §2.3).
                 fecha_linea = recaudo or venta.fecha_venta
-                total = abonado
-                if venta.total > CERO and venta.total_costo > CERO:
+                total = CERO if sin_cobro else abonado
+                if sin_cobro or venta.total <= CERO or venta.total_costo <= CERO:
+                    costo = CERO
+                else:
                     costo = redondear_dinero(
                         abonado * min(venta.total_costo / venta.total, Decimal("1"))
                     )
-                else:
-                    costo = CERO
             ganancia = (
                 redondear_dinero(total - costo)
                 if migrada
