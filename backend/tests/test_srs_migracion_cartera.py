@@ -431,9 +431,9 @@ def test_historial_de_gastos_cabe_en_la_tarjeta() -> None:
     celdas = css.split(".tabla.historial-gastos-table th,", 1)[1].split("}", 1)[0]
     assert "padding: 6px 8px" in celdas
     acciones = css.split(".tabla.historial-gastos-table .tabla-gastos__acciones {", 1)[1].split("}", 1)[0]
-    assert "justify-content: center" in acciones
+    assert "justify-content: flex-end" in acciones
     cabecera_acciones = css.split(".tabla.historial-gastos-table thead th.col-acciones,", 1)[1].split("}", 1)[0]
-    assert "text-align: center" in cabecera_acciones
+    assert "text-align: right" in cabecera_acciones
 
 
 def test_el_gesto_tactil_se_confina_en_tablas_de_analitica() -> None:
