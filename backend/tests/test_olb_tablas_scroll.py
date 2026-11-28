@@ -121,7 +121,7 @@ def test_fondo_de_escritorio_muestraArriba_y_abajo() -> None:
     bloque = css.split("@media (min-width: 768px) {\n  body:not(.pagina-acceso)::before {", 1)[1].split("}", 1)[0]
     assert "center top / 100% auto" in bloque
     assert "center bottom / 100% auto" in bloque
-    assert "0.2" in bloque
+    assert "0.3" in bloque
 
 
 def test_ajustes_finales_de_fechas_botones_y_movil() -> None:

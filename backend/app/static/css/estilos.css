@@ -79,7 +79,7 @@ body:not(.pagina-acceso)::before {
 @media (min-width: 768px) {
   body:not(.pagina-acceso)::before {
     background:
-      linear-gradient(rgba(5, 15, 36, 0.2), rgba(5, 15, 36, 0.2)),
+      linear-gradient(rgba(5, 15, 36, 0.3), rgba(5, 15, 36, 0.3)),
       url("/estaticos/img/fondo-ondas-futuristas.png") center top / 100% auto no-repeat,
       url("/estaticos/img/fondo-ondas-futuristas.png") center bottom / 100% auto no-repeat;
   }
