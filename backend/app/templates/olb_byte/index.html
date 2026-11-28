@@ -274,7 +274,7 @@
           </label>
           <label class="campo">
             <span class="campo__etiqueta">Garantía (meses)</span>
-            <input class="campo__control" type="number" min="0" value="{{ meses_defecto }}" data-campo-panel="garantia_meses" />
+            <input class="campo__control" type="number" min="0" placeholder="0" data-campo-panel="garantia_meses" />
           </label>
         </div>
         <div class="subtotal-linea">
@@ -326,7 +326,7 @@
     </form>
 
     <template data-plantilla-fila>
-      {{ fila_producto({'producto_nombre': '', 'categoria': '', 'costo_unitario': '', 'precio_unitario': '', 'cantidad': 1, 'garantia_meses': meses_defecto}) }}
+      {{ fila_producto({'producto_nombre': '', 'categoria': '', 'costo_unitario': '', 'precio_unitario': '', 'cantidad': 1, 'garantia_meses': ''}) }}
     </template>
 
     <dialog class="dialogo-edicion" data-dialogo-edicion aria-labelledby="titulo-edicion">

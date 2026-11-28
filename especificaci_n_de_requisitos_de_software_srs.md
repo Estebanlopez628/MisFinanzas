@@ -2065,7 +2065,7 @@ El `<h2 class="panel__titulo form-header-white">Cartera frente a deuda</h2>` lle
 
 ### 103.1 Migración de Cartera
 
-1. Pestaña nueva «Migración de Cartera» inmediatamente después de «Registro de ventas», con el mismo submenú y `.form-header-white` en su encabezado y en los dos bloques.
+1. Pestaña nueva «Migración de Cartera» inmediatamente después de «Registro de ventas», con el mismo submenú. La línea neón `.form-header-white` va **solo** en los títulos de los dos bloques; el encabezado principal (`heroe__titulo`) no la lleva (ajuste del propietario, ADR-177).
 2. «Ventas realizadas antes del sistema»: cliente, teléfono con «Pegar Numero», fecha de compra precargada con hoy y editable, valor total adeudado, productos opcionales (producto, cantidad, precio, costo) con «+ Agregar otro producto». `POST /olb-byte/migracion/ventas` crea una orden `origen = MIGRACION_CARTERA` en Cuentas por cobrar, sin factura ni WhatsApp. Si no se detallan productos, se genera una línea «Saldo pendiente migrado»; si la suma es menor al total, la diferencia se registra como «Saldo pendiente sin detallar».
 3. «Deudas al proveedor anteriores al sistema»: se traslada desde Cartera, conserva Concepto y Valor adeudado y añade Proveedor, Fecha y Referencia. `POST /olb-byte/migracion/deudas-iniciales` alimenta `movimientos_proveedor` con `DEUDA_INICIAL`.
 4. Columnas `ventas.origen`, `ventas.fecha_compra` y `movimientos_proveedor.proveedor_nombre`, `fecha_deuda`, `referencia_factura`; migración idempotente `_migrar_migracion_cartera()` en SQLite y PostgreSQL. El costo se guarda en `total_costo` (no se crea `costo_total_migrado`) y el libro de proveedor sigue siendo `movimientos_proveedor` (no existe tabla `deudas`).
@@ -2095,3 +2095,22 @@ El `<h2 class="panel__titulo form-header-white">Cartera frente a deuda</h2>` lle
 2. El historial de gastos operativos usa `.tabla.historial-gastos-table` con `min-width: 0`, `table-layout: fixed` y celdas de 6 × 8 px, de modo que fecha, monto y acciones se vean completos sin desplazamiento horizontal dentro de la tarjeta.
 3. El submenú de OLB BYTE añade `subnav-finanzas--olb`: grilla 3 × 2 en escritorio y 2 × 3 en móvil, sin barra de desplazamiento ni pestañas cortadas. El submenú de Mis Finanzas no cambia.
 4. `limpiar_gastos_huerfanos()` elimina también gastos de metas archivadas y gastos históricos con prefijo «Meta · » o «Meta - » sin una meta activa con esa descripción, para que no vuelvan a aparecer en la segunda quincena.
+
+### 103.7 Retiro de la línea neón del encabezado (ADR-177)
+
+El `<h1 class="heroe__titulo">🧾 Migración de Cartera</h1>` queda sin `.form-header-white`: la raya cian/azul neón solo adorna los títulos de «Ventas realizadas antes del sistema» y «Deudas al proveedor anteriores al sistema». No se tocan los colores, el texto, el ícono ni los bloques.
+
+### 103.8 Garantía vacía y etiquetas opcionales (ADR-178)
+
+En `index.html` y `migracion.html` el campo «Garantía (meses)» nace sin valor (`placeholder="0"`); si se deja vacío, `_lineas_desde_filas()` sigue aplicando los 3 meses por defecto del servidor. En el panel de Migración se retira la nota general y la ayuda junto a «Guardar»; las seis etiquetas llevan «(Opcional)» y el subtítulo de la tabla es «Productos de esta venta», sin la palabra opcional. Junto a «Producto» se muestra `(Llenar campos, solo si conoces el dato, si no dejalos vacios)`.
+
+### 103.9 Integración de la migración en Analítica y garantía declarada (ADR-180)
+
+Cuando se migran ventas con el detalle completo, `venta_detalle` conserva producto, cantidad, precio unitario, costo unitario y garantía (`fecha_compra + meses`). En «Mes a mes» y «Año tras año»:
+
+1. Al registrar, la orden **no suma** ventas, ingresos ni ganancia: aparece solo en Cuentas por cobrar y en los indicadores de la pestaña Migración.
+2. Al cobrar, `analitica._lineas()` genera las líneas con `fecha = fecha_recaudo`: el mes/año del cobro recibe `Ingresos = abonado`, `Costos = abonado × (total_costo / total)` y `Ganancia = Ingresos − Costos`. El `PASIVO ANTIGUO` y los gastos operativos no se alteran.
+3. La tabla «Ventas por producto» y su CSV muestran `Origen = MIGRACION_CARTERA`, `Fecha de compra`, `Fecha de recaudo`, el desglose por producto y la garantía Activa/Vencida calculada desde la fecha de compra.
+4. «Último costo y margen por producto» limita la vista a cinco filas con desplazamiento vertical y cabecera fija.
+
+Ejemplo: Audífonos × 2 a $90.000 c/u con costo $20.000 c/u → total $180.000. Sin cobros, Marzo queda en $0. Al cobrar $90.000 en Abril: Abril muestra Ventas 1, Ingresos $90.000, Costos $20.000, Ganancia $70.000.

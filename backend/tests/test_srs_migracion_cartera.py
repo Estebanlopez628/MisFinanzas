@@ -7,7 +7,7 @@ registrar una venta y borrado integral de los gastos de una meta en ambas quince
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 from pathlib import Path
 
@@ -15,7 +15,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import select, text
 
 from app.modelos import Abono, Gasto, MovimientoProveedor, ProyeccionAhorro, Venta, VentaDetalle
-from app.servicios import ahorro, comercial, pagos_metas, usuarios
+from app.servicios import ahorro, analitica, comercial, pagos_metas, usuarios
 
 RUTA = Path(__file__).resolve().parent.parent / "app"
 
@@ -62,7 +62,8 @@ def test_la_vista_de_migracion_tiene_los_dos_bloques_con_linea_neon(cliente_admi
         "Deudas al proveedor anteriores al sistema",
     ):
         assert f'class="panel__titulo form-header-white">{titulo}</h2>' in html
-    assert 'class="heroe__titulo form-header-white">🧾 Migración de Cartera</h1>' in html
+    assert 'class="heroe__titulo">🧾 Migración de Cartera</h1>' in html
+    assert 'class="heroe__titulo form-header-white"' not in html
     assert "name=fecha_compra" not in html
     assert 'name="fecha_compra"' in html
     assert "+ Agregar otro producto" in html
@@ -255,9 +256,25 @@ def test_el_panel_de_producto_de_migracion_es_completo_y_opcional(
     ):
         assert etiqueta in panel
     assert "required" not in panel
+    assert panel.count("(Opcional)") == 6
+    assert "(Llenar campos, solo si conoces el dato, si no dejalos vacios)" in panel
+    assert "Todos los campos son opcionales" not in html
+    assert "data-estado-panel" not in html
+    assert "Productos de esta venta (opcional)" not in html
     assert "data-guardar-producto" in panel
     assert "+ Agregar otro producto" in html
     assert 'name="garantia_meses"' in html.split("data-plantilla-producto>", 1)[1]
+
+
+def test_la_garantia_nace_en_blanco_en_ventas_y_migracion() -> None:
+    """Ninguno de los dos paneles precarga meses de garantía."""
+    for nombre in ("index.html", "migracion.html"):
+        texto = (RUTA / "templates/olb_byte" / nombre).read_text(encoding="utf-8")
+        campo = texto.split('data-campo-panel="garantia_meses"', 1)[0]
+        inicio = campo.rfind("<input")
+        etiqueta = campo[inicio:]
+        assert "value=" not in etiqueta
+        assert 'placeholder="0"' in etiqueta
 
 
 def test_producto_migrado_con_garantia_se_almacena(cliente_admin: TestClient, bd) -> None:
@@ -284,7 +301,8 @@ def test_producto_migrado_con_garantia_se_almacena(cliente_admin: TestClient, bd
     assert detalle.cantidad == 2
     assert detalle.costo_unitario == Decimal("40000")
     assert detalle.precio_unitario == Decimal("90000")
-    assert detalle.garantia_texto is None
+    assert detalle.garantia_texto == "6 meses por defectos de fábrica"
+    assert detalle.garantia_fecha_fin == date(2025, 11, 5)
 
 
 def test_subnav_de_olb_va_en_tres_columnas() -> None:
@@ -307,6 +325,20 @@ def test_historial_de_gastos_cabe_en_la_tarjeta() -> None:
     assert "table-layout: fixed" in tabla
     celdas = css.split(".tabla.historial-gastos-table th,", 1)[1].split("}", 1)[0]
     assert "padding: 6px 8px" in celdas
+    acciones = css.split(".tabla.historial-gastos-table .tabla-gastos__acciones {", 1)[1].split("}", 1)[0]
+    assert "justify-content: center" in acciones
+    cabecera_acciones = css.split(".tabla.historial-gastos-table thead th.col-acciones,", 1)[1].split("}", 1)[0]
+    assert "text-align: center" in cabecera_acciones
+
+
+def test_el_ultimo_costo_muestra_cinco_productos_con_scroll() -> None:
+    """La tabla de último costo limita a cinco filas visibles y cabecera fija."""
+    css = (RUTA / "static/css/estilos.css").read_text(encoding="utf-8")
+    html = (RUTA / "templates/olb_byte/analitica.html").read_text(encoding="utf-8")
+    bloque = css.split(".tabla-contenedor--costos {", 1)[1].split("}", 1)[0]
+    assert "max-height: 252px" in bloque
+    assert "overflow-y: auto" in bloque
+    assert "tabla-contenedor--costos" in html
 
 
 def test_limpieza_por_descripcion_retira_gastos_de_metas_borradas(bd) -> None:
@@ -381,6 +413,43 @@ def test_eliminar_meta_archivada_tambien_limpia_sus_gastos(bd) -> None:
     assert (
         len(bd.scalars(select(Gasto).where(Gasto.id_proyeccion == meta.id_proyeccion)).all()) == 0
     )
+
+
+def test_migracion_no_infla_reportes_hasta_el_recaudo(bd) -> None:
+    """Los reportes mensual/anual solo reconocen lo cobrado de una venta migrada."""
+    sin_costo = comercial.registrar_venta_migrada(
+        bd, "Historial Global", "3001111111", "100000", date(2025, 3, 10)
+    )
+    con_costo = comercial.registrar_venta_migrada(
+        bd,
+        "Historial Detallado",
+        "3002222222",
+        "200000",
+        date(2025, 3, 11),
+        [comercial.LineaVenta("Producto", 1, "200000", "50000")],
+    )
+    antes = analitica.reporte_mensual(bd, 2025)[2]
+    assert antes["ventas"] == 0 and antes["ingresos"] == Decimal("0") and antes["ganancia"] == Decimal("0")
+
+    comercial.registrar_abono(
+        bd,
+        sin_costo.id_venta,
+        "60000",
+        fecha_abono=datetime(2025, 4, 5, 12, tzinfo=comercial.ZONA_TIENDA),
+    )
+    comercial.registrar_abono(
+        bd,
+        con_costo.id_venta,
+        "80000",
+        fecha_abono=datetime(2025, 4, 6, 12, tzinfo=comercial.ZONA_TIENDA),
+    )
+    abril = analitica.reporte_mensual(bd, 2025)[3]
+    assert abril["ventas"] == 2
+    assert abril["ingresos"] == Decimal("140000")
+    assert abril["costos"] == Decimal("20000")
+    assert abril["ganancia"] == Decimal("120000")
+    anual = analitica.reporte_anual(bd)[0]
+    assert anual["ingresos"] == Decimal("140000")
 
 
 # ---------------------------------------------------------------------------

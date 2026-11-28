@@ -31,7 +31,7 @@ from __future__ import annotations
 import csv
 import io
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date, datetime, time
 from decimal import Decimal
 
 from sqlalchemy import select
@@ -252,8 +252,26 @@ def _repartir(valor: Decimal, pesos: list[Decimal]) -> list[Decimal]:
     return partes
 
 
+def _momento_recaudo(fecha: datetime | None) -> datetime | None:
+    """Normaliza la fecha de un abono para usarla como periodo contable.
+
+    Args:
+        fecha: Fecha del último abono, con o sin zona horaria.
+
+    Returns:
+        La misma fecha al mediodía en hora de la tienda, o `None`.
+    """
+    if fecha is None:
+        return None
+    referencia = fecha.date() if isinstance(fecha, datetime) else fecha
+    return datetime.combine(referencia, time(12, 0), tzinfo=comercial.ZONA_TIENDA)
+
+
 def _lineas(bd: Session, *, incluir_anuladas: bool = False) -> list[Linea]:
     """Construye las líneas de venta con sus saldos y abonos repartidos.
+
+    Las ventas migradas no se contabilizan al registrarlas: entran a los reportes
+    solo con lo efectivamente cobrado, en el mes del recaudo (SRS Migración §2.3).
 
     Args:
         bd: Sesión de base de datos.
@@ -285,14 +303,38 @@ def _lineas(bd: Session, *, incluir_anuladas: bool = False) -> list[Linea]:
         pesos = [redondear_dinero(detalle.subtotal_item) for detalle, _ in grupo]
         saldos = _repartir(venta.saldo_pendiente, pesos)
         abonos = _repartir(venta.total_abonado, pesos)
+        migrada = venta.origen == comercial.ORIGEN_MIGRACION_CARTERA
+        recaudo = _momento_recaudo(ultimos.get(venta.id_venta)) if migrada else None
+        # Una venta migrada aún no cobrada no suma ventas, ingresos ni ganancia.
+        if migrada and (recaudo is None or venta.total_abonado <= CERO):
+            continue
         for (detalle, _), total, saldo, abonado in zip(grupo, pesos, saldos, abonos):
             costo = redondear_dinero(detalle.costo_unitario * detalle.cantidad)
+            fecha_linea = venta.fecha_venta
+            if migrada:
+                # El ingreso y la utilidad se reconocen solo sobre lo cobrado,
+                # repartiendo el costo en la misma proporción que el total.
+                fecha_linea = recaudo or venta.fecha_venta
+                total = abonado
+                if venta.total > CERO and venta.total_costo > CERO:
+                    costo = redondear_dinero(
+                        abonado * min(venta.total_costo / venta.total, Decimal("1"))
+                    )
+                else:
+                    costo = CERO
+            ganancia = (
+                redondear_dinero(total - costo)
+                if migrada
+                else redondear_dinero(
+                    (detalle.precio_unitario - detalle.costo_unitario) * detalle.cantidad
+                )
+            )
             lineas.append(
                 Linea(
                     id_detalle=detalle.id_detalle,
                     id_venta=venta.id_venta,
                     numero_orden=venta.numero_orden,
-                    fecha=venta.fecha_venta,
+                    fecha=fecha_linea,
                     id_cliente=venta.id_cliente,
                     cliente=venta.cliente_nombre,
                     telefono=venta.cliente_telefono,
@@ -303,9 +345,7 @@ def _lineas(bd: Session, *, incluir_anuladas: bool = False) -> list[Linea]:
                     precio_unitario=detalle.precio_unitario,
                     costo=costo,
                     total=total,
-                    ganancia=redondear_dinero(
-                        (detalle.precio_unitario - detalle.costo_unitario) * detalle.cantidad
-                    ),
+                    ganancia=ganancia,
                     saldo=saldo,
                     abonado=abonado,
                     garantia_fin=detalle.garantia_fecha_fin or venta.garantia_fecha_fin,

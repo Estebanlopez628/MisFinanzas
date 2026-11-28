@@ -706,9 +706,17 @@ def registrar_venta_migrada(
     bd.flush()
 
     total_costo = CERO
+    vencimientos: list[tuple[date, str]] = []
     for linea, precio, costo in valores:
         subtotal_item = redondear_dinero(precio * linea.cantidad)
         total_costo += redondear_dinero(costo * linea.cantidad)
+        texto_garantia = _texto_garantia(linea.garantia_meses)
+        vencimiento = (
+            fecha
+            if linea.garantia_meses <= 0
+            else _sumar_meses(fecha, linea.garantia_meses)
+        )
+        vencimientos.append((vencimiento, texto_garantia))
         bd.add(
             VentaDetalle(
                 id_venta=venta.id_venta,
@@ -718,8 +726,8 @@ def registrar_venta_migrada(
                 costo_unitario=costo,
                 precio_unitario=precio,
                 subtotal_item=subtotal_item,
-                garantia_texto=None,
-                garantia_fecha_fin=None,
+                garantia_texto=texto_garantia,
+                garantia_fecha_fin=vencimiento,
             )
         )
 
@@ -748,6 +756,10 @@ def registrar_venta_migrada(
     venta.estado_pago = ESTADO_PAGO_PENDIENTE
     venta.garantia_texto = ""
     venta.garantia_fecha_fin = None
+    if vencimientos:
+        vencimiento_orden, texto_orden = min(vencimientos, key=lambda par: par[0])
+        venta.garantia_texto = texto_orden
+        venta.garantia_fecha_fin = vencimiento_orden
 
     # El costo queda registrado solo como dato para el reparto proporcional de
     # cada abono. No se crea deuda con el proveedor al migrar: el saldo global ya

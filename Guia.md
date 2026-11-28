@@ -1210,14 +1210,18 @@ ingresos, costos, ganancia, rentabilidad (ganancia ÷ costo × 100) y variación
 `ranking_vip` ordena clientes por monto y frecuencia; `alertas_costos` compara el costo
 de cada compra con la anterior del mismo producto, marca los márgenes bajo
 `UMBRAL_MARGEN_BAJO` y entrega el último costo de cada producto. Las órdenes anuladas no
-cuentan en ingresos ni rankings, pero sí en el historial de costos.
+cuentan en ingresos ni rankings, pero sí en el historial de costos. Las ventas migradas
+(`origen = MIGRACION_CARTERA`) no se contabilizan al registrar: `_lineas` las emite solo
+cuando hay abono, con fecha del recaudo e ingresos/costo/ganancia proporcionales a lo
+cobrado (ADR-180).
 
 ### `backend/app/templates/olb_byte/analitica.html`
 
 Vista de analítica con selector de año: tabla mensual con barras de ingresos, tabla
 anual con rentabilidad, ranking de clientes VIP, alertas de subida de costo con margen
-y tabla del último costo por producto. Las variaciones y márgenes se muestran sin signo
-ni color, porque el signo de RF-10 aplica solo al módulo de cartera.
+y tabla del último costo por producto, limitada a cinco filas con desplazamiento vertical
+y cabecera fija. Las variaciones y márgenes se muestran sin signo ni color, porque el
+signo de RF-10 aplica solo al módulo de cartera.
 
 ### `backend/app/templates/olb_byte/cartera.html`
 

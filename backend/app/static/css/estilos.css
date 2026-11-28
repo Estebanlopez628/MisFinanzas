@@ -1483,6 +1483,25 @@ a.tarjeta:focus-visible {
   background: var(--bg-primary);
 }
 
+/* Último costo y margen: cinco productos visibles con cabecera fija opaca. */
+.tabla-contenedor--costos {
+  max-height: 252px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.tabla-contenedor--costos thead th,
+.tabla-contenedor--costos tbody td {
+  height: 42px;
+}
+
+.tabla-contenedor--costos .tabla thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--bg-primary);
+}
+
 /* Ventas: cinco órdenes visibles y cabecera opaca. */
 .tabla-contenedor--ordenes {
   max-height: 252px;
@@ -1544,9 +1563,14 @@ a.tarjeta:focus-visible {
   width: 30%;
 }
 
+.tabla.historial-gastos-table thead th.col-acciones,
+.tabla.historial-gastos-table tbody td.col-acciones {
+  text-align: center;
+}
+
 .tabla.historial-gastos-table .tabla-gastos__acciones {
-  gap: 4px;
-  justify-content: flex-end;
+  gap: 6px;
+  justify-content: center;
 }
 
 .tabla.historial-gastos-table .boton {
@@ -3958,6 +3982,15 @@ strong.valor-negativo.recibo__cifra--saldo {
   padding: 0 6px;
   font-weight: 700;
   color: var(--accent-blue);
+}
+
+/* Migración de Cartera: aclaración junto a «Producto». */
+.bloque-producto__nota {
+  margin-left: 6px;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 400;
+  white-space: normal;
 }
 
 .subtotal-linea {
