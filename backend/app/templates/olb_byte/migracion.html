@@ -286,9 +286,7 @@
          href="{{ url_for('exportar_migracion_csv') }}">Descargar CSV</a>
     </div>
     <p class="panel__descripcion">
-      Cobrado: <strong>{{ resumen.abonado | cop }}</strong> ·
-      Utilidad reconocida: <strong>{{ resumen.utilidad | cop }}</strong> ·
-      Pago al proveedor proporcional: <strong>{{ resumen.pago_proveedor | cop }}</strong>.
+      Total por cobrar de deudas migradas: <strong class="valor-positivo">{{ resumen.saldo | cop }}</strong>
     </p>
     {% if filas %}
       <div class="tabla-contenedor tabla-contenedor--migracion">

@@ -98,6 +98,16 @@ def test_total_de_cartera_aparece_en_pendientes(cliente_admin: TestClient, bd) -
     assert "$70.000" in bloque
 
 
+def test_resumen_de_migracion_muestra_total_por_cobrar(cliente_admin: TestClient, bd) -> None:
+    """El panel de migradas muestra solo el total por cobrar, en verde."""
+    comercial.registrar_venta_migrada(bd, "Pendiente Resumen", "3006060606", "90000")
+    html = cliente_admin.get("/olb-byte/migracion").text
+    bloque = html.split("Ventas migradas y recaudos", 1)[1].split("<table", 1)[0]
+    assert "Total por cobrar de deudas migradas:" in bloque
+    assert "valor-positivo" in bloque
+    assert "Pago al proveedor proporcional" not in bloque
+
+
 def test_la_pestana_de_migracion_esta_junto_a_registro_de_ventas(cliente_admin: TestClient) -> None:
     """La subnavegación incluye la pestaña nueva en segundo lugar."""
     html = cliente_admin.get("/olb-byte").text
