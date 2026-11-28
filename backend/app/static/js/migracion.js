@@ -123,14 +123,23 @@
     mensajeVacio.hidden = lista.querySelectorAll("[data-fila-producto]").length > 0;
   }
 
+  function mostrarEstado(texto) {
+    if (!estadoPanel) {
+      return;
+    }
+    estadoPanel.textContent = texto;
+    estadoPanel.hidden = !texto;
+  }
+
   /**
    * Guarda el producto del panel como una fila nueva de la tabla.
    *
-   * @returns {boolean} `true` si se agregó o si no había datos que agregar.
+   * @returns {boolean} `true` si se agregó; `false` si no había datos que agregar.
    */
   function guardarProducto() {
     if (!hayDatosEnPanel()) {
-      return true;
+      mostrarEstado("Escribe los datos del producto o deja los campos vacíos y carga solo el saldo.");
+      return false;
     }
     var valores = leerPanel();
     var nombre = valores.producto_nombre || "(sin nombre)";
@@ -152,9 +161,7 @@
     escribirEnFila(fila, "garantia_meses", valores.garantia_meses || "0");
     lista.appendChild(fila);
     mostrarError("");
-    if (estadoPanel) {
-      estadoPanel.textContent = "Producto agregado. Puedes escribir otro.";
-    }
+    mostrarEstado("");
     limpiarPanel();
     actualizarVacia();
     return true;
@@ -167,6 +174,7 @@
     if (!panel) {
       return;
     }
+    mostrarEstado("");
     panel.querySelectorAll("[data-campo-panel]").forEach(function (campo) {
       var nombre = campo.getAttribute("data-campo-panel");
       if (nombre === "cantidad") {

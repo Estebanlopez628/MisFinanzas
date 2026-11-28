@@ -230,6 +230,16 @@ def test_la_cartera_tiene_cuatro_paneles_en_dos_filas(cliente_admin: TestClient)
         assert "form-header-white" in fragmento[-80:]
 
 
+def test_el_boton_guardar_avisa_cuando_no_hay_datos() -> None:
+    """Sin datos en el panel, Guardar explica que se puede cargar solo el saldo."""
+    js = (RUTA / "static/js/migracion.js").read_text(encoding="utf-8")
+    assert "function mostrarEstado" in js
+    assert "Escribe los datos del producto" in js
+    bloque = js.split("function guardarProducto()", 1)[1].split("var valores", 1)[0]
+    assert "mostrarEstado(" in bloque
+    assert "return false" in bloque
+
+
 def test_el_panel_de_producto_de_migracion_es_completo_y_opcional(
     cliente_admin: TestClient,
 ) -> None:
@@ -259,7 +269,7 @@ def test_el_panel_de_producto_de_migracion_es_completo_y_opcional(
     assert panel.count("(Opcional)") == 6
     assert "(Llenar campos, solo si conoces el dato, si no dejalos vacios)" in panel
     assert "Todos los campos son opcionales" not in html
-    assert "data-estado-panel" not in html
+    assert 'data-estado-panel hidden' in html
     assert "Productos de esta venta (opcional)" not in html
     assert "data-guardar-producto" in panel
     assert "+ Agregar otro producto" in html

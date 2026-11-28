@@ -1230,7 +1230,8 @@ por producto» añaden columnas «D. migración» con el detalle de las ventas a
 sistema; «Ganancia neta» ya incluye esa ganancia. En móvil, las tablas de productos y
 último costo confinan el gesto al contenedor (`touch-action`, `overscroll-behavior` y una
 guarda en `app.js`) para que no salten de lado a lado; si el dedo empieza en la cabecera,
-solo hay desplazamiento horizontal (ADR-183/184).
+solo hay desplazamiento horizontal (ADR-183/184). El botón «Guardar» del panel de producto
+avisa cuando no hay datos escritos (ADR-185).
 
 ### `backend/app/templates/olb_byte/cartera.html`
 

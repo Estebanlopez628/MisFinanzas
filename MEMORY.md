@@ -2878,6 +2878,8 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Cabecera fuera del scroll vertical (ADR-184).** A petición del propietario, si el dedo toca `thead`, el gesto vertical se cancela: la cabecera solo se desplaza en horizontal junto con las columnas. El scroll vertical nace únicamente en las filas de datos (fila 2 en adelante). Se reinicia el estado del gesto también en `touchcancel`. `sw.js` en `olb-finanzas-v212`.
 
+**Aviso del botón Guardar (ADR-185).** Si los seis campos del panel están vacíos o con su valor por defecto, «Guardar» no agregaba fila y parecía no responder. Ahora muestra el mensaje «Escribe los datos del producto o deja los campos vacíos y carga solo el saldo.», que desaparece al guardar un producto. El botón sigue sin ser obligatorio: se puede cargar directamente solo el saldo. `sw.js` en `olb-finanzas-v213`.
+
 **Verificación.** **1038 pruebas** en verde (21 de la SRS), `compileall`, `node --check` de los dos scripts y `generar_guia.py --verificar` correcto (119 fichas). Sin desbordes en las vistas nuevas comprobadas por las pruebas HTTP; paleta, COP, íconos y scroll heredados intactos.
 
 ### 2026-11-27 — KPI de Analítica más anchos (ADR-174)

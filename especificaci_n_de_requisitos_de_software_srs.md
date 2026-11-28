@@ -2130,3 +2130,7 @@ Si solo se conoce el total (ADR-182), se crea la línea «Saldo pendiente migrad
 ### 103.11 Gesto táctil contenido (ADR-183)
 
 «Mes a mes» solo desplaza en horizontal (`overflow-x: auto`) y el panel permanece en su lugar. «Ventas por producto» y «Último costo y margen por producto» desplazan en dos ejes; en móvil se añadió `touch-action: pan-x pan-y`, `-webkit-overflow-scrolling: touch`, `contain: paint` y `overscroll-behavior-x/y: contain`, más una guarda en `app.js` que cancela el gesto solo al llegar al borde dominante. Así la tabla no salta de lado a lado ni arrastra la página. ADR-184: si el gesto empieza en `thead`, se cancela el movimiento vertical, de modo que la cabecera solo se desplaza en horizontal y el scroll vertical nace en la fila 2 en adelante. `sw.js` en `olb-finanzas-v212`.
+
+### 103.12 Aviso de «Guardar» sin datos (ADR-185)
+
+Si los seis campos del panel de producto están vacíos o con su valor por defecto, el botón «Guardar» muestra `Escribe los datos del producto o deja los campos vacíos y carga solo el saldo.` El mensaje desaparece al guardar una fila. La carga solo con el total sigue siendo válida; no se agrega ningún producto inventado. `sw.js` en `olb-finanzas-v213`.
