@@ -2876,6 +2876,8 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Gesto táctil en tablas de analítica (ADR-183).** «Mes a mes» solo tiene `overflow-x: auto`, por eso el dedo desplaza columnas sin mover el panel. «Ventas por producto» y «Último costo» tienen además `max-height`, `overflow-y`, cabecera fija y `overscroll-behavior: contain`; en móvil ese doble eje hacía que el gesto se encadenara a la página y la tabla pareciera saltar de lado a lado. Se añadió `touch-action: pan-x pan-y`, `-webkit-overflow-scrolling: touch`, `contain: paint` y una guarda en `app.js` que cancela el gesto solo en el borde dominante. `sw.js` en `olb-finanzas-v211`.
 
+**Cabecera fuera del scroll vertical (ADR-184).** A petición del propietario, si el dedo toca `thead`, el gesto vertical se cancela: la cabecera solo se desplaza en horizontal junto con las columnas. El scroll vertical nace únicamente en las filas de datos (fila 2 en adelante). Se reinicia el estado del gesto también en `touchcancel`. `sw.js` en `olb-finanzas-v212`.
+
 **Verificación.** **1038 pruebas** en verde (21 de la SRS), `compileall`, `node --check` de los dos scripts y `generar_guia.py --verificar` correcto (119 fichas). Sin desbordes en las vistas nuevas comprobadas por las pruebas HTTP; paleta, COP, íconos y scroll heredados intactos.
 
 ### 2026-11-27 — KPI de Analítica más anchos (ADR-174)

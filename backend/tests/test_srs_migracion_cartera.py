@@ -343,6 +343,8 @@ def test_el_gesto_tactil_se_confina_en_tablas_de_analitica() -> None:
     assert ".tabla-contenedor--productos, .tabla-contenedor--costos" in js
     assert "evento.preventDefault()" in js
     assert "caja.scrollLeft" in js and "caja.scrollTop" in js
+    assert 'objetivo.closest("thead")' in js
+    assert "empiezaEnCabecera && !horizontal" in js
 
 
 def test_solo_total_conocido_deja_vacios_cantidad_y_precio(bd) -> None:

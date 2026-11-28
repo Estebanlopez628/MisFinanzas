@@ -1592,6 +1592,7 @@
   function confinarGesto(caja) {
     var inicioX = null;
     var inicioY = null;
+    var empiezaEnCabecera = false;
     caja.addEventListener("touchstart", function (evento) {
       if (!window.matchMedia("(max-width: 767px)").matches || evento.touches.length !== 1) {
         inicioX = inicioY = null;
@@ -1599,6 +1600,8 @@
       }
       inicioX = evento.touches[0].clientX;
       inicioY = evento.touches[0].clientY;
+      var objetivo = evento.target instanceof Element ? evento.target : null;
+      empiezaEnCabecera = !!(objetivo && objetivo.closest("thead"));
     }, { passive: true });
 
     caja.addEventListener("touchmove", function (evento) {
@@ -1608,6 +1611,12 @@
       var dx = evento.touches[0].clientX - inicioX;
       var dy = evento.touches[0].clientY - inicioY;
       var horizontal = Math.abs(dx) > Math.abs(dy);
+      // La cabecera no participa del desplazamiento vertical: solo se mueve
+      // de forma horizontal. El scroll vertical nace en la fila 2 en adelante.
+      if (empiezaEnCabecera && !horizontal) {
+        evento.preventDefault();
+        return;
+      }
       var enBorde = horizontal
         ? (dx < 0
           ? caja.scrollLeft + caja.clientWidth >= caja.scrollWidth - 1
@@ -1620,9 +1629,12 @@
       }
     }, { passive: false });
 
-    caja.addEventListener("touchend", function () {
+    function terminarGesto() {
       inicioX = inicioY = null;
-    }, { passive: true });
+      empiezaEnCabecera = false;
+    }
+    caja.addEventListener("touchend", terminarGesto, { passive: true });
+    caja.addEventListener("touchcancel", terminarGesto, { passive: true });
   }
 
   document

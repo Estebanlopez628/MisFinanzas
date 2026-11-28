@@ -1229,7 +1229,8 @@ signo de RF-10 aplica solo al módulo de cartera. «Mes a mes», «Año tras añ
 por producto» añaden columnas «D. migración» con el detalle de las ventas anteriores al
 sistema; «Ganancia neta» ya incluye esa ganancia. En móvil, las tablas de productos y
 último costo confinan el gesto al contenedor (`touch-action`, `overscroll-behavior` y una
-guarda en `app.js`) para que no salten de lado a lado.
+guarda en `app.js`) para que no salten de lado a lado; si el dedo empieza en la cabecera,
+solo hay desplazamiento horizontal (ADR-183/184).
 
 ### `backend/app/templates/olb_byte/cartera.html`
 
