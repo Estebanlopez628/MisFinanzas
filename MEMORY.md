@@ -2888,7 +2888,7 @@ Los tres bloques de la orden de corrección y refactorización quedaron implemen
 
 **Total de cartera en pendientes (ADR-190).** La vista «Cuentas por cobrar» muestra junto al buscador `- TotaL Cuentas por cobrar: $xxxxx` en el verde de valores positivos. El total es el saldo vivo de todas las órdenes activas, aunque el buscador esté filtrando filas.
 
-**Tablas con filas fijas (ADR-191).** «Órdenes registradas» y «Ventas migradas y recaudos» muestran cinco filas en móvil y escritorio; «Cuentas por cobrar» muestra seis, en tabla y en lista móvil. Cabecera `sticky` con fondo sólido `#0b1e3d`, filas de 42 px sin envolver texto y gesto confinado. `sw.js` en `olb-finanzas-v218`.
+**Tablas con filas fijas (ADR-191).** «Órdenes registradas» y «Ventas migradas y recaudos» muestran cinco filas en móvil y escritorio; «Cuentas por cobrar» muestra seis, en tabla y en lista móvil. Cabecera `sticky` con fondo sólido `#0b1e3d`, filas de 42 px sin envolver texto y gesto confinado. `sw.js` en `olb-finanzas-v218`. ADR-192: el panel «Ventas migradas y recaudos» muestra solo `Total por cobrar de deudas migradas`. `sw.js` en `olb-finanzas-v219`.
 
 **Verificación.** **1038 pruebas** en verde (21 de la SRS), `compileall`, `node --check` de los dos scripts y `generar_guia.py --verificar` correcto (119 fichas). Sin desbordes en las vistas nuevas comprobadas por las pruebas HTTP; paleta, COP, íconos y scroll heredados intactos.
 
